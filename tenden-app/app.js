@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let mainRouteLine = null;
     let activeScenarioId = 1;
     let activeLocationId = 'a';
+    let sheltersData = [];
     // Simulation-derived data
     let routeData = {};  // loaded from assets/routes.json
     let pendingRouteArgs = null; // {scenarioId, locationId, scLoc} while route modal is open
@@ -188,10 +189,12 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('assets/shelters.json')
             .then(res => res.json())
             .then(data => {
+                sheltersData = data;
                 addShelterMarkers(data);
                 console.log('[TENDEN] shelters.json 読み込み完了:', data.length, '件');
             })
             .catch(() => {
+                sheltersData = FALLBACK_SHELTERS;
                 addShelterMarkers(FALLBACK_SHELTERS);
                 console.log('[TENDEN] shelters.json なし → fallback 使用');
             });
@@ -286,93 +289,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         btnTestAlert.addEventListener('click', () => {
-            const overlay = document.getElementById('scenario-overlay');
-            overlay.classList.remove('hidden');
-            setTimeout(() => overlay.classList.add('active'), 10);
+            // Instantly transition to Emergency Mode (Tsunami Evacuation)
+            isEmergency = true;
+            activeScenarioId = 1;
+            activeLocationId = 'a';
+            document.body.classList.add('emergency-mode');
+            
+            document.getElementById('btn-test-alert').classList.add('hidden');
+            document.getElementById('btn-sos').classList.remove('hidden');
+            document.getElementById('btn-share').classList.remove('hidden');
+            document.getElementById('btn-reset-alert').classList.remove('hidden');
+            
+            // Show the evacuation banner with custom instructions
+            const banner = document.getElementById('evacuation-banner');
+            banner.classList.remove('hidden');
+            
+            document.getElementById('i18n-evac-title').innerText = "避難指示（大津波警報）";
+            document.getElementById('i18n-evac-desc').innerText = "【ピン打ち待機中】地図上をタップして避難開始位置を設定してください。最寄りの避難所へ誘導します。";
+            
+            const detailsEl = document.getElementById('disaster-details');
+            detailsEl.style.display = 'block';
+            detailsEl.innerHTML = `<span>予想到達時間:</span> <strong>15分</strong> | <span>予想高:</span> <strong>10m</strong>`;
+            
+            // Clear any old route layers & active simulations
+            if (routeLayerGroup) routeLayerGroup.clearLayers();
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+            }
+            
+            alert("「発災避難モード」になりました。\n地図上の任意の場所（路地や海岸など）をタップしてピンを打ってください。そこから最も近い避難所への経路を自動計算し、シミュレーションを開始します！");
         });
-
-        const btnScenarioClose = document.getElementById('btn-scenario-close');
-        if (btnScenarioClose) {
-            btnScenarioClose.addEventListener('click', () => {
-                const overlay = document.getElementById('scenario-overlay');
-                overlay.classList.remove('active');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            });
-        }
-
-        // Handle scenario choice
-        document.querySelectorAll('.scenario-option-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                // close scenario modal
-                const scenarioOverlay = document.getElementById('scenario-overlay');
-                scenarioOverlay.classList.remove('active');
-                setTimeout(() => scenarioOverlay.classList.add('hidden'), 300);
-                
-                const scenarioId = parseInt(btn.getAttribute('data-scenario'));
-                
-                // Show location modal with dynamic content
-                setTimeout(() => {
-                    const locOverlay = document.getElementById('location-overlay');
-                    const titleEl = document.getElementById('location-dialog-title');
-                    const containerEl = document.getElementById('location-options-container');
-                    
-                    const sc = SCENARIOS[scenarioId];
-                    titleEl.innerText = `${sc.title} : 開始位置の選択`;
-                    
-                    // Populate locations
-                    containerEl.innerHTML = '';
-                    Object.keys(sc.locations).forEach(locKey => {
-                        const loc = sc.locations[locKey];
-                        const startLabel = locKey === 'a' ? "最危険地帯" : "避難中間地帯";
-                        let themeColor = "#0071e3";
-                        let btnBg = "rgba(0,113,227,0.08)";
-                        if (scenarioId === 1) {
-                            themeColor = "#ff9f0a";
-                            btnBg = "rgba(255,159,10,0.08)";
-                        } else if (scenarioId === 3) {
-                            themeColor = "#ff453a";
-                            btnBg = "rgba(255,69,58,0.08)";
-                        }
-                        
-                        const btnHtml = `
-                            <button class="location-option-btn" data-loc="${locKey}" style="display: flex; flex-direction: column; text-align: left; padding: 14px; border-radius: 12px; border: 1px solid var(--glass-border); background: ${btnBg}; cursor: pointer; transition: background 0.2s, transform 0.2s; width: 100%;">
-                                <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 6px;">
-                                    <strong style="color: ${themeColor}; font-size: 0.95rem;">${loc.name}</strong>
-                                    <span style="font-size: 0.75rem; background: ${themeColor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${startLabel}</span>
-                                </div>
-                                <span style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">${loc.desc}</span>
-                            </button>
-                        `;
-                        containerEl.insertAdjacentHTML('beforeend', btnHtml);
-                    });
-                    
-                    // Add event listeners to generated buttons
-                    containerEl.querySelectorAll('.location-option-btn').forEach(locBtn => {
-                        locBtn.addEventListener('click', () => {
-                            // close location modal
-                            locOverlay.classList.remove('active');
-                            setTimeout(() => locOverlay.classList.add('hidden'), 300);
-                            
-                            const locId = locBtn.getAttribute('data-loc');
-                            triggerEmergencyMode(true, scenarioId, locId);
-                        });
-                    });
-                    
-                    locOverlay.classList.remove('hidden');
-                    setTimeout(() => locOverlay.classList.add('active'), 10);
-                }, 350);
-            });
-        });
-
-        // Close location overlay
-        const btnLocationClose = document.getElementById('btn-location-close');
-        if (btnLocationClose) {
-            btnLocationClose.addEventListener('click', () => {
-                const overlay = document.getElementById('location-overlay');
-                overlay.classList.remove('active');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            });
-        }
 
         // Handle drill reset (End Drill)
         const btnResetAlert = document.getElementById('btn-reset-alert');
@@ -889,24 +836,111 @@ document.addEventListener('DOMContentLoaded', () => {
     function recalculateRouteFromLocation(loc) {
         if (!isEmergency) return;
         
-        const sc = SCENARIOS[activeScenarioId] || SCENARIOS[1];
-        const scLoc = sc.locations[activeLocationId] || sc.locations['a'];
-        
         // Stop current evacuation simulation interval
         if (simulationInterval) {
             clearInterval(simulationInterval);
             simulationInterval = null;
         }
 
-        // Redraw evacuation route
-        const routeKey = `${activeScenarioId}_${activeLocationId}`;
-        const candidates = routeData[routeKey];
-        const routeB = candidates ? candidates.find(r => r.id === 'B') : null;
+        // Find nearest shelter
+        const nearestShelter = findNearestShelter(loc);
+        if (nearestShelter) {
+            // Calculate dynamic custom route connecting the custom clicked coordinate to the nearest shelter
+            const customRoute = calculateCustomRoute(loc, nearestShelter);
+            
+            // Draw the evacuation route
+            drawEvacuationRoutes(loc, nearestShelter, customRoute);
+            
+            // Update HUD banner description
+            document.getElementById('i18n-evac-desc').innerText = `避難開始地点を設定しました。最寄りの「${nearestShelter.name}」へ避難を開始します。`;
+            
+            // Restart evacuation simulation from this new custom location
+            simulateEvacuation();
+        } else {
+            console.warn("No nearest shelter found");
+        }
+    }
+
+    function findNearestShelter(loc) {
+        let nearest = null;
+        let minDist = Infinity;
+        const startLatLng = L.latLng(loc.lat, loc.lng);
         
-        drawEvacuationRoutes(loc, scLoc, routeB);
+        sheltersData.forEach(s => {
+            const dist = startLatLng.distanceTo(L.latLng(s.lat, s.lng));
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = s;
+            }
+        });
         
-        // Restart evacuation simulation from this new custom location
-        simulateEvacuation();
+        return nearest;
+    }
+
+    function calculateCustomRoute(startLoc, shelter) {
+        let bestRoute = null;
+        let minWaypointDist = Infinity;
+        let bestSplitIndex = 0;
+        
+        const startLatLng = L.latLng(startLoc.lat, startLoc.lng);
+        
+        // Loop through all scenario routes in routeData
+        Object.keys(routeData).forEach(key => {
+            const candidates = routeData[key] || [];
+            candidates.forEach(route => {
+                if (!route.waypoints || route.waypoints.length < 2) return;
+                
+                // Check if this route ends near our target shelter
+                const lastPt = route.waypoints[route.waypoints.length - 1];
+                const destDist = L.latLng(lastPt[0], lastPt[1]).distanceTo(L.latLng(shelter.lat, shelter.lng));
+                
+                // If it ends within 150m of the shelter, it's a good candidate route
+                if (destDist < 150) {
+                    // Find the closest waypoint along this route to our startLoc
+                    route.waypoints.forEach((pt, idx) => {
+                        const dist = startLatLng.distanceTo(L.latLng(pt[0], pt[1]));
+                        if (dist < minWaypointDist) {
+                            minWaypointDist = dist;
+                            bestRoute = route;
+                            bestSplitIndex = idx;
+                        }
+                    });
+                }
+            });
+        });
+        
+        // If we found a good predefined route nearby, slice and splice it!
+        if (bestRoute && minWaypointDist < 800) { // must be within 800m of the route
+            const customWaypoints = [ [startLoc.lat, startLoc.lng] ];
+            for (let i = bestSplitIndex; i < bestRoute.waypoints.length; i++) {
+                customWaypoints.push(bestRoute.waypoints[i]);
+            }
+            return {
+                waypoints: customWaypoints,
+                label: bestRoute.label,
+                color: bestRoute.color,
+                distance_m: Math.round(minWaypointDist + bestRoute.distance_m * (1 - bestSplitIndex / bestRoute.waypoints.length)),
+                characteristics: bestRoute.characteristics,
+                congestion_score: bestRoute.congestion_score
+            };
+        }
+        
+        // Absolute fallback: draw a simulated L-shaped (Manhattan) route or straight line to the shelter
+        const shelterLat = shelter.lat;
+        const shelterLng = shelter.lng;
+        const midPoint = [startLoc.lat, shelterLng]; // corner turn to simulate streets
+        return {
+            waypoints: [
+                [startLoc.lat, startLoc.lng],
+                midPoint,
+                [shelterLat, shelterLng]
+            ],
+            label: "緊急避難ルート",
+            color: "#ff3b30", // Bright warning red
+            distance_m: Math.round(startLatLng.distanceTo(L.latLng(shelterLat, shelterLng)) * 1.3),
+            characteristics: "緊急時の最短道路接続ルート",
+            congestion_score: "low"
+        };
     }
 
     function isInModelArea(loc) {
