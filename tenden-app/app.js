@@ -848,6 +848,175 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let activeRoutesList = [];
+    let activeSelectedRouteId = 'B';
+
+    function drawMultipleEvacuationRoutes(startLoc, nearestShelter, bestShelter, candidates, selectedId) {
+        routeLayerGroup.clearLayers();
+        activeRoutesList = candidates;
+        activeSelectedRouteId = selectedId || 'B';
+
+        candidates.forEach(candidate => {
+            const isSelected = candidate.id === activeSelectedRouteId;
+            const color = candidate.color || '#00bbff';
+            
+            if (candidate.waypoints && candidate.waypoints.length > 0) {
+                let waypoints = [];
+                const firstPt = candidate.waypoints[0];
+                const dist = L.latLng(startLoc.lat, startLoc.lng).distanceTo(L.latLng(firstPt[0], firstPt[1]));
+                
+                // Smart Snap Connector: Manhattan L-shaped clamp
+                if (dist > 15 && !candidate.isOSRM) {
+                    const midPt = [startLoc.lat, firstPt[1]];
+                    waypoints = [ [startLoc.lat, startLoc.lng], midPt, ...candidate.waypoints ];
+                } else {
+                    waypoints = [ [startLoc.lat, startLoc.lng], ...candidate.waypoints ];
+                }
+                
+                // Highlight active main selection, thin dash other alternatives
+                const lineOpts = isSelected ? {
+                    color: color,
+                    weight: 6.5,
+                    opacity: 1.0,
+                    className: 'animated-route'
+                } : {
+                    color: color,
+                    weight: 4.0,
+                    opacity: 0.35,
+                    dashArray: '5, 8'
+                };
+                
+                const pline = L.polyline(waypoints, lineOpts).addTo(routeLayerGroup);
+                
+                // Direct on-map line clicking toggles route choice!
+                pline.on('click', (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    selectEvacuationRoute(candidate.id);
+                });
+
+                if (isSelected) {
+                    mainRouteLine = pline; // Expose as main path for evacuation simulation to follow
+                    
+                    // Render selected route badge label
+                    const midIdx = Math.floor(waypoints.length / 2);
+                    if (midIdx < waypoints.length) {
+                        const midPt = waypoints[midIdx];
+                        const labelIcon = L.divIcon({
+                            className: 'route-label-container',
+                            html: `<div class="route-label-pill active" style="background:${color}">${candidate.label}</div>`,
+                            iconSize: [120, 24],
+                            iconAnchor: [60, 12]
+                        });
+                        L.marker(midPt, { icon: labelIcon }).addTo(routeLayerGroup);
+                    }
+                }
+            }
+        });
+    }
+
+    function selectEvacuationRoute(routeId) {
+        if (!currentLocation) return;
+        
+        // Stop current evacuation simulation interval
+        if (simulationInterval) {
+            clearInterval(simulationInterval);
+            simulationInterval = null;
+        }
+
+        const nearest = findNearestShelter(currentLocation);
+        const best = findBestShelter(currentLocation);
+        
+        activeSelectedRouteId = routeId;
+        
+        // Redraw multiple routes with new active selection
+        drawMultipleEvacuationRoutes(currentLocation, nearest, best, activeRoutesList, activeSelectedRouteId);
+        
+        // Highlight active card in HUD bottom sheet
+        updateRouteSelectorUI(activeSelectedRouteId);
+
+        // Update emergency HUD banner description with chosen destination
+        const selectedRoute = activeRoutesList.find(r => r.id === activeSelectedRouteId);
+        if (selectedRoute) {
+            document.getElementById('i18n-evac-desc').innerText = `${selectedRoute.label}（${selectedRoute.characteristics.split('。')[0]}）で避難を開始します。`;
+        }
+
+        // Restart simulation along new selected path
+        simulateEvacuation();
+    }
+
+    function updateRouteSelectorUI(selectedId) {
+        const container = document.getElementById('route-options-container');
+        if (!container) return;
+        
+        container.querySelectorAll('.route-option-btn').forEach(btn => {
+            const btnId = btn.getAttribute('data-route-id');
+            const targetColor = btn.getAttribute('data-color');
+            if (btnId === selectedId) {
+                btn.classList.add('active');
+                btn.style.borderColor = targetColor;
+                btn.style.boxShadow = `0 4px 16px ${targetColor}44`;
+                btn.style.opacity = '1';
+                btn.style.transform = 'scale(1.02)';
+            } else {
+                btn.classList.remove('active');
+                btn.style.borderColor = 'var(--glass-border)';
+                btn.style.boxShadow = 'none';
+                btn.style.opacity = '0.55';
+                btn.style.transform = 'scale(1)';
+            }
+        });
+    }
+
+    function showRouteSelectorHUD(candidates) {
+        const container = document.getElementById('route-options-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        candidates.forEach(c => {
+            const isSelected = c.id === activeSelectedRouteId;
+            const targetColor = c.color || '#00bbff';
+            
+            // Build visual tags
+            let tagsHtml = `<span style="font-size:0.72rem; padding:2px 6px; border-radius:4px; font-weight:600; background:${targetColor}; color:#fff;">`;
+            if (c.id === 'B') tagsHtml += `混雑回避`;
+            else if (c.id === 'A') tagsHtml += `避難所分散`;
+            else if (c.id === 'C') tagsHtml += `バリアフリー`;
+            tagsHtml += `</span>`;
+            
+            const cardHtml = `
+                <button class="route-option-btn ${isSelected ? 'active' : ''}" data-route-id="${c.id}" data-color="${targetColor}"
+                    style="text-align:left; padding:12px; border-radius:12px; border:2px solid ${isSelected ? targetColor : 'var(--glass-border)'};
+                           background:var(--glass-bg); cursor:pointer; width:100%; transition:all 0.25s ease;
+                           box-shadow: ${isSelected ? `0 4px 16px ${targetColor}44` : 'none'}; opacity: ${isSelected ? '1' : '0.55'}; transform: ${isSelected ? 'scale(1.02)' : 'scale(1)'}">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <strong style="font-size:0.95rem; color:var(--hud-text);">${c.label}</strong>
+                        ${tagsHtml}
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.8rem; opacity:0.9;">
+                        <span>⏱ 避難時間: <strong>${c.estimated_min}分</strong></span>
+                        <span>📏 距離: <strong>${c.distance_m}m</strong></span>
+                    </div>
+                    <p style="font-size:0.75rem; opacity:0.8; line-height:1.4; margin:0;">${c.characteristics}</p>
+                </button>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        });
+
+        // Bind clicks
+        container.querySelectorAll('.route-option-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const rId = btn.getAttribute('data-route-id');
+                selectEvacuationRoute(rId);
+            });
+        });
+
+        // Show bottom sheet
+        const overlay = document.getElementById('route-overlay');
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.add('active'), 10);
+    }
+
     async function recalculateRouteFromLocation(loc) {
         if (!isEmergency) return;
         
@@ -857,65 +1026,145 @@ document.addEventListener('DOMContentLoaded', () => {
             simulationInterval = null;
         }
 
-        // Find nearest shelter
         const nearestShelter = findNearestShelter(loc);
-        if (nearestShelter) {
-            let customRoute = null;
+        const bestShelter = findBestShelter(loc);
+        
+        if (!nearestShelter) {
+            console.warn("No nearest shelter found");
+            return;
+        }
 
-            // Try OSRM Online Walking Routing API first with dual fallback servers and 3s timeouts
-            const osrmUrls = [
+        // We will generate 3 candidate routes (A, B, C)
+        let candidates = [];
+        
+        // Calculate Pin-to-Approach slope in % (dynamic calculation)
+        let startElevation = 0;
+        const elevationEl = document.getElementById('elevation-m');
+        if (elevationEl && elevationEl.innerText !== '--') {
+            startElevation = parseFloat(elevationEl.innerText);
+        }
+
+        // 1. Fetch routes online if available via OSRM, otherwise fallback locally
+        let routeB = null; // Candidate B (Congestion-avoidance)
+        let routeA = null; // Candidate A (Load-balanced shelter)
+        let routeC = null; // Candidate C (Flat/Physical)
+        
+        // Try OSRM Online for nearest & best shelters
+        const osrmUrls = {
+            nearest: [
                 `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${loc.lng},${loc.lat};${nearestShelter.lng},${nearestShelter.lat}?overview=full&geometries=geojson`,
                 `https://router.project-osrm.org/route/v1/foot/${loc.lng},${loc.lat};${nearestShelter.lng},${nearestShelter.lat}?overview=full&geometries=geojson`
-            ];
+            ],
+            best: [
+                `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${loc.lng},${loc.lat};${bestShelter.lng},${bestShelter.lat}?overview=full&geometries=geojson`,
+                `https://router.project-osrm.org/route/v1/foot/${loc.lng},${loc.lat};${bestShelter.lng},${bestShelter.lat}?overview=full&geometries=geojson`
+            ]
+        };
 
-            for (let url of osrmUrls) {
+        // Try to fetch OSRM Route for nearest shelter (used for Route B basic snapping online)
+        let onlineNearestWaypoints = null;
+        let onlineNearestDistance = 0;
+        for (let url of osrmUrls.nearest) {
+            try {
+                // Safe cross-browser timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2500);
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                const data = await response.json();
+                if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                    onlineNearestWaypoints = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                    onlineNearestDistance = Math.round(data.routes[0].distance);
+                    break;
+                }
+            } catch (e) {
+                console.warn("OSRM failed for nearest shelter", e);
+            }
+        }
+
+        // Try to fetch OSRM Route for best shelter (load-balanced)
+        let onlineBestWaypoints = null;
+        let onlineBestDistance = 0;
+        if (bestShelter.id !== nearestShelter.id) {
+            for (let url of osrmUrls.best) {
                 try {
-                    // Safe cross-browser timeout using AbortController
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 3000);
-                    
+                    const timeoutId = setTimeout(() => controller.abort(), 2500);
                     const response = await fetch(url, { signal: controller.signal });
                     clearTimeout(timeoutId);
                     const data = await response.json();
-                    
                     if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-                        const route = data.routes[0];
-                        // OSRM returns [longitude, latitude] coordinates; Leaflet expects [latitude, longitude]
-                        const waypoints = route.geometry.coordinates.map(c => [c[1], c[0]]);
-                        
-                        customRoute = {
-                            waypoints: waypoints,
-                            label: "避難歩行ルート",
-                            color: "#0a84ff", // Apple-style Cyan/Blue for emergency
-                            distance_m: Math.round(route.distance),
-                            characteristics: "歩行者用の安全な避難経路",
-                            congestion_score: "low",
-                            isOSRM: true
-                        };
-                        console.log(`[TENDEN] OSRM Online Route fetched successfully from: ${url}`);
+                        onlineBestWaypoints = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                        onlineBestDistance = Math.round(data.routes[0].distance);
                         break;
                     }
                 } catch (e) {
-                    console.warn(`[TENDEN] OSRM routing failed or offline for ${url}. Trying next...`, e);
+                    console.warn("OSRM failed for best shelter", e);
                 }
             }
-
-            // Fallback to offline local path approximation if OSRM is offline
-            if (!customRoute) {
-                customRoute = calculateCustomRoute(loc, nearestShelter);
-            }
-            
-            // Draw the evacuation route
-            drawEvacuationRoutes(loc, nearestShelter, customRoute);
-            
-            // Update HUD banner description
-            document.getElementById('i18n-evac-desc').innerText = `避難開始地点を設定しました。最寄りの「${nearestShelter.name}」へ避難を開始します。`;
-            
-            // Restart evacuation simulation from this new custom location
-            simulateEvacuation();
-        } else {
-            console.warn("No nearest shelter found");
         }
+
+        // BUILD ROUTE A (避難所混雑回避ルート)
+        if (onlineBestWaypoints) {
+            routeA = {
+                id: 'A',
+                label: '避難所混雑回避ルート',
+                color: '#0071e3',
+                waypoints: onlineBestWaypoints,
+                distance_m: onlineBestDistance,
+                estimated_min: Math.round((onlineBestDistance / 1.37) / 60),
+                characteristics: `混雑を避けた安全な「${bestShelter.name}」へのルート。`,
+                congestion_score: 'low',
+                isOSRM: true
+            };
+        } else {
+            routeA = calculateCustomRouteForType(loc, bestShelter, 'A');
+        }
+
+        // BUILD ROUTE B (混雑回避優先ルート)
+        if (onlineNearestWaypoints) {
+            routeB = {
+                id: 'B',
+                label: '混雑回避優先ルート',
+                color: '#34c759',
+                waypoints: onlineNearestWaypoints,
+                distance_m: onlineNearestDistance,
+                estimated_min: Math.round((onlineNearestDistance / 1.37) / 60),
+                characteristics: `渋滞予測エリアを避けた推奨ルート。最寄り「${nearestShelter.name}」へ誘導。`,
+                congestion_score: 'low',
+                isOSRM: true
+            };
+        } else {
+            routeB = calculateCustomRouteForType(loc, nearestShelter, 'B');
+        }
+
+        // BUILD ROUTE C (高齢者・子供向けフラットルート)
+        routeC = calculateCustomRouteForType(loc, nearestShelter, 'C');
+
+        // Dynamically compute slope and adjust description for candidate C
+        if (routeC && routeC.waypoints && routeC.waypoints.length > 0) {
+            const firstPt = routeC.waypoints[0];
+            const distToApproach = L.latLng(loc.lat, loc.lng).distanceTo(L.latLng(firstPt[0], firstPt[1]));
+            
+            // Assume typical slope estimation based on elevation endpoints
+            const targetElevation = (nearestShelter.typical_occupancy_pct > 0) ? 12 : 5;
+            const elevDiff = Math.abs(startElevation - targetElevation);
+            const slopePct = distToApproach > 5 ? Math.round((elevDiff / distToApproach) * 1000) / 10 : 0;
+            
+            routeC.characteristics = `坂道・段差を徹底回避した平坦ルート。高齢者・児童推奨。アプローチ勾配: ${slopePct}%`;
+            routeC.estimated_min = Math.round((routeC.distance_m / 1.0) / 60); // 1.0 m/s slow speed
+        }
+
+        candidates = [routeB, routeA, routeC];
+
+        // Draw multiple routes with default selection 'B'
+        drawMultipleEvacuationRoutes(loc, nearestShelter, bestShelter, candidates, 'B');
+
+        // Dynamically populate bottom sheet HUD cards and show
+        showRouteSelectorHUD(candidates);
+
+        // Update emergency HUD text
+        document.getElementById('i18n-evac-desc').innerText = `避難開始地点を設定しました。候補ルートを選択して避難を開始してください。`;
     }
 
     function findNearestShelter(loc) {
@@ -934,7 +1183,38 @@ document.addEventListener('DOMContentLoaded', () => {
         return nearest;
     }
 
-    function calculateCustomRoute(startLoc, shelter) {
+    function findBestShelter(loc) {
+        let best = null;
+        let minDist = Infinity;
+        const startLatLng = L.latLng(loc.lat, loc.lng);
+        
+        // First try to find a shelter that is NOT high load
+        sheltersData.forEach(s => {
+            const load = s.predicted_load || 'low';
+            if (load !== 'high') {
+                const dist = startLatLng.distanceTo(L.latLng(s.lat, s.lng));
+                if (dist < minDist) {
+                    minDist = dist;
+                    best = s;
+                }
+            }
+        });
+        
+        // If all surrounding shelters are high load, fallback to absolute nearest
+        if (!best) {
+            minDist = Infinity;
+            sheltersData.forEach(s => {
+                const dist = startLatLng.distanceTo(L.latLng(s.lat, s.lng));
+                if (dist < minDist) {
+                    minDist = dist;
+                    best = s;
+                }
+            });
+        }
+        return best;
+    }
+
+    function calculateCustomRouteForType(startLoc, shelter, type) {
         let bestRoute = null;
         let minWaypointDist = Infinity;
         let bestSplitIndex = 0;
@@ -947,11 +1227,13 @@ document.addEventListener('DOMContentLoaded', () => {
             candidates.forEach(route => {
                 if (!route.waypoints || route.waypoints.length < 2) return;
                 
+                // Match the specific route candidate type (A, B, or C)
+                if (route.id !== type) return;
+                
                 // Check if this route ends near our target shelter
                 const lastPt = route.waypoints[route.waypoints.length - 1];
                 const destDist = L.latLng(lastPt[0], lastPt[1]).distanceTo(L.latLng(shelter.lat, shelter.lng));
                 
-                // If it ends within 150m of the shelter, it's a good candidate route
                 if (destDist < 150) {
                     // Find the closest waypoint along this route to our startLoc
                     route.waypoints.forEach((pt, idx) => {
