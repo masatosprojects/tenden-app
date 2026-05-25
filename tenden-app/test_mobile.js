@@ -90,8 +90,8 @@ if (!executablePath) {
     });
 
     try {
-        console.log("Navigating to http://127.0.0.1:8082 ...");
-        await page.goto('http://127.0.0.1:8082', { waitUntil: 'networkidle2' });
+        console.log("Navigating to http://127.0.0.1:8082/app.html ...");
+        await page.goto('http://127.0.0.1:8082/app.html', { waitUntil: 'networkidle2' });
 
         // Save initial screenshot
         await page.screenshot({ path: path.join(__dirname, 'screenshot_1_loaded.png') });
