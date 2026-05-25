@@ -801,8 +801,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Smart Snap Connector:
             // If the start location is significantly far from the first route point (e.g. > 15m),
             // we insert a smart Manhattan L-shaped mid-point to avoid cutting through buildings diagonally.
-            // If it's already OSRM and we have snapped, or if distance is tiny, a direct connection is fine.
-            if (dist > 15 && !routeCandidate.isOSRM) {
+            // This is applied to BOTH OSRM and offline routes if the snapping distance is large.
+            if (dist > 15) {
                 const midPt = [startLoc.lat, firstPt[1]];
                 waypoints = [ [startLoc.lat, startLoc.lng], midPt, ...routeCandidate.waypoints ];
             } else {
@@ -870,7 +870,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (let url of osrmUrls) {
                 try {
-                    const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+                    // Safe cross-browser timeout using AbortController
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
                     const data = await response.json();
                     
                     if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
