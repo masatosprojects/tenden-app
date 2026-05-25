@@ -1,0 +1,21 @@
+{
+    "name": "TENDEN - 日頃の備えと迷わないルートを",
+    "short_name": "TENDEN",
+    "description": "平時の「減災・備え」と発災時の「避難誘導」をシームレスに繋ぐWebアプリケーション",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+        {
+            "src": "assets/icons/icon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "assets/logo.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
