@@ -456,6 +456,31 @@ document.addEventListener('DOMContentLoaded', () => {
         btnScreenshot.addEventListener('click', () => {
             takeScreenshot();
         });
+
+        const btnDevReset = document.getElementById('btn-dev-reset');
+        if (btnDevReset) {
+            btnDevReset.addEventListener('click', async () => {
+                if (confirm('【開発者用】PWAキャッシュとサービスワーカーを完全に削除して再起動しますか？\n(次回読み込み時に最新のコードが強制適用されます)')) {
+                    // 1. Clear Cache Storage
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        for (let key of keys) {
+                            await caches.delete(key);
+                        }
+                    }
+                    // 2. Unregister Service Workers
+                    if ('serviceWorker' in navigator) {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for (let registration of registrations) {
+                            await registration.unregister();
+                        }
+                    }
+                    
+                    alert('キャッシュとサービスワーカーのクリアを完了しました。再起動します。');
+                    window.location.reload(true);
+                }
+            });
+        }
     }
 
     function requestLocation() {
