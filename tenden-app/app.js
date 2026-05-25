@@ -2,10 +2,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Basic state
     let isEmergency = false;
-    let map, userMarker, routeLayerGroup, hazardLayer, sheltersLayerGroup;
+    let map, userMarker, routeLayerGroup, hazardLayer, sheltersLayerGroup, congestionLayer;
     let currentLocation = null; // {lat, lng}
     let simulationInterval = null;
     let mainRouteLine = null;
+    // Simulation-derived data
+    let routeData = {};  // loaded from assets/routes.json
+    let pendingRouteArgs = null; // {scenarioId, locationId, scLoc} while route modal is open
     
     // Kamakura default location (Yuigahama)
     const KAMAKURA_CENTER = [35.3111, 139.5467];
@@ -90,6 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initI18n();
     connectP2PQuake();
 
+    // Load simulation-derived route data
+    fetch('assets/routes.json')
+        .then(res => res.json())
+        .then(data => { routeData = data; console.log('[TENDEN] routes.json 読み込み完了'); })
+        .catch(e => console.log('[TENDEN] routes.json なし (fallback to static routes)', e));
+
     // Remove Splash Screen after initial load (1000ms animation + 500ms wait = 1500ms total)
     setTimeout(() => {
         const splash = document.getElementById('splash-screen');
@@ -148,29 +157,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }).catch(e => console.log("No hazard geojson found", e));
 
-        // Initialize Shelter markers
+        // Initialize Shelter markers — dynamic load from simulation data
         sheltersLayerGroup = L.layerGroup();
-        const SHELTERS = [
-            { name: "御成小学校 (避難所/海抜9.5m)", lat: 35.3190, lng: 139.5510 },
-            { name: "鎌倉市役所 (避難所/海抜9.0m)", lat: 35.3180, lng: 139.5400 },
-            { name: "甘縄神明宮 (高台避難所/海抜15m)", lat: 35.3142, lng: 139.5332 },
-            { name: "八幡宮境内 (避難所/海抜12m)", lat: 35.3252, lng: 139.5562 },
-            { name: "清泉小学校 (避難所/海抜24.0m)", lat: 35.3258, lng: 139.5605 },
-            { name: "鎌倉生涯学習センター (避難所/海抜9.2m)", lat: 35.3195, lng: 139.5570 }
+        const LOAD_COLORS = { low: '#00a63e', medium: '#f5a623', high: '#c0392b' };
+        const LOAD_LABELS = { low: '● 混雑少', medium: '●● やや混雑', high: '●●● 混雑予測' };
+        const FALLBACK_SHELTERS = [
+            { name: "御成小学校", lat: 35.3190, lng: 139.5510, predicted_load: 'low', capacity: 910, typical_occupancy_pct: 4.7 },
+            { name: "鎌倉市役所", lat: 35.3180, lng: 139.5400, predicted_load: 'low', capacity: 1000, typical_occupancy_pct: 0 },
+            { name: "甘縄神明宮", lat: 35.3142, lng: 139.5332, predicted_load: 'low', capacity: 500, typical_occupancy_pct: 0 },
+            { name: "八幡宮境内", lat: 35.3252, lng: 139.5562, predicted_load: 'low', capacity: 800, typical_occupancy_pct: 0 },
+            { name: "清泉小学校", lat: 35.3258, lng: 139.5605, predicted_load: 'low', capacity: 600, typical_occupancy_pct: 0 },
+            { name: "鎌倉生涯学習センター", lat: 35.3195, lng: 139.5570, predicted_load: 'low', capacity: 400, typical_occupancy_pct: 0 }
         ];
 
-        const shelterIcon = L.divIcon({
-            className: 'shelter-marker',
-            html: '<div class="shelter-marker-inner"></div>',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
-        });
+        function addShelterMarkers(shelterList) {
+            shelterList.forEach(s => {
+                const load = s.predicted_load || 'low';
+                const color = LOAD_COLORS[load] || '#888';
+                const label = LOAD_LABELS[load] || '';
+                const icon = L.divIcon({
+                    className: `shelter-marker shelter-${load}`,
+                    html: `<div class="shelter-marker-inner" style="background:${color};border-color:${color}"></div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                const occupancyNote = s.typical_occupancy_pct > 0
+                    ? `<br><span style="color:${color};font-size:0.85em">${label} (典型利用率 ${s.typical_occupancy_pct}%)</span>`
+                    : '';
+                const disclaimer = '<br><em style="font-size:0.78em;opacity:0.7">※シミュレーション統計に基づく予測。リアルタイムデータではありません</em>';
+                L.marker([s.lat, s.lng], { icon })
+                    .bindPopup(`<strong>${s.name}</strong> (収容 ${s.capacity}人)${occupancyNote}${disclaimer}`)
+                    .addTo(sheltersLayerGroup);
+            });
+        }
 
-        SHELTERS.forEach(shelter => {
-            L.marker([shelter.lat, shelter.lng], { icon: shelterIcon })
-                .bindPopup(`<strong>${shelter.name}</strong>`)
-                .addTo(sheltersLayerGroup);
-        });
+        fetch('assets/shelters.json')
+            .then(res => res.json())
+            .then(data => {
+                addShelterMarkers(data);
+                console.log('[TENDEN] shelters.json 読み込み完了:', data.length, '件');
+            })
+            .catch(() => {
+                addShelterMarkers(FALLBACK_SHELTERS);
+                console.log('[TENDEN] shelters.json なし → fallback 使用');
+            });
+
+        // Load congestion heatmap from simulation data
+        fetch('assets/congestion.geojson')
+            .then(res => res.json())
+            .then(data => {
+                congestionLayer = L.geoJSON(data, {
+                    style: f => ({
+                        color: LOAD_COLORS[f.properties.level] || '#888888',
+                        weight: f.properties.level === 'high' ? 5 : (f.properties.level === 'medium' ? 4 : 2),
+                        opacity: f.properties.level === 'high' ? 0.85 : (f.properties.level === 'medium' ? 0.65 : 0.35)
+                    })
+                });
+                const btnToggleLayers = document.getElementById('btn-toggle-layers');
+                if (btnToggleLayers && btnToggleLayers.classList.contains('active')) {
+                    congestionLayer.addTo(map);
+                }
+                console.log('[TENDEN] congestion.geojson 読み込み完了:', data.features.length, '件');
+            })
+            .catch(e => console.log('[TENDEN] congestion.geojson なし', e));
 
         // Initialize Device Orientation for Compass
         if (window.DeviceOrientationEvent) {
@@ -354,9 +403,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isActive) {
                 if (hazardLayer) hazardLayer.addTo(map);
                 if (sheltersLayerGroup) sheltersLayerGroup.addTo(map);
+                if (congestionLayer) congestionLayer.addTo(map);
             } else {
                 if (hazardLayer) map.removeLayer(hazardLayer);
                 if (sheltersLayerGroup) map.removeLayer(sheltersLayerGroup);
+                if (congestionLayer) map.removeLayer(congestionLayer);
             }
         });
 
@@ -620,10 +671,22 @@ document.addEventListener('DOMContentLoaded', () => {
             currentLocation = { lat: scLoc.start.lat, lng: scLoc.start.lng };
             map.setView([currentLocation.lat, currentLocation.lng], 16);
             updateMarker(currentLocation);
-            drawEvacuationRoutes(currentLocation, scLoc);
-            simulateEvacuation();
+            // Show route selection modal if route data is available
+            const routeKey = `${scenarioId}_${locationId}`;
+            const candidates = routeData[routeKey];
+            if (candidates && candidates.length > 0) {
+                showRouteSelectionModal(scenarioId, locationId, scLoc);
+            } else {
+                // Fallback to static routes
+                drawEvacuationRoutes(currentLocation, scLoc, null);
+                simulateEvacuation();
+            }
         } else {
-            drawEvacuationRoutes(currentLocation, scLoc);
+            // Real emergency: use Route B (congestion-avoidance) automatically
+            const routeKey = `${scenarioId}_${locationId}`;
+            const candidates = routeData[routeKey];
+            const routeB = candidates ? candidates.find(r => r.id === 'B') : null;
+            drawEvacuationRoutes(currentLocation, scLoc, routeB);
         }
 
         if ("vibrate" in navigator && !isTest) {
@@ -633,7 +696,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetEmergencyMode() {
         isEmergency = false;
-        
+
+        // Close route selection modal if open
+        const routeOverlay = document.getElementById('route-overlay');
+        if (routeOverlay) {
+            routeOverlay.classList.remove('active');
+            routeOverlay.classList.add('hidden');
+        }
+        pendingRouteArgs = null;
+
         // Stop evacuation simulation interval
         if (simulationInterval) {
             clearInterval(simulationInterval);
@@ -677,28 +748,124 @@ document.addEventListener('DOMContentLoaded', () => {
         requestLocation();
     }
 
-    function drawEvacuationRoutes(startLoc, scLoc) {
+    // ── ルート選択モーダル ─────────────────────────────────────────────
+    function showRouteSelectionModal(scenarioId, locationId, scLoc) {
+        const routeKey = `${scenarioId}_${locationId}`;
+        const candidates = routeData[routeKey] || [];
+
+        const CONG_DOTS = { low: '●○○', medium: '●●○', high: '●●●' };
+        const CONG_LABELS = { low: '低', medium: '中', high: '高' };
+        const CONG_COLORS = { low: '#00a63e', medium: '#f5a623', high: '#c0392b' };
+
+        const container = document.getElementById('route-options-container');
+        container.innerHTML = '';
+
+        candidates.forEach(route => {
+            const congColor = CONG_COLORS[route.congestion_score] || '#888';
+            const congDots = CONG_DOTS[route.congestion_score] || '○○○';
+            const congLabel = CONG_LABELS[route.congestion_score] || '-';
+            const isElderly = route.recommended_for && (route.recommended_for.includes('elderly') || route.recommended_for.includes('child'));
+            const elderlyBadge = isElderly
+                ? `<span class="route-badge elderly-badge">♿ 高齢者・お子様向け推奨</span>`
+                : '';
+
+            const btnHtml = `
+                <button class="route-option-btn" data-route-id="${route.id}"
+                    style="text-align:left; padding:13px 14px; border-radius:12px; border:2px solid ${route.color}20;
+                           background:${route.color}12; cursor:pointer; transition:all 0.2s; width:100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <strong style="color:${route.color}; font-size:0.95rem;">[${route.id}] ${route.label}</strong>
+                        <span style="font-size:0.8rem; background:var(--glass-bg); border-radius:6px; padding:2px 7px;">
+                            🚶 ${route.distance_m}m · ${route.estimated_min}分
+                        </span>
+                    </div>
+                    <div style="margin-bottom:5px;">
+                        <span style="font-size:0.82rem; color:${congColor}; font-weight:600;">
+                            ${congDots} 混雑リスク ${congLabel}
+                        </span>
+                        ${elderlyBadge}
+                    </div>
+                    <p style="font-size:0.8rem; opacity:0.8; line-height:1.4; margin:0;">${route.characteristics}</p>
+                </button>
+            `;
+            container.insertAdjacentHTML('beforeend', btnHtml);
+        });
+
+        // Add fallback option
+        container.insertAdjacentHTML('beforeend', `
+            <button class="route-option-btn" data-route-id="fallback"
+                style="text-align:center; padding:10px; border-radius:10px; border:1px solid var(--glass-border);
+                       background:var(--glass-bg); cursor:pointer; font-size:0.82rem; opacity:0.75; width:100%;">
+                既定ルートを使用
+            </button>
+        `);
+
+        // Bind events
+        container.querySelectorAll('.route-option-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const routeId = btn.getAttribute('data-route-id');
+                // Close modal
+                const overlay = document.getElementById('route-overlay');
+                overlay.classList.remove('active');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+
+                // Draw selected route
+                const selected = routeId === 'fallback' ? null : candidates.find(r => r.id === routeId);
+                drawEvacuationRoutes(currentLocation, scLoc, selected);
+                simulateEvacuation();
+            });
+        });
+
+        // Show modal
+        const overlay = document.getElementById('route-overlay');
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.add('active'), 10);
+    }
+
+    function drawEvacuationRoutes(startLoc, scLoc, routeCandidate) {
         routeLayerGroup.clearLayers();
-        
+
         if (!scLoc) {
             scLoc = SCENARIOS[1].locations['a'];
         }
 
-        // Draw main route using scenario coordinates
-        mainRouteLine = L.polyline(scLoc.mainRoute, {
-            color: '#00bbff', 
-            weight: 6,
-            opacity: 1,
-            className: 'animated-route'
-        }).addTo(routeLayerGroup);
+        // If valid route candidate from routes.json
+        if (routeCandidate && routeCandidate.waypoints && routeCandidate.waypoints.length > 1) {
+            mainRouteLine = L.polyline(routeCandidate.waypoints, {
+                color: routeCandidate.color || '#00bbff',
+                weight: 6,
+                opacity: 1,
+                className: 'animated-route'
+            }).addTo(routeLayerGroup);
 
-        // Draw sub route
-        L.polyline(scLoc.subRoute, {
-            color: '#888888',
-            weight: 3,
-            opacity: 0.8,
-            dashArray: '5, 10'
-        }).addTo(routeLayerGroup);
+            // Route type label on the map
+            const midIdx = Math.floor(routeCandidate.waypoints.length / 2);
+            if (midIdx < routeCandidate.waypoints.length) {
+                const midPt = routeCandidate.waypoints[midIdx];
+                const labelIcon = L.divIcon({
+                    className: 'route-label-container',
+                    html: `<div class="route-label-pill" style="background:${routeCandidate.color || '#00bbff'}">${routeCandidate.label}</div>`,
+                    iconSize: [110, 22],
+                    iconAnchor: [55, 11]
+                });
+                L.marker(midPt, { icon: labelIcon }).addTo(routeLayerGroup);
+            }
+        } else {
+            // Fallback: draw from static SCENARIOS waypoints
+            mainRouteLine = L.polyline(scLoc.mainRoute, {
+                color: '#00bbff',
+                weight: 6,
+                opacity: 1,
+                className: 'animated-route'
+            }).addTo(routeLayerGroup);
+
+            L.polyline(scLoc.subRoute, {
+                color: '#888888',
+                weight: 3,
+                opacity: 0.8,
+                dashArray: '5, 10'
+            }).addTo(routeLayerGroup);
+        }
     }
 
     function checkRouteDeviation(loc) {
