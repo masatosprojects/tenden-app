@@ -38,9 +38,14 @@
                 <img src="assets/icons/hud-logo.png" alt="TENDEN Logo" class="hud-logo" style="height: 44px; width: auto; object-fit: cover; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); transition: transform 0.3s;">
                 <span id="current-date" style="font-size: 0.75rem; opacity: 0.7; font-weight: 500;"></span>
             </div>
-            <div class="hud-right elevation-box">
-                <span class="elevation-label" id="i18n-elevation-label" data-i18n="elevationLabel">現在地の海抜</span>
-                <span class="elevation-value"><span id="elevation-m">--</span> m</span>
+            <div class="hud-right" style="display: flex; align-items: center; gap: 12px;">
+                <div id="tsunami-status-box" class="tsunami-status-box hidden">
+                    <span id="tsunami-status-text">判定中...</span>
+                </div>
+                <div class="elevation-box">
+                    <span class="elevation-label" id="i18n-elevation-label" data-i18n="elevationLabel">現在地の海抜</span>
+                    <span class="elevation-value"><span id="elevation-m">--</span> m</span>
+                </div>
             </div>
         </header>
 
