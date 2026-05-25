@@ -1,6 +1,6 @@
 // sw.js - Advanced Service Worker with Dynamic Caching
-const CACHE_NAME = 'tenden-v5';
-const DYNAMIC_CACHE = 'tenden-dynamic-v5';
+const CACHE_NAME = 'tenden-v6';
+const DYNAMIC_CACHE = 'tenden-dynamic-v6';
 
 const urlsToCache = [
   './',

@@ -437,6 +437,31 @@ body.emergency-mode .disaster-details strong {
     line-height: 1.6;
 }
 
+.dialog .primary-btn {
+    width: 100%;
+    padding: 16px 28px;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 8px 24px rgba(0, 113, 227, 0.35), var(--glass-inner-shadow);
+    transition: transform 0.4s var(--spring-easing), background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.dialog .primary-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 32px rgba(0, 113, 227, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+.dialog .primary-btn:active {
+    transform: scale(0.96) translateY(0);
+}
+
 /* SOS Flash Animation */
 #flash-overlay {
     position: absolute;
