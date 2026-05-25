@@ -1,6 +1,6 @@
 // sw.js - Advanced Service Worker with Dynamic Caching
-const CACHE_NAME = 'tenden-v3';
-const DYNAMIC_CACHE = 'tenden-dynamic-v3';
+const CACHE_NAME = 'tenden-v4';
+const DYNAMIC_CACHE = 'tenden-dynamic-v4';
 
 const urlsToCache = [
   './',
@@ -8,7 +8,6 @@ const urlsToCache = [
   './style.css',
   './app.js',
   './manifest.json',
-  './assets/hazard.geojson',
   './assets/congestion.geojson',
   './assets/shelters.json',
   './assets/routes.json',
@@ -17,6 +16,13 @@ const urlsToCache = [
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://html2canvas.hertzen.com/dist/html2canvas.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+];
+
+// Domains whose tiles are cached dynamically (Cache-First after first load)
+const TILE_DOMAINS = [
+  'basemaps.cartocdn.com',
+  'cyberjapandata2.gsi.go.jp',
+  'disaportaldata.gsi.go.jp'  // official tsunami inundation tiles
 ];
 
 self.addEventListener('install', event => {
@@ -42,7 +48,7 @@ self.addEventListener('fetch', event => {
   const req = event.request;
   
   // Cache First strategy for static assets and Map tiles
-  if (req.url.includes('basemaps.cartocdn.com') || req.url.includes('cyberjapandata2.gsi.go.jp') || urlsToCache.includes(req.url)) {
+  if (TILE_DOMAINS.some(d => req.url.includes(d)) || urlsToCache.includes(req.url)) {
     event.respondWith(
       caches.match(req).then(cachedRes => {
         if (cachedRes) return cachedRes;

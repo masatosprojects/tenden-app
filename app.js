@@ -130,32 +130,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         L.control.attribution({
             position: 'bottomleft',
-            prefix: '出典: 国土地理院 標高API, 神奈川県 津波浸水想定 | Leaflet'
+            prefix: '出典: <a href="https://disaportal.gsi.go.jp/" target="_blank">ハザードマップポータルサイト</a> (国土地理院) | Leaflet'
         }).addTo(map);
 
         routeLayerGroup = L.layerGroup().addTo(map);
 
-        // Load mock GeoJSON for hazard layer (CUD Hatching Style)
-        fetch('assets/hazard.geojson')
-            .then(res => res.json())
-            .then(data => {
-                hazardLayer = L.geoJSON(data, {
-                    style: {
-                        color: '#ff9f0a', // CUD Orange stroke
-                        weight: 3,
-                        opacity: 0.9,
-                        fillColor: '#ff9f0a', // Fallback to solid color to fix rendering issues
-                        fillOpacity: 0.35,
-                        dashArray: '5, 5'
-                    }
-                });
-                
-                // If the toggle button is already active, add it to the map now
-                const btnToggleLayers = document.getElementById('btn-toggle-layers');
-                if (btnToggleLayers && btnToggleLayers.classList.contains('active')) {
-                    hazardLayer.addTo(map);
-                }
-            }).catch(e => console.log("No hazard geojson found", e));
+        // Official tsunami inundation tile layer (ハザードマップポータルサイト, 国土地理院)
+        // Source: https://disaportal.gsi.go.jp/
+        // Kanagawa pref. code = 14, zoom range 2–17
+        hazardLayer = L.tileLayer(
+            'https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_pref_data/14/{z}/{x}/{y}.png',
+            {
+                minZoom: 2,
+                maxZoom: 17,
+                opacity: 0.65,
+                attribution: '津波浸水想定: <a href="https://disaportal.gsi.go.jp/" target="_blank">ハザードマップポータルサイト</a>'
+            }
+        );
+        // Note: tile layer is instantiated but not added to map until toggle button is activated
 
         // Initialize Shelter markers — dynamic load from simulation data
         sheltersLayerGroup = L.layerGroup();
@@ -395,6 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Default layers state to active
         btnToggleLayers.classList.add('active');
+        if (hazardLayer) hazardLayer.addTo(map);      // official tsunami inundation tiles
         if (sheltersLayerGroup) sheltersLayerGroup.addTo(map);
 
         btnToggleLayers.addEventListener('click', () => {
