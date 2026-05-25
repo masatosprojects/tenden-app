@@ -445,6 +445,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+
+        const btnChangeRoute = document.getElementById('btn-change-route');
+        if (btnChangeRoute) {
+            btnChangeRoute.addEventListener('click', () => {
+                if (activeRoutesList && activeRoutesList.length > 0) {
+                    showRouteSelectorHUD(activeRoutesList);
+                } else if (currentLocation) {
+                    recalculateRouteFromLocation(currentLocation);
+                }
+            });
+        }
     }
 
     function requestLocation() {
@@ -942,6 +953,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Restart simulation along new selected path
         simulateEvacuation();
+
+        // Safe auto-close bottom sheet to return to the interactive map
+        hideRouteSelectorHUD();
+    }
+
+    function hideRouteSelectorHUD() {
+        const overlay = document.getElementById('route-overlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.classList.add('hidden'), 350);
+        }
+
+        // Restore header/bottom HUD panel visibility on mobile vertically
+        const hudBottom = document.querySelector('.hud-bottom');
+        if (hudBottom) hudBottom.classList.remove('hidden-for-route');
+
+        const banner = document.getElementById('evacuation-banner');
+        if (banner) banner.classList.remove('hidden-for-route');
     }
 
     function updateRouteSelectorUI(selectedId) {
@@ -971,6 +1000,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('route-options-container');
         if (!container) return;
         
+        // Temporarily fade out background emergency controls & banners to prevent overlapping on mobile viewport sizes
+        const hudBottom = document.querySelector('.hud-bottom');
+        if (hudBottom) hudBottom.classList.add('hidden-for-route');
+
+        const banner = document.getElementById('evacuation-banner');
+        if (banner) banner.classList.add('hidden-for-route');
+
         container.innerHTML = '';
         
         candidates.forEach(c => {
@@ -1255,8 +1291,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 customWaypoints.push(bestRoute.waypoints[i]);
             }
             return {
+                id: type, // Fixed: included the missing type ID!
                 waypoints: customWaypoints,
-                label: bestRoute.label,
+                label: type === 'C' ? '高齢者・児童バリアフリールート' : bestRoute.label, // Dynamic premium label
                 color: bestRoute.color,
                 distance_m: Math.round(minWaypointDist + bestRoute.distance_m * (1 - bestSplitIndex / bestRoute.waypoints.length)),
                 characteristics: bestRoute.characteristics,
@@ -1269,15 +1306,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const shelterLat = shelter.lat;
         const shelterLng = shelter.lng;
         const midPoint = [startLoc.lat, shelterLng]; // corner turn to simulate streets
+        
+        const fallbackNames = {
+            'A': '避難所混雑回避ルート',
+            'B': '混雑回避優先ルート',
+            'C': '高齢者・児童バリアフリールート' // Refined name
+        };
+        const fallbackColors = {
+            'A': '#0071e3',
+            'B': '#34c759',
+            'C': '#5e5ce6'
+        };
+
         return {
+            id: type,
+            label: fallbackNames[type] || '緊急避難ルート',
+            color: fallbackColors[type] || '#ff3b30',
             waypoints: [
                 midPoint,
                 [shelterLat, shelterLng]
             ],
-            label: "緊急避難ルート",
-            color: "#ff3b30", // Bright warning red
             distance_m: Math.round(startLatLng.distanceTo(L.latLng(shelterLat, shelterLng)) * 1.3),
-            characteristics: "緊急時の最短道路接続ルート",
+            estimated_min: Math.round((startLatLng.distanceTo(L.latLng(shelterLat, shelterLng)) * 1.3 / (type === 'C' ? 1.0 : 1.37)) / 60),
+            characteristics: type === 'C' ? "坂道を避けた緊急平坦ルート。" : "緊急時の最短道路接続ルート。",
             congestion_score: "low",
             isOSRM: false
         };
