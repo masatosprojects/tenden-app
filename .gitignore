@@ -1,0 +1,6 @@
+# Ignore development screenshots and original logo assets
+tenden-app/assets/icons/*.png
+!tenden-app/assets/icons/icon.svg
+ロゴ/
+*.DS_Store
+node_modules/

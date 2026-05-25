@@ -1,0 +1,893 @@
+// app.js
+document.addEventListener('DOMContentLoaded', () => {
+    // Basic state
+    let isEmergency = false;
+    let map, userMarker, routeLayerGroup, hazardLayer, sheltersLayerGroup;
+    let currentLocation = null; // {lat, lng}
+    let simulationInterval = null;
+    let mainRouteLine = null;
+    
+    // Kamakura default location (Yuigahama)
+    const KAMAKURA_CENTER = [35.3111, 139.5467];
+
+    // Dictionary for i18n
+    const i18nDict = {
+        'en': {
+            onboardingTitle: "We will guide you to the nearest<br>safe location.",
+            onboardingDesc: "Please allow location access to check your daily preparation and clear routes.",
+            okBtn: "OK",
+            errorTitle: "Location Unavailable",
+            errorDesc: "Please move the map to set a pin at your location.",
+            errorBtn: "Set Manually",
+            elevationLabel: "Current Elevation",
+            testAlert: "Test Alert",
+            evacTitle: "Evacuation Order Issued",
+            evacDesc: "Follow the blue route to higher ground",
+            shareBtn: "Share Status",
+            settingsTitle: "Settings",
+            langLabel: "Language",
+            langAuto: "Auto",
+            dataLabel: "Data Management",
+            clearCacheBtn: "Clear Offline Data",
+            estTime: "Est. Arrival:",
+            estHeight: "Est. Height:",
+            scenarioTitle: "Select Simulation Scenario",
+            scenarioDesc: "Please select a demonstration disaster scenario.",
+            resetAlert: "End Drill"
+        },
+        'zh': {
+            onboardingTitle: "我们将引导您前往最近的<br>安全地点。",
+            onboardingDesc: "请允许访问位置信息，以检查您的日常准备和明确的路线。",
+            okBtn: "确定",
+            errorTitle: "无法获取位置信息",
+            errorDesc: "请移动地图并在您所在的位置设置图钉。",
+            errorBtn: "手动设置",
+            elevationLabel: "当前海拔",
+            testAlert: "测试警报",
+            evacTitle: "避难指示已发布",
+            evacDesc: "请沿着蓝色路线向高处避难",
+            shareBtn: "分享状态",
+            settingsTitle: "设置",
+            langLabel: "语言",
+            langAuto: "自动",
+            dataLabel: "数据管理",
+            clearCacheBtn: "清除离线数据",
+            estTime: "预计到达时间:",
+            estHeight: "预计高度:",
+            scenarioTitle: "选择模拟防灾演练",
+            scenarioDesc: "请选择演示用的灾害场景。",
+            resetAlert: "结束演练"
+        },
+        'ko': {
+            onboardingTitle: "가장 가까운 안전한 장소로<br>안내해 드립니다.",
+            onboardingDesc: "위치 정보 액세스를 허용하여 일상적인 준비와 대피 경로를 확인하십시오.",
+            okBtn: "확인",
+            errorTitle: "위치 정보를 사용할 수 없음",
+            errorDesc: "지도를 이동하여 현재 위치에 핀을 설정하십시오.",
+            errorBtn: "수동으로 설정",
+            elevationLabel: "현재 해발",
+            testAlert: "테스트 경보",
+            evacTitle: "대피 지시 발령됨",
+            evacDesc: "파란색 경로를 따라 고지대로 대피하십시오",
+            shareBtn: "안부 공유",
+            settingsTitle: "설정",
+            langLabel: "언어",
+            langAuto: "자동",
+            dataLabel: "데이터 관리",
+            clearCacheBtn: "오프ライン 데이터 삭제",
+            estTime: "예상 도착 시간:",
+            estHeight: "예상 높이:",
+            scenarioTitle: "대피 시뮬레이션 선택",
+            scenarioDesc: "데모용 재해 시나리오를 선택하십시오.",
+            resetAlert: "훈련 종료"
+        }
+    };
+
+    // Initialize Map
+    initMap();
+    initUI();
+    updateDate();
+    initI18n();
+    connectP2PQuake();
+
+    // Remove Splash Screen after initial load (1000ms animation + 500ms wait = 1500ms total)
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.style.display = 'none', 500);
+        }
+    }, 1500);
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(err => {
+                console.log('SW registration failed: ', err);
+            });
+        });
+    }
+
+    function initMap() {
+        map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView(KAMAKURA_CENTER, 14);
+
+        // OSM Light style for Normal mode
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        L.control.attribution({
+            position: 'bottomleft',
+            prefix: '出典: 国土地理院 標高API, 神奈川県 津波浸水想定 | Leaflet'
+        }).addTo(map);
+
+        routeLayerGroup = L.layerGroup().addTo(map);
+
+        // Load mock GeoJSON for hazard layer (CUD Hatching Style)
+        fetch('assets/hazard.geojson')
+            .then(res => res.json())
+            .then(data => {
+                hazardLayer = L.geoJSON(data, {
+                    style: {
+                        color: '#ff9f0a', // CUD Orange stroke
+                        weight: 3,
+                        opacity: 0.9,
+                        fillColor: '#ff9f0a', // Fallback to solid color to fix rendering issues
+                        fillOpacity: 0.35,
+                        dashArray: '5, 5'
+                    }
+                });
+                
+                // If the toggle button is already active, add it to the map now
+                const btnToggleLayers = document.getElementById('btn-toggle-layers');
+                if (btnToggleLayers && btnToggleLayers.classList.contains('active')) {
+                    hazardLayer.addTo(map);
+                }
+            }).catch(e => console.log("No hazard geojson found", e));
+
+        // Initialize Shelter markers
+        sheltersLayerGroup = L.layerGroup();
+        const SHELTERS = [
+            { name: "御成小学校 (避難所/海抜9.5m)", lat: 35.3190, lng: 139.5510 },
+            { name: "鎌倉市役所 (避難所/海抜9.0m)", lat: 35.3180, lng: 139.5400 },
+            { name: "甘縄神明宮 (高台避難所/海抜15m)", lat: 35.3142, lng: 139.5332 },
+            { name: "八幡宮境内 (避難所/海抜12m)", lat: 35.3252, lng: 139.5562 },
+            { name: "清泉小学校 (避難所/海抜24.0m)", lat: 35.3258, lng: 139.5605 },
+            { name: "鎌倉生涯学習センター (避難所/海抜9.2m)", lat: 35.3195, lng: 139.5570 }
+        ];
+
+        const shelterIcon = L.divIcon({
+            className: 'shelter-marker',
+            html: '<div class="shelter-marker-inner"></div>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        SHELTERS.forEach(shelter => {
+            L.marker([shelter.lat, shelter.lng], { icon: shelterIcon })
+                .bindPopup(`<strong>${shelter.name}</strong>`)
+                .addTo(sheltersLayerGroup);
+        });
+
+        // Initialize Device Orientation for Compass
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+            // Fallback for non-absolute
+            window.addEventListener('deviceorientation', handleOrientation, true);
+        }
+    }
+
+    function handleOrientation(event) {
+        let heading = null;
+        if (event.webkitCompassHeading) {
+            heading = event.webkitCompassHeading;
+        } else if (event.alpha !== null) {
+            heading = 360 - event.alpha;
+        }
+        if (heading !== null) {
+            document.documentElement.style.setProperty('--compass-heading', `${heading}deg`);
+        }
+    }
+
+    function initUI() {
+        const btnOnboarding = document.getElementById('btn-onboarding-ok');
+        const btnErrorOk = document.getElementById('btn-error-ok');
+        const btnTestAlert = document.getElementById('btn-test-alert');
+        const btnSos = document.getElementById('btn-sos');
+        const btnScreenshot = document.getElementById('btn-screenshot');
+        const btnToggleLayers = document.getElementById('btn-toggle-layers');
+        const btnSettings = document.getElementById('btn-settings');
+        const btnSettingsClose = document.getElementById('btn-settings-close');
+        const langSelect = document.getElementById('lang-select');
+        const btnClearCache = document.getElementById('btn-clear-cache');
+        const btnShare = document.getElementById('btn-share');
+        
+        btnOnboarding.addEventListener('click', () => {
+            const overlay = document.getElementById('onboarding-overlay');
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+            requestLocation();
+        });
+
+        btnErrorOk.addEventListener('click', () => {
+            const overlay = document.getElementById('error-overlay');
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+            
+            currentLocation = { lat: map.getCenter().lat, lng: map.getCenter().lng };
+            updateMarker(currentLocation);
+            fetchElevation(currentLocation);
+            
+            map.on('moveend', () => {
+                if(!isEmergency) {
+                    currentLocation = { lat: map.getCenter().lat, lng: map.getCenter().lng };
+                    updateMarker(currentLocation);
+                    fetchElevation(currentLocation);
+                }
+            });
+        });
+
+        btnTestAlert.addEventListener('click', () => {
+            const overlay = document.getElementById('scenario-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('active'), 10);
+        });
+
+        const btnScenarioClose = document.getElementById('btn-scenario-close');
+        if (btnScenarioClose) {
+            btnScenarioClose.addEventListener('click', () => {
+                const overlay = document.getElementById('scenario-overlay');
+                overlay.classList.remove('active');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            });
+        }
+
+        // Handle scenario choice
+        document.querySelectorAll('.scenario-option-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // close scenario modal
+                const scenarioOverlay = document.getElementById('scenario-overlay');
+                scenarioOverlay.classList.remove('active');
+                setTimeout(() => scenarioOverlay.classList.add('hidden'), 300);
+                
+                const scenarioId = parseInt(btn.getAttribute('data-scenario'));
+                
+                // Show location modal with dynamic content
+                setTimeout(() => {
+                    const locOverlay = document.getElementById('location-overlay');
+                    const titleEl = document.getElementById('location-dialog-title');
+                    const containerEl = document.getElementById('location-options-container');
+                    
+                    const sc = SCENARIOS[scenarioId];
+                    titleEl.innerText = `${sc.title} : 開始位置の選択`;
+                    
+                    // Populate locations
+                    containerEl.innerHTML = '';
+                    Object.keys(sc.locations).forEach(locKey => {
+                        const loc = sc.locations[locKey];
+                        const startLabel = locKey === 'a' ? "最危険地帯" : "避難中間地帯";
+                        let themeColor = "#0071e3";
+                        let btnBg = "rgba(0,113,227,0.08)";
+                        if (scenarioId === 1) {
+                            themeColor = "#ff9f0a";
+                            btnBg = "rgba(255,159,10,0.08)";
+                        } else if (scenarioId === 3) {
+                            themeColor = "#ff453a";
+                            btnBg = "rgba(255,69,58,0.08)";
+                        }
+                        
+                        const btnHtml = `
+                            <button class="location-option-btn" data-loc="${locKey}" style="display: flex; flex-direction: column; text-align: left; padding: 14px; border-radius: 12px; border: 1px solid var(--glass-border); background: ${btnBg}; cursor: pointer; transition: background 0.2s, transform 0.2s; width: 100%;">
+                                <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 6px;">
+                                    <strong style="color: ${themeColor}; font-size: 0.95rem;">${loc.name}</strong>
+                                    <span style="font-size: 0.75rem; background: ${themeColor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${startLabel}</span>
+                                </div>
+                                <span style="font-size: 0.8rem; opacity: 0.8; line-height: 1.4;">${loc.desc}</span>
+                            </button>
+                        `;
+                        containerEl.insertAdjacentHTML('beforeend', btnHtml);
+                    });
+                    
+                    // Add event listeners to generated buttons
+                    containerEl.querySelectorAll('.location-option-btn').forEach(locBtn => {
+                        locBtn.addEventListener('click', () => {
+                            // close location modal
+                            locOverlay.classList.remove('active');
+                            setTimeout(() => locOverlay.classList.add('hidden'), 300);
+                            
+                            const locId = locBtn.getAttribute('data-loc');
+                            triggerEmergencyMode(true, scenarioId, locId);
+                        });
+                    });
+                    
+                    locOverlay.classList.remove('hidden');
+                    setTimeout(() => locOverlay.classList.add('active'), 10);
+                }, 350);
+            });
+        });
+
+        // Close location overlay
+        const btnLocationClose = document.getElementById('btn-location-close');
+        if (btnLocationClose) {
+            btnLocationClose.addEventListener('click', () => {
+                const overlay = document.getElementById('location-overlay');
+                overlay.classList.remove('active');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            });
+        }
+
+        // Handle drill reset (End Drill)
+        const btnResetAlert = document.getElementById('btn-reset-alert');
+        if (btnResetAlert) {
+            btnResetAlert.addEventListener('click', () => {
+                resetEmergencyMode();
+            });
+        }
+
+        btnSos.addEventListener('click', () => {
+            const flash = document.getElementById('flash-overlay');
+            flash.classList.toggle('hidden');
+            flash.classList.toggle('flashing');
+        });
+
+        btnShare.addEventListener('click', () => {
+            if (navigator.share && currentLocation) {
+                navigator.share({
+                    title: '安否情報 - TENDEN',
+                    text: `現在、安全な高台へ避難中です。\n現在地: https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`
+                }).catch(console.error);
+            } else {
+                alert(`現在地: https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`);
+            }
+        });
+
+        // Default layers state to active
+        btnToggleLayers.classList.add('active');
+        if (sheltersLayerGroup) sheltersLayerGroup.addTo(map);
+
+        btnToggleLayers.addEventListener('click', () => {
+            btnToggleLayers.classList.toggle('active');
+            const isActive = btnToggleLayers.classList.contains('active');
+            if (isActive) {
+                if (hazardLayer) hazardLayer.addTo(map);
+                if (sheltersLayerGroup) sheltersLayerGroup.addTo(map);
+            } else {
+                if (hazardLayer) map.removeLayer(hazardLayer);
+                if (sheltersLayerGroup) map.removeLayer(sheltersLayerGroup);
+            }
+        });
+
+        btnSettings.addEventListener('click', () => {
+            const overlay = document.getElementById('settings-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('active'), 10);
+        });
+
+        btnSettingsClose.addEventListener('click', () => {
+            const overlay = document.getElementById('settings-overlay');
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        });
+
+        // Initialize Lang Select
+        const savedLang = localStorage.getItem('tenden-lang') || 'auto';
+        langSelect.value = savedLang;
+
+        langSelect.addEventListener('change', (e) => {
+            localStorage.setItem('tenden-lang', e.target.value);
+            initI18n();
+        });
+
+        btnClearCache.addEventListener('click', async () => {
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                for (let key of keys) {
+                    await caches.delete(key);
+                }
+                alert('キャッシュをクリアしました。');
+            }
+        });
+
+        btnScreenshot.addEventListener('click', () => {
+            takeScreenshot();
+        });
+    }
+
+    function requestLocation() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    currentLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    map.setView([currentLocation.lat, currentLocation.lng], 16);
+                    updateMarker(currentLocation);
+                    fetchElevation(currentLocation);
+                    
+                    // Track location changes
+                    navigator.geolocation.watchPosition(pos => {
+                        if (isEmergency && !simulationInterval) {
+                            currentLocation = {
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude
+                            };
+                            updateMarker(currentLocation);
+                            checkRouteDeviation(currentLocation);
+                        }
+                    });
+                },
+                error => {
+                    console.error("Location error:", error);
+                    const overlay = document.getElementById('error-overlay');
+                    overlay.classList.remove('hidden');
+                    setTimeout(() => overlay.classList.add('active'), 10);
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        } else {
+            const overlay = document.getElementById('error-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('active'), 10);
+        }
+    }
+
+    function updateMarker(loc) {
+        if (userMarker) {
+            userMarker.setLatLng([loc.lat, loc.lng]);
+        } else {
+            const userIcon = L.divIcon({
+                className: 'user-marker-container',
+                html: '<div class="user-marker-inner"><div class="user-marker-arrow"></div></div>',
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            });
+            userMarker = L.marker([loc.lat, loc.lng], { icon: userIcon }).addTo(map);
+        }
+    }
+
+    async function fetchElevation(loc) {
+        try {
+            const url = `https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon=${loc.lng}&lat=${loc.lat}&outtype=JSON`;
+            const response = await fetch(url);
+            const data = await response.json();
+            const el = data.elevation;
+            if (el !== undefined && el !== null && el !== '-----') {
+                document.getElementById('elevation-m').innerText = Math.round(el * 10) / 10;
+            } else {
+                document.getElementById('elevation-m').innerText = '0.0';
+            }
+        } catch (e) {
+            console.error("Elevation API failed", e);
+        }
+    }
+
+    const SCENARIOS = {
+        1: {
+            title: "避難指示（大津波警報）",
+            time: "15分（15:30）",
+            height: "10m",
+            locations: {
+                'a': {
+                    name: "地点A: 由比ヶ浜海岸 (最危険地帯/海抜2.4m)",
+                    desc: "青いルートに沿って直ちに高台（御成小学校）へ避難してください",
+                    start: { lat: 35.3111, lng: 139.5467 }, // Yuigahama Beach
+                    goal: { lat: 35.3190, lng: 139.5510 }, // Onari Elementary
+                    goal2: { lat: 35.3180, lng: 139.5400 }, // Kamakura City Hall
+                    mainRoute: [
+                        [35.3111, 139.5467],
+                        [35.3150, 139.5480],
+                        [35.3190, 139.5510]
+                    ],
+                    subRoute: [
+                        [35.3111, 139.5467],
+                        [35.3140, 139.5420],
+                        [35.3180, 139.5400]
+                    ]
+                },
+                'b': {
+                    name: "地点B: 和田塚駅付近 (内陸中間地帯/海抜5.8m)",
+                    desc: "青いルートに沿って最寄りの高台（鎌倉市役所）へ避難してください",
+                    start: { lat: 35.3135, lng: 139.5448 }, // Wadazuka Station
+                    goal: { lat: 35.3180, lng: 139.5400 }, // Kamakura City Hall
+                    goal2: { lat: 35.3190, lng: 139.5510 }, // Onari Elementary
+                    mainRoute: [
+                        [35.3135, 139.5448],
+                        [35.3155, 139.5415],
+                        [35.3180, 139.5400]
+                    ],
+                    subRoute: [
+                        [35.3135, 139.5448],
+                        [35.3145, 139.5480],
+                        [35.3190, 139.5510]
+                    ]
+                }
+            }
+        },
+        2: {
+            title: "避難勧告（津波警報）",
+            time: "30分（15:45）",
+            height: "3m",
+            locations: {
+                'a': {
+                    name: "地点A: 七里ヶ浜海岸 (最危険地帯/海抜3.1m)",
+                    desc: "青い避難ルートに沿って高台（鎌倉プリンスホテル方面）へ避難してください",
+                    start: { lat: 35.3050, lng: 139.5100 }, // Shichirigahama Beach Parking
+                    goal: { lat: 35.3102, lng: 139.5173 }, // Kamakura Prince Hotel high ground
+                    goal2: { lat: 35.3085, lng: 139.5100 }, // Sub high ground
+                    mainRoute: [
+                        [35.3050, 139.5100],
+                        [35.3080, 139.5135],
+                        [35.3102, 139.5173]
+                    ],
+                    subRoute: [
+                        [35.3050, 139.5100],
+                        [35.3075, 139.5105],
+                        [35.3085, 139.5100]
+                    ]
+                },
+                'b': {
+                    name: "地点B: 七里ヶ浜駅前 (江ノ電沿線/海抜4.0m)",
+                    desc: "青い避難ルートに沿って最寄りの高台（七里ガ浜東高台公園）へ避難してください",
+                    start: { lat: 35.3065, lng: 139.5165 }, // Shichirigahama Station
+                    goal: { lat: 35.3125, lng: 139.5135 }, // Shichirigahama Higashi Park
+                    goal2: { lat: 35.3102, lng: 139.5173 }, // Kamakura Prince Hotel
+                    mainRoute: [
+                        [35.3065, 139.5165],
+                        [35.3100, 139.5155],
+                        [35.3125, 139.5135]
+                    ],
+                    subRoute: [
+                        [35.3065, 139.5165],
+                        [35.3080, 139.5162],
+                        [35.3102, 139.5173]
+                    ]
+                }
+            }
+        },
+        3: {
+            title: "避難指示（土砂災害警戒）",
+            time: "直ちに避難",
+            height: "1.5m",
+            isLandslide: true,
+            locations: {
+                'a': {
+                    name: "地点A: 鶴岡八幡宮参道 (三ノ鳥居付近/海抜6.5m)",
+                    desc: "青い避難ルートに沿って安全な避難所（清泉小学校）へ避難してください",
+                    start: { lat: 35.3235, lng: 139.5564 }, // 三ノ鳥居付近
+                    goal: { lat: 35.3258, lng: 139.5605 }, // 清泉小学校
+                    goal2: { lat: 35.3195, lng: 139.5570 }, // 鎌倉生涯学習センター
+                    mainRoute: [
+                        [35.3235, 139.5564],
+                        [35.3245, 139.5595],
+                        [35.3258, 139.5605]
+                    ],
+                    subRoute: [
+                        [35.3235, 139.5564],
+                        [35.3210, 139.5567],
+                        [35.3195, 139.5570]
+                    ]
+                },
+                'b': {
+                    name: "地点B: 段葛・二ノ鳥居付近 (参道中間点/海抜6.0m)",
+                    desc: "青い避難ルートに沿って安全な避難所（鎌倉生涯学習センター）へ避難してください",
+                    start: { lat: 35.3191, lng: 139.5569 }, // 二ノ鳥居付近
+                    goal: { lat: 35.3195, lng: 139.5570 }, // 鎌倉生涯学習センター
+                    goal2: { lat: 35.3258, lng: 139.5605 }, // 清泉小学校
+                    mainRoute: [
+                        [35.3191, 139.5569],
+                        [35.3195, 139.5570]
+                    ],
+                    subRoute: [
+                        [35.3191, 139.5569],
+                        [35.3225, 139.5564],
+                        [35.3245, 139.5595],
+                        [35.3258, 139.5605]
+                    ]
+                }
+            }
+        }
+    };
+
+    function triggerEmergencyMode(isTest = false, scenarioId = 1, locationId = 'a') {
+        isEmergency = true;
+        document.body.classList.add('emergency-mode');
+        
+        document.getElementById('btn-test-alert').classList.add('hidden');
+        document.getElementById('btn-sos').classList.remove('hidden');
+        document.getElementById('btn-share').classList.remove('hidden');
+        document.getElementById('btn-reset-alert').classList.remove('hidden');
+        document.getElementById('evacuation-banner').classList.remove('hidden');
+        document.getElementById('disaster-details').style.display = 'block';
+
+        // Load scenario parameters
+        const sc = SCENARIOS[scenarioId] || SCENARIOS[1];
+        const scLoc = sc.locations[locationId] || sc.locations['a'];
+        
+        // Dynamically update banner content
+        document.getElementById('i18n-evac-title').innerText = sc.title;
+        document.getElementById('i18n-evac-desc').innerText = scLoc.desc;
+        
+        const detailsEl = document.getElementById('disaster-details');
+        const timeLabel = sc.isLandslide ? "到達予測:" : "予想到達時間:";
+        const heightLabel = sc.isLandslide ? "予想浸水深:" : "予想高:";
+        detailsEl.innerHTML = `<span>${timeLabel}</span> <strong>${sc.time}</strong> | <span>${heightLabel}</span> <strong>${sc.height}</strong>`;
+
+        if (isTest) {
+            currentLocation = { lat: scLoc.start.lat, lng: scLoc.start.lng };
+            map.setView([currentLocation.lat, currentLocation.lng], 16);
+            updateMarker(currentLocation);
+            drawEvacuationRoutes(currentLocation, scLoc);
+            simulateEvacuation();
+        } else {
+            drawEvacuationRoutes(currentLocation, scLoc);
+        }
+
+        if ("vibrate" in navigator && !isTest) {
+            navigator.vibrate([200, 100, 200]);
+        }
+    }
+
+    function resetEmergencyMode() {
+        isEmergency = false;
+        
+        // Stop evacuation simulation interval
+        if (simulationInterval) {
+            clearInterval(simulationInterval);
+            simulationInterval = null;
+        }
+
+        // Clear evacuation route layer
+        if (routeLayerGroup) {
+            routeLayerGroup.clearLayers();
+        }
+
+        // Remove emergency dark class
+        document.body.classList.remove('emergency-mode');
+
+        // Toggle UI visibility
+        document.getElementById('btn-test-alert').classList.remove('hidden');
+        document.getElementById('btn-share').classList.add('hidden');
+        document.getElementById('btn-sos').classList.add('hidden');
+        document.getElementById('btn-reset-alert').classList.add('hidden');
+        document.getElementById('evacuation-banner').classList.add('hidden');
+
+        // Reset visual style of banner in case deviation error triggered it
+        const banner = document.getElementById('evacuation-banner');
+        banner.style.borderLeftColor = 'var(--primary)';
+        
+        // Reset marker to current location (or default if null)
+        if (currentLocation) {
+            map.setView([currentLocation.lat, currentLocation.lng], 15);
+            updateMarker(currentLocation);
+            fetchElevation(currentLocation);
+        } else {
+            map.setView(KAMAKURA_CENTER, 14);
+            if (userMarker) {
+                map.removeLayer(userMarker);
+                userMarker = null;
+            }
+            document.getElementById('elevation-m').innerText = '--';
+        }
+
+        // Restart location tracking
+        requestLocation();
+    }
+
+    function drawEvacuationRoutes(startLoc, scLoc) {
+        routeLayerGroup.clearLayers();
+        
+        if (!scLoc) {
+            scLoc = SCENARIOS[1].locations['a'];
+        }
+
+        // Draw main route using scenario coordinates
+        mainRouteLine = L.polyline(scLoc.mainRoute, {
+            color: '#00bbff', 
+            weight: 6,
+            opacity: 1,
+            className: 'animated-route'
+        }).addTo(routeLayerGroup);
+
+        // Draw sub route
+        L.polyline(scLoc.subRoute, {
+            color: '#888888',
+            weight: 3,
+            opacity: 0.8,
+            dashArray: '5, 10'
+        }).addTo(routeLayerGroup);
+    }
+
+    function checkRouteDeviation(loc) {
+        if (!mainRouteLine) return;
+        
+        // Simple distance check from the route line
+        const latlng = L.latLng(loc.lat, loc.lng);
+        // Leaflet doesn't have point-to-line distance natively without geometry libs,
+        // so we approximate by checking distance to nearest route vertex for this demo.
+        const latlngs = mainRouteLine.getLatLngs();
+        let minDistance = Infinity;
+        for (let pt of latlngs) {
+            let d = latlng.distanceTo(pt);
+            if (d < minDistance) minDistance = d;
+        }
+
+        // If distance > 100m, trigger warning
+        if (minDistance > 100) {
+            console.log("Route deviation detected");
+            document.getElementById('i18n-evac-desc').innerText = "ルートから外れています！青い線に戻ってください。";
+            document.getElementById('i18n-evac-desc').style.color = 'var(--danger)';
+            if ("vibrate" in navigator) {
+                navigator.vibrate([500, 200, 500]);
+            } else {
+                // iOS visual fallback
+                const banner = document.getElementById('evacuation-banner');
+                banner.style.borderLeftColor = 'var(--danger)';
+                setTimeout(() => banner.style.borderLeftColor = 'var(--primary)', 500);
+            }
+        }
+    }
+
+    function simulateEvacuation() {
+        if (!mainRouteLine) return;
+        const pts = mainRouteLine.getLatLngs();
+        let currentPtIndex = 0;
+        let progress = 0;
+
+        simulationInterval = setInterval(() => {
+            if (currentPtIndex >= pts.length - 1) {
+                clearInterval(simulationInterval);
+                return;
+            }
+            
+            const p1 = pts[currentPtIndex];
+            const p2 = pts[currentPtIndex + 1];
+            
+            progress += 0.05;
+            if (progress >= 1) {
+                progress = 0;
+                currentPtIndex++;
+                if (currentPtIndex >= pts.length - 1) {
+                    clearInterval(simulationInterval);
+                    return;
+                }
+            }
+            
+            // Interpolate
+            const lat = p1.lat + (p2.lat - p1.lat) * progress;
+            const lng = p1.lng + (p2.lng - p1.lng) * progress;
+            
+            const newLoc = { lat, lng };
+            updateMarker(newLoc);
+            map.panTo([lat, lng]);
+            fetchElevation(newLoc);
+            
+        }, 500); // update every 500ms
+    }
+
+    function takeScreenshot() {
+        const uiLayer = document.getElementById('ui-layer');
+        document.querySelector('.hud-controls').style.display = 'none';
+        
+        html2canvas(document.body, {
+            useCORS: true,
+            allowTaint: true,
+            ignoreElements: (el) => el.id === 'onboarding-overlay' || el.id === 'error-overlay'
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `tenden_backup_${new Date().toISOString().split('T')[0]}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            document.querySelector('.hud-controls').style.display = 'flex';
+        }).catch(err => {
+            console.error("Screenshot failed:", err);
+            document.querySelector('.hud-controls').style.display = 'flex';
+        });
+    }
+
+    // ── P2P地震情報 WebSocket接続 ─────────────────────────────────────
+    // 使用API: wss://api.p2pquake.net/v2/ws（P2P地震情報ネットワーク）
+    // code 551 = 津波情報, code 556 = 津波警報
+    function connectP2PQuake() {
+        let ws;
+        let reconnectTimer = null;
+
+        function connect() {
+            try {
+                ws = new WebSocket('wss://api.p2pquake.net/v2/ws');
+            } catch (e) {
+                console.warn('[P2P] WebSocket 接続失敗（オフライン?）:', e);
+                scheduleReconnect();
+                return;
+            }
+
+            ws.onopen = () => {
+                console.log('[P2P] WebSocket 接続完了 (api.p2pquake.net)');
+            };
+
+            ws.onmessage = (e) => {
+                let data;
+                try {
+                    data = JSON.parse(e.data);
+                } catch (_) {
+                    return;
+                }
+
+                // code 551 = 気象庁発表「津波情報」, code 556 = 緊急地震速報（予報）
+                if (data.code === 551 || data.code === 556) {
+                    // 津波警報クラスを確認
+                    const forecasts = data?.tsunami?.comments?.forecast?.text ?? '';
+                    const isTsunamiWarning =
+                        forecasts.includes('大津波警報') ||
+                        forecasts.includes('津波警報') ||
+                        data.code === 551; // 津波情報が届いた時点で緊急モード発動
+
+                    if (isTsunamiWarning && !isEmergency) {
+                        console.warn('[P2P] 津波警報受信 → 緊急モード発動');
+                        // 実際の緊急アラートとして起動（isTest=false）
+                        triggerEmergencyMode(false, 1, 'a');
+                        // バイブレーション（Vibration API）
+                        if ('vibrate' in navigator) {
+                            navigator.vibrate([300, 100, 300, 100, 300]);
+                        }
+                    }
+                }
+            };
+
+            ws.onerror = (err) => {
+                console.warn('[P2P] WebSocket エラー:', err);
+            };
+
+            ws.onclose = () => {
+                console.log('[P2P] WebSocket 切断 → 5秒後に再接続');
+                scheduleReconnect();
+            };
+        }
+
+        function scheduleReconnect() {
+            if (reconnectTimer) return; // 二重予約を防ぐ
+            reconnectTimer = setTimeout(() => {
+                reconnectTimer = null;
+                connect();
+            }, 5000);
+        }
+
+        connect();
+    }
+
+    function updateDate() {
+        const d = new Date();
+        document.getElementById('current-date').innerText = d.toLocaleDateString();
+    }
+
+    function initI18n() {
+        const savedLang = localStorage.getItem('tenden-lang') || 'auto';
+        let langCode = 'ja';
+        
+        if (savedLang !== 'auto') {
+            langCode = savedLang;
+        } else {
+            langCode = (navigator.language || navigator.userLanguage).split('-')[0];
+        }
+
+        // Reset to original Japanese if not in dict
+        if (!i18nDict[langCode]) {
+            // Usually we'd fetch original html content, but for this demo, 
+            // if we need to reset we can just reload or assume Japanese is default
+            if (langCode === 'ja') return;
+        }
+
+        if (i18nDict[langCode]) {
+            const dict = i18nDict[langCode];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) {
+                    el.innerHTML = dict[key];
+                }
+            });
+        }
+    }
+});
