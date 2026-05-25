@@ -1,9 +1,10 @@
-const CACHE_NAME = 'tenden-v16';
-const DYNAMIC_CACHE = 'tenden-dynamic-v16';
+const CACHE_NAME = 'tenden-v17';
+const DYNAMIC_CACHE = 'tenden-dynamic-v17';
 
 const urlsToCache = [
   './',
   './index.html',
+  './app.html',
   './style.css',
   './app.js',
   './manifest.json',
