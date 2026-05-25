@@ -732,6 +732,60 @@ body.emergency-mode .leaflet-control-attribution {
     transition: opacity 0.35s var(--smooth-easing), transform 0.35s var(--smooth-easing) !important;
 }
 
+/* ==========================================================================
+   Tsunami Inundation Status Badge (津波浸水想定ステータスバッジ)
+   ========================================================================== */
+.tsunami-status-box {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    color: #ffffff;
+    opacity: 1;
+    transform: scale(1);
+}
+
+.tsunami-status-box.hidden {
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+    display: none !important;
+}
+
+/* 浸水想定区域 内 (危険状態) */
+.tsunami-status-danger {
+    background: linear-gradient(135deg, rgba(215, 38, 38, 0.45), rgba(230, 126, 34, 0.55)) !important;
+    border-color: rgba(231, 76, 60, 0.45) !important;
+    box-shadow: 0 4px 16px rgba(215, 38, 38, 0.25) !important;
+    animation: danger-pulse 2s infinite alternate;
+}
+
+/* 浸水想定区域 外 (安全状態) */
+.tsunami-status-safe {
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.45), rgba(26, 188, 156, 0.55)) !important;
+    border-color: rgba(39, 174, 96, 0.45) !important;
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.15) !important;
+}
+
+@keyframes danger-pulse {
+    0% {
+        box-shadow: 0 4px 12px rgba(215, 38, 38, 0.2);
+        border-color: rgba(215, 38, 38, 0.3);
+    }
+    100% {
+        box-shadow: 0 4px 20px rgba(215, 38, 38, 0.6);
+        border-color: rgba(215, 38, 38, 0.8);
+    }
+}
+
 /* 📱 スマートフォン縦画面（縦長）への完全レスポンシブ最適化 */
 @media (max-width: 600px) {
     .route-bottom-sheet {
@@ -745,11 +799,17 @@ body.emergency-mode .leaflet-control-attribution {
         top: 16px !important;
         left: 12px !important;
         right: 12px !important;
-        padding: 8px 14px !important;
+        padding: 8px 10px !important;
     }
     
     .hud-logo {
-        height: 36px !important;
+        height: 28px !important;
+    }
+    
+    .tsunami-status-box {
+        padding: 4px 8px !important;
+        font-size: 0.65rem !important;
+        border-radius: 12px !important;
     }
     
     .elevation-value {

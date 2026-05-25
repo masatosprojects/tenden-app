@@ -230,11 +230,18 @@ document.addEventListener('DOMContentLoaded', () => {
             currentLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
             updateMarker(currentLocation);
             fetchElevation(currentLocation);
+            triggerLocationTsunamiCheck(currentLocation);
             
             // If already in emergency mode, instantly recalculate the evacuation route
             if (isEmergency) {
                 recalculateRouteFromLocation(currentLocation);
             }
+        });
+
+        // Map drag/move listener to dynamically update tsunami map based on displayed region
+        map.on('moveend', () => {
+            const center = map.getCenter();
+            updateTsunamiPrefecturalTile(center.lat, center.lng);
         });
     }
 
@@ -469,15 +476,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     map.setView([currentLocation.lat, currentLocation.lng], 16);
                     updateMarker(currentLocation);
                     fetchElevation(currentLocation);
+                    triggerLocationTsunamiCheck(currentLocation);
                     
                     // Track location changes
                     navigator.geolocation.watchPosition(pos => {
+                        currentLocation = {
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude
+                        };
+                        updateMarker(currentLocation);
+                        triggerLocationTsunamiCheck(currentLocation);
+                        
                         if (isEmergency && !simulationInterval) {
-                            currentLocation = {
-                                lat: pos.coords.latitude,
-                                lng: pos.coords.longitude
-                            };
-                            updateMarker(currentLocation);
                             checkRouteDeviation(currentLocation);
                         }
                     });
@@ -1569,5 +1579,151 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+    }
+
+    // ==========================================================================
+    // Tsunami National Hazard Map & Location Inundation Detection (全国区対応＆現在地浸水想定区域内外判定)
+    // ==========================================================================
+    let currentPrefCode = '14'; // 初期値は神奈川県 (JIS: 14)
+
+    /**
+     * 緯度経度から都道府県コードを特定し、ハザードマップタイルを動的に切り替える
+     * @param {number} lat 緯度
+     * @param {number} lng 経度
+     * @returns {Promise<string>} 都道府県コード (2桁)
+     */
+    async function updateTsunamiPrefecturalTile(lat, lng) {
+        try {
+            // 国土地理院の軽量逆ジオコーディングAPIを利用
+            const url = `https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat=${lat}&lon=${lng}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Reverse geocoding failed');
+            
+            const data = await res.json();
+            if (data && data.results && data.results.muniCd) {
+                const muniCd = data.results.muniCd;
+                // muniCdの先頭2桁が都道府県コード
+                const prefCode = String(Math.floor(parseInt(muniCd) / 1000)).padStart(2, '0');
+                
+                if (prefCode !== currentPrefCode) {
+                    currentPrefCode = prefCode;
+                    console.log(`[Tsunami Hazard] Switching hazard map prefecture tile to: ${prefCode}`);
+                    
+                    if (hazardLayer) {
+                        // タイルURLを動的に更新
+                        hazardLayer.setUrl(`https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_pref_data/${prefCode}/{z}/{x}/{y}.png`);
+                    }
+                }
+                return prefCode;
+            }
+        } catch (err) {
+            console.warn('[Tsunami Hazard] Failed to auto-switch prefectural tile:', err);
+        }
+        return currentPrefCode;
+    }
+
+    /**
+     * 緯度経度からズームレベル14におけるXYZタイル座標とタイル内ピクセル座標を算出する
+     */
+    function getTileCoords(lat, lng, zoom = 14) {
+        const latRad = lat * Math.PI / 180;
+        const n = Math.pow(2, zoom);
+        const x = ((lng + 180) / 360) * n;
+        const y = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
+        
+        const tileX = Math.floor(x);
+        const tileY = Math.floor(y);
+        
+        const px = Math.floor((x - tileX) * 256);
+        const py = Math.floor((y - tileY) * 256);
+        
+        return { x: tileX, y: tileY, px: px, py: py };
+    }
+
+    /**
+     * 指定された位置が津波浸水想定区域内にあるかをPNGタイルのピクセル透過度を用いて高精度に判定する
+     * @param {number} lat 緯度
+     * @param {number} lng 経度
+     * @param {string} prefCode 都道府県コード
+     * @returns {Promise<boolean>} 浸水想定区域内ならtrue、区域外ならfalse
+     */
+    function checkTsunamiInundation(lat, lng, prefCode) {
+        return new Promise((resolve) => {
+            const zoom = 14;
+            const coords = getTileCoords(lat, lng, zoom);
+            const tileUrl = `https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_pref_data/${prefCode}/${zoom}/${coords.x}/${coords.y}.png`;
+            
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            
+            img.onload = function() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 256;
+                    canvas.height = 256;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const pixel = ctx.getImageData(coords.px, coords.py, 1, 1).data;
+                    const alpha = pixel[3]; // 透明度 (0〜255)
+                    
+                    // アルファ値が0より大きい（色が付いている）場合、浸水想定区域内と判定
+                    const isInundated = alpha > 0;
+                    console.log(`[Tsunami Hazard] Location check: alpha=${alpha}, isInundated=${isInundated}`);
+                    resolve(isInundated);
+                } catch (e) {
+                    console.error('[Tsunami Hazard] Canvas processing error:', e);
+                    resolve(false);
+                }
+            };
+            
+            img.onerror = function() {
+                // 画像がない（タイルが存在しない、内陸など）場合は浸水想定区域外とみなす
+                resolve(false);
+            };
+            
+            img.src = tileUrl;
+        });
+    }
+
+    /**
+     * 判定結果をHUD上部バー（tsunami-status-box）に美しいグラスモルフィズムバッジとして反映する
+     * @param {boolean} isInundated 浸水想定区域内かどうか
+     */
+    function updateTsunamiStatusUI(isInundated) {
+        const box = document.getElementById('tsunami-status-box');
+        const textSpan = document.getElementById('tsunami-status-text');
+        if (!box || !textSpan) return;
+        
+        box.classList.remove('hidden');
+        box.className = 'tsunami-status-box'; // クラスの初期化
+        
+        // 画面幅がスマホかどうか（レスポンシブな表記の微調整）
+        const isMobile = window.innerWidth <= 600;
+        
+        if (isInundated) {
+            box.classList.add('tsunami-status-danger');
+            textSpan.textContent = isMobile ? '⚠️浸水想定 内' : '⚠️ 津波浸水想定区域 内';
+        } else {
+            box.classList.add('tsunami-status-safe');
+            textSpan.textContent = isMobile ? '✅浸水想定 外' : '✅ 津波浸水想定区域 外';
+        }
+    }
+
+    /**
+     * 現在地または特定座標に基づく、ハザードタイル更新および浸水想定判定の総合実行関数
+     * @param {Object} loc 緯度経度オブジェクト {lat, lng}
+     */
+    async function triggerLocationTsunamiCheck(loc) {
+        if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return;
+        
+        // 1. まず逆ジオコーディングで都道府県コードを特定し、タイルURLを切り替え
+        const prefCode = await updateTsunamiPrefecturalTile(loc.lat, loc.lng);
+        
+        // 2. その都道府県コードのタイルを用いて、現在地が浸水想定区域内かをピクセル判定
+        const isInundated = await checkTsunamiInundation(loc.lat, loc.lng, prefCode);
+        
+        // 3. UIに結果を反映
+        updateTsunamiStatusUI(isInundated);
     }
 });
