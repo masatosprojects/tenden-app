@@ -598,3 +598,92 @@ body.emergency-mode .leaflet-control-attribution {
 .scenario-option-btn:active, .location-option-btn:active {
     transform: translateY(0) scale(0.98);
 }
+
+/* ── ルート選択ボトムシート ───────────────────────────── */
+.route-bottom-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 18px 28px;
+    z-index: 1000;
+    pointer-events: all;
+    transform: translateY(0);
+    animation: slideUp 0.35s var(--smooth-easing) both;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.route-bottom-sheet::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--glass-border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+}
+
+.route-disclaimer {
+    font-size: 0.78rem;
+    opacity: 0.75;
+    background: rgba(255, 159, 10, 0.10);
+    border-left: 3px solid #ff9f0a;
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-bottom: 14px;
+    line-height: 1.45;
+    color: var(--hud-text);
+}
+
+.route-option-btn {
+    border-radius: 12px !important;
+    transition: transform 0.2s var(--spring-easing), box-shadow 0.2s ease !important;
+}
+.route-option-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+.route-option-btn:active {
+    transform: scale(0.97);
+}
+
+.route-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 5px;
+    margin-left: 6px;
+}
+
+.elderly-badge {
+    background: rgba(94, 92, 230, 0.15);
+    color: #5e5ce6;
+}
+
+/* ルートラベル (地図上) */
+.route-label-pill {
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    pointer-events: none;
+}
+
+/* ── 避難所カラー (load-based) ─────────────────────────── */
+.shelter-low    .shelter-marker-inner { background: #00a63e; border-color: #007a2e; }
+.shelter-medium .shelter-marker-inner { background: #f5a623; border-color: #c07c10; }
+.shelter-high   .shelter-marker-inner { background: #c0392b; border-color: #8e1b15; }

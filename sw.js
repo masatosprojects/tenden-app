@@ -1,6 +1,6 @@
 // sw.js - Advanced Service Worker with Dynamic Caching
-const CACHE_NAME = 'tenden-v2';
-const DYNAMIC_CACHE = 'tenden-dynamic-v2';
+const CACHE_NAME = 'tenden-v3';
+const DYNAMIC_CACHE = 'tenden-dynamic-v3';
 
 const urlsToCache = [
   './',
@@ -9,6 +9,9 @@ const urlsToCache = [
   './app.js',
   './manifest.json',
   './assets/hazard.geojson',
+  './assets/congestion.geojson',
+  './assets/shelters.json',
+  './assets/routes.json',
   './assets/icons/icon.svg',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
