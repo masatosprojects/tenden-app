@@ -104,6 +104,56 @@ body.emergency-mode #map {
     gap: 12px;
 }
 
+.hud-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 0 8px;
+}
+
+/* P2P 警報受信状態インジケーター */
+.p2p-status-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 14px;
+    border: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.06);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--hud-text);
+    white-space: nowrap;
+    transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+}
+body.emergency-mode .p2p-status-bar {
+    background: rgba(255,255,255,0.06);
+}
+.p2p-status-bar.p2p-alert-active {
+    background: rgba(255, 59, 48, 0.18);
+    border-color: rgba(255, 59, 48, 0.55);
+    color: #ff3b30;
+}
+
+.p2p-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.4s ease;
+}
+.p2p-connecting { background: #f5a623; animation: p2p-pulse 1.6s ease-in-out infinite; }
+.p2p-connected  { background: #34c759; }
+.p2p-disconnected { background: #8e8e93; }
+.p2p-alert { background: #ff3b30; animation: p2p-pulse 0.55s ease-in-out infinite; }
+
+@keyframes p2p-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.35; transform: scale(0.75); }
+}
+
 .hud-logo {
     height: 44px;
     width: auto;
@@ -117,12 +167,38 @@ body.emergency-mode #map {
     transform: scale(1.15) rotate(-2deg);
 }
 
+/* リアルタイム時計 */
+.hud-clock {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.clock-time {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1;
+    color: var(--hud-text);
+}
+
+.clock-date {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 500;
+    opacity: 0.6;
+    letter-spacing: 0.3px;
+    line-height: 1;
+}
+
+/* 後方互換 */
 #current-date {
-    font-size: 0.8rem;
+    font-size: 0.68rem;
     font-family: 'Outfit', sans-serif;
     font-weight: 500;
-    opacity: 0.7;
-    letter-spacing: 0.5px;
+    opacity: 0.6;
+    letter-spacing: 0.3px;
 }
 
 .elevation-box {
@@ -166,9 +242,9 @@ body.emergency-mode .elevation-value {
 }
 
 .control-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 24px; /* Perfect circle */
+    width: 52px;
+    min-height: 60px;
+    border-radius: 18px;
     border: 1px solid var(--glass-border);
     background: var(--glass-bg);
     backdrop-filter: blur(24px) saturate(150%);
@@ -176,11 +252,27 @@ body.emergency-mode .elevation-value {
     box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
     color: var(--hud-text);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 5px;
+    padding: 8px 4px 7px;
     cursor: pointer;
     transition: transform 0.4s var(--spring-easing), background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
 }
+
+.btn-label {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    opacity: 0.7;
+    text-align: center;
+    line-height: 1;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+.control-btn:hover .btn-label { opacity: 1; }
 
 .control-btn svg {
     width: 22px;
@@ -738,7 +830,7 @@ body.emergency-mode .leaflet-control-attribution {
 .tsunami-status-box {
     display: inline-flex;
     align-items: center;
-    padding: 6px 12px;
+    padding: 5px 11px;
     border-radius: 20px;
     font-size: 0.72rem;
     font-weight: 700;
@@ -773,6 +865,23 @@ body.emergency-mode .leaflet-control-attribution {
     background: linear-gradient(135deg, rgba(39, 174, 96, 0.45), rgba(26, 188, 156, 0.55)) !important;
     border-color: rgba(39, 174, 96, 0.45) !important;
     box-shadow: 0 4px 12px rgba(39, 174, 96, 0.15) !important;
+}
+
+/* バッジ内部レイアウト：サブラベル + メインテキスト */
+.tsunami-status-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.tsunami-status-sublabel {
+    font-size: 0.58rem;
+    font-weight: 500;
+    opacity: 0.7;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: none;
 }
 
 @keyframes danger-pulse {

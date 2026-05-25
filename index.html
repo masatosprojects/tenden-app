@@ -33,14 +33,29 @@
     <div id="ui-layer" class="mode-normal">
         
         <!-- Header HUD -->
-        <header class="hud-header glass-panel" style="padding: 10px 20px;">
-            <div class="hud-left" style="display: flex; align-items: center; gap: 12px;">
-                <img src="assets/icons/hud-logo.png" alt="TENDEN Logo" class="hud-logo" style="height: 44px; width: auto; object-fit: cover; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); transition: transform 0.3s;">
-                <span id="current-date" style="font-size: 0.75rem; opacity: 0.7; font-weight: 500;"></span>
+        <header class="hud-header glass-panel">
+            <!-- 左：ロゴ + 時刻 -->
+            <div class="hud-left">
+                <img src="assets/icons/hud-logo.png" alt="TENDEN Logo" class="hud-logo">
+                <div class="hud-clock">
+                    <span id="current-time" class="clock-time">--:--</span>
+                    <span id="current-date" class="clock-date"></span>
+                </div>
             </div>
-            <div class="hud-right" style="display: flex; align-items: center; gap: 12px;">
+            <!-- 中央：P2P 津波警報 受信状態 -->
+            <div class="hud-center">
+                <div id="p2p-status-bar" class="p2p-status-bar">
+                    <span id="p2p-dot" class="p2p-dot p2p-connecting"></span>
+                    <span id="p2p-label">警報待機中...</span>
+                </div>
+            </div>
+            <!-- 右：浸水区域判定 + 海抜 -->
+            <div class="hud-right">
                 <div id="tsunami-status-box" class="tsunami-status-box hidden">
-                    <span id="tsunami-status-text">判定中...</span>
+                    <div class="tsunami-status-inner">
+                        <span class="tsunami-status-sublabel">現在地（GPS）浸水区域</span>
+                        <span id="tsunami-status-text">判定中...</span>
+                    </div>
                 </div>
                 <div class="elevation-box">
                     <span class="elevation-label" id="i18n-elevation-label" data-i18n="elevationLabel">現在地の海抜</span>
@@ -53,24 +68,29 @@
         <div class="hud-controls">
             <button id="btn-settings" class="control-btn" aria-label="設定">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span class="btn-label">設定</span>
             </button>
-            <button id="btn-toggle-layers" class="control-btn" aria-label="ハザード/避難所トグル">
+            <button id="btn-toggle-layers" class="control-btn" aria-label="ハザード/避難所レイヤー表示切替">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                <span class="btn-label">レイヤー</span>
             </button>
-            <button id="btn-focus-model" class="control-btn" aria-label="モデル地区を表示" title="モデル地区（由比ヶ浜）を表示">
+            <button id="btn-focus-model" class="control-btn" aria-label="鎌倉モデル地区を表示">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 8 2 15 6 22 2 22 18 15 22 8 18 1 22"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="15" y1="6" x2="15" y2="22"></line></svg>
+                <span class="btn-label">鎌倉へ</span>
             </button>
-            <button id="btn-screenshot" class="control-btn" aria-label="備えを保存">
+            <button id="btn-screenshot" class="control-btn" aria-label="現在地マップを画像保存">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span class="btn-label">保存</span>
             </button>
-            <button id="btn-dev-reset" class="control-btn" aria-label="PWAキャッシュクリア" title="【開発者用】PWAキャッシュとサービスワーカーをクリアして再起動" style="border-color: rgba(255, 69, 58, 0.4); color: #ff453a;">
+            <button id="btn-dev-reset" class="control-btn" aria-label="PWAキャッシュリセット" style="border-color: rgba(255, 69, 58, 0.4); color: #ff453a;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <span class="btn-label">再読込</span>
             </button>
         </div>
 
         <!-- Emergency & SOS Controls -->
         <div class="hud-bottom">
-            <button id="btn-test-alert" class="action-btn warning-btn" data-i18n="testAlert">テスト発令</button>
+            <button id="btn-test-alert" class="action-btn warning-btn" data-i18n="testAlert">🚶 鎌倉で避難体験</button>
             <button id="btn-share" class="action-btn primary-btn hidden" style="margin-right: 12px;" data-i18n="shareBtn">安否共有</button>
             <button id="btn-reset-alert" class="action-btn secondary-btn hidden" style="margin-right: 12px;" data-i18n="resetAlert">訓練終了</button>
             <button id="btn-sos" class="action-btn sos-btn hidden">SOS</button>

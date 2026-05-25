@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             errorDesc: "Please move the map to set a pin at your location.",
             errorBtn: "Set Manually",
             elevationLabel: "Current Elevation",
-            testAlert: "Test Alert",
+            testAlert: "🚶 Evacuation Demo",
             evacTitle: "Evacuation Order Issued",
             evacDesc: "Follow the blue route to higher ground",
             shareBtn: "Share Status",
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             errorDesc: "请移动地图并在您所在的位置设置图钉。",
             errorBtn: "手动设置",
             elevationLabel: "当前海拔",
-            testAlert: "测试警报",
+            testAlert: "🚶 鎌仓避难体验",
             evacTitle: "避难指示已发布",
             evacDesc: "请沿着蓝色路线向高处避难",
             shareBtn: "分享状态",
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
             errorDesc: "지도를 이동하여 현재 위치에 핀을 설정하십시오.",
             errorBtn: "수동으로 설정",
             elevationLabel: "현재 해발",
-            testAlert: "테스트 경보",
+            testAlert: "🚶 가마쿠라 대피 체험",
             evacTitle: "대피 지시 발령됨",
             evacDesc: "파란색 경로를 따라 고지대로 대피하십시오",
             shareBtn: "안부 공유",
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Map
     initMap();
     initUI();
-    updateDate();
+    startClock();
     initI18n();
     connectP2PQuake();
 
@@ -1496,6 +1496,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ws.onopen = () => {
                 console.log('[P2P] WebSocket 接続完了 (api.p2pquake.net)');
+                setP2PStatus('connected');
             };
 
             ws.onmessage = (e) => {
@@ -1515,6 +1516,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         forecasts.includes('津波警報') ||
                         data.code === 551; // 津波情報が届いた時点で緊急モード発動
 
+                    if (isTsunamiWarning) {
+                        setP2PStatus('alert');
+                    }
                     if (isTsunamiWarning && !isEmergency) {
                         console.warn('[P2P] 津波警報受信 → 緊急モード発動');
                         // 実際の緊急アラートとして起動（isTest=false）
@@ -1533,6 +1537,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ws.onclose = () => {
                 console.log('[P2P] WebSocket 切断 → 5秒後に再接続');
+                setP2PStatus('connecting');
                 scheduleReconnect();
             };
         }
@@ -1548,9 +1553,39 @@ document.addEventListener('DOMContentLoaded', () => {
         connect();
     }
 
-    function updateDate() {
-        const d = new Date();
-        document.getElementById('current-date').innerText = d.toLocaleDateString();
+    function startClock() {
+        function tick() {
+            const d = new Date();
+            const timeEl = document.getElementById('current-time');
+            const dateEl = document.getElementById('current-date');
+            if (timeEl) {
+                timeEl.innerText = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+            }
+            if (dateEl) {
+                dateEl.innerText = d.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', weekday: 'short' });
+            }
+        }
+        tick();
+        setInterval(tick, 1000);
+    }
+
+    // P2P接続状態をHUDに反映する
+    function setP2PStatus(state) {
+        const dot = document.getElementById('p2p-dot');
+        const label = document.getElementById('p2p-label');
+        const bar = document.getElementById('p2p-status-bar');
+        if (!dot || !label) return;
+        dot.className = `p2p-dot p2p-${state}`;
+        const labels = {
+            connecting:    '警報待機中...',
+            connected:     '警報待機中',
+            alert:         '🚨 大津波警報',
+            disconnected:  '警報: 未接続'
+        };
+        label.textContent = labels[state] || '待機中';
+        if (bar) {
+            bar.classList.toggle('p2p-alert-active', state === 'alert');
+        }
     }
 
     function initI18n() {
