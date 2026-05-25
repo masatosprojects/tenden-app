@@ -404,6 +404,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        const btnFocusModel = document.getElementById('btn-focus-model');
+        if (btnFocusModel) {
+            btnFocusModel.addEventListener('click', () => {
+                const targetLat = KAMAKURA_CENTER[0];
+                const targetLng = KAMAKURA_CENTER[1];
+                currentLocation = { lat: targetLat, lng: targetLng };
+                
+                // Smooth fly animation to the model area (Yuigahama)
+                map.flyTo(KAMAKURA_CENTER, 15, {
+                    duration: 1.5,
+                    easeLinearity: 0.25
+                });
+                
+                updateMarker(currentLocation);
+                fetchElevation(currentLocation);
+            });
+        }
+
         btnSettings.addEventListener('click', () => {
             const overlay = document.getElementById('settings-overlay');
             overlay.classList.remove('hidden');
