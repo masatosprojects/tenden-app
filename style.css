@@ -712,3 +712,14 @@ body.emergency-mode .leaflet-control-attribution {
 .shelter-low    .shelter-marker-inner { background: #00a63e; border-color: #007a2e; }
 .shelter-medium .shelter-marker-inner { background: #f5a623; border-color: #c07c10; }
 .shelter-high   .shelter-marker-inner { background: #c0392b; border-color: #8e1b15; }
+
+/* ── プレミアムインタラクション（ホバー＆アクティブ効果） ─────── */
+.leaflet-interactive {
+    cursor: pointer;
+    transition: stroke 0.25s var(--smooth-easing), stroke-width 0.25s var(--spring-easing), opacity 0.25s ease !important;
+}
+
+.leaflet-interactive:hover {
+    opacity: 0.85 !important;
+    stroke-width: 7.5px !important;
+}
