@@ -143,6 +143,19 @@
         </div>
     </div>
 
+    <!-- Custom Alert Overlay -->
+    <div id="alert-overlay" class="overlay hidden">
+        <div class="dialog glass-panel">
+            <div class="dialog-icon" id="alert-icon" style="color: var(--primary);">
+                <!-- Default Info Icon -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </div>
+            <h2 id="alert-title">通知</h2>
+            <p id="alert-desc">メッセージ内容</p>
+            <button id="btn-alert-ok" class="primary-btn" style="width: 100%;">OK</button>
+        </div>
+    </div>
+
     <!-- Scenario Selection Dialog -->
     <div id="scenario-overlay" class="overlay hidden">
         <div class="dialog glass-panel" style="text-align: left; max-width: 400px; width: 95%;">

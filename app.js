@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 simulationInterval = null;
             }
             
-            alert("「発災避難モード」になりました。\n地図上の任意の場所（路地や海岸など）をタップしてピンを打ってください。そこから最も近い避難所への経路を自動計算し、シミュレーションを開始します！");
+            showCustomAlert("避難開始地点を選択してください", "「発災避難モード」になりました。\n\n地図上の任意の場所（路地や海岸など）をタップしてピンを打ってください。そこから最も近い避難所への経路を自動計算し、シミュレーションを開始します！", "info");
         });
 
         // Handle drill reset (End Drill)
@@ -341,8 +341,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     title: '安否情報 - TENDEN',
                     text: `現在、安全な高台へ避難中です。\n現在地: https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`
                 }).catch(console.error);
+            } else if (currentLocation) {
+                showCustomAlert("安否情報 (現在地)", `コピーして家族や友人に送信してください：\n\nhttps://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`, "success");
             } else {
-                alert(`現在地: https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`);
+                showCustomAlert("安否情報", "現在地を取得できませんでした。まず地図上をタップして現在地を設定してください。", "warning");
             }
         });
 
@@ -410,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let key of keys) {
                     await caches.delete(key);
                 }
-                alert('キャッシュをクリアしました。');
+                showCustomAlert("キャッシュ削除完了", "オフラインキャッシュを正常に削除しました。", "success");
             }
         });
 
@@ -437,8 +439,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
-                    alert('キャッシュとサービスワーカーのクリアを完了しました。再起動します。');
-                    window.location.reload(true);
+                    showCustomAlert("システムリセット完了", "キャッシュとサービスワーカーのクリアを完了しました。ページを再起動します。", "success", () => {
+                        window.location.reload(true);
+                    });
                 }
             });
         }
@@ -947,6 +950,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!loc) return false;
         // Kamakura model area bounding box: Yuigahama, Shichirigahama, Zaimokuza
         return (loc.lat >= 35.28 && loc.lat <= 35.34 && loc.lng >= 139.48 && loc.lng <= 139.58);
+    }
+
+    function showCustomAlert(title, message, iconType = 'info', callback = null) {
+        const overlay = document.getElementById('alert-overlay');
+        const titleEl = document.getElementById('alert-title');
+        const descEl = document.getElementById('alert-desc');
+        const iconContainer = document.getElementById('alert-icon');
+        const btnOk = document.getElementById('btn-alert-ok');
+        
+        titleEl.innerText = title;
+        descEl.innerHTML = message.replace(/\n/g, '<br>');
+        
+        // Dynamic icons mapping
+        let iconColor = 'var(--primary)';
+        let iconHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+        
+        if (iconType === 'success') {
+            iconColor = '#34c759'; // Apple green
+            iconHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        } else if (iconType === 'warning') {
+            iconColor = 'var(--danger)'; // CUD Orange
+            iconHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+        } else if (iconType === 'error') {
+            iconColor = '#ff3b30'; // Apple red
+            iconHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+        }
+        
+        iconContainer.style.color = iconColor;
+        iconContainer.innerHTML = iconHtml;
+        
+        const hideAlert = () => {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+            btnOk.removeEventListener('click', hideAlert);
+            if (callback) callback();
+        };
+        
+        btnOk.addEventListener('click', hideAlert);
+        
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.add('active'), 10);
     }
 
     function checkRouteDeviation(loc) {
