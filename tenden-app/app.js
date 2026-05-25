@@ -792,10 +792,22 @@ document.addEventListener('DOMContentLoaded', () => {
             scLoc = SCENARIOS[1].locations['a'];
         }
 
-        // If valid route candidate from routes.json
-        if (routeCandidate && routeCandidate.waypoints && routeCandidate.waypoints.length > 1) {
-            // Prepend the user's custom starting location to the waypoints
-            const waypoints = [ [startLoc.lat, startLoc.lng], ...routeCandidate.waypoints ];
+        // If valid route candidate
+        if (routeCandidate && routeCandidate.waypoints && routeCandidate.waypoints.length > 0) {
+            let waypoints = [];
+            const firstPt = routeCandidate.waypoints[0];
+            const dist = L.latLng(startLoc.lat, startLoc.lng).distanceTo(L.latLng(firstPt[0], firstPt[1]));
+            
+            // Smart Snap Connector:
+            // If the start location is significantly far from the first route point (e.g. > 15m),
+            // we insert a smart Manhattan L-shaped mid-point to avoid cutting through buildings diagonally.
+            // If it's already OSRM and we have snapped, or if distance is tiny, a direct connection is fine.
+            if (dist > 15 && !routeCandidate.isOSRM) {
+                const midPt = [startLoc.lat, firstPt[1]];
+                waypoints = [ [startLoc.lat, startLoc.lng], midPt, ...routeCandidate.waypoints ];
+            } else {
+                waypoints = [ [startLoc.lat, startLoc.lng], ...routeCandidate.waypoints ];
+            }
             
             mainRouteLine = L.polyline(waypoints, {
                 color: routeCandidate.color || '#00bbff',
@@ -836,7 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function recalculateRouteFromLocation(loc) {
+    async function recalculateRouteFromLocation(loc) {
         if (!isEmergency) return;
         
         // Stop current evacuation simulation interval
@@ -848,8 +860,45 @@ document.addEventListener('DOMContentLoaded', () => {
         // Find nearest shelter
         const nearestShelter = findNearestShelter(loc);
         if (nearestShelter) {
-            // Calculate dynamic custom route connecting the custom clicked coordinate to the nearest shelter
-            const customRoute = calculateCustomRoute(loc, nearestShelter);
+            let customRoute = null;
+
+            // Try OSRM Online Walking Routing API first with dual fallback servers and 3s timeouts
+            const osrmUrls = [
+                `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${loc.lng},${loc.lat};${nearestShelter.lng},${nearestShelter.lat}?overview=full&geometries=geojson`,
+                `https://router.project-osrm.org/route/v1/foot/${loc.lng},${loc.lat};${nearestShelter.lng},${nearestShelter.lat}?overview=full&geometries=geojson`
+            ];
+
+            for (let url of osrmUrls) {
+                try {
+                    const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+                    const data = await response.json();
+                    
+                    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                        const route = data.routes[0];
+                        // OSRM returns [longitude, latitude] coordinates; Leaflet expects [latitude, longitude]
+                        const waypoints = route.geometry.coordinates.map(c => [c[1], c[0]]);
+                        
+                        customRoute = {
+                            waypoints: waypoints,
+                            label: "避難歩行ルート",
+                            color: "#0a84ff", // Apple-style Cyan/Blue for emergency
+                            distance_m: Math.round(route.distance),
+                            characteristics: "歩行者用の安全な避難経路",
+                            congestion_score: "low",
+                            isOSRM: true
+                        };
+                        console.log(`[TENDEN] OSRM Online Route fetched successfully from: ${url}`);
+                        break;
+                    }
+                } catch (e) {
+                    console.warn(`[TENDEN] OSRM routing failed or offline for ${url}. Trying next...`, e);
+                }
+            }
+
+            // Fallback to offline local path approximation if OSRM is offline
+            if (!customRoute) {
+                customRoute = calculateCustomRoute(loc, nearestShelter);
+            }
             
             // Draw the evacuation route
             drawEvacuationRoutes(loc, nearestShelter, customRoute);
@@ -913,8 +962,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // If we found a good predefined route nearby, slice and splice it!
-        if (bestRoute && minWaypointDist < 800) { // must be within 800m of the route
-            const customWaypoints = [ [startLoc.lat, startLoc.lng] ];
+        if (bestRoute && minWaypointDist < 300) { // Limit to 300m instead of 800m to avoid long diagonal lines
+            const customWaypoints = [];
             for (let i = bestSplitIndex; i < bestRoute.waypoints.length; i++) {
                 customWaypoints.push(bestRoute.waypoints[i]);
             }
@@ -924,7 +973,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 color: bestRoute.color,
                 distance_m: Math.round(minWaypointDist + bestRoute.distance_m * (1 - bestSplitIndex / bestRoute.waypoints.length)),
                 characteristics: bestRoute.characteristics,
-                congestion_score: bestRoute.congestion_score
+                congestion_score: bestRoute.congestion_score,
+                isOSRM: false
             };
         }
         
@@ -934,7 +984,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const midPoint = [startLoc.lat, shelterLng]; // corner turn to simulate streets
         return {
             waypoints: [
-                [startLoc.lat, startLoc.lng],
                 midPoint,
                 [shelterLat, shelterLng]
             ],
@@ -942,7 +991,8 @@ document.addEventListener('DOMContentLoaded', () => {
             color: "#ff3b30", // Bright warning red
             distance_m: Math.round(startLatLng.distanceTo(L.latLng(shelterLat, shelterLng)) * 1.3),
             characteristics: "緊急時の最短道路接続ルート",
-            congestion_score: "low"
+            congestion_score: "low",
+            isOSRM: false
         };
     }
 
