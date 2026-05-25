@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLocation = null; // {lat, lng}
     let simulationInterval = null;
     let mainRouteLine = null;
+    let activeScenarioId = 1;
+    let activeLocationId = 'a';
     // Simulation-derived data
     let routeData = {};  // loaded from assets/routes.json
     let pendingRouteArgs = null; // {scenarioId, locationId, scLoc} while route modal is open
@@ -219,6 +221,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fallback for non-absolute
             window.addEventListener('deviceorientation', handleOrientation, true);
         }
+
+        // Map Click Listener to set custom starting point
+        map.on('click', (e) => {
+            currentLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
+            updateMarker(currentLocation);
+            fetchElevation(currentLocation);
+            
+            // If already in emergency mode, instantly recalculate the evacuation route
+            if (isEmergency) {
+                recalculateRouteFromLocation(currentLocation);
+            }
+        });
     }
 
     function handleOrientation(event) {
@@ -634,53 +648,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     ]
                 }
             }
-        },
-        3: {
-            title: "避難指示（土砂災害警戒）",
-            time: "直ちに避難",
-            height: "1.5m",
-            isLandslide: true,
-            locations: {
-                'a': {
-                    name: "地点A: 鶴岡八幡宮参道 (三ノ鳥居付近/海抜6.5m)",
-                    desc: "青い避難ルートに沿って安全な避難所（清泉小学校）へ避難してください",
-                    start: { lat: 35.3235, lng: 139.5564 }, // 三ノ鳥居付近
-                    goal: { lat: 35.3258, lng: 139.5605 }, // 清泉小学校
-                    goal2: { lat: 35.3195, lng: 139.5570 }, // 鎌倉生涯学習センター
-                    mainRoute: [
-                        [35.3235, 139.5564],
-                        [35.3245, 139.5595],
-                        [35.3258, 139.5605]
-                    ],
-                    subRoute: [
-                        [35.3235, 139.5564],
-                        [35.3210, 139.5567],
-                        [35.3195, 139.5570]
-                    ]
-                },
-                'b': {
-                    name: "地点B: 段葛・二ノ鳥居付近 (参道中間点/海抜6.0m)",
-                    desc: "青い避難ルートに沿って安全な避難所（鎌倉生涯学習センター）へ避難してください",
-                    start: { lat: 35.3191, lng: 139.5569 }, // 二ノ鳥居付近
-                    goal: { lat: 35.3195, lng: 139.5570 }, // 鎌倉生涯学習センター
-                    goal2: { lat: 35.3258, lng: 139.5605 }, // 清泉小学校
-                    mainRoute: [
-                        [35.3191, 139.5569],
-                        [35.3195, 139.5570]
-                    ],
-                    subRoute: [
-                        [35.3191, 139.5569],
-                        [35.3225, 139.5564],
-                        [35.3245, 139.5595],
-                        [35.3258, 139.5605]
-                    ]
-                }
-            }
         }
     };
 
     function triggerEmergencyMode(isTest = false, scenarioId = 1, locationId = 'a') {
         isEmergency = true;
+        activeScenarioId = scenarioId;
+        activeLocationId = locationId;
         document.body.classList.add('emergency-mode');
         
         document.getElementById('btn-test-alert').classList.add('hidden');
@@ -689,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-reset-alert').classList.remove('hidden');
         document.getElementById('evacuation-banner').classList.remove('hidden');
         document.getElementById('disaster-details').style.display = 'block';
-
+ 
         // Load scenario parameters
         const sc = SCENARIOS[scenarioId] || SCENARIOS[1];
         const scLoc = sc.locations[locationId] || sc.locations['a'];
@@ -702,9 +676,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeLabel = sc.isLandslide ? "到達予測:" : "予想到達時間:";
         const heightLabel = sc.isLandslide ? "予想浸水深:" : "予想高:";
         detailsEl.innerHTML = `<span>${timeLabel}</span> <strong>${sc.time}</strong> | <span>${heightLabel}</span> <strong>${sc.height}</strong>`;
-
+ 
         if (isTest) {
-            currentLocation = { lat: scLoc.start.lat, lng: scLoc.start.lng };
+            // Keep user's custom location if it is within the Kamakura model area, otherwise fallback to scenario start
+            if (!isInModelArea(currentLocation)) {
+                currentLocation = { lat: scLoc.start.lat, lng: scLoc.start.lng };
+            }
             map.setView([currentLocation.lat, currentLocation.lng], 16);
             updateMarker(currentLocation);
             // Show route selection modal if route data is available
@@ -724,7 +701,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const routeB = candidates ? candidates.find(r => r.id === 'B') : null;
             drawEvacuationRoutes(currentLocation, scLoc, routeB);
         }
-
+ 
         if ("vibrate" in navigator && !isTest) {
             navigator.vibrate([200, 100, 200]);
         }
@@ -867,7 +844,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // If valid route candidate from routes.json
         if (routeCandidate && routeCandidate.waypoints && routeCandidate.waypoints.length > 1) {
-            mainRouteLine = L.polyline(routeCandidate.waypoints, {
+            // Prepend the user's custom starting location to the waypoints
+            const waypoints = [ [startLoc.lat, startLoc.lng], ...routeCandidate.waypoints ];
+            
+            mainRouteLine = L.polyline(waypoints, {
                 color: routeCandidate.color || '#00bbff',
                 weight: 6,
                 opacity: 1,
@@ -875,9 +855,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }).addTo(routeLayerGroup);
 
             // Route type label on the map
-            const midIdx = Math.floor(routeCandidate.waypoints.length / 2);
-            if (midIdx < routeCandidate.waypoints.length) {
-                const midPt = routeCandidate.waypoints[midIdx];
+            const midIdx = Math.floor(waypoints.length / 2);
+            if (midIdx < waypoints.length) {
+                const midPt = waypoints[midIdx];
                 const labelIcon = L.divIcon({
                     className: 'route-label-container',
                     html: `<div class="route-label-pill" style="background:${routeCandidate.color || '#00bbff'}">${routeCandidate.label}</div>`,
@@ -888,20 +868,51 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             // Fallback: draw from static SCENARIOS waypoints
-            mainRouteLine = L.polyline(scLoc.mainRoute, {
+            const mainWaypoints = [ [startLoc.lat, startLoc.lng], ...scLoc.mainRoute ];
+            mainRouteLine = L.polyline(mainWaypoints, {
                 color: '#00bbff',
                 weight: 6,
                 opacity: 1,
                 className: 'animated-route'
             }).addTo(routeLayerGroup);
 
-            L.polyline(scLoc.subRoute, {
+            const subWaypoints = [ [startLoc.lat, startLoc.lng], ...scLoc.subRoute ];
+            L.polyline(subWaypoints, {
                 color: '#888888',
                 weight: 3,
                 opacity: 0.8,
                 dashArray: '5, 10'
             }).addTo(routeLayerGroup);
         }
+    }
+
+    function recalculateRouteFromLocation(loc) {
+        if (!isEmergency) return;
+        
+        const sc = SCENARIOS[activeScenarioId] || SCENARIOS[1];
+        const scLoc = sc.locations[activeLocationId] || sc.locations['a'];
+        
+        // Stop current evacuation simulation interval
+        if (simulationInterval) {
+            clearInterval(simulationInterval);
+            simulationInterval = null;
+        }
+
+        // Redraw evacuation route
+        const routeKey = `${activeScenarioId}_${activeLocationId}`;
+        const candidates = routeData[routeKey];
+        const routeB = candidates ? candidates.find(r => r.id === 'B') : null;
+        
+        drawEvacuationRoutes(loc, scLoc, routeB);
+        
+        // Restart evacuation simulation from this new custom location
+        simulateEvacuation();
+    }
+
+    function isInModelArea(loc) {
+        if (!loc) return false;
+        // Kamakura model area bounding box: Yuigahama, Shichirigahama, Zaimokuza
+        return (loc.lat >= 35.28 && loc.lat <= 35.34 && loc.lng >= 139.48 && loc.lng <= 139.58);
     }
 
     function checkRouteDeviation(loc) {
