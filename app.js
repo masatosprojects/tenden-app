@@ -212,8 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         opacity: f.properties.level === 'high' ? 0.85 : (f.properties.level === 'medium' ? 0.65 : 0.35)
                     })
                 });
-                const btnToggleLayers = document.getElementById('btn-toggle-layers');
-                if (btnToggleLayers && btnToggleLayers.classList.contains('active')) {
+                const chkToggle = document.getElementById('toggle-congestion');
+                if (chkToggle && chkToggle.checked) {
                     congestionLayer.addTo(map);
                 }
                 console.log('[TENDEN] congestion.geojson 読み込み完了:', data.features.length, '件');
@@ -246,6 +246,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const center = map.getCenter();
             updateTsunamiPrefecturalTile(center.lat, center.lng);
         });
+
+        // Banner Toggle Logic
+        const bannerToggle = document.getElementById('banner-toggle');
+        const bannerContent = document.getElementById('banner-content-expanded');
+        const bannerChevron = document.getElementById('banner-chevron');
+        if (bannerToggle && bannerContent) {
+            bannerToggle.addEventListener('click', () => {
+                if (bannerContent.style.display === 'none') {
+                    bannerContent.style.display = 'block';
+                    bannerChevron.style.transform = 'rotate(180deg)';
+                } else {
+                    bannerContent.style.display = 'none';
+                    bannerChevron.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
     }
 
     function handleOrientation(event) {
@@ -301,9 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         btnTestAlert.addEventListener('click', () => {
             document.getElementById('btn-test-alert').classList.add('hidden');
-            document.getElementById('btn-sos').classList.remove('hidden');
-            document.getElementById('btn-share').classList.remove('hidden');
-            document.getElementById('btn-reset-alert').classList.remove('hidden');
             
             // Clear any old route layers & active simulations
             if (routeLayerGroup) routeLayerGroup.clearLayers();
@@ -701,9 +714,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('bottom-normal-actions').classList.add('hidden');
         document.getElementById('btn-test-alert').classList.add('hidden');
-        document.getElementById('btn-sos').classList.remove('hidden');
-        document.getElementById('btn-share').classList.remove('hidden');
-        document.getElementById('btn-reset-alert').classList.remove('hidden');
         document.getElementById('evacuation-banner').classList.remove('hidden');
         document.getElementById('disaster-details').style.display = 'block';
  
@@ -779,10 +789,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Toggle UI visibility
         document.getElementById('bottom-normal-actions').classList.remove('hidden');
         document.getElementById('btn-test-alert').classList.remove('hidden');
-        document.getElementById('btn-share').classList.add('hidden');
-        document.getElementById('btn-sos').classList.add('hidden');
-        document.getElementById('btn-reset-alert').classList.add('hidden');
         document.getElementById('evacuation-banner').classList.add('hidden');
+        document.getElementById('banner-content-expanded').style.display = 'none';
+        document.getElementById('banner-chevron').style.transform = 'rotate(0deg)';
 
         // Reset visual style of banner in case deviation error triggered it
         const banner = document.getElementById('evacuation-banner');
@@ -885,16 +894,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const firstPt = routeCandidate.waypoints[0];
             const dist = L.latLng(startLoc.lat, startLoc.lng).distanceTo(L.latLng(firstPt[0], firstPt[1]));
             
-            // Smart Snap Connector:
-            // If the start location is significantly far from the first route point (e.g. > 15m),
-            // we insert a smart Manhattan L-shaped mid-point to avoid cutting through buildings diagonally.
-            // This is applied to BOTH OSRM and offline routes if the snapping distance is large.
-            if (dist > 15) {
-                const midPt = [startLoc.lat, firstPt[1]];
-                waypoints = [ [startLoc.lat, startLoc.lng], midPt, ...routeCandidate.waypoints ];
-            } else {
-                waypoints = [ [startLoc.lat, startLoc.lng], ...routeCandidate.waypoints ];
-            }
+            // Direct snap without L-shape artifact
+            waypoints = [ [startLoc.lat, startLoc.lng], ...routeCandidate.waypoints ];
             
             mainRouteLine = L.polyline(waypoints, {
                 color: routeCandidate.color || '#00bbff',
@@ -952,13 +953,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const firstPt = candidate.waypoints[0];
                 const dist = L.latLng(startLoc.lat, startLoc.lng).distanceTo(L.latLng(firstPt[0], firstPt[1]));
                 
-                // Smart Snap Connector: Manhattan L-shaped clamp
-                if (dist > 15 && !candidate.isOSRM) {
-                    const midPt = [startLoc.lat, firstPt[1]];
-                    waypoints = [ [startLoc.lat, startLoc.lng], midPt, ...candidate.waypoints ];
-                } else {
-                    waypoints = [ [startLoc.lat, startLoc.lng], ...candidate.waypoints ];
-                }
+                // Direct snap without L-shape artifact
+                waypoints = [ [startLoc.lat, startLoc.lng], ...candidate.waypoints ];
                 
                 // Highlight active main selection, thin dash other alternatives
                 const lineOpts = isSelected ? {
@@ -1500,11 +1496,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // We use a slight delay and responsive padding so it doesn't break on small screens
         setTimeout(() => {
             if (routeLayerGroup && mainRouteLine) {
-                const isMobile = window.innerWidth <= 600;
                 map.fitBounds(routeLayerGroup.getBounds(), {
-                    paddingTopLeft: isMobile ? [20, 150] : [40, 150],     // Avoid top dashboard
-                    paddingBottomRight: isMobile ? [20, 200] : [40, 220], // Avoid bottom banner
-                    maxZoom: 17,
+                    paddingTopLeft: [20, 80],     // top-status-bar height is ~52px
+                    paddingBottomRight: [20, 150], // Bottom sheet expanded
                     animate: true,
                     duration: 1.2
                 });
