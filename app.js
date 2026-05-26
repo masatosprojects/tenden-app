@@ -699,6 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.add('emergency-mode');
         }
         
+        document.getElementById('bottom-normal-actions').classList.add('hidden');
         document.getElementById('btn-test-alert').classList.add('hidden');
         document.getElementById('btn-sos').classList.remove('hidden');
         document.getElementById('btn-share').classList.remove('hidden');
@@ -776,6 +777,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.remove('emergency-mode');
 
         // Toggle UI visibility
+        document.getElementById('bottom-normal-actions').classList.remove('hidden');
         document.getElementById('btn-test-alert').classList.remove('hidden');
         document.getElementById('btn-share').classList.add('hidden');
         document.getElementById('btn-sos').classList.add('hidden');
