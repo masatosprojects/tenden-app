@@ -809,16 +809,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const routeKey = `${scenarioId}_${locationId}`;
         const candidates = routeData[routeKey] || [];
 
+        const CONG_LABELS = { low: '低', medium: '中', high: '高' };
+        const CONG_BAR = { low: '■□□ (1/3)', medium: '■■□ (2/3)', high: '■■■ (3/3)' };
+
         const container = document.getElementById('route-options-container');
         container.innerHTML = '';
 
         candidates.forEach(route => {
+            const congLabel = CONG_LABELS[route.congestion_score] || '-';
+            const congBar = CONG_BAR[route.congestion_score] || '□□□';
+            
             const btnHtml = `
                 <button class="route-option-btn" data-route-id="${route.id}"
                     style="text-align:left; padding:16px; margin-bottom:10px; border-radius:14px; border:2px solid ${route.color}40;
-                           background:${route.color}15; cursor:pointer; transition:all 0.2s; width:100%; display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:${route.color}; font-size:1.15rem; letter-spacing:0.05em;">ルート ${route.id}</strong>
-                    <span style="font-size:0.8rem; font-weight:600; opacity:0.8; color:var(--hud-text);">選択</span>
+                           background:${route.color}15; cursor:pointer; transition:all 0.2s; width:100%; display:flex; flex-direction:column; gap:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                        <strong style="color:${route.color}; font-size:1.15rem; letter-spacing:0.05em;">ルート ${route.id}</strong>
+                        <span style="font-size:0.8rem; font-weight:600; opacity:0.8; color:var(--hud-text);">選択</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; width:100%; font-size:0.8rem; color:var(--hud-text); opacity:0.9;">
+                        <span>🚶 ${route.distance_m}m (約${route.estimated_min}分)</span>
+                        <span>混雑度: <span style="color:${route.color};">${congBar}</span></span>
+                    </div>
                 </button>
             `;
             container.insertAdjacentHTML('beforeend', btnHtml);
@@ -1483,16 +1495,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Auto-fit the map to optimally display the entire evacuation route
-        // We use paddingTopLeft and paddingBottomRight to ensure the route isn't hidden behind the top dashboard or bottom banner.
-        if (routeLayerGroup) {
-            map.fitBounds(routeLayerGroup.getBounds(), {
-                paddingTopLeft: [40, 180],     // Avoid top dashboard and buttons
-                paddingBottomRight: [40, 260], // Avoid large bottom fixed banner
-                maxZoom: 18,
-                animate: true,
-                duration: 1.5
-            });
-        }
+        // We use a slight delay and responsive padding so it doesn't break on small screens
+        setTimeout(() => {
+            if (routeLayerGroup && mainRouteLine) {
+                const isMobile = window.innerWidth <= 600;
+                map.fitBounds(routeLayerGroup.getBounds(), {
+                    paddingTopLeft: isMobile ? [20, 150] : [40, 150],     // Avoid top dashboard
+                    paddingBottomRight: isMobile ? [20, 200] : [40, 220], // Avoid bottom banner
+                    maxZoom: 17,
+                    animate: true,
+                    duration: 1.2
+                });
+            }
+        }, 300);
     }
 
     function takeScreenshot() {

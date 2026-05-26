@@ -319,6 +319,20 @@ body.emergency-mode .p2p-status-bar {
     padding: 16px 20px;
 }
 
+/* Flashy Evacuation Start Button */
+.action-btn.test-alert {
+    background: linear-gradient(135deg, #ff9f0a, #ff3b30);
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
+    animation: pulse-flashy 2s infinite alternate;
+}
+
+@keyframes pulse-flashy {
+    0% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); }
+    100% { transform: scale(1.03); box-shadow: 0 8px 25px rgba(255, 59, 48, 0.7); }
+}
+
 .action-btn {
     padding: 16px 28px;
     border-radius: 30px; /* Pill shape */
@@ -916,7 +930,7 @@ body.emergency-mode .leaflet-control-attribution {
     }
     
     .hud-top-left-actions {
-        top: 110px !important;
+        top: 170px !important;
         left: 8px !important;
         gap: 8px !important;
     }
