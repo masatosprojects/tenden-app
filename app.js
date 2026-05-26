@@ -235,10 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchElevation(currentLocation);
             triggerLocationTsunamiCheck(currentLocation);
             
-            if (isWaitingForPinDrop) {
-                isWaitingForPinDrop = false;
-                triggerEmergencyMode(true, 1, 'a');
-            } else if (isEmergency) {
+            if (isEmergency) {
                 // If already in emergency mode, instantly recalculate the evacuation route
                 recalculateRouteFromLocation(currentLocation);
             }
@@ -323,9 +320,41 @@ document.addEventListener('DOMContentLoaded', () => {
             
             map.once('moveend', () => {
                 isWaitingForPinDrop = true;
-                showCustomAlert("避難開始地点を選択してください", "鎌倉エリアへ移動しました。\nマップ上の任意の場所（路地や海岸など）をタップして、シミュレーションの「避難開始位置」を決定してください。そこから最も近い避難所への経路を自動計算します。", "info");
+                
+                // Show crosshair and "Set Pin" button instead of waiting for a map tap
+                const crosshair = document.getElementById('crosshair-target');
+                if (crosshair) crosshair.classList.remove('hidden');
+                
+                const btnSetPin = document.getElementById('btn-set-pin');
+                if (btnSetPin) btnSetPin.classList.remove('hidden');
+                
+                showCustomAlert("避難開始位置を決定", "マップをドラッグして、画面中央のターゲット（照準）を避難開始位置に合わせてから、下部のボタンを押してください。", "info");
             });
         });
+
+        // Set Pin button listener for Crosshair mode
+        const btnSetPin = document.getElementById('btn-set-pin');
+        if (btnSetPin) {
+            btnSetPin.addEventListener('click', () => {
+                if (!isWaitingForPinDrop) return;
+                isWaitingForPinDrop = false;
+                
+                // Hide crosshair and button
+                document.getElementById('crosshair-target').classList.add('hidden');
+                btnSetPin.classList.add('hidden');
+                
+                // Get center of map
+                const center = map.getCenter();
+                isManualLocation = true;
+                currentLocation = { lat: center.lat, lng: center.lng };
+                updateMarker(currentLocation);
+                fetchElevation(currentLocation);
+                triggerLocationTsunamiCheck(currentLocation);
+                
+                // Start emergency mode
+                triggerEmergencyMode(true, 1, 'a');
+            });
+        }
 
         // Handle drill reset (End Drill)
         const btnResetAlert = document.getElementById('btn-reset-alert');
@@ -780,51 +809,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const routeKey = `${scenarioId}_${locationId}`;
         const candidates = routeData[routeKey] || [];
 
-        const CONG_DOTS = { low: '●○○', medium: '●●○', high: '●●●' };
-        const CONG_LABELS = { low: '低', medium: '中', high: '高' };
-        const CONG_COLORS = { low: '#00a63e', medium: '#f5a623', high: '#c0392b' };
-
         const container = document.getElementById('route-options-container');
         container.innerHTML = '';
 
         candidates.forEach(route => {
-            const congColor = CONG_COLORS[route.congestion_score] || '#888';
-            const congDots = CONG_DOTS[route.congestion_score] || '○○○';
-            const congLabel = CONG_LABELS[route.congestion_score] || '-';
-            const isElderly = route.recommended_for && (route.recommended_for.includes('elderly') || route.recommended_for.includes('child'));
-            const elderlyBadge = isElderly
-                ? `<span class="route-badge elderly-badge">♿ 高齢者・お子様向け推奨</span>`
-                : '';
-
             const btnHtml = `
                 <button class="route-option-btn" data-route-id="${route.id}"
-                    style="text-align:left; padding:13px 14px; border-radius:12px; border:2px solid ${route.color}20;
-                           background:${route.color}12; cursor:pointer; transition:all 0.2s; width:100%;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                        <strong style="color:${route.color}; font-size:0.95rem;">[${route.id}] ${route.label}</strong>
-                        <span style="font-size:0.8rem; background:var(--glass-bg); border-radius:6px; padding:2px 7px;">
-                            🚶 ${route.distance_m}m · ${route.estimated_min}分
-                        </span>
-                    </div>
-                    <div style="margin-bottom:5px;">
-                        <span style="font-size:0.82rem; color:${congColor}; font-weight:600;">
-                            ${congDots} 混雑リスク ${congLabel}
-                        </span>
-                        ${elderlyBadge}
-                    </div>
-                    <p style="font-size:0.8rem; opacity:0.8; line-height:1.4; margin:0;">${route.characteristics}</p>
+                    style="text-align:left; padding:16px; margin-bottom:10px; border-radius:14px; border:2px solid ${route.color}40;
+                           background:${route.color}15; cursor:pointer; transition:all 0.2s; width:100%; display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="color:${route.color}; font-size:1.15rem; letter-spacing:0.05em;">ルート ${route.id}</strong>
+                    <span style="font-size:0.8rem; font-weight:600; opacity:0.8; color:var(--hud-text);">選択</span>
                 </button>
             `;
             container.insertAdjacentHTML('beforeend', btnHtml);
         });
 
-        // Add fallback option
+        // Add fallback option and disclaimer
         container.insertAdjacentHTML('beforeend', `
             <button class="route-option-btn" data-route-id="fallback"
-                style="text-align:center; padding:10px; border-radius:10px; border:1px solid var(--glass-border);
-                       background:var(--glass-bg); cursor:pointer; font-size:0.82rem; opacity:0.75; width:100%;">
-                既定ルートを使用
+                style="text-align:center; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);
+                       background:rgba(255,255,255,0.05); cursor:pointer; font-size:0.95rem; font-weight:600; width:100%; margin-top:6px; color:var(--hud-text);">
+                規定のルートを使用する
             </button>
+            <div style="margin-top:16px; text-align:center; font-size:0.75rem; opacity:0.6; color:var(--hud-text); line-height:1.4;">
+                ※このルートはあくまで参考情報です。<br>実際の避難時は現場の状況（倒壊や浸水など）を優先してください。
+            </div>
         `);
 
         // Bind events
@@ -1474,9 +1483,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Auto-fit the map to optimally display the entire evacuation route
+        // We use paddingTopLeft and paddingBottomRight to ensure the route isn't hidden behind the top dashboard or bottom banner.
         if (routeLayerGroup) {
             map.fitBounds(routeLayerGroup.getBounds(), {
-                padding: [60, 60],
+                paddingTopLeft: [40, 180],     // Avoid top dashboard and buttons
+                paddingBottomRight: [40, 260], // Avoid large bottom fixed banner
                 maxZoom: 18,
                 animate: true,
                 duration: 1.5

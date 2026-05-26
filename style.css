@@ -73,6 +73,21 @@ body.emergency-mode #map {
     pointer-events: none;
 }
 
+#crosshair-target {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    pointer-events: none;
+    z-index: 20;
+    transition: opacity 0.3s ease;
+}
+#crosshair-target.hidden {
+    opacity: 0;
+}
+
 .glass-panel {
     background: var(--glass-bg);
     backdrop-filter: blur(24px) saturate(150%);
@@ -96,11 +111,7 @@ body.emergency-mode #map {
     gap: 12px;
     padding: 16px;
     border-radius: 20px;
-    background: rgba(25, 25, 30, 0.7);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    /* Removed hardcoded background, using .glass-panel vars instead */
     z-index: 100;
 }
 
@@ -115,6 +126,7 @@ body.emergency-mode #map {
     width: auto;
     object-fit: contain;
     filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+    border-radius: 8px; /* Added rounded corners for the logo */
 }
 
 .dash-clock {
@@ -135,35 +147,25 @@ body.emergency-mode #map {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.08);
-    padding: 10px 14px;
+    background: rgba(120, 120, 120, 0.1);
+    padding: 12px 16px;
     border-radius: 14px;
-}
-
-.dash-info-card .card-icon {
-    font-size: 1.4rem;
-    background: rgba(255,255,255,0.1);
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
 }
 
 .dash-info-card .card-content {
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 .dash-info-card .card-label {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    opacity: 0.7;
-    margin-bottom: 2px;
+    opacity: 0.8;
+    margin-bottom: 4px;
     color: var(--hud-text);
 }
 .dash-info-card .card-value {
-    font-size: 1.05rem;
+    font-size: 1.3rem;
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
     color: var(--hud-text);
@@ -216,6 +218,17 @@ body.emergency-mode .p2p-status-bar {
 }
 
 /* Controls - Pill Layout */
+.hud-top-left-actions {
+    position: absolute;
+    top: 104px;
+    left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: auto;
+    z-index: 50;
+}
+
 .hud-controls {
     position: absolute;
     top: 104px;
@@ -291,13 +304,19 @@ body.emergency-mode .p2p-status-bar {
 .hud-bottom {
     position: absolute;
     bottom: 24px;
-    left: 20px;
-    right: 20px;
+    left: 16px;
+    right: 16px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     pointer-events: auto;
     gap: 12px;
+    z-index: 50;
+}
+
+.emergency-banner {
+    width: 100%;
+    position: relative;
+    padding: 16px 20px;
 }
 
 .action-btn {
@@ -370,10 +389,8 @@ body.emergency-mode .primary-btn {
 
 /* Emergency Banner - Neo-Glassmorphism & Neon Glow */
 .emergency-banner {
-    position: absolute;
-    top: 130px;
-    right: 90px; /* Push to the right, avoiding controls */
-    width: 320px;
+    position: relative;
+    width: 100%;
     padding: 18px 24px;
     text-align: left;
     border-left: 5px solid var(--primary);
@@ -873,20 +890,13 @@ body.emergency-mode .leaflet-control-attribution {
     }
     
     .dash-info-card {
-        padding: 6px 8px !important;
+        padding: 8px 12px !important;
         gap: 6px !important;
         border-radius: 10px !important;
     }
     
-    .dash-info-card .card-icon {
-        width: 28px !important;
-        height: 28px !important;
-        font-size: 1.1rem !important;
-        border-radius: 8px !important;
-    }
-    
     .dash-info-card .card-value {
-        font-size: 0.9rem !important;
+        font-size: 1.1rem !important;
     }
     
     .hud-controls {
@@ -905,10 +915,16 @@ body.emergency-mode .leaflet-control-attribution {
         height: 18px !important;
     }
     
+    .hud-top-left-actions {
+        top: 110px !important;
+        left: 8px !important;
+        gap: 8px !important;
+    }
+    
     .hud-bottom {
-        bottom: 16px !important;
-        left: 12px !important;
-        right: 12px !important;
+        bottom: 12px !important;
+        left: 8px !important;
+        right: 8px !important;
         gap: 8px !important;
     }
     
@@ -918,11 +934,9 @@ body.emergency-mode .leaflet-control-attribution {
     }
     
     .emergency-banner {
-        top: 140px !important; /* Below the dashboard */
-        right: 8px !important;
-        left: auto !important;
-        width: 300px !important;
-        padding: 12px 16px !important;
+        width: 100% !important;
+        padding: 12px 14px !important;
+        border-radius: 16px !important;
     }
     
     .banner-content strong {

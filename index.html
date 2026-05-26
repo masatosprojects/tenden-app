@@ -51,14 +51,12 @@
             <!-- Bottom Row: Inundation & Elevation Cards -->
             <div class="dashboard-bottom">
                 <div class="dash-info-card" id="tsunami-status-box">
-                    <div class="card-icon">🌊</div>
                     <div class="card-content">
                         <span class="card-label">GPS浸水区域</span>
                         <strong class="card-value" id="tsunami-status-text">判定中...</strong>
                     </div>
                 </div>
                 <div class="dash-info-card">
-                    <div class="card-icon">🏔️</div>
                     <div class="card-content">
                         <span class="card-label" id="i18n-elevation-label" data-i18n="elevationLabel">現在地の海抜</span>
                         <strong class="card-value"><span id="elevation-m">--</span> m</strong>
@@ -66,6 +64,18 @@
                 </div>
             </div>
         </header>
+
+        <!-- Crosshair for Pin Drop (Hidden by default) -->
+        <div id="crosshair-target" class="hidden">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="40" stroke="var(--primary)" stroke-width="4" fill="none" opacity="0.8"/>
+                <circle cx="50" cy="50" r="4" fill="var(--danger)"/>
+                <line x1="50" y1="0" x2="50" y2="30" stroke="var(--primary)" stroke-width="4"/>
+                <line x1="50" y1="100" x2="50" y2="70" stroke="var(--primary)" stroke-width="4"/>
+                <line x1="0" y1="50" x2="30" y2="50" stroke="var(--primary)" stroke-width="4"/>
+                <line x1="100" y1="50" x2="70" y2="50" stroke="var(--primary)" stroke-width="4"/>
+            </svg>
+        </div>
 
         <!-- Controls HUD -->
         <div class="hud-controls">
@@ -91,30 +101,35 @@
             </button>
         </div>
 
-        <!-- Emergency & SOS Controls -->
-        <div class="hud-bottom">
-            <button id="btn-test-alert" class="action-btn warning-btn" data-i18n="testAlert">🚶 鎌倉で避難体験</button>
-            <button id="btn-share" class="action-btn primary-btn hidden" style="margin-right: 12px;" data-i18n="shareBtn">安否共有</button>
-            <button id="btn-reset-alert" class="action-btn secondary-btn hidden" style="margin-right: 12px;" data-i18n="resetAlert">訓練終了</button>
+        <!-- Top-Left Actions (SOS, Share, Reset) -->
+        <div class="hud-top-left-actions">
+            <button id="btn-share" class="action-btn primary-btn hidden" data-i18n="shareBtn">安否共有</button>
+            <button id="btn-reset-alert" class="action-btn secondary-btn hidden" data-i18n="resetAlert">訓練終了</button>
             <button id="btn-sos" class="action-btn sos-btn hidden">SOS</button>
         </div>
-        
-        <!-- Instruction Banner for Evacuation -->
-        <div id="evacuation-banner" class="hidden glass-panel emergency-banner">
-            <div class="banner-header" id="banner-toggle" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px;">
-                <div style="font-size: 0.75rem; color: #ff9f0a; font-weight: bold;">⚠️ これは避難訓練シミュレーションです</div>
-                <svg id="banner-chevron" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="18 15 12 9 6 15"></polyline></svg>
-            </div>
-            <div class="banner-content" id="banner-content-body">
-                <strong id="i18n-evac-title" data-i18n="evacTitle">避難指示発令中</strong>
-                <p id="i18n-evac-desc" data-i18n="evacDesc">青いルートに沿って高台へ避難してください</p>
-                <div class="disaster-details" id="disaster-details" style="display: none; margin-top: 6px; font-size: 0.8rem; color: #ff9f0a; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 6px;">
-                    <span data-i18n="estTime">予想到達時間:</span> <strong>15:30</strong> | 
-                    <span data-i18n="estHeight">予想高:</span> <strong>10m</strong>
+
+        <!-- Bottom Fixed Area (Evac Test, Set Pin, Banner) -->
+        <div class="hud-bottom">
+            <button class="action-btn test-alert" id="btn-test-alert">鎌倉で避難体験</button>
+            <button class="action-btn test-alert hidden" id="btn-set-pin" style="background: var(--primary); color: white; width: 100%;">ここにピンを打つ (避難開始)</button>
+            
+            <!-- Instruction Banner for Evacuation (Fixed Bottom) -->
+            <div id="evacuation-banner" class="hidden glass-panel emergency-banner">
+                <div class="banner-header" id="banner-toggle" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px;">
+                    <div style="font-size: 0.75rem; color: #ff9f0a; font-weight: bold;">⚠️ これは避難訓練シミュレーションです</div>
+                    <svg id="banner-chevron" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="18 15 12 9 6 15"></polyline></svg>
                 </div>
-                <button id="btn-change-route" class="primary-btn" style="margin-top: 10px; padding: 6px 14px; font-size: 0.75rem; border-radius: 12px; display: inline-block;">
-                    🔄 避難ルート変更
-                </button>
+                <div class="banner-content" id="banner-content-body">
+                    <strong id="i18n-evac-title" data-i18n="evacTitle">避難指示発令中</strong>
+                    <p id="i18n-evac-desc" data-i18n="evacDesc">青いルートに沿って高台へ避難してください</p>
+                    <div class="disaster-details" id="disaster-details" style="display: none; margin-top: 6px; font-size: 0.8rem; color: #ff9f0a; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 6px;">
+                        <span data-i18n="estTime">予想到達時間:</span> <strong>15:30</strong> | 
+                        <span data-i18n="estHeight">予想高:</span> <strong>10m</strong>
+                    </div>
+                    <button id="btn-change-route" class="primary-btn" style="margin-top: 10px; padding: 10px 14px; font-size: 0.85rem; font-weight: bold; border-radius: 12px; width: 100%; display: inline-block;">
+                        ルート変更
+                    </button>
+                </div>
             </div>
         </div>
     </div>
