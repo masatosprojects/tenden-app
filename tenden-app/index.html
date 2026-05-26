@@ -32,34 +32,36 @@
     <!-- UI Overlay Layer -->
     <div id="ui-layer" class="mode-normal">
         
-        <!-- Header HUD -->
-        <header class="hud-header glass-panel">
-            <div class="hud-top-row">
-                <div class="hud-left">
-                    <img src="assets/icons/hud-logo.png" alt="TENDEN Logo" class="hud-logo">
-                    <div class="hud-clock">
-                        <span id="current-time" class="clock-time">--:--</span>
-                        <span id="current-date" class="clock-date"></span>
-                    </div>
+        <!-- Dashboard HUD -->
+        <header class="tenden-dashboard glass-panel">
+            <!-- Top Row: Logo, Status, Clock -->
+            <div class="dashboard-top">
+                <div class="dash-logo">
+                    <img src="assets/icons/hud-logo.png" alt="TENDEN Logo">
                 </div>
-                <div class="hud-center">
-                    <div id="p2p-status-bar" class="p2p-status-bar">
-                        <span id="p2p-dot" class="p2p-dot p2p-connecting"></span>
-                        <span id="p2p-label">警報待機中...</span>
-                    </div>
+                <div class="dash-alert-status p2p-status-bar" id="p2p-status-bar">
+                    <span id="p2p-dot" class="p2p-dot p2p-connecting"></span>
+                    <span id="p2p-label" class="status-text">警報待機中...</span>
+                </div>
+                <div class="dash-clock">
+                    <span id="current-time">--:--</span>
+                    <!-- You can add date here if needed: <span id="current-date" class="clock-date" style="display:none;"></span> -->
                 </div>
             </div>
-            <div class="hud-bottom-row">
-                <div class="hud-right">
-                    <div id="tsunami-status-box" class="tsunami-status-box hidden">
-                        <div class="tsunami-status-inner">
-                            <span class="tsunami-status-sublabel">現在地（GPS）浸水区域</span>
-                            <span id="tsunami-status-text">判定中...</span>
-                        </div>
+            <!-- Bottom Row: Inundation & Elevation Cards -->
+            <div class="dashboard-bottom">
+                <div class="dash-info-card" id="tsunami-status-box">
+                    <div class="card-icon">🌊</div>
+                    <div class="card-content">
+                        <span class="card-label">GPS浸水区域</span>
+                        <strong class="card-value" id="tsunami-status-text">判定中...</strong>
                     </div>
-                    <div class="elevation-box">
-                        <span class="elevation-label" id="i18n-elevation-label" data-i18n="elevationLabel">現在地の海抜</span>
-                        <span class="elevation-value"><span id="elevation-m">--</span> m</span>
+                </div>
+                <div class="dash-info-card">
+                    <div class="card-icon">🏔️</div>
+                    <div class="card-content">
+                        <span class="card-label" id="i18n-elevation-label" data-i18n="elevationLabel">現在地の海抜</span>
+                        <strong class="card-value"><span id="elevation-m">--</span> m</strong>
                     </div>
                 </div>
             </div>
