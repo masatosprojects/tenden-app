@@ -99,8 +99,11 @@
         
         <!-- Instruction Banner for Evacuation -->
         <div id="evacuation-banner" class="hidden glass-panel emergency-banner">
-            <div class="banner-content">
-                <div style="font-size: 0.75rem; color: #ff9f0a; font-weight: bold; margin-bottom: 4px;">⚠️ これは避難訓練シミュレーションです</div>
+            <div class="banner-header" id="banner-toggle" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px;">
+                <div style="font-size: 0.75rem; color: #ff9f0a; font-weight: bold;">⚠️ これは避難訓練シミュレーションです</div>
+                <svg id="banner-chevron" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            </div>
+            <div class="banner-content" id="banner-content-body">
                 <strong id="i18n-evac-title" data-i18n="evacTitle">避難指示発令中</strong>
                 <p id="i18n-evac-desc" data-i18n="evacDesc">青いルートに沿って高台へ避難してください</p>
                 <div class="disaster-details" id="disaster-details" style="display: none; margin-top: 6px; font-size: 0.8rem; color: #ff9f0a; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 6px;">
