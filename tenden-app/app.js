@@ -1148,7 +1148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function selectEvacuationRoute(routeId) {
+    async function selectEvacuationRoute(routeId) {
         if (!currentLocation) return;
         
         // Stop current evacuation simulation interval
@@ -1157,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', () => {
             simulationInterval = null;
         }
 
-        const targetEdge = findNearestSafeEdge(currentLocation);
+        const targetEdge = await findNearestSafeEdge(currentLocation);
         
         activeSelectedRouteId = routeId;
         
@@ -1415,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
             simulationInterval = null;
         }
 
-        const targetEdge = findNearestSafeEdge(loc);
+        const targetEdge = await findNearestSafeEdge(loc);
         const bestShelter = findBestShelter(loc); // We keep this to show the best shelter if we want, but our main destination is targetEdge.
         
         if (!targetEdge) {
@@ -1724,20 +1724,45 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.round(maxSlope * 10) / 10;
     }
 
-    function findNearestSafeEdge(loc) {
-        let nearest = null;
-        let minDist = Infinity;
+    async function findNearestSafeEdge(loc) {
         const startLatLng = L.latLng(loc.lat, loc.lng);
         
-        safeEdgesData.forEach(e => {
-            const dist = startLatLng.distanceTo(L.latLng(e.lat, e.lng));
-            if (dist < minDist) {
-                minDist = dist;
-                nearest = e;
+        // 1. Sort all safe edges by distance
+        const sortedEdges = [...safeEdgesData]
+            .map(e => ({
+                edge: e,
+                dist: startLatLng.distanceTo(L.latLng(e.lat, e.lng))
+            }))
+            .sort((a, b) => a.dist - b.dist);
+
+        if (sortedEdges.length === 0) return null;
+
+        // 2. Take the top 15 closest safe edges to filter
+        const candidates = sortedEdges.slice(0, 15).map(x => x.edge);
+
+        // 3. Query elevations in a single batch request
+        try {
+            const elevations = await getElevationsForWaypoints(candidates);
+            
+            // 4. Return the closest candidate that has an elevation of > 5.0m (clearly safe high ground/land)
+            for (let i = 0; i < candidates.length; i++) {
+                const elev = elevations[i];
+                const cand = candidates[i];
+                if (elev !== null && elev > 5.0) {
+                    console.log(`[SafeEdge] 標高フィルタ採用: ${cand.name || cand.id} (距離: ${Math.round(sortedEdges[i].dist)}m, 標高: ${elev}m)`);
+                    return cand;
+                } else if (elev !== null) {
+                    console.warn(`[SafeEdge] 境界候補除外（標高低すぎ/海・川・海岸の疑い）: ${cand.name || cand.id} (標高: ${elev}m)`);
+                }
             }
-        });
-        
-        return nearest;
+        } catch (err) {
+            console.error('[SafeEdge] 標高判定エラー、距離のみで決定します:', err);
+        }
+
+        // Fallback: Return the absolute closest candidate if none are > 5m or API fails
+        const fallbackCand = sortedEdges[0].edge;
+        console.log(`[SafeEdge] 安全な高台候補が見つからないため、最寄りをフォールバック採用します: ${fallbackCand.name || fallbackCand.id}`);
+        return fallbackCand;
     }
 
     function findSheltersAlongRoute(waypoints) {
