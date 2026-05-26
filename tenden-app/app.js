@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let map, userMarker, routeLayerGroup, hazardLayer, sheltersLayerGroup, congestionLayer;
     let currentLocation = null; // {lat, lng}
     let isManualLocation = false;
+    let isWaitingForPinDrop = false;
     let simulationInterval = null;
     let mainRouteLine = null;
     let activeScenarioId = 1;
@@ -234,8 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchElevation(currentLocation);
             triggerLocationTsunamiCheck(currentLocation);
             
-            // If already in emergency mode, instantly recalculate the evacuation route
-            if (isEmergency) {
+            if (isWaitingForPinDrop) {
+                isWaitingForPinDrop = false;
+                triggerEmergencyMode(true, 1, 'a');
+            } else if (isEmergency) {
+                // If already in emergency mode, instantly recalculate the evacuation route
                 recalculateRouteFromLocation(currentLocation);
             }
         });
@@ -299,26 +303,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         btnTestAlert.addEventListener('click', () => {
-            // Instantly transition to Emergency Mode (Tsunami Evacuation)
-            isEmergency = true;
-            activeScenarioId = 1;
-            activeLocationId = 'a';
-            
             document.getElementById('btn-test-alert').classList.add('hidden');
             document.getElementById('btn-sos').classList.remove('hidden');
             document.getElementById('btn-share').classList.remove('hidden');
             document.getElementById('btn-reset-alert').classList.remove('hidden');
-            
-            // Show the evacuation banner with custom instructions
-            const banner = document.getElementById('evacuation-banner');
-            banner.classList.remove('hidden');
-            
-            document.getElementById('i18n-evac-title').innerText = "避難指示（大津波警報）";
-            document.getElementById('i18n-evac-desc').innerText = "【ピン打ち待機中】地図上をタップして避難開始位置を設定してください。最寄りの避難所へ誘導します。";
-            
-            const detailsEl = document.getElementById('disaster-details');
-            detailsEl.style.display = 'block';
-            detailsEl.innerHTML = `<span>予想到達時間:</span> <strong>15分</strong> | <span>予想高:</span> <strong>10m</strong>`;
             
             // Clear any old route layers & active simulations
             if (routeLayerGroup) routeLayerGroup.clearLayers();
@@ -327,7 +315,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 simulationInterval = null;
             }
             
-            showCustomAlert("避難開始地点を選択してください", "「発災避難モード」になりました。\n\n地図上の任意の場所（路地や海岸など）をタップしてピンを打ってください。そこから最も近い避難所への経路を自動計算し、シミュレーションを開始します！", "info");
+            // Fly to Kamakura first
+            map.flyTo(KAMAKURA_CENTER, 15, {
+                duration: 1.5,
+                easeLinearity: 0.25
+            });
+            
+            map.once('moveend', () => {
+                isWaitingForPinDrop = true;
+                showCustomAlert("避難開始地点を選択してください", "鎌倉エリアへ移動しました。\nマップ上の任意の場所（路地や海岸など）をタップして、シミュレーションの「避難開始位置」を決定してください。そこから最も近い避難所への経路を自動計算します。", "info");
+            });
         });
 
         // Handle drill reset (End Drill)
@@ -358,20 +355,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Default layers state to active
-        btnToggleLayers.classList.add('active');
-        if (hazardLayer) hazardLayer.addTo(map);      // official tsunami inundation tiles
+        if (hazardLayer) hazardLayer.addTo(map);
         if (sheltersLayerGroup) sheltersLayerGroup.addTo(map);
 
         btnToggleLayers.addEventListener('click', () => {
-            btnToggleLayers.classList.toggle('active');
-            const isActive = btnToggleLayers.classList.contains('active');
-            if (isActive) {
-                if (hazardLayer) hazardLayer.addTo(map);
+            const overlay = document.getElementById('layers-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.add('active'), 10);
+        });
+
+        // Layer Dialog Listeners
+        document.getElementById('btn-layers-close').addEventListener('click', () => {
+            const overlay = document.getElementById('layers-overlay');
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        });
+
+        document.getElementById('toggle-shelters').addEventListener('change', (e) => {
+            if (e.target.checked) {
                 if (sheltersLayerGroup) sheltersLayerGroup.addTo(map);
-                if (congestionLayer) congestionLayer.addTo(map);
+            } else {
+                if (sheltersLayerGroup) map.removeLayer(sheltersLayerGroup);
+            }
+        });
+
+        document.getElementById('toggle-hazard').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                if (hazardLayer) hazardLayer.addTo(map);
             } else {
                 if (hazardLayer) map.removeLayer(hazardLayer);
-                if (sheltersLayerGroup) map.removeLayer(sheltersLayerGroup);
+            }
+        });
+
+        document.getElementById('toggle-congestion').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                if (congestionLayer) congestionLayer.addTo(map);
+            } else {
                 if (congestionLayer) map.removeLayer(congestionLayer);
             }
         });
@@ -628,6 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function triggerEmergencyMode(isTest = false, scenarioId = 1, locationId = 'a') {
         isEmergency = true;
+        isWaitingForPinDrop = false;
         activeScenarioId = scenarioId;
         activeLocationId = locationId;
         if (!isTest) {

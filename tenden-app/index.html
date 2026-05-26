@@ -34,32 +34,33 @@
         
         <!-- Header HUD -->
         <header class="hud-header glass-panel">
-            <!-- 左：ロゴ + 時刻 -->
-            <div class="hud-left">
-                <img src="assets/icons/hud-logo.png" alt="TENDEN Logo" class="hud-logo">
-                <div class="hud-clock">
-                    <span id="current-time" class="clock-time">--:--</span>
-                    <span id="current-date" class="clock-date"></span>
-                </div>
-            </div>
-            <!-- 中央：P2P 津波警報 受信状態 -->
-            <div class="hud-center">
-                <div id="p2p-status-bar" class="p2p-status-bar">
-                    <span id="p2p-dot" class="p2p-dot p2p-connecting"></span>
-                    <span id="p2p-label">警報待機中...</span>
-                </div>
-            </div>
-            <!-- 右：浸水区域判定 + 海抜 -->
-            <div class="hud-right">
-                <div id="tsunami-status-box" class="tsunami-status-box hidden">
-                    <div class="tsunami-status-inner">
-                        <span class="tsunami-status-sublabel">現在地（GPS）浸水区域</span>
-                        <span id="tsunami-status-text">判定中...</span>
+            <div class="hud-top-row">
+                <div class="hud-left">
+                    <img src="assets/icons/hud-logo.png" alt="TENDEN Logo" class="hud-logo">
+                    <div class="hud-clock">
+                        <span id="current-time" class="clock-time">--:--</span>
+                        <span id="current-date" class="clock-date"></span>
                     </div>
                 </div>
-                <div class="elevation-box">
-                    <span class="elevation-label" id="i18n-elevation-label" data-i18n="elevationLabel">現在地の海抜</span>
-                    <span class="elevation-value"><span id="elevation-m">--</span> m</span>
+                <div class="hud-center">
+                    <div id="p2p-status-bar" class="p2p-status-bar">
+                        <span id="p2p-dot" class="p2p-dot p2p-connecting"></span>
+                        <span id="p2p-label">警報待機中...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hud-bottom-row">
+                <div class="hud-right">
+                    <div id="tsunami-status-box" class="tsunami-status-box hidden">
+                        <div class="tsunami-status-inner">
+                            <span class="tsunami-status-sublabel">現在地（GPS）浸水区域</span>
+                            <span id="tsunami-status-text">判定中...</span>
+                        </div>
+                    </div>
+                    <div class="elevation-box">
+                        <span class="elevation-label" id="i18n-elevation-label" data-i18n="elevationLabel">現在地の海抜</span>
+                        <span class="elevation-value"><span id="elevation-m">--</span> m</span>
+                    </div>
                 </div>
             </div>
         </header>
@@ -99,6 +100,7 @@
         <!-- Instruction Banner for Evacuation -->
         <div id="evacuation-banner" class="hidden glass-panel emergency-banner">
             <div class="banner-content">
+                <div style="font-size: 0.75rem; color: #ff9f0a; font-weight: bold; margin-bottom: 4px;">⚠️ これは避難訓練シミュレーションです</div>
                 <strong id="i18n-evac-title" data-i18n="evacTitle">避難指示発令中</strong>
                 <p id="i18n-evac-desc" data-i18n="evacDesc">青いルートに沿って高台へ避難してください</p>
                 <div class="disaster-details" id="disaster-details" style="display: none; margin-top: 6px; font-size: 0.8rem; color: #ff9f0a; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 6px;">
@@ -167,6 +169,31 @@
             <div style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8;" data-i18n="dataLabel">データ管理</label>
                 <button id="btn-clear-cache" class="action-btn warning-btn" style="width: 100%; font-size: 0.9rem;" data-i18n="clearCacheBtn">オフラインデータを削除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layers Dialog -->
+    <div id="layers-overlay" class="overlay hidden">
+        <div class="dialog glass-panel" style="text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 1.2rem;">レイヤー設定</h2>
+                <button id="btn-layers-close" style="background: none; border: none; color: inherit; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-size: 0.95rem;">避難所ピン</label>
+                <input type="checkbox" id="toggle-shelters" checked style="width: 20px; height: 20px;">
+            </div>
+
+            <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-size: 0.95rem;">津波浸水想定区域</label>
+                <input type="checkbox" id="toggle-hazard" checked style="width: 20px; height: 20px;">
+            </div>
+            
+            <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-size: 0.95rem;">混雑予測（ヒートマップ）</label>
+                <input type="checkbox" id="toggle-congestion" style="width: 20px; height: 20px;">
             </div>
         </div>
     </div>
