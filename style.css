@@ -85,44 +85,92 @@ body.emergency-mode #map {
     transition: background 0.6s ease, color 0.6s ease, border 0.6s ease, box-shadow 0.6s ease, transform 0.4s var(--spring-easing);
 }
 
-/* Header HUD */
-.hud-header {
+/* Dashboard HUD */
+.tenden-dashboard {
     position: absolute;
-    top: 24px;
-    left: 20px;
-    right: 20px;
+    top: 16px;
+    left: 16px;
+    right: 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 12px 20px;
-    border-radius: 24px;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 20px;
+    background: rgba(25, 25, 30, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    z-index: 100;
 }
 
-.hud-top-row, .hud-bottom-row {
+.dashboard-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
 }
 
-.hud-left {
+.dash-logo img {
+    height: 28px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
+}
+
+.dash-clock {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--hud-text);
+}
+
+.dashboard-bottom {
     display: flex;
-    align-items: center;
     gap: 12px;
 }
 
-.hud-center {
+.dash-info-card {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 10px 14px;
+    border-radius: 14px;
+}
+
+.dash-info-card .card-icon {
+    font-size: 1.4rem;
+    background: rgba(255,255,255,0.1);
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 1;
-    padding: 0 8px;
+    border-radius: 10px;
 }
 
-.hud-right {
+.dash-info-card .card-content {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+}
+.dash-info-card .card-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.7;
+    margin-bottom: 2px;
+    color: var(--hud-text);
+}
+.dash-info-card .card-value {
+    font-size: 1.05rem;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    color: var(--hud-text);
+}
+
+body.emergency-mode .dash-info-card {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 /* P2P 警報受信状態インジケーター */
@@ -130,11 +178,11 @@ body.emergency-mode #map {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 11px;
-    border-radius: 14px;
+    padding: 6px 14px;
+    border-radius: 30px;
     border: 1px solid var(--glass-border);
     background: rgba(0,0,0,0.06);
-    font-size: 0.72rem;
+    font-size: 0.85rem;
     font-weight: 600;
     letter-spacing: 0.02em;
     color: var(--hud-text);
@@ -151,8 +199,8 @@ body.emergency-mode .p2p-status-bar {
 }
 
 .p2p-dot {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
     transition: background 0.4s ease;
@@ -165,82 +213,6 @@ body.emergency-mode .p2p-status-bar {
 @keyframes p2p-pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50%       { opacity: 0.35; transform: scale(0.75); }
-}
-
-.hud-logo {
-    height: 44px;
-    width: auto;
-    object-fit: contain;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transition: transform 0.4s var(--spring-easing);
-}
-
-.hud-logo:hover {
-    transform: scale(1.15) rotate(-2deg);
-}
-
-/* リアルタイム時計 */
-.hud-clock {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-}
-
-.clock-time {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.15rem;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    line-height: 1;
-    color: var(--hud-text);
-}
-
-.clock-date {
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.68rem;
-    font-weight: 500;
-    opacity: 0.6;
-    letter-spacing: 0.3px;
-    line-height: 1;
-}
-
-/* 後方互換 */
-#current-date {
-    font-size: 0.68rem;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    opacity: 0.6;
-    letter-spacing: 0.3px;
-}
-
-.elevation-box {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.elevation-label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    opacity: 0.6;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.elevation-value {
-    font-size: 1.6rem;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, var(--hud-text), rgba(120,120,120,0.8));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-body.emergency-mode .elevation-value {
-    background: linear-gradient(135deg, #ffffff, rgba(255,255,255,0.6));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
 }
 
 /* Controls - Pill Layout */
@@ -838,30 +810,6 @@ body.emergency-mode .leaflet-control-attribution {
 /* ==========================================================================
    Tsunami Inundation Status Badge (津波浸水想定ステータスバッジ)
    ========================================================================== */
-.tsunami-status-box {
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 11px;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    color: #ffffff;
-    opacity: 1;
-    transform: scale(1);
-}
-
-.tsunami-status-box.hidden {
-    opacity: 0;
-    transform: scale(0.9);
-    pointer-events: none;
-    display: none !important;
-}
 
 /* 浸水想定区域 内 (危険状態) */
 .tsunami-status-danger {
@@ -876,23 +824,6 @@ body.emergency-mode .leaflet-control-attribution {
     background: linear-gradient(135deg, rgba(39, 174, 96, 0.45), rgba(26, 188, 156, 0.55)) !important;
     border-color: rgba(39, 174, 96, 0.45) !important;
     box-shadow: 0 4px 12px rgba(39, 174, 96, 0.15) !important;
-}
-
-/* バッジ内部レイアウト：サブラベル + メインテキスト */
-.tsunami-status-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-}
-
-.tsunami-status-sublabel {
-    font-size: 0.58rem;
-    font-weight: 500;
-    opacity: 0.7;
-    letter-spacing: 0.04em;
-    line-height: 1;
-    text-transform: none;
 }
 
 @keyframes danger-pulse {
@@ -915,30 +846,52 @@ body.emergency-mode .leaflet-control-attribution {
         padding: 16px 14px 28px !important;
     }
     
-    .hud-header {
-        top: 16px !important;
-        left: 12px !important;
-        right: 12px !important;
-        padding: 8px 10px !important;
+    .tenden-dashboard {
+        top: 8px !important;
+        left: 8px !important;
+        right: 8px !important;
+        padding: 10px !important;
+        gap: 8px !important;
     }
     
-    .hud-logo {
+    .dashboard-top {
+        flex-wrap: wrap; /* allow wrapping if needed */
+        gap: 6px;
+    }
+
+    .dash-logo img {
+        height: 24px !important;
+    }
+    
+    .dash-clock {
+        font-size: 1.1rem !important;
+    }
+    
+    .p2p-status-bar {
+        padding: 4px 10px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .dash-info-card {
+        padding: 6px 8px !important;
+        gap: 6px !important;
+        border-radius: 10px !important;
+    }
+    
+    .dash-info-card .card-icon {
+        width: 28px !important;
         height: 28px !important;
+        font-size: 1.1rem !important;
+        border-radius: 8px !important;
     }
     
-    .tsunami-status-box {
-        padding: 4px 8px !important;
-        font-size: 0.65rem !important;
-        border-radius: 12px !important;
-    }
-    
-    .elevation-value {
-        font-size: 1.3rem !important;
+    .dash-info-card .card-value {
+        font-size: 0.9rem !important;
     }
     
     .hud-controls {
-        top: 154px !important;
-        right: 12px !important;
+        top: 170px !important;
+        right: 8px !important;
         gap: 8px !important;
     }
     
@@ -965,8 +918,8 @@ body.emergency-mode .leaflet-control-attribution {
     }
     
     .emergency-banner {
-        top: 110px !important;
-        right: 12px !important;
+        top: 140px !important; /* Below the dashboard */
+        right: 8px !important;
         left: auto !important;
         width: 300px !important;
         padding: 12px 16px !important;

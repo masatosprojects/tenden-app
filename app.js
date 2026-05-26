@@ -1757,7 +1757,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!box || !textSpan) return;
         
         box.classList.remove('hidden');
-        box.className = 'tsunami-status-box'; // クラスの初期化
+        box.className = 'dash-info-card'; // クラスの初期化
         
         // 画面幅がスマホかどうか（レスポンシブな表記の微調整）
         const isMobile = window.innerWidth <= 600;
