@@ -112,6 +112,12 @@ body.emergency-mode #map {
     padding: 0 8px;
 }
 
+.hud-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 /* P2P 警報受信状態インジケーター */
 .p2p-status-bar {
     display: inline-flex;
@@ -157,8 +163,8 @@ body.emergency-mode .p2p-status-bar {
 .hud-logo {
     height: 44px;
     width: auto;
-    object-fit: cover;
-    border-radius: 12px;
+    object-fit: contain;
+    border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     transition: transform 0.4s var(--spring-easing);
 }
@@ -386,7 +392,7 @@ body.emergency-mode .primary-btn {
 /* Emergency Banner - Neo-Glassmorphism & Neon Glow */
 .emergency-banner {
     position: absolute;
-    bottom: 96px;
+    top: 104px;
     left: 20px;
     right: 20px;
     max-width: 500px;
@@ -926,7 +932,7 @@ body.emergency-mode .leaflet-control-attribution {
     }
     
     .hud-controls {
-        top: 82px !important;
+        top: 154px !important;
         right: 12px !important;
         gap: 8px !important;
     }
@@ -954,7 +960,8 @@ body.emergency-mode .leaflet-control-attribution {
     }
     
     .emergency-banner {
-        bottom: 80px !important;
+        top: 80px !important;
+        bottom: auto !important;
         left: 12px !important;
         right: 12px !important;
         padding: 12px 16px !important;

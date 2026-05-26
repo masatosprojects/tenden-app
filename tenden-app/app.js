@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isEmergency = false;
     let map, userMarker, routeLayerGroup, hazardLayer, sheltersLayerGroup, congestionLayer;
     let currentLocation = null; // {lat, lng}
+    let isManualLocation = false;
     let simulationInterval = null;
     let mainRouteLine = null;
     let activeScenarioId = 1;
@@ -227,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Map Click Listener to set custom starting point
         map.on('click', (e) => {
+            isManualLocation = true;
             currentLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
             updateMarker(currentLocation);
             fetchElevation(currentLocation);
@@ -282,6 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.classList.remove('active');
             setTimeout(() => overlay.classList.add('hidden'), 300);
             
+            isManualLocation = true;
             currentLocation = { lat: map.getCenter().lat, lng: map.getCenter().lng };
             updateMarker(currentLocation);
             fetchElevation(currentLocation);
@@ -300,7 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
             isEmergency = true;
             activeScenarioId = 1;
             activeLocationId = 'a';
-            document.body.classList.add('emergency-mode');
             
             document.getElementById('btn-test-alert').classList.add('hidden');
             document.getElementById('btn-sos').classList.remove('hidden');
@@ -480,15 +482,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Track location changes
                     navigator.geolocation.watchPosition(pos => {
-                        currentLocation = {
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude
-                        };
-                        updateMarker(currentLocation);
-                        triggerLocationTsunamiCheck(currentLocation);
+                        if (!isManualLocation) {
+                            currentLocation = {
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude
+                            };
+                            updateMarker(currentLocation);
+                            triggerLocationTsunamiCheck(currentLocation);
+                        }
                         
                         if (isEmergency && !simulationInterval) {
-                            checkRouteDeviation(currentLocation);
+                            checkRouteDeviation({lat: pos.coords.latitude, lng: pos.coords.longitude});
                         }
                     });
                 },
@@ -626,7 +630,9 @@ document.addEventListener('DOMContentLoaded', () => {
         isEmergency = true;
         activeScenarioId = scenarioId;
         activeLocationId = locationId;
-        document.body.classList.add('emergency-mode');
+        if (!isTest) {
+            document.body.classList.add('emergency-mode');
+        }
         
         document.getElementById('btn-test-alert').classList.add('hidden');
         document.getElementById('btn-sos').classList.remove('hidden');
@@ -651,6 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isTest) {
             // Keep user's custom location if it is within the Kamakura model area, otherwise fallback to scenario start
             if (!isInModelArea(currentLocation)) {
+                isManualLocation = true;
                 currentLocation = { lat: scLoc.start.lat, lng: scLoc.start.lng };
             }
             map.setView([currentLocation.lat, currentLocation.lng], 16);
