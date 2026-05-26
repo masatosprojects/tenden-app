@@ -2317,6 +2317,13 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function isNearCoastOrWater(lat, lng) {
         if (!window.turf) return false;
+        
+        // Strictly exclude anything outside Kamakura municipal limits (East of 139.563 in Zushi / Kotsubo, or South of 35.295)
+        if (lng > 139.563 || lat < 35.295) {
+            console.log(`[SafeEdge] City Limits Filter: Excluded point outside Kamakura city boundaries: ${lat}, ${lng}`);
+            return true;
+        }
+        
         const pt = turf.point([lng, lat]);
         
         // Coastline coordinates from West to East (covers Kamakura entire coast and Kotsubo peninsula)
@@ -2414,8 +2421,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function computeSafeEdgesFromRasterScan(prefCode = '14') {
         console.log('[SafeEdge] 津波浸水区域の境界スキャンを開始します...');
         
-        // Kamakura bounding box (slightly generous)
-        const bbox = { latMin: 35.27, latMax: 35.37, lngMin: 139.47, lngMax: 139.60 };
+        // Kamakura bounding box (strictly within Kamakura municipal limits, avoiding Zushi/Kotsubo in the east)
+        const bbox = { latMin: 35.27, latMax: 35.37, lngMin: 139.47, lngMax: 139.563 };
         const zoom = 14; // ~10m per pixel — high resolution
         const pow2 = Math.pow(2, zoom);
 
