@@ -2324,6 +2324,40 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         }
         
+        // [CRITICAL] Mathematical Ocean Exclusion:
+        // Coastline coordinates from West to East in Kamakura city limits
+        const coastPts = [
+            { lng: 139.460, lat: 35.310 }, // Far West border
+            { lng: 139.470, lat: 35.309 }, // West border
+            { lng: 139.485, lat: 35.307 }, // Koshigoe
+            { lng: 139.500, lat: 35.304 }, // Shichirigahama
+            { lng: 139.515, lat: 35.302 },
+            { lng: 139.525, lat: 35.301 }, // Inamuragasaki
+            { lng: 139.535, lat: 35.310 }, // Yuigahama West
+            { lng: 139.545, lat: 35.310 }, // Yuigahama Center
+            { lng: 139.553, lat: 35.308 }, // Namerikawa mouth
+            { lng: 139.560, lat: 35.302 }, // Zaimokuza Beach
+            { lng: 139.568, lat: 35.298 }  // East border (Kotsubo entrance)
+        ];
+
+        // Find the exact coastline latitude at the point's longitude using linear interpolation
+        let coastLat = null;
+        for (let i = 0; i < coastPts.length - 1; i++) {
+            const p1 = coastPts[i];
+            const p2 = coastPts[i+1];
+            if (lng >= p1.lng && lng <= p2.lng) {
+                const ratio = (lng - p1.lng) / (p2.lng - p1.lng);
+                coastLat = p1.lat + (p2.lat - p1.lat) * ratio;
+                break;
+            }
+        }
+
+        // If the point is south of the interpolated coastline (ocean / sea), strictly exclude it!
+        if (coastLat !== null && lat < coastLat) {
+            console.log(`[SafeEdge] Ocean Exclusion: Point is south of the coastline (in the sea): ${lat}, ${lng} (Coast Lat: ${coastLat})`);
+            return true;
+        }
+
         const pt = turf.point([lng, lat]);
         
         // Coastline coordinates from West to East (covers Kamakura entire coast and Kotsubo peninsula)
@@ -2367,8 +2401,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const distToNamerikawa = turf.pointToLineDistance(pt, namerikawaLine, {units: 'meters'});
         const distToKobaigawa = turf.pointToLineDistance(pt, kobaigawaLine, {units: 'meters'});
         
-        // Coast buffer: 200m (strong safety), Rivers buffer: 50m
-        if (distToCoast < 200) return true;
+        // Coast buffer: 300m (stronger safety), Rivers buffer: 50m
+        if (distToCoast < 300) return true;
         if (distToNamerikawa < 50) return true;
         if (distToKobaigawa < 50) return true;
         
