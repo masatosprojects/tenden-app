@@ -1,974 +1,239 @@
 :root {
-    /* Normal Mode (Light) - Neo-Glassmorphism */
-    --bg-color: #f5f5f7;
-    --text-color: #1d1d1f;
-    --glass-bg: rgba(255, 255, 255, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.8);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-    --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    --primary: #0071e3;
-    --primary-hover: #0077ed;
-    --danger: #ff9f0a; /* CUD Orange */
-    --hud-text: #1d1d1f;
-    --map-filter: none;
-    --spring-easing: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    --smooth-easing: cubic-bezier(0.25, 1, 0.5, 1);
+    --primary: #007aff;
+    --danger: #ff3b30;
+    --warning: #ff9f0a;
+    --success: #34c759;
+    --dark-bg: rgba(30, 30, 30, 0.85);
+    --glass-bg: rgba(255, 255, 255, 0.92);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --text-color: #1c1c1e;
+    --text-muted: #8e8e93;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.12);
+    --shadow-lg: 0 16px 40px rgba(0,0,0,0.2);
+    --hud-text: var(--text-color);
+    --bg-color: #ffffff;
 }
 
-body.emergency-mode {
-    /* Emergency Mode (Midnight Dark) - Immersive */
-    --bg-color: #050508;
-    --text-color: #f5f5f7;
-    --glass-bg: rgba(20, 20, 25, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-shadow: 0 12px 48px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6);
-    --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    --primary: #0a84ff; /* High Saturation Cyan/Blue */
-    --primary-hover: #409cff;
-    --danger: #ff9f0a;
-    --hud-text: #f5f5f7;
-    /* Map invert for midnight dark mode: darker and richer */
-    --map-filter: invert(100%) hue-rotate(180deg) brightness(75%) contrast(120%) saturate(120%);
+.mode-emergency {
+    --glass-bg: rgba(20, 20, 20, 0.95);
+    --glass-border: rgba(255, 69, 58, 0.3);
+    --text-color: #ffffff;
+    --text-muted: #ebebf5;
+    --hud-text: #ffffff;
+    --bg-color: #000000;
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: var(--text-color); }
+#map { width: 100%; height: 100%; z-index: 1; }
 
-body, html {
-    width: 100%;
-    height: 100%;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    overflow: hidden;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    transition: background-color 0.8s ease;
-}
+/* Leaflet Overrides */
+.leaflet-control-container .leaflet-top.leaflet-left { display: none; } /* Hide default zoom */
+.leaflet-control-attribution { display: none; } /* Hide attribution for cleaner UI */
 
-/* Map */
-#map {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    transition: filter 0.8s ease;
-}
+/* Utilities */
+.hidden { display: none !important; }
+.w-100 { width: 100%; }
+.mt-10 { margin-top: 10px; }
+.mt-15 { margin-top: 15px; }
 
-body.emergency-mode #map {
-    filter: var(--map-filter);
-}
-
-/* UI Layer */
-#ui-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-    pointer-events: none;
-}
-
-#crosshair-target {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 60px;
-    height: 60px;
-    pointer-events: none;
-    z-index: 20;
-    transition: opacity 0.3s ease;
-}
-#crosshair-target.hidden {
-    opacity: 0;
-}
-
+/* Glass Panel Base */
 .glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
-    border-radius: 20px;
-    color: var(--hud-text);
-    pointer-events: auto;
-    transition: background 0.6s ease, color 0.6s ease, border 0.6s ease, box-shadow 0.6s ease, transform 0.4s var(--spring-easing);
+    box-shadow: var(--shadow-md);
+    color: var(--text-color);
 }
 
-/* Dashboard HUD */
-.tenden-dashboard {
+/* Top Status Bar (Google Maps Search Bar style) */
+.top-status-bar {
     position: absolute;
-    top: 16px;
+    top: max(env(safe-area-inset-top, 16px), 16px);
     left: 16px;
     right: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 20px;
-    /* Removed hardcoded background, using .glass-panel vars instead */
-    z-index: 100;
-}
-
-.dashboard-top {
+    height: 52px;
+    border-radius: 26px;
+    z-index: 1000;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0 8px 0 16px;
+    transition: all 0.3s ease;
 }
 
-.dash-logo img {
-    height: 28px;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.1));
-    border-radius: 8px; /* Added rounded corners for the logo */
+.status-left, .status-right { display: flex; align-items: center; gap: 8px; }
+.status-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.9rem; font-weight: 600;
 }
+.status-icon { font-size: 1.1rem; }
+.elev-badge { background: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: 12px; }
+.mode-emergency .elev-badge { background: rgba(255,255,255,0.1); }
+.status-time { font-size: 1.1rem; font-weight: 700; margin-left: 4px; padding-right: 8px; font-variant-numeric: tabular-nums; }
 
-.dash-clock {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: var(--hud-text);
-}
+/* P2P Status */
+.p2p-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
 
-.dashboard-bottom {
-    display: flex;
-    gap: 12px;
-}
-
-.dash-info-card {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(120, 120, 120, 0.1);
-    padding: 12px 16px;
-    border-radius: 14px;
-}
-
-.dash-info-card .card-content {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-.dash-info-card .card-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    opacity: 0.8;
-    margin-bottom: 4px;
-    color: var(--hud-text);
-}
-.dash-info-card .card-value {
-    font-size: 1.3rem;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 700;
-    color: var(--hud-text);
-}
-
-body.emergency-mode .dash-info-card {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-/* P2P 警報受信状態インジケーター */
-.p2p-status-bar {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 30px;
-    border: 1px solid var(--glass-border);
-    background: rgba(0,0,0,0.06);
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--hud-text);
-    white-space: nowrap;
-    transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
-}
-body.emergency-mode .p2p-status-bar {
-    background: rgba(255,255,255,0.06);
-}
-.p2p-status-bar.p2p-alert-active {
-    background: rgba(255, 59, 48, 0.18);
-    border-color: rgba(255, 59, 48, 0.55);
-    color: #ff3b30;
-}
-
-.p2p-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    transition: background 0.4s ease;
-}
-.p2p-connecting { background: #f5a623; animation: p2p-pulse 1.6s ease-in-out infinite; }
-.p2p-connected  { background: #34c759; }
-.p2p-disconnected { background: #8e8e93; }
-.p2p-alert { background: #ff3b30; animation: p2p-pulse 0.55s ease-in-out infinite; }
-
-@keyframes p2p-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.35; transform: scale(0.75); }
-}
-
-/* Controls - Pill Layout */
-.hud-top-left-actions {
+/* Right FABs */
+.map-action-fabs {
     position: absolute;
-    top: 104px;
-    left: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    pointer-events: auto;
-    z-index: 50;
-}
-
-.hud-controls {
-    position: absolute;
-    top: 104px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    pointer-events: auto;
-}
-
-.control-btn {
-    width: 52px;
-    min-height: 60px;
-    border-radius: 18px;
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
-    box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
-    color: var(--hud-text);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    padding: 8px 4px 7px;
-    cursor: pointer;
-    transition: transform 0.4s var(--spring-easing), background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
-}
-
-.btn-label {
-    font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    opacity: 0.7;
-    text-align: center;
-    line-height: 1;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    font-family: 'Inter', -apple-system, sans-serif;
-}
-.control-btn:hover .btn-label { opacity: 1; }
-
-.control-btn svg {
-    width: 22px;
-    height: 22px;
-    transition: transform 0.3s var(--smooth-easing);
-}
-
-.control-btn:hover {
-    background: var(--primary);
-    color: white;
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 12px 24px rgba(0,113,227,0.3), var(--glass-inner-shadow);
-    border-color: rgba(255,255,255,0.3);
-}
-.control-btn:hover svg {
-    transform: scale(1.1);
-}
-
-.control-btn:active {
-    transform: scale(0.92);
-}
-
-.control-btn.active {
-    background: var(--primary) !important;
-    color: white !important;
-    border-color: rgba(255,255,255,0.3);
-    box-shadow: 0 8px 16px rgba(0,113,227,0.3), var(--glass-inner-shadow);
-}
-
-/* Emergency HUD Bottom - Pill Layout */
-.hud-bottom {
-    position: absolute;
-    bottom: 24px;
-    left: 16px;
+    top: 90px;
     right: 16px;
     display: flex;
     flex-direction: column;
-    pointer-events: auto;
     gap: 12px;
-    z-index: 50;
+    z-index: 900;
 }
-
-.emergency-banner {
-    width: 100%;
-    position: relative;
-    padding: 16px 20px;
-}
-
-/* Flashy Evacuation Start Button */
-.action-btn.test-alert {
-    background: linear-gradient(135deg, #ff9f0a, #ff3b30);
-    color: white;
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
-    animation: pulse-flashy 2s infinite alternate;
-}
-
-@keyframes pulse-flashy {
-    0% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); }
-    100% { transform: scale(1.03); box-shadow: 0 8px 25px rgba(255, 59, 48, 0.7); }
-}
-
-.action-btn {
-    padding: 16px 28px;
-    border-radius: 30px; /* Pill shape */
-    font-size: 1.05rem;
-    font-weight: 600;
-    font-family: 'Outfit', sans-serif;
+.fab-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
-    cursor: pointer;
-    box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
-    transition: transform 0.4s var(--spring-easing), background 0.4s ease, box-shadow 0.4s ease;
+    box-shadow: var(--shadow-sm);
+    color: var(--text-color);
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; transition: all 0.2s;
 }
+.fab-btn svg { width: 20px; height: 20px; }
+.fab-btn:active { transform: scale(0.92); }
+.fab-danger { color: var(--danger); border-color: rgba(255,59,48,0.3); }
 
-.warning-btn {
-    background: var(--glass-bg);
-    color: var(--danger);
-    border-color: rgba(255, 159, 10, 0.4);
-}
-.warning-btn:hover {
-    background: rgba(255, 159, 10, 0.1);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(255, 159, 10, 0.25), var(--glass-inner-shadow);
-}
-
-.primary-btn {
-    background: var(--primary);
-    color: white;
-    border-color: rgba(255,255,255,0.3);
-}
-.primary-btn:hover {
-    background: var(--primary-hover);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 113, 227, 0.4), inset 0 1px 0 rgba(255,255,255,0.4);
-}
-
-body.emergency-mode .primary-btn {
-    box-shadow: 0 0 24px rgba(10, 132, 255, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
-}
-
-.secondary-btn {
-    background: var(--glass-bg);
-    color: var(--hud-text);
-}
-.secondary-btn:hover {
-    background: rgba(120, 120, 120, 0.15);
-    transform: translateY(-4px);
-}
-
-.sos-btn {
-    background: linear-gradient(135deg, #ff3b30, #ff0000);
-    color: white;
-    border: none;
-    box-shadow: 0 8px 24px rgba(255, 59, 48, 0.4), inset 0 1px 0 rgba(255,255,255,0.4);
-}
-.sos-btn:hover {
-    transform: scale(1.08) translateY(-4px);
-    box-shadow: 0 12px 32px rgba(255, 59, 48, 0.6), inset 0 1px 0 rgba(255,255,255,0.6);
-}
-
-.action-btn:active {
-    transform: scale(0.95);
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* Emergency Banner - Neo-Glassmorphism & Neon Glow */
-.emergency-banner {
-    position: relative;
-    width: 100%;
-    padding: 18px 24px;
-    text-align: left;
-    border-left: 5px solid var(--primary);
-    border-radius: 20px;
-    pointer-events: auto;
-    z-index: 20;
-    transition: opacity 0.4s var(--smooth-easing), transform 0.5s var(--spring-easing), box-shadow 0.5s ease;
-}
-
-body.emergency-mode .emergency-banner {
-    border-color: rgba(255,255,255,0.1);
-    border-left: 5px solid var(--primary);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.8), 0 0 32px rgba(10, 132, 255, 0.25), inset 0 1px 0 rgba(255,255,255,0.08);
-}
-
-.banner-content strong {
-    display: block;
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 4px;
-    letter-spacing: 0.5px;
-}
-
-.banner-content p {
-    font-size: 0.95rem;
-    opacity: 0.9;
-    line-height: 1.4;
-    font-weight: 500;
-}
-
-.disaster-details {
-    margin-top: 12px;
-    padding-top: 12px;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--danger);
-    border-top: 1px solid rgba(255,255,255,0.15);
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-}
-.disaster-details strong {
-    display: inline;
-    font-size: 1.05rem;
-    color: var(--danger);
-}
-body.emergency-mode .disaster-details {
-    color: #ffb340;
-    text-shadow: 0 0 8px rgba(255, 159, 10, 0.4);
-}
-body.emergency-mode .disaster-details strong {
-    color: #ffb340;
-    text-shadow: 0 0 12px rgba(255, 159, 10, 0.6);
-}
-
-/* Route Animation */
-@keyframes routePulse {
-    0% { stroke-width: 6; opacity: 1; filter: drop-shadow(0 0 8px rgba(0,187,255,0.4)); }
-    50% { stroke-width: 10; opacity: 0.8; filter: drop-shadow(0 0 16px rgba(0,187,255,0.8)); }
-    100% { stroke-width: 6; opacity: 1; filter: drop-shadow(0 0 8px rgba(0,187,255,0.4)); }
-}
-
-.animated-route {
-    animation: routePulse 2.5s var(--smooth-easing) infinite;
-}
-
-/* Overlays - Fluid Modals */
-.overlay {
+/* Bottom Sheet */
+.bottom-sheet {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s var(--smooth-easing);
-}
-
-.overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.dialog {
-    width: 90%;
-    max-width: 380px;
-    padding: 36px 28px;
-    border-radius: 28px;
-    text-align: center;
-    background: var(--glass-bg);
-    box-shadow: var(--glass-shadow), 0 24px 64px rgba(0,0,0,0.4), var(--glass-inner-shadow);
-    color: var(--hud-text);
-    transform: scale(0.9) translateY(20px);
-    opacity: 0;
-    transition: transform 0.6s var(--spring-easing), opacity 0.4s ease;
-}
-
-.overlay.active .dialog {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-}
-
-.dialog-icon {
-    font-size: 3.5rem;
-    margin-bottom: 20px;
-    animation: floatIcon 3s ease-in-out infinite;
-}
-
-@keyframes floatIcon {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-}
-
-.dialog h2 {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-    margin-bottom: 14px;
-    line-height: 1.3;
-    letter-spacing: -0.2px;
-}
-
-.dialog p {
-    font-size: 0.95rem;
-    opacity: 0.8;
-    margin-bottom: 28px;
-    line-height: 1.6;
-}
-
-.dialog .primary-btn {
-    width: 100%;
-    padding: 16px 28px;
-    border-radius: 20px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    font-family: 'Outfit', sans-serif;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    cursor: pointer;
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 8px 24px rgba(0, 113, 227, 0.35), var(--glass-inner-shadow);
-    transition: transform 0.4s var(--spring-easing), background 0.4s ease, box-shadow 0.4s ease;
-}
-
-.dialog .primary-btn:hover {
-    background: var(--primary-hover);
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 32px rgba(0, 113, 227, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
-}
-
-.dialog .primary-btn:active {
-    transform: scale(0.96) translateY(0);
-}
-
-/* SOS Flash Animation */
-#flash-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255,255,255,0.9);
-    z-index: 999;
-    pointer-events: none;
-    opacity: 0;
-}
-
-@keyframes sosFlash {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 1; }
-}
-
-.flashing {
-    animation: sosFlash 0.3s infinite;
-    display: block !important;
-}
-
-/* User Marker & Compass */
-:root {
-    --compass-heading: 0deg;
-}
-
-.user-marker-inner {
-    width: 24px;
-    height: 24px;
-    background: var(--primary);
-    border: 3px solid #ffffff;
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 16px rgba(0,113,227,0.4);
-    position: relative;
-    transform: rotate(var(--compass-heading));
-    transition: transform 0.1s linear;
-}
-
-.user-marker-arrow {
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-bottom: 12px solid var(--primary);
-    filter: drop-shadow(0 -2px 4px rgba(0,0,0,0.2));
-}
-
-/* Micro-animations initial load */
-.hud-header, .hud-controls, .hud-bottom, .emergency-banner {
-    animation: floatIn 0.8s var(--spring-easing) forwards;
-}
-
-@keyframes floatIn {
-    0% { transform: translateY(20px) scale(0.95); opacity: 0; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-/* Leaflet Custom Overrides */
-.leaflet-control-attribution {
-    background: rgba(255,255,255,0.4) !important;
-    backdrop-filter: blur(8px);
-    color: var(--hud-text) !important;
-    border-radius: 8px 0 0 0;
-    font-size: 0.65rem !important;
-}
-body.emergency-mode .leaflet-control-attribution {
-    background: rgba(0,0,0,0.5) !important;
-    color: rgba(255,255,255,0.6) !important;
-}
-.leaflet-bar a {
-    background-color: var(--glass-bg) !important;
-    color: var(--hud-text) !important;
-    border-color: var(--glass-border) !important;
-    backdrop-filter: blur(12px);
-}
-
-/* CUD Compliant Elegant Shelter Marker */
-.shelter-marker {
-    background: none;
-    border: none;
-}
-
-.shelter-marker-inner {
-    width: 26px;
-    height: 26px;
-    background: #34c759; /* Apple green */
-    border: 3px solid #ffffff;
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0,0,0,0.2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    transition: transform 0.3s var(--spring-easing);
-}
-.shelter-marker-inner:hover {
-    transform: scale(1.2);
-    box-shadow: 0 8px 24px rgba(52, 199, 89, 0.5);
-}
-
-.shelter-marker-inner::after {
-    content: '';
-    width: 10px;
-    height: 10px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-/* Splash Screen Animation */
-.splash-wave {
-    stroke-dasharray: 200;
-    stroke-dashoffset: 200;
-    animation: drawWave 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-@keyframes drawWave {
-    0% { stroke-dashoffset: 200; }
-    100% { stroke-dashoffset: 0; }
-}
-
-.splash-arrow {
-    stroke-dasharray: 250;
-    stroke-dashoffset: 250;
-    animation: drawArrow 0.5s cubic-bezier(0.34, 1.3, 0.64, 1) 0.4s forwards;
-}
-@keyframes drawArrow {
-    0% { stroke-dashoffset: 250; }
-    100% { stroke-dashoffset: 0; }
-}
-
-.splash-title {
-    opacity: 0;
-    animation: textFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
-}
-@keyframes textFadeUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
-
-/* Scenario Buttons */
-.scenario-option-btn, .location-option-btn {
-    border-radius: 16px;
-    border: 1px solid var(--glass-border) !important;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-    transition: transform 0.4s var(--spring-easing), background 0.4s ease, box-shadow 0.4s ease !important;
-}
-.scenario-option-btn:hover, .location-option-btn:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.1), var(--glass-inner-shadow);
-    border-color: rgba(255,255,255,0.4) !important;
-}
-.scenario-option-btn:active, .location-option-btn:active {
-    transform: translateY(0) scale(0.98);
-}
-
-/* ── ルート選択ボトムシート ───────────────────────────── */
-.route-bottom-sheet {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: 480px;
-    margin: 0 auto;
-    border-radius: 20px 20px 0 0;
-    padding: 20px 18px 28px;
+    bottom: 0; left: 0; right: 0;
+    border-radius: 24px 24px 0 0;
+    padding: 12px 20px calc(env(safe-area-inset-bottom, 20px) + 20px);
     z-index: 1000;
-    pointer-events: all;
-    transform: translateY(0);
-    animation: slideUp 0.35s var(--smooth-easing) both;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    border-bottom: none;
     max-height: 85vh;
     overflow-y: auto;
 }
-
-@keyframes slideUp {
-    from { transform: translateY(100%); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
-}
-
-.route-bottom-sheet::before {
-    content: '';
-    display: block;
-    width: 36px;
-    height: 4px;
-    background: var(--glass-border);
+.bottom-sheet-handle {
+    width: 40px; height: 4px;
+    background: rgba(120,120,120,0.3);
     border-radius: 2px;
     margin: 0 auto 16px;
 }
+.mode-emergency .bottom-sheet-handle { background: rgba(255,255,255,0.3); }
 
-.route-disclaimer {
-    font-size: 0.78rem;
-    opacity: 0.75;
-    background: rgba(255, 159, 10, 0.10);
-    border-left: 3px solid #ff9f0a;
-    border-radius: 4px;
-    padding: 8px 10px;
-    margin-bottom: 14px;
-    line-height: 1.45;
-    color: var(--hud-text);
+/* Buttons inside Bottom Sheet */
+.action-btn {
+    border: none; border-radius: 14px;
+    font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+.action-btn:active { transform: scale(0.96); }
+.btn-large { width: 100%; padding: 16px; font-size: 1.05rem; }
+
+.primary-btn { background: var(--primary); color: white; }
+.secondary-btn { background: rgba(0, 122, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 122, 255, 0.2); }
+.mode-emergency .secondary-btn { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.2); }
+.sos-btn { background: var(--danger); color: white; }
+.outline-btn { background: transparent; color: var(--text-color); border: 1px solid var(--glass-border); padding: 12px; }
+
+/* Flashy Test Button */
+.btn-flashy {
+    background: linear-gradient(135deg, #ff9f0a, #ff3b30);
+    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+    animation: pulse-flashy 2s infinite alternate;
+    color: white;
+}
+@keyframes pulse-flashy {
+    0% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3); }
+    100% { transform: scale(1.02); box-shadow: 0 8px 25px rgba(255, 59, 48, 0.6); }
 }
 
+/* Emergency Mode Content */
+.emergency-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding-bottom: 12px; }
+.eh-title { font-size: 1.2rem; font-weight: 700; color: var(--warning); }
+.evac-instruction { font-size: 1.05rem; font-weight: 600; margin-bottom: 12px; }
+.disaster-details { font-size: 0.85rem; color: var(--warning); border-top: 1px solid rgba(255,159,10,0.3); padding-top: 10px; margin-bottom: 15px; }
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.action-grid .sos-btn { grid-column: span 2; padding: 14px; font-size: 1.1rem; }
+.action-grid .secondary-btn { padding: 12px; }
+
+/* Overlays (Dialogs) */
+.overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 2000;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; visibility: hidden; transition: all 0.3s;
+}
+.overlay.active { opacity: 1; visibility: visible; }
+.dialog {
+    width: 90%; max-width: 360px;
+    padding: 24px; border-radius: 24px;
+    text-align: center;
+}
+.dialog-icon { margin-bottom: 16px; }
+.dialog h2 { font-size: 1.3rem; margin-bottom: 12px; }
+.dialog p { font-size: 0.95rem; opacity: 0.8; margin-bottom: 24px; line-height: 1.5; }
+
+/* Settings / Scenarios */
+.settings-dialog, .scenario-dialog { text-align: left; }
+.dialog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.dialog-header h2 { margin: 0; }
+.close-btn { background: none; border: none; font-size: 1.8rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0 4px; }
+.form-group { margin-bottom: 20px; text-align: left; }
+.form-group label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; }
+.form-control { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.05); color: var(--text-color); font-size: 1rem; }
+.mode-emergency .form-control { background: rgba(255,255,255,0.05); }
+
+/* Toggles */
+.toggle-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--glass-border); }
+.toggle-group:last-child { border: none; margin: 0; padding: 0; }
+.toggle-switch { width: 44px; height: 24px; appearance: none; background: #e9e9ea; border-radius: 12px; position: relative; cursor: pointer; outline: none; transition: 0.3s; }
+.mode-emergency .toggle-switch { background: #39393d; }
+.toggle-switch:checked { background: var(--success); }
+.toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.toggle-switch:checked::after { left: 22px; }
+
+/* Scenarios */
+.dialog-subtitle { font-size: 0.85rem; opacity: 0.8; margin-bottom: 20px; }
+.scenario-list { display: flex; flex-direction: column; gap: 12px; text-align: left; max-height: 60vh; overflow-y: auto; }
+.scenario-option-btn { padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); cursor: pointer; text-align: left; transition: 0.2s; background: rgba(255,255,255,0.5); }
+.mode-emergency .scenario-option-btn { background: rgba(0,0,0,0.3); }
+.sc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 1rem; }
+.sc-body { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+.s-warning .badge { background: var(--warning); color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; }
+.s-warning { border-left: 4px solid var(--warning); }
+.s-info .badge { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; }
+.s-info { border-left: 4px solid var(--primary); }
+
+/* Route buttons */
 .route-option-btn {
-    border-radius: 12px !important;
-    transition: transform 0.2s var(--spring-easing), box-shadow 0.2s ease !important;
+    text-align:left; padding:16px; border-radius:16px; border:2px solid var(--glass-border);
+    background:rgba(255,255,255,0.4); cursor:pointer; width:100%; transition: all 0.2s;
 }
-.route-option-btn:hover {
-    transform: scale(1.02);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-}
-.route-option-btn:active {
-    transform: scale(0.97);
-}
+.mode-emergency .route-option-btn { background:rgba(0,0,0,0.2); }
 
-.route-badge {
-    display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 5px;
-    margin-left: 6px;
-}
+/* Crosshair target */
+#crosshair-target { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 80px; height: 80px; pointer-events: none; }
 
-.elderly-badge {
-    background: rgba(94, 92, 230, 0.15);
-    color: #5e5ce6;
-}
-
-/* ルートラベル (地図上) */
+/* Route Label Pillon Map */
 .route-label-pill {
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
+    background: #00bbff;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: 12px;
     white-space: nowrap;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    pointer-events: none;
+    border: 2px solid white;
 }
 
-/* ── 避難所カラー (load-based) ─────────────────────────── */
-.shelter-low    .shelter-marker-inner { background: #00a63e; border-color: #007a2e; }
-.shelter-medium .shelter-marker-inner { background: #f5a623; border-color: #c07c10; }
-.shelter-high   .shelter-marker-inner { background: #c0392b; border-color: #8e1b15; }
-
-/* ── プレミアムインタラクション（ホバー＆アクティブ効果） ─────── */
-.leaflet-interactive {
-    cursor: pointer;
-    transition: stroke 0.25s var(--smooth-easing), stroke-width 0.25s var(--spring-easing), opacity 0.25s ease !important;
-}
-
-.leaflet-interactive:hover {
-    opacity: 0.85 !important;
-    stroke-width: 7.5px !important;
-}
-
-/* ボトムシート表示時の背景要素のフェードアウト効果 */
-.hidden-for-route {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transform: translateY(20px) !important;
-    transition: opacity 0.35s var(--smooth-easing), transform 0.35s var(--smooth-easing) !important;
-}
-
-/* ==========================================================================
-   Tsunami Inundation Status Badge (津波浸水想定ステータスバッジ)
-   ========================================================================== */
-
-/* 浸水想定区域 内 (危険状態) */
-.tsunami-status-danger {
-    background: linear-gradient(135deg, rgba(215, 38, 38, 0.45), rgba(230, 126, 34, 0.55)) !important;
-    border-color: rgba(231, 76, 60, 0.45) !important;
-    box-shadow: 0 4px 16px rgba(215, 38, 38, 0.25) !important;
-    animation: danger-pulse 2s infinite alternate;
-}
-
-/* 浸水想定区域 外 (安全状態) */
-.tsunami-status-safe {
-    background: linear-gradient(135deg, rgba(39, 174, 96, 0.45), rgba(26, 188, 156, 0.55)) !important;
-    border-color: rgba(39, 174, 96, 0.45) !important;
-    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.15) !important;
-}
-
-@keyframes danger-pulse {
-    0% {
-        box-shadow: 0 4px 12px rgba(215, 38, 38, 0.2);
-        border-color: rgba(215, 38, 38, 0.3);
-    }
-    100% {
-        box-shadow: 0 4px 20px rgba(215, 38, 38, 0.6);
-        border-color: rgba(215, 38, 38, 0.8);
-    }
-}
-
-/* 📱 スマートフォン縦画面（縦長）への完全レスポンシブ最適化 */
-@media (max-width: 600px) {
-    .route-bottom-sheet {
-        max-width: 100% !important;
-        width: 100% !important;
-        border-radius: 24px 24px 0 0 !important;
-        padding: 16px 14px 28px !important;
-    }
-    
-    .tenden-dashboard {
-        top: 8px !important;
-        left: 8px !important;
-        right: 8px !important;
-        padding: 10px !important;
-        gap: 8px !important;
-    }
-    
-    .dashboard-top {
-        flex-wrap: wrap; /* allow wrapping if needed */
-        gap: 6px;
-    }
-
-    .dash-logo img {
-        height: 24px !important;
-    }
-    
-    .dash-clock {
-        font-size: 1.1rem !important;
-    }
-    
-    .p2p-status-bar {
-        padding: 4px 10px !important;
-        font-size: 0.75rem !important;
-    }
-    
-    .dash-info-card {
-        padding: 8px 12px !important;
-        gap: 6px !important;
-        border-radius: 10px !important;
-    }
-    
-    .dash-info-card .card-value {
-        font-size: 1.1rem !important;
-    }
-    
-    .hud-controls {
-        top: 170px !important;
-        right: 8px !important;
-        gap: 8px !important;
-    }
-    
-    .control-btn {
-        width: 40px !important;
-        height: 40px !important;
-    }
-    
-    .control-btn svg {
-        width: 18px !important;
-        height: 18px !important;
-    }
-    
-    .hud-top-left-actions {
-        top: 170px !important;
-        left: 8px !important;
-        gap: 8px !important;
-    }
-    
-    .hud-bottom {
-        bottom: 12px !important;
-        left: 8px !important;
-        right: 8px !important;
-        gap: 8px !important;
-    }
-    
-    .action-btn {
-        padding: 12px 20px !important;
-        font-size: 0.9rem !important;
-    }
-    
-    .emergency-banner {
-        width: 100% !important;
-        padding: 12px 14px !important;
-        border-radius: 16px !important;
-    }
-    
-    .banner-content strong {
-        font-size: 1.1rem !important;
-    }
-    
-    .banner-content p {
-        font-size: 0.85rem !important;
-    }
-    
-    .disaster-details {
-        font-size: 0.75rem !important;
-        margin-top: 8px !important;
-        padding-top: 8px !important;
-    }
-    
-    .dialog {
-        padding: 24px 18px !important;
-        max-width: 92% !important;
-    }
-}
+/* Flash Screen */
+#flash-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+#flash-overlay.flash { opacity: 1; transition: none; }
