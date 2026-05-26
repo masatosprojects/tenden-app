@@ -92,10 +92,17 @@ body.emergency-mode #map {
     left: 20px;
     right: 20px;
     display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 24px;
+}
+
+.hud-top-row, .hud-bottom-row {
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 20px;
-    border-radius: 24px; /* More rounded for pill-like feel */
+    width: 100%;
 }
 
 .hud-left {
@@ -392,13 +399,11 @@ body.emergency-mode .primary-btn {
 /* Emergency Banner - Neo-Glassmorphism & Neon Glow */
 .emergency-banner {
     position: absolute;
-    top: 104px;
-    left: 20px;
-    right: 20px;
-    max-width: 500px;
-    margin: 0 auto;
+    top: 130px;
+    right: 90px; /* Push to the right, avoiding controls */
+    width: 320px;
     padding: 18px 24px;
-    text-align: center;
+    text-align: left;
     border-left: 5px solid var(--primary);
     border-radius: 20px;
     pointer-events: auto;
@@ -960,10 +965,10 @@ body.emergency-mode .leaflet-control-attribution {
     }
     
     .emergency-banner {
-        top: 80px !important;
-        bottom: auto !important;
-        left: 12px !important;
+        top: 110px !important;
         right: 12px !important;
+        left: auto !important;
+        width: 300px !important;
         padding: 12px 16px !important;
     }
     
