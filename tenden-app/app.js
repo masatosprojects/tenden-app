@@ -2313,14 +2313,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Helper to check if a lat/lng is near the coastline or rivers in Kamakura.
-     * Excludes points within 120m of the coastline and 50m of Namerikawa/Sakaigawa rivers.
+     * Excludes points within 200m of the coastline and 50m of Namerikawa/Sakaigawa rivers.
      */
     function isNearCoastOrWater(lat, lng) {
         if (!window.turf) return false;
         const pt = turf.point([lng, lat]);
         
-        // Coastline coordinates from West to East (covers Kamakura entire coast)
+        // Coastline coordinates from West to East (covers Kamakura entire coast and Kotsubo peninsula)
         const coastLine = turf.lineString([
+            [139.460, 35.310], // Far West border
             [139.470, 35.309], // West border
             [139.485, 35.307], // Koshigoe
             [139.500, 35.304], // Shichirigahama
@@ -2330,7 +2331,10 @@ document.addEventListener('DOMContentLoaded', () => {
             [139.545, 35.310], // Yuigahama Center
             [139.553, 35.308], // Namerikawa mouth
             [139.560, 35.302], // Zaimokuza Beach
-            [139.568, 35.298]  // East border
+            [139.568, 35.298], // East border (Kotsubo entrance)
+            [139.565, 35.292], // Kotsubo coast south
+            [139.563, 35.285], // Kotsubo outer coast
+            [139.562, 35.275]  // Kotsubo outer tip
         ]);
         
         // Namerikawa River (East/Central Kamakura)
@@ -2356,8 +2360,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const distToNamerikawa = turf.pointToLineDistance(pt, namerikawaLine, {units: 'meters'});
         const distToKobaigawa = turf.pointToLineDistance(pt, kobaigawaLine, {units: 'meters'});
         
-        // Coast buffer: 120m, Rivers buffer: 50m
-        if (distToCoast < 120) return true;
+        // Coast buffer: 200m (strong safety), Rivers buffer: 50m
+        if (distToCoast < 200) return true;
         if (distToNamerikawa < 50) return true;
         if (distToKobaigawa < 50) return true;
         
