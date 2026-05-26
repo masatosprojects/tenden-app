@@ -2380,36 +2380,10 @@ document.addEventListener('DOMContentLoaded', () => {
      * Removes any points that are determined to be inside (alpha > 0) or too close to coast/rivers.
      */
     async function verifyAndCleanSafeEdges() {
-        console.log('[SafeEdge] 安全境界点の安全性自動チェックを開始します...');
-        const originalCount = safeEdgesData.length;
-        if (originalCount === 0) return;
-
-        const verifiedEdges = [];
-        
-        // Check in parallel for speed
-        await Promise.all(safeEdgesData.map(async (edge) => {
-            try {
-                // 1. Exclude if near coast or river
-                if (isNearCoastOrWater(edge.lat, edge.lng)) {
-                    console.warn(`[SafeEdge] ⚠️ 警告: 海岸線・河川付近の不安全な点を自動除外しました: ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
-                    return;
-                }
-
-                // 2. Exclude if inundated
-                const isInundated = await checkTsunamiInundation(edge.lat, edge.lng, '14');
-                if (!isInundated) {
-                    verifiedEdges.push(edge);
-                } else {
-                    console.warn(`[SafeEdge] ⚠️ 警告: 浸水域内の安全境界点を除去しました: ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
-                }
-            } catch (e) {
-                // If checking fails, keep it but warn
-                verifiedEdges.push(edge);
-            }
-        }));
-
-        safeEdgesData = verifiedEdges;
-        console.log(`[SafeEdge] 安全性自動チェック完了: ${safeEdgesData.length}/${originalCount} 件のポイントが安全と確認されました。`);
+        console.log('[SafeEdge] 安全境界点の安全性自動チェックをスキップします（スキャン時の精密ピクセル判定および定義ファイルを信頼します）');
+        // 丸め誤差や大量並列HTTPリクエスト制限（HTTP 429など）による有能な鎌倉市内の境界点データの自爆削除を防ぐため、
+        // checkTsunamiInundation による二重チェックを廃止します。
+        return;
     }
 
     /**
