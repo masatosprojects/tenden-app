@@ -484,6 +484,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+
+        // Banner collapsible toggle
+        const bannerToggle = document.getElementById('banner-toggle');
+        const bannerContent = document.getElementById('banner-content-body');
+        const bannerChevron = document.getElementById('banner-chevron');
+        if (bannerToggle && bannerContent && bannerChevron) {
+            bannerToggle.addEventListener('click', () => {
+                if (bannerContent.style.display === 'none') {
+                    bannerContent.style.display = 'block';
+                    bannerChevron.style.transform = 'rotate(0deg)';
+                } else {
+                    bannerContent.style.display = 'none';
+                    bannerChevron.style.transform = 'rotate(180deg)';
+                }
+            });
+        }
     }
 
     function requestLocation() {
@@ -1450,39 +1466,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function simulateEvacuation() {
         if (!mainRouteLine) return;
-        const pts = mainRouteLine.getLatLngs();
-        let currentPtIndex = 0;
-        let progress = 0;
+        
+        // Ensure simulationInterval is clear since we no longer move the pin automatically
+        if (simulationInterval) {
+            clearInterval(simulationInterval);
+            simulationInterval = null;
+        }
 
-        simulationInterval = setInterval(() => {
-            if (currentPtIndex >= pts.length - 1) {
-                clearInterval(simulationInterval);
-                return;
-            }
-            
-            const p1 = pts[currentPtIndex];
-            const p2 = pts[currentPtIndex + 1];
-            
-            progress += 0.05;
-            if (progress >= 1) {
-                progress = 0;
-                currentPtIndex++;
-                if (currentPtIndex >= pts.length - 1) {
-                    clearInterval(simulationInterval);
-                    return;
-                }
-            }
-            
-            // Interpolate
-            const lat = p1.lat + (p2.lat - p1.lat) * progress;
-            const lng = p1.lng + (p2.lng - p1.lng) * progress;
-            
-            const newLoc = { lat, lng };
-            updateMarker(newLoc);
-            map.panTo([lat, lng]);
-            fetchElevation(newLoc);
-            
-        }, 500); // update every 500ms
+        // Auto-fit the map to optimally display the entire evacuation route
+        if (routeLayerGroup) {
+            map.fitBounds(routeLayerGroup.getBounds(), {
+                padding: [60, 60],
+                maxZoom: 18,
+                animate: true,
+                duration: 1.5
+            });
+        }
     }
 
     function takeScreenshot() {
