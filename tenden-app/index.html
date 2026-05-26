@@ -32,7 +32,7 @@
     <!-- UI Overlay Layer (Mobile First & Google Maps Style) -->
     <div id="ui-layer" class="mode-normal">
         
-        <!-- Top Status Bar (Google Maps Search Bar Style) -->
+        <!-- Top Status Bar (Full width rectangular) -->
         <div class="top-status-bar glass-panel">
             <div class="status-left">
                 <!-- Keep IDs for JS compatibility -->
@@ -41,14 +41,14 @@
                     <span id="p2p-label" class="status-text">待機中</span>
                 </div>
                 <div class="status-badge" id="tsunami-status-box">
-                    <span class="status-icon" style="font-size: 1.2rem;">浸水予測:</span>
-                    <strong id="tsunami-status-text" style="font-size: 1.1rem;">判定中...</strong>
+                    <span class="status-icon">浸水予測:</span>
+                    <strong id="tsunami-status-text">判定中...</strong>
                 </div>
             </div>
             <div class="status-right">
                 <div class="status-badge elev-badge">
-                    <span id="i18n-elevation-label" data-i18n="elevationLabel" class="status-icon" style="font-size: 1.2rem;">海抜:</span>
-                    <strong style="font-size: 1.1rem;"><span id="elevation-m">--</span>m</strong>
+                    <span id="i18n-elevation-label" data-i18n="elevationLabel" class="status-icon">海抜:</span>
+                    <strong><span id="elevation-m">--</span>m</strong>
                 </div>
                 <div class="status-time">
                     <span id="current-time">--:--</span>
@@ -119,6 +119,7 @@
                     
                     <div class="action-grid mt-10" id="essential-buttons">
                         <button id="btn-change-route" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 2.13-5.88L2 9"></path></svg> ルート変更</button>
+                        <button id="btn-unlock-pin" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> ピン解除</button>
                         <button id="btn-reset-alert" class="action-btn outline-btn" data-i18n="resetAlert">訓練終了</button>
                     </div>
 
@@ -146,7 +147,7 @@
             </div>
             <h2 id="i18n-onboarding-title" data-i18n="onboardingTitle">現在地から一番近い<br>安全な場所をご案内します</h2>
             <p id="i18n-onboarding-desc" data-i18n="onboardingDesc">位置情報を許可して、日頃の備えと迷わないルートを確認しましょう。</p>
-            <button id="btn-onboarding-ok" class="primary-btn btn-large w-100" data-i18n="okBtn">OK</button>
+            <button id="btn-onboarding-ok" class="action-btn primary-btn btn-large w-100" data-i18n="okBtn">OK</button>
         </div>
     </div>
 
@@ -162,7 +163,7 @@
             </div>
             <h2 id="i18n-error-title" data-i18n="errorTitle">現在地が取得できません</h2>
             <p id="i18n-error-desc" data-i18n="errorDesc">マップを動かして、確認したい場所にピンを合わせてください。</p>
-            <button id="btn-error-ok" class="primary-btn btn-large w-100" data-i18n="errorBtn">手動で設定する</button>
+            <button id="btn-error-ok" class="action-btn primary-btn btn-large w-100" style="margin-top:20px;">現在地からリトライ</button>
         </div>
     </div>
 
@@ -292,7 +293,8 @@
     <!-- Capture Container (used for html2canvas to ensure clean rendering) -->
     <div id="capture-container"></div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="app.js"></script>
 </body>
