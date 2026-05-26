@@ -2312,8 +2312,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Helper to check if a lat/lng is near the coastline or rivers in Kamakura.
+     * Excludes points within 120m of the coastline and 50m of Namerikawa/Sakaigawa rivers.
+     */
+    function isNearCoastOrWater(lat, lng) {
+        if (!window.turf) return false;
+        const pt = turf.point([lng, lat]);
+        
+        // Coastline coordinates from West to East (covers Kamakura entire coast)
+        const coastLine = turf.lineString([
+            [139.470, 35.309], // West border
+            [139.485, 35.307], // Koshigoe
+            [139.500, 35.304], // Shichirigahama
+            [139.515, 35.302],
+            [139.525, 35.301], // Inamuragasaki
+            [139.535, 35.310], // Yuigahama West
+            [139.545, 35.310], // Yuigahama Center
+            [139.553, 35.308], // Namerikawa mouth
+            [139.560, 35.302], // Zaimokuza Beach
+            [139.568, 35.298]  // East border
+        ]);
+        
+        // Namerikawa River (East/Central Kamakura)
+        const namerikawaLine = turf.lineString([
+            [139.553, 35.308], // Mouth
+            [139.554, 35.311],
+            [139.556, 35.315],
+            [139.558, 35.319],
+            [139.560, 35.323],
+            [139.563, 35.327],
+            [139.567, 35.331]
+        ]);
+        
+        // Sakaigawa/Kobaigawa River (West Kamakura/Koshigoe)
+        const kobaigawaLine = turf.lineString([
+            [139.480, 35.307], // Mouth
+            [139.482, 35.312],
+            [139.485, 35.318],
+            [139.488, 35.324]
+        ]);
+        
+        const distToCoast = turf.pointToLineDistance(pt, coastLine, {units: 'meters'});
+        const distToNamerikawa = turf.pointToLineDistance(pt, namerikawaLine, {units: 'meters'});
+        const distToKobaigawa = turf.pointToLineDistance(pt, kobaigawaLine, {units: 'meters'});
+        
+        // Coast buffer: 120m, Rivers buffer: 50m
+        if (distToCoast < 120) return true;
+        if (distToNamerikawa < 50) return true;
+        if (distToKobaigawa < 50) return true;
+        
+        return false;
+    }
+
+    /**
      * Dynamically verifies that all safe edges in safeEdgesData are strictly outside the inundation zone.
-     * Removes any points that are determined to be inside (alpha > 0).
+     * Removes any points that are determined to be inside (alpha > 0) or too close to coast/rivers.
      */
     async function verifyAndCleanSafeEdges() {
         console.log('[SafeEdge] 安全境界点の安全性自動チェックを開始します...');
@@ -2325,6 +2378,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check in parallel for speed
         await Promise.all(safeEdgesData.map(async (edge) => {
             try {
+                // 1. Exclude if near coast or river
+                if (isNearCoastOrWater(edge.lat, edge.lng)) {
+                    console.warn(`[SafeEdge] ⚠️ 警告: 海岸線・河川付近の不安全な点を自動除外しました: ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
+                    return;
+                }
+
+                // 2. Exclude if inundated
                 const isInundated = await checkTsunamiInundation(edge.lat, edge.lng, '14');
                 if (!isInundated) {
                     verifiedEdges.push(edge);
@@ -2365,8 +2425,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const GRID = 0.0008; // Deduplication grid cell ~80m
         const edgeMap = new Map(); // gridKey → {lat, lng, id, name}
 
-        const R_SAFE = 4;    // 4 pixels ≈ 40m safe buffer in all directions
-        const R_PROX = 8;    // 8 pixels ≈ 80m proximity limit to inundation zone
+        const R_SAFE = 1;    // 1 pixel ≈ 10m safe buffer (allows points in narrow safe valleys)
+        const R_PROX = 3;    // 3 pixels ≈ 30m proximity limit to inundation zone (close to boundary)
 
         // Gather all tile loading tasks
         const tileTasks = [];
@@ -2400,6 +2460,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const thisAlpha = pixels[(py * 256 + px) * 4 + 3];
                     if (thisAlpha > 0) continue; // Must be strictly outside (safe)
 
+                    // Convert pixel → lat/lng (Web Mercator)
+                    const lng = (tx + px / 256) / pow2 * 360 - 180;
+                    const mercN = Math.PI - 2 * Math.PI * (ty + py / 256) / pow2;
+                    const lat = 180 / Math.PI * Math.atan(0.5 * (Math.exp(mercN) - Math.exp(-mercN)));
+
+                    // Skip if the point is near the coastline or rivers
+                    if (isNearCoastOrWater(lat, lng)) continue;
+
                     // 1. Verify safety buffer: all pixels in R_SAFE box must be completely safe (alpha === 0)
                     let isSafeBuffer = true;
                     for (let dy = -R_SAFE; dy <= R_SAFE; dy++) {
@@ -2432,11 +2500,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (!hasInsideNeighbor) continue; // Fails proximity check (too far from inundation boundary)
 
-                    // Convert pixel → lat/lng (Web Mercator)
-                    const lng = (tx + px / 256) / pow2 * 360 - 180;
-                    const mercN = Math.PI - 2 * Math.PI * (ty + py / 256) / pow2;
-                    const lat = 180 / Math.PI * Math.atan(0.5 * (Math.exp(mercN) - Math.exp(-mercN)));
-
                     // Deduplicate to GRID resolution
                     const gk = `${Math.round(lat / GRID)}_${Math.round(lng / GRID)}`;
                     if (!edgeMap.has(gk)) {
@@ -2452,7 +2515,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const edges = Array.from(edgeMap.values());
-        console.log(`[SafeEdge] スキャン完了: ${tilesScanned}/${tileTasks.length}タイル処理 → ${edges.length}件の安全境界点`);
+        console.log(`[SafeEdge] スキャン完了: ${tilesScanned}/${tileTasks.length}タイル処理 → ${edges.length}件 of 安全境界点`);
         return edges;
     }
 
