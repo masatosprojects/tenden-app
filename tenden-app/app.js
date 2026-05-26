@@ -1724,7 +1724,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.round(maxSlope * 10) / 10;
     }
 
-    async function findNearestSafeEdge(loc) {
+    async function findNearestSafeEdgeCandidates(loc) {
         const startLatLng = L.latLng(loc.lat, loc.lng);
         
         // 1. Sort all safe edges by distance
@@ -1735,34 +1735,93 @@ document.addEventListener('DOMContentLoaded', () => {
             }))
             .sort((a, b) => a.dist - b.dist);
 
-        if (sortedEdges.length === 0) return null;
+        if (sortedEdges.length === 0) return [];
 
         // 2. Take the top 15 closest safe edges to filter
         const candidates = sortedEdges.slice(0, 15).map(x => x.edge);
+
+        const filteredCandidates = [];
 
         // 3. Query elevations in a single batch request
         try {
             const elevations = await getElevationsForWaypoints(candidates);
             
-            // 4. Return the closest candidate that has an elevation of > 5.0m (clearly safe high ground/land)
+            // 4. Filter by elevation > 5.0m
             for (let i = 0; i < candidates.length; i++) {
                 const elev = elevations[i];
                 const cand = candidates[i];
                 if (elev !== null && elev > 5.0) {
-                    console.log(`[SafeEdge] 標高フィルタ採用: ${cand.name || cand.id} (距離: ${Math.round(sortedEdges[i].dist)}m, 標高: ${elev}m)`);
-                    return cand;
+                    filteredCandidates.push(cand);
                 } else if (elev !== null) {
-                    console.warn(`[SafeEdge] 境界候補除外（標高低すぎ/海・川・海岸の疑い）: ${cand.name || cand.id} (標高: ${elev}m)`);
+                    console.warn(`[SafeEdge] 境界候補除外（標高低すぎ/水域の疑い）: ${cand.name || cand.id} (標高: ${elev}m)`);
                 }
             }
         } catch (err) {
-            console.error('[SafeEdge] 標高判定エラー、距離のみで決定します:', err);
+            console.error('[SafeEdge] 標高判定エラー、距離順で候補を返します:', err);
         }
 
-        // Fallback: Return the absolute closest candidate if none are > 5m or API fails
-        const fallbackCand = sortedEdges[0].edge;
-        console.log(`[SafeEdge] 安全な高台候補が見つからないため、最寄りをフォールバック採用します: ${fallbackCand.name || fallbackCand.id}`);
-        return fallbackCand;
+        // If no candidates passed the elevation filter, return the distance-sorted ones
+        if (filteredCandidates.length === 0) {
+            return sortedEdges.map(x => x.edge);
+        }
+        return filteredCandidates;
+    }
+
+    async function findNearestSafeEdge(loc) {
+        const candidatesList = await findNearestSafeEdgeCandidates(loc);
+        if (candidatesList.length === 0) return null;
+
+        console.log(`[SafeEdge] 安全境界候補数: ${candidatesList.length}点。OSRMスナップ安全チェックを開始します...`);
+
+        // Loop through candidates list to find the first one that has a safe OSRM snapped destination!
+        for (let i = 0; i < Math.min(candidatesList.length, 6); i++) {
+            const candidateEdge = candidatesList[i];
+            
+            const osrmUrls = [
+                `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${loc.lng},${loc.lat};${candidateEdge.lng},${candidateEdge.lat}?overview=full&geometries=geojson`,
+                `https://router.project-osrm.org/route/v1/foot/${loc.lng},${loc.lat};${candidateEdge.lng},${candidateEdge.lat}?overview=full&geometries=geojson`
+            ];
+
+            let verificationFailed = false;
+            for (let url of osrmUrls) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2000);
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    const data = await response.json();
+                    
+                    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                        const routeData = data.routes[0];
+                        const waypoints = routeData.geometry.coordinates.map(c => [c[1], c[0]]); // [lat, lng]
+                        const lastWaypoint = waypoints[waypoints.length - 1];
+                        
+                        // Check if the OSRM snapped last waypoint is inside the inundation zone!
+                        const isSnappedInside = await checkTsunamiInundation(lastWaypoint[0], lastWaypoint[1], '14');
+                        
+                        if (isSnappedInside) {
+                            console.warn(`[SafeEdge] ⚠️ OSRMスナップ先が浸水域内のため候補を除外: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
+                            verificationFailed = true;
+                            break; // Try the next candidateEdge
+                        }
+
+                        // Found a perfectly safe snapped destination!
+                        console.log(`[SafeEdge] ✅ 安全なスナップ先を確認: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
+                        return candidateEdge;
+                    }
+                } catch (e) {
+                    // skip URL and try fallback URL
+                }
+            }
+
+            // If we aborted because the snapped target is inside, continue to next candidate
+            if (verificationFailed) continue;
+        }
+
+        // Fallback: If all candidates failed OSRM safety checks or API was offline, return the first candidate
+        const fallbackEdge = candidatesList[0];
+        console.warn(`[SafeEdge] すべての候補のスナップ先が安全域外または検証エラーのため、最寄りを緊急採用します: ${fallbackEdge.name || fallbackEdge.id}`);
+        return fallbackEdge;
     }
 
     function findSheltersAlongRoute(waypoints) {
