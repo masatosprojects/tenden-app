@@ -2436,8 +2436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const GRID = 0.0008; // Deduplication grid cell ~80m
         const edgeMap = new Map(); // gridKey → {lat, lng, id, name}
 
-        const R_SAFE = 1;    // 1 pixel ≈ 10m safe buffer (allows points in narrow safe valleys)
-        const R_PROX = 3;    // 3 pixels ≈ 30m proximity limit to inundation zone (close to boundary)
+        const R_PROX = 2;    // 2 pixels ≈ 20m proximity limit to inundation zone (close to boundary)
 
         // Gather all tile loading tasks
         const tileTasks = [];
@@ -2465,7 +2464,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tx = tile.tx;
             const ty = tile.ty;
 
-            // Scan for boundary: safe pixel (alpha === 0) with buffer R_SAFE, close to inundation (R_PROX)
+            // Scan for boundary: safe pixel (alpha === 0) close to inundation (R_PROX)
             for (let py = R_PROX; py < 256 - R_PROX; py += STEP) {
                 for (let px = R_PROX; px < 256 - R_PROX; px += STEP) {
                     const thisAlpha = pixels[(py * 256 + px) * 4 + 3];
@@ -2479,27 +2478,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Skip if the point is near the coastline or rivers
                     if (isNearCoastOrWater(lat, lng)) continue;
 
-                    // 1. Verify safety buffer: all pixels in R_SAFE box must be completely safe (alpha === 0)
-                    let isSafeBuffer = true;
-                    for (let dy = -R_SAFE; dy <= R_SAFE; dy++) {
-                        for (let dx = -R_SAFE; dx <= R_SAFE; dx++) {
-                            const ny = py + dy;
-                            const nx = px + dx;
-                            if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
-                                isSafeBuffer = false;
-                                break;
-                            }
-                        }
-                        if (!isSafeBuffer) break;
-                    }
-                    if (!isSafeBuffer) continue; // Fails safe buffer check
-
-                    // 2. Verify proximity: at least one pixel in R_PROX box must be inundated (alpha > 0)
+                    // Verify proximity: at least one pixel in R_PROX box must be inundated (alpha > 0)
                     let hasInsideNeighbor = false;
                     for (let dy = -R_PROX; dy <= R_PROX; dy++) {
                         for (let dx = -R_PROX; dx <= R_PROX; dx++) {
-                            // Skip checking the safe buffer we already verified
-                            if (Math.abs(dx) <= R_SAFE && Math.abs(dy) <= R_SAFE) continue;
                             const ny = py + dy;
                             const nx = px + dx;
                             if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
