@@ -216,17 +216,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // then replace with comprehensive dynamic raster scan in background
         fetch('assets/safe_edges.json')
             .then(res => res.json())
-            .then(data => {
+            .then(async (data) => {
                 safeEdgesData = data;
                 console.log('[TENDEN] safe_edges.json 読み込み完了 (暫定):', data.length, '件');
+                await verifyAndCleanSafeEdges();
             })
             .catch(() => {})
             .finally(() => {
                 // Trigger full raster scan to find ALL boundary×road intersections
-                computeSafeEdgesFromRasterScan('14').then(dynamicEdges => {
+                computeSafeEdgesFromRasterScan('14').then(async (dynamicEdges) => {
                     if (dynamicEdges.length > 0) {
                         safeEdgesData = dynamicEdges;
                         console.log(`[TENDEN] ラスタースキャン完了: ${safeEdgesData.length} 件の安全境界点を検出`);
+                        await verifyAndCleanSafeEdges();
                     }
                 }).catch(e => console.warn('[SafeEdge] ラスタースキャン失敗:', e));
             });
@@ -2226,6 +2228,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Dynamically verifies that all safe edges in safeEdgesData are strictly outside the inundation zone.
+     * Removes any points that are determined to be inside (alpha > 0).
+     */
+    async function verifyAndCleanSafeEdges() {
+        console.log('[SafeEdge] 安全境界点の安全性自動チェックを開始します...');
+        const originalCount = safeEdgesData.length;
+        if (originalCount === 0) return;
+
+        const verifiedEdges = [];
+        
+        // Check in parallel for speed
+        await Promise.all(safeEdgesData.map(async (edge) => {
+            try {
+                const isInundated = await checkTsunamiInundation(edge.lat, edge.lng, '14');
+                if (!isInundated) {
+                    verifiedEdges.push(edge);
+                } else {
+                    console.warn(`[SafeEdge] ⚠️ 警告: 浸水域内の安全境界点を除去しました: ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
+                }
+            } catch (e) {
+                // If checking fails, keep it but warn
+                verifiedEdges.push(edge);
+            }
+        }));
+
+        safeEdgesData = verifiedEdges;
+        console.log(`[SafeEdge] 安全性自動チェック完了: ${safeEdgesData.length}/${originalCount} 件のポイントが安全と確認されました。`);
+    }
+
+    /**
      * Scans GSI tsunami raster tiles for ALL inundation-boundary × safe-zone crossing points.
      * Finds pixels that are outside the inundation zone but directly adjacent to inside pixels.
      * Returns a dense array of {id, name, lat, lng} objects covering the entire Kamakura area.
@@ -2248,6 +2280,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const STEP = 4;      // Sample every 4th pixel (~40m spacing)
         const GRID = 0.0008; // Deduplication grid cell ~80m
         const edgeMap = new Map(); // gridKey → {lat, lng, id, name}
+
+        const R_SAFE = 4;    // 4 pixels ≈ 40m safe buffer in all directions
+        const R_PROX = 8;    // 8 pixels ≈ 80m proximity limit to inundation zone
 
         // Gather all tile loading tasks
         const tileTasks = [];
@@ -2275,21 +2310,43 @@ document.addEventListener('DOMContentLoaded', () => {
             const tx = tile.tx;
             const ty = tile.ty;
 
-            // Scan for boundary: safe pixel (alpha === 0) adjacent to inundation pixel (alpha > 0)
-            for (let py = STEP; py < 256 - STEP; py += STEP) {
-                for (let px = STEP; px < 256 - STEP; px += STEP) {
+            // Scan for boundary: safe pixel (alpha === 0) with buffer R_SAFE, close to inundation (R_PROX)
+            for (let py = R_PROX; py < 256 - R_PROX; py += STEP) {
+                for (let px = R_PROX; px < 256 - R_PROX; px += STEP) {
                     const thisAlpha = pixels[(py * 256 + px) * 4 + 3];
-                    if (thisAlpha > 0) continue; // Must be strictly outside the inundation zone (completely transparent/safe)
+                    if (thisAlpha > 0) continue; // Must be strictly outside (safe)
 
-                    let hasInsideNeighbor = false;
-                    for (const [dx, dy] of [[-STEP,0],[STEP,0],[0,-STEP],[0,STEP]]) {
-                        const nx = px + dx, ny = py + dy;
-                        if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
-                            hasInsideNeighbor = true;
-                            break;
+                    // 1. Verify safety buffer: all pixels in R_SAFE box must be completely safe (alpha === 0)
+                    let isSafeBuffer = true;
+                    for (let dy = -R_SAFE; dy <= R_SAFE; dy++) {
+                        for (let dx = -R_SAFE; dx <= R_SAFE; dx++) {
+                            const ny = py + dy;
+                            const nx = px + dx;
+                            if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
+                                isSafeBuffer = false;
+                                break;
+                            }
                         }
+                        if (!isSafeBuffer) break;
                     }
-                    if (!hasInsideNeighbor) continue;
+                    if (!isSafeBuffer) continue; // Fails safe buffer check
+
+                    // 2. Verify proximity: at least one pixel in R_PROX box must be inundated (alpha > 0)
+                    let hasInsideNeighbor = false;
+                    for (let dy = -R_PROX; dy <= R_PROX; dy++) {
+                        for (let dx = -R_PROX; dx <= R_PROX; dx++) {
+                            // Skip checking the safe buffer we already verified
+                            if (Math.abs(dx) <= R_SAFE && Math.abs(dy) <= R_SAFE) continue;
+                            const ny = py + dy;
+                            const nx = px + dx;
+                            if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
+                                hasInsideNeighbor = true;
+                                break;
+                            }
+                        }
+                        if (hasInsideNeighbor) break;
+                    }
+                    if (!hasInsideNeighbor) continue; // Fails proximity check (too far from inundation boundary)
 
                     // Convert pixel → lat/lng (Web Mercator)
                     const lng = (tx + px / 256) / pow2 * 360 - 180;
