@@ -2618,7 +2618,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // This prevents over-exclusion in upper valleys (resolves missing plots) while strictly blocking direct river banks.
         const riverBufferDist = lat < 35.315 ? 40 : 20;
         
-        if (distToCoast < 300) return true;
+        if (distToCoast < 50) return true;
         if (distToNamerikawa < riverBufferDist) return true;
         if (distToNikaidogawa < riverBufferDist) return true;
         if (distToGokurakuji < riverBufferDist) return true;
