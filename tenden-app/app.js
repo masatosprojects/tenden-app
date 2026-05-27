@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // GeoJSON and Data layers
     let sheltersData = [];
     let safeEdgesData = [];
+    let staticSafeEdges = [];
     
     // Kamakura default location (Yuigahama)
     const KAMAKURA_CENTER = [35.3192, 139.5504];
@@ -207,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('assets/safe_edges.json')
             .then(res => res.json())
             .then(async (data) => {
+                staticSafeEdges = data;
                 safeEdgesData = data;
                 console.log('[TENDEN] safe_edges.json 読み込み完了 (暫定):', data.length, '件');
                 await verifyAndCleanSafeEdges();
@@ -217,8 +219,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Trigger full raster scan to find ALL boundary×road intersections
                 computeSafeEdgesFromRasterScan('14').then(async (dynamicEdges) => {
                     if (dynamicEdges.length > 0) {
-                        safeEdgesData = dynamicEdges;
-                        console.log(`[TENDEN] ラスタースキャン完了: ${safeEdgesData.length} 件の安全境界点を検出`);
+                        // Merge static curated edges with dynamically scanned edges to prevent high-altitude fallbacks from disappearing
+                        const mergedEdges = [...staticSafeEdges];
+                        dynamicEdges.forEach(dyn => {
+                            // Check if a very close point already exists (within 50 meters) to avoid visual clutter
+                            const isDuplicate = mergedEdges.some(st => {
+                                const dist = L.latLng(st.lat, st.lng).distanceTo(L.latLng(dyn.lat, dyn.lng));
+                                return dist < 50;
+                            });
+                            if (!isDuplicate) {
+                                mergedEdges.push(dyn);
+                            }
+                        });
+                        safeEdgesData = mergedEdges;
+                        console.log(`[TENDEN] ラスタースキャン完了: ${safeEdgesData.length} 件（静的: ${staticSafeEdges.length}件、動的マージ: ${dynamicEdges.length}件）の安全境界点を検出`);
                         await verifyAndCleanSafeEdges();
                         drawAllSafeEdges(); // Render layers
                     }
@@ -2938,9 +2952,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function isNearCoastOrWater(lat, lng) {
         if (!window.turf) return false;
         
-        // Strictly exclude anything outside Kamakura municipal limits (East of 139.563 in Zushi / Kotsubo, or South of 35.295)
-        if (lng > 139.563 || lat < 35.295) {
-            console.log(`[SafeEdge] City Limits Filter: Excluded point outside Kamakura city boundaries: ${lat}, ${lng}`);
+        // Strictly exclude anything outside Kamakura municipal limits:
+        // Exclude if it's east of 139.585, OR if it's in Zushi/Kotsubo (east of 139.563 AND south of 35.308), OR south of 35.295.
+        if (lng > 139.585 || (lng > 139.563 && lat < 35.308) || lat < 35.295) {
+            console.log(`[SafeEdge] City Limits Filter: Excluded point outside Kamakura city boundaries or inside Zushi: ${lat}, ${lng}`);
             return true;
         }
         
@@ -3081,7 +3096,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('[SafeEdge] 津波浸水区域の境界スキャンを開始します...');
         
         // Kamakura bounding box (strictly within Kamakura municipal limits, avoiding Zushi/Kotsubo in the east)
-        const bbox = { latMin: 35.27, latMax: 35.37, lngMin: 139.47, lngMax: 139.563 };
+        const bbox = { latMin: 35.27, latMax: 35.37, lngMin: 139.47, lngMax: 139.585 };
         const zoom = 14; // ~10m per pixel — high resolution
         const pow2 = Math.pow(2, zoom);
 
