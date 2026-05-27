@@ -2519,12 +2519,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const distToGokurakuji = turf.pointToLineDistance(pt, gokurakujiLine, {units: 'meters'});
         const distToKobaigawa = turf.pointToLineDistance(pt, kobaigawaLine, {units: 'meters'});
         
-        // Coast buffer: 300m (stronger safety), Rivers buffer: 100m (double safety)
+        // Dynamic River buffer: 40m for downstream (flat land), 20m for upstream (mountains/valleys)
+        // This prevents over-exclusion in upper valleys (resolves missing plots) while strictly blocking direct river banks.
+        const riverBufferDist = lat < 35.315 ? 40 : 20;
+        
         if (distToCoast < 300) return true;
-        if (distToNamerikawa < 100) return true;
-        if (distToNikaidogawa < 100) return true;
-        if (distToGokurakuji < 100) return true;
-        if (distToKobaigawa < 100) return true;
+        if (distToNamerikawa < riverBufferDist) return true;
+        if (distToNikaidogawa < riverBufferDist) return true;
+        if (distToGokurakuji < riverBufferDist) return true;
+        if (distToKobaigawa < riverBufferDist) return true;
         
         return false;
     }
@@ -2606,10 +2609,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Skip if the point is near the coastline or rivers
                     if (isNearCoastOrWater(lat, lng)) continue;
 
-                    // Verify proximity: at least one pixel in R_PROX box must be inundated (alpha > 0)
+                    // [CRITICAL] 1-Pixel Safety Margin Check (~10m buffer from inundation pixels)
+                    // This mathematically guarantees that no green plot point lies inside or overlaps with the pink/red hazard zone.
+                    let tooCloseToInundation = false;
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            if (pixels[((py + dy) * 256 + (px + dx)) * 4 + 3] > 0) {
+                                tooCloseToInundation = true;
+                                break;
+                            }
+                        }
+                        if (tooCloseToInundation) break;
+                    }
+                    if (tooCloseToInundation) continue; // Skip if it's too close to the hazard edge
+
+                    // Verify proximity: at least one pixel in outer shell (2 to 3 pixels away) must be inundated (alpha > 0)
                     let hasInsideNeighbor = false;
-                    for (let dy = -R_PROX; dy <= R_PROX; dy++) {
-                        for (let dx = -R_PROX; dx <= R_PROX; dx++) {
+                    const R_OUTER = 3;
+                    for (let dy = -R_OUTER; dy <= R_OUTER; dy++) {
+                        for (let dx = -R_OUTER; dx <= R_OUTER; dx++) {
+                            // Skip the inner 3x3 box we already verified is completely safe
+                            if (Math.abs(dy) <= 1 && Math.abs(dx) <= 1) continue;
+                            
                             const ny = py + dy;
                             const nx = px + dx;
                             if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
@@ -2619,7 +2640,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         if (hasInsideNeighbor) break;
                     }
-                    if (!hasInsideNeighbor) continue; // Fails proximity check (too far from inundation boundary)
+                    if (!hasInsideNeighbor) continue; // Too far from the boundary
 
                     // Deduplicate to GRID resolution
                     const gk = `${Math.round(lat / GRID)}_${Math.round(lng / GRID)}`;
