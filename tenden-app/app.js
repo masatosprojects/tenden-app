@@ -840,9 +840,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const desc = dict.manualPinPopupDesc || '大津波が迫る中、あなたならどう動き、どこへ逃げますか？';
 
             userMarker.bindPopup(`
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 4px;">
-                    <strong style="color: #ff3b30; font-size: 14px; display: block; margin-bottom: 4px;">${title}</strong>
-                    <span style="font-size: 12px; color: #555; line-height: 1.4; display: block;">
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 2px; max-width: 220px;">
+                    <strong style="color: #ff3b30; font-size: 11px; display: block; margin-bottom: 2px;">${title}</strong>
+                    <span style="font-size: 10px; color: #555; line-height: 1.35; display: block;">
                         ${desc}
                     </span>
                 </div>
@@ -852,13 +852,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 className: 'gsi-thought-popup'
             }).openPopup();
 
-            // Automatically close the popup after 5 seconds to keep the map clean and unobstructed
+            // Automatically close the popup after 3 seconds to keep the map clean and unobstructed
             popupTimeoutId = setTimeout(() => {
                 if (userMarker && userMarker.getPopup && userMarker.getPopup()) {
                     userMarker.closePopup();
                 }
                 popupTimeoutId = null;
-            }, 5000);
+            }, 3000);
         } else {
             // Cancel timeout and close safely
             if (popupTimeoutId) {
