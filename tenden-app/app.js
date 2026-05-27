@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeSelectedRouteId = 'A';
     let activeSecondaryRoute = null; // Cached secondary (shelter) route for redraw
     let simulationInterval = null;
+    let popupTimeoutId = null; // Timeout ID for auto-closing manual pin thought popup
     let mainRouteLine = null;
     let activeScenarioId = 1;
     let activeLocationId = 'a';
@@ -708,6 +709,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show a simple thought-provoking popup if user placed the pin manually
         if (isManualLocation) {
+            // Cancel any pending popup close timeouts
+            if (popupTimeoutId) {
+                clearTimeout(popupTimeoutId);
+                popupTimeoutId = null;
+            }
+
             userMarker.bindPopup(`
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 4px;">
                     <strong style="color: #ff3b30; font-size: 14px; display: block; margin-bottom: 4px;">もし、ここにいたら・・・</strong>
@@ -720,7 +727,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 offset: [0, -10],
                 className: 'gsi-thought-popup'
             }).openPopup();
+
+            // Automatically close the popup after 5 seconds to keep the map clean and unobstructed
+            popupTimeoutId = setTimeout(() => {
+                if (userMarker && userMarker.getPopup && userMarker.getPopup()) {
+                    userMarker.closePopup();
+                }
+                popupTimeoutId = null;
+            }, 5000);
         } else {
+            // Cancel timeout and close safely
+            if (popupTimeoutId) {
+                clearTimeout(popupTimeoutId);
+                popupTimeoutId = null;
+            }
             // Leaflet unbindPopup/closePopup can throw errors if no popup is currently bound.
             // Safely check using getPopup() first to prevent TypeError app crash!
             if (userMarker.getPopup && userMarker.getPopup()) {

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'tenden-v25';
-const DYNAMIC_CACHE = 'tenden-dynamic-v25';
+const CACHE_NAME = 'tenden-v26';
+const DYNAMIC_CACHE = 'tenden-dynamic-v26';
 
 const urlsToCache = [
   './',
