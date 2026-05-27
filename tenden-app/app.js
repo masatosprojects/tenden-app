@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Basic state
     let isEmergency = false;
-    let map, userMarker, routeLayerGroup, hazardLayer, sheltersLayerGroup, congestionLayer;
+    let map, userMarker, routeLayerGroup, hazardLayer, reliefLayer, sheltersLayerGroup, congestionLayer;
     let congestionGeojsonData = null;
     let currentLocation = null; // {lat, lng}
     let isManualLocation = false;
@@ -160,6 +160,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 maxZoom: 17,
                 opacity: 0.65,
                 attribution: '津波浸水想定: <a href="https://disaportal.gsi.go.jp/" target="_blank">ハザードマップポータルサイト</a>'
+            }
+        );
+        
+        // Official relief tile layer from GSI for elevation color maps
+        reliefLayer = L.tileLayer(
+            'https://cyberjapandata2.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png',
+            {
+                minZoom: 2,
+                maxZoom: 18,
+                opacity: 0.6,
+                attribution: '色別標高図: <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">国土地理院</a>'
             }
         );
         // Note: tile layer is instantiated but not added to map until toggle button is activated
@@ -515,6 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        document.getElementById('toggle-relief').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                if (reliefLayer) reliefLayer.addTo(map);
+            } else {
+                if (reliefLayer) map.removeLayer(reliefLayer);
+            }
+        });
+
         const btnGpsLocation = document.getElementById('btn-gps-location');
         if (btnGpsLocation) {
             btnGpsLocation.addEventListener('click', () => {
@@ -685,6 +704,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 iconAnchor: [13, 13]
             });
             userMarker = L.marker([loc.lat, loc.lng], { icon: userIcon }).addTo(map);
+        }
+
+        // Show a simple thought-provoking popup if user placed the pin manually
+        if (isManualLocation) {
+            userMarker.bindPopup(`
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 4px;">
+                    <strong style="color: #ff3b30; font-size: 14px; display: block; margin-bottom: 4px;">もし、ここにいたら・・・</strong>
+                    <span style="font-size: 12px; color: #555; line-height: 1.4; display: block;">
+                        大津波が迫る中、あなたならどう動き、どこへ逃げますか？
+                    </span>
+                </div>
+            `, {
+                closeButton: false,
+                offset: [0, -10],
+                className: 'gsi-thought-popup'
+            }).openPopup();
+        } else {
+            userMarker.closePopup();
+            userMarker.unbindPopup();
         }
     }
 
