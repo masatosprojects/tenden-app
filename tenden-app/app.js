@@ -1676,31 +1676,23 @@ document.addEventListener('DOMContentLoaded', () => {
      * Returns array of elevation values in metres (null for failures).
      */
     async function getElevationsForWaypoints(points) {
-        const elevations = new Array(points.length).fill(null);
-        // GSI elevation API supports batch requests via a locations string
-        const locStr = points.map(p => `${p.lng},${p.lat}`).join('|');
-        const url = `https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?positions=${encodeURIComponent(locStr)}&outtype=JSON`;
-        try {
-            const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
-            const json = await res.json();
-            if (json && json.results) {
-                json.results.forEach((r, i) => {
-                    if (r && r.elevation !== undefined && r.elevation !== null) {
-                        elevations[i] = r.elevation;
-                    }
-                });
+        // GSI elevation API does NOT support batch request with positions.
+        // We fetch individual coordinates in parallel using Promise.all for maximum performance!
+        const fetchPromises = points.map(async (p) => {
+            const url = `https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon=${p.lng}&lat=${p.lat}&outtype=JSON`;
+            try {
+                const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+                const json = await response.json();
+                if (json && json.elevation !== undefined && json.elevation !== null) {
+                    return json.elevation;
+                }
+            } catch (e) {
+                // skip
             }
-        } catch (e) {
-            // Fallback: try individual point queries
-            for (let i = 0; i < points.length; i++) {
-                try {
-                    const r = await fetch(`https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon=${points[i].lng}&lat=${points[i].lat}&outtype=JSON`, { signal: AbortSignal.timeout(2000) });
-                    const j = await r.json();
-                    if (j && j.elevation !== undefined) elevations[i] = j.elevation;
-                } catch (_) { /* skip */ }
-            }
-        }
-        return elevations;
+            return null;
+        });
+
+        return Promise.all(fetchPromises);
     }
 
     /**
@@ -1737,34 +1729,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (sortedEdges.length === 0) return [];
 
-        // 2. Take the top 15 closest safe edges to filter
-        const candidates = sortedEdges.slice(0, 15).map(x => x.edge);
-
-        const filteredCandidates = [];
-
-        // 3. Query elevations in a single batch request
-        try {
-            const elevations = await getElevationsForWaypoints(candidates);
-            
-            // 4. Filter by elevation > 5.0m
-            for (let i = 0; i < candidates.length; i++) {
-                const elev = elevations[i];
-                const cand = candidates[i];
-                if (elev !== null && elev > 5.0) {
-                    filteredCandidates.push(cand);
-                } else if (elev !== null) {
-                    console.warn(`[SafeEdge] 境界候補除外（標高低すぎ/水域の疑い）: ${cand.name || cand.id} (標高: ${elev}m)`);
-                }
-            }
-        } catch (err) {
-            console.error('[SafeEdge] 標高判定エラー、距離順で候補を返します:', err);
-        }
-
-        // If no candidates passed the elevation filter, return the distance-sorted ones
-        if (filteredCandidates.length === 0) {
-            return sortedEdges.map(x => x.edge);
-        }
-        return filteredCandidates;
+        // 2. Take the top 10 closest safe edges for OSRM routing verification (instantly without API delays)
+        return sortedEdges.slice(0, 10).map(x => x.edge);
     }
 
     async function findNearestSafeEdge(loc) {
