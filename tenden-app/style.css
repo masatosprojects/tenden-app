@@ -519,3 +519,142 @@ input:checked + .slider:before {
     }
 }
 
+/* ==========================================================================
+   5大プレミアム・デザイン・システム・アップデート
+   ========================================================================== */
+
+/* 1. 流体モーフィング・テーマ移行アニメーション */
+body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, button, input, textarea {
+    transition: background-color 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                backdrop-filter 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                -webkit-backdrop-filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 2. ネオン・ルミナス発光する多重発光避難ルート */
+.route-glow-base {
+    animation: neonPulse 2.5s infinite ease-in-out;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.8s;
+}
+@keyframes neonPulse {
+    0% { opacity: 0.35; stroke-width: 10; filter: drop-shadow(0 0 3px currentColor); }
+    50% { opacity: 0.75; stroke-width: 13; filter: drop-shadow(0 0 14px currentColor); }
+    100% { opacity: 0.35; stroke-width: 10; filter: drop-shadow(0 0 3px currentColor); }
+}
+
+.route-glow-core {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 10 12;
+    animation: routeFlow 25s linear infinite;
+    transition: stroke 0.8s;
+}
+@keyframes routeFlow {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -500; }
+}
+
+/* 3. Appleライクな「ダイナミック・アイランド（上部伸縮カプセル通知）」 */
+#dynamic-island {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: max(env(safe-area-inset-top, 12px), 12px);
+    z-index: 10000; /* Highest priority overlay */
+    background: rgba(15, 15, 15, 0.95);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+}
+
+.dynamic-island-collapsed {
+    width: 60px;
+    height: 30px;
+    border-radius: 15px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) scale(0.85) translateY(-20px) !important;
+}
+
+.dynamic-island-expanded {
+    width: 340px;
+    max-width: 90vw;
+    height: auto;
+    min-height: 48px;
+    padding: 10px 18px;
+    border-radius: 24px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) scale(1.0) translateY(0) !important;
+}
+
+.island-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.island-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    animation: scalePulse 1.5s infinite alternate ease-in-out;
+}
+@keyframes scalePulse {
+    0% { transform: scale(0.9); }
+    100% { transform: scale(1.1); }
+}
+
+.island-text {
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-align: left;
+    line-height: 1.45;
+    color: #ffffff;
+    width: 100%;
+}
+
+/* 4. ボタンの「3Dマイクロ・リフレクション（ガラス光沢反射）」効果 */
+.fab-btn, .action-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.fab-btn::after, .action-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0) 30%, 
+        rgba(255, 255, 255, 0.28) 50%, 
+        rgba(255, 255, 255, 0) 70%
+    );
+    transform: rotate(-45deg) translate(-100%, -100%);
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+
+.fab-btn:hover::after, .action-btn:hover::after {
+    transform: rotate(-45deg) translate(100%, 100%);
+}
+
+/* 5. 地図（Leaflet）レイヤー切替時の「流体フェード」効果 */
+.leaflet-tile {
+    transition: opacity 0.6s ease-in-out !important;
+}
+
+

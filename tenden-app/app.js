@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Premium features state variables
     let lastOffCourseSpeakTime = 0;
     let isEvacuationCompleted = false;
+    let dynamicIslandTimer = null;
     
     // Simulation-derived data
     let routeData = {};  // loaded from assets/routes.json
@@ -359,6 +360,9 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleVoiceNav.checked = localStorage.getItem('tenden-voice-nav') === 'true';
             toggleVoiceNav.addEventListener('change', (e) => {
                 localStorage.setItem('tenden-voice-nav', e.target.checked);
+                const statusText = e.target.checked ? "ON" : "OFF";
+                const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                triggerDynamicIsland((dict.voiceNavLabel || "音声ナビゲーション") + ": " + statusText, "info");
                 if (e.target.checked) {
                     speakI18n('voiceNavLabel');
                 }
@@ -369,6 +373,9 @@ document.addEventListener('DOMContentLoaded', () => {
             walkSpeedSelect.value = localStorage.getItem('tenden-walk-speed') || '4.0';
             walkSpeedSelect.addEventListener('change', (e) => {
                 localStorage.setItem('tenden-walk-speed', e.target.value);
+                const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                const speedText = walkSpeedSelect.options[walkSpeedSelect.selectedIndex].text;
+                triggerDynamicIsland((dict.walkSpeedLabel || "避難歩行速度") + ": " + speedText, "info");
                 // Dynamically recalculate route evacuation times if active location exists
                 if (currentLocation) {
                     recalculateRouteFromLocation(currentLocation);
@@ -379,12 +386,18 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleP2PAuto.checked = localStorage.getItem('tenden-p2p-auto') !== 'false';
             toggleP2PAuto.addEventListener('change', (e) => {
                 localStorage.setItem('tenden-p2p-auto', e.target.checked);
+                const statusText = e.target.checked ? "ON" : "OFF";
+                const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                triggerDynamicIsland((dict.p2pAutoLabel || "P2P自動検知") + ": " + statusText, "info");
             });
         }
         if (toggleDeviationAlert) {
             toggleDeviationAlert.checked = localStorage.getItem('tenden-deviation-alert') !== 'false';
             toggleDeviationAlert.addEventListener('change', (e) => {
                 localStorage.setItem('tenden-deviation-alert', e.target.checked);
+                const statusText = e.target.checked ? "ON" : "OFF";
+                const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                triggerDynamicIsland((dict.deviationAlertLabel || "ルート逸脱警告") + ": " + statusText, "info");
             });
         }
         if (toggleEmergencyForce) {
@@ -453,6 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
                     const originalText = btnShareCopy.innerText;
                     btnShareCopy.innerText = dict.copiedLabel || 'コピーしました！ ✅';
+                    triggerDynamicIsland(dict.copiedLabel || 'コピーしました！ ✅', 'copied');
                     setTimeout(() => {
                         btnShareCopy.innerText = originalText;
                     }, 2000);
@@ -755,7 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let key of keys) {
                     await caches.delete(key);
                 }
-                showCustomAlert(dict.alertCacheTitle || "キャッシュ削除完了", dict.alertCacheDesc || "オフラインキャッシュを正常に削除しました。", "success");
+                triggerDynamicIsland(dict.alertCacheTitle || "キャッシュ削除完了", "success");
             }
         });
 
@@ -1055,6 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
  
         // Trigger speech synthesis evac start instruction
         speakI18n('speechEvacStart');
+        triggerDynamicIsland(`${sc.title}: ${scLoc.desc}`, 'warning');
  
         if (isTest) {
             // Keep user's custom location if it is within the Kamakura model area, otherwise fallback to scenario start
@@ -1215,12 +1230,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // Do not snap back to the raw pin coordinate to prevent cutting through terrain
             waypoints = [ ...routeCandidate.waypoints ];
             
+            // Multiglow neon route base line (broad pulse)
             mainRouteLine = L.polyline(waypoints, {
                 color: routeCandidate.color || '#00bbff',
-                weight: 6,
-                opacity: 1,
-                className: 'animated-route'
+                className: 'route-glow-base'
             }).addTo(routeLayerGroup);
+
+            // Multiglow neon route core line (dashed flow)
+            L.polyline(waypoints, {
+                color: '#ffffff', // High brightness white core for absolute neon aesthetics
+                className: 'route-glow-core'
+            }).addTo(routeLayerGroup);
+
+            // Set custom route color custom property for dropping shadows dynamically in CSS!
+            mainRouteLine.getElement().style.color = routeCandidate.color || '#00bbff';
 
             // Route type label on the map
             const midIdx = Math.floor(waypoints.length / 2);
@@ -1239,10 +1262,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const mainWaypoints = [ [startLoc.lat, startLoc.lng], ...scLoc.mainRoute ];
             mainRouteLine = L.polyline(mainWaypoints, {
                 color: '#00bbff',
-                weight: 6,
-                opacity: 1,
-                className: 'animated-route'
+                className: 'route-glow-base'
             }).addTo(routeLayerGroup);
+
+            L.polyline(mainWaypoints, {
+                color: '#ffffff',
+                className: 'route-glow-core'
+            }).addTo(routeLayerGroup);
+
+            mainRouteLine.getElement().style.color = '#00bbff';
 
             const subWaypoints = [ [startLoc.lat, startLoc.lng], ...scLoc.subRoute ];
             L.polyline(subWaypoints, {
@@ -1265,20 +1293,30 @@ document.addEventListener('DOMContentLoaded', () => {
             if (candidate.waypoints && candidate.waypoints.length > 0) {
                 let waypoints = [ ...candidate.waypoints ];
                 
-                // Highlight active main selection, thin dash other alternatives
-                const lineOpts = isSelected ? {
-                    color: color,
-                    weight: 6.5,
-                    opacity: 1.0,
-                    className: 'animated-route'
-                } : {
-                    color: color,
-                    weight: 4.0,
-                    opacity: 0.35,
-                    dashArray: '5, 8'
-                };
-                
-                const pline = L.polyline(waypoints, lineOpts).addTo(routeLayerGroup);
+                let pline;
+                if (isSelected) {
+                    // Draw dual glowing polylines for the selected active neon-luminous route
+                    pline = L.polyline(waypoints, {
+                        color: color,
+                        className: 'route-glow-base'
+                    }).addTo(routeLayerGroup);
+
+                    L.polyline(waypoints, {
+                        color: '#ffffff', // bright center core
+                        className: 'route-glow-core'
+                    }).addTo(routeLayerGroup);
+
+                    // Set route color property dynamically
+                    pline.getElement().style.color = color;
+                } else {
+                    // Inactive alternatives are rendered as thin semi-transparent dashed lines
+                    pline = L.polyline(waypoints, {
+                        color: color,
+                        weight: 4.0,
+                        opacity: 0.35,
+                        dashArray: '5, 8'
+                    }).addTo(routeLayerGroup);
+                }
                 
                 // Direct on-map line clicking toggles route choice!
                 pline.on('click', (e) => {
@@ -1465,6 +1503,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Voice Navigation speech for route choice
             speakI18n('speechRouteSelect', { routeLabel: selectedRoute.label });
+            triggerDynamicIsland((dict.routeSelectSuccess || "ルート {routeLabel} を選択しました").replace('{routeLabel}', selectedRoute.label), 'success');
         }
 
         // Restart simulation along new selected path
@@ -2366,6 +2405,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const now = Date.now();
             if (now - lastOffCourseSpeakTime > 12000) {
                 speakI18n('speechOffCourse');
+                triggerDynamicIsland(dict.routeOffCourse || "ルートから外れています！青い線に戻ってください。", "error");
                 lastOffCourseSpeakTime = now;
             }
 
@@ -2571,9 +2611,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ==========================================================================
-    // Premium Features Helpers (多言語音声ナビ、オフライン検知、GPS精度HUD、避難完了チェック)
-    // ==========================================================================
+    function triggerDynamicIsland(message, type = 'info') {
+        const island = document.getElementById('dynamic-island');
+        const iconEl = document.getElementById('island-icon');
+        const textEl = document.getElementById('island-text');
+        if (!island || !iconEl || !textEl) return;
+
+        // Reset state & clear active timers to handle rapid triggers elegantly
+        if (dynamicIslandTimer) {
+            clearTimeout(dynamicIslandTimer);
+            dynamicIslandTimer = null;
+        }
+
+        const icons = {
+            info: 'ℹ️',
+            success: '✅',
+            warning: '⚠️',
+            error: '🚨',
+            copied: '📋'
+        };
+        iconEl.innerText = icons[type] || 'ℹ️';
+        textEl.innerText = message;
+
+        island.classList.remove('hidden');
+        island.className = 'dynamic-island-collapsed';
+
+        // Force browser repaint to trigger slide down animation
+        setTimeout(() => {
+            island.className = 'dynamic-island-expanded';
+        }, 30);
+
+        // Retract after 3.8 seconds
+        dynamicIslandTimer = setTimeout(() => {
+            island.className = 'dynamic-island-collapsed';
+            dynamicIslandTimer = setTimeout(() => {
+                island.classList.add('hidden');
+                dynamicIslandTimer = null;
+            }, 650);
+        }, 3800);
+    }
+
     function updateGPSAccuracyHUD(accuracy) {
         const accuracyEl = document.getElementById('gps-accuracy');
         const box = document.getElementById('gps-accuracy-box');
