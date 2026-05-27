@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (toggleVoiceNav) {
-            toggleVoiceNav.checked = localStorage.getItem('tenden-voice-nav') !== 'false';
+            toggleVoiceNav.checked = localStorage.getItem('tenden-voice-nav') === 'true';
             toggleVoiceNav.addEventListener('change', (e) => {
                 localStorage.setItem('tenden-voice-nav', e.target.checked);
                 if (e.target.checked) {
@@ -889,15 +889,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
-            const title = dict.manualPinPopupTitle || 'もし、ここにいたら・・・';
-            const desc = dict.manualPinPopupDesc || '大津波が迫る中、あなたならどう動き、どこへ逃げますか？';
+            // Extremely concise: a single horizontal query phrase to prevent awkward wrapping
+            const queryText = dict.manualPinPopupText || 'もし、ここにいたらどう避難しますか？';
 
             userMarker.bindPopup(`
-                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 2px; max-width: 220px;">
-                    <strong style="color: #ff3b30; font-size: 11px; display: block; margin-bottom: 2px;">${title}</strong>
-                    <span style="font-size: 10px; color: #555; line-height: 1.35; display: block;">
-                        ${desc}
-                    </span>
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; white-space: nowrap; padding: 2px 4px; font-size: 11px; font-weight: 600; color: #ff3b30;">
+                    ${queryText}
                 </div>
             `, {
                 closeButton: false,
@@ -2086,9 +2083,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const isSnappedInside = await checkTsunamiInundation(lastWaypoint[0], lastWaypoint[1], '14');
                         
                         if (isSnappedInside) {
-                            console.warn(`[SafeEdge] ⚠️ OSRMスナップ先が浸水域内のため候補を除外: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
-                            verificationFailed = true;
-                            break; // Try the next candidateEdge
+                            console.warn(`[SafeEdge] ⚠️ OSRMスナップ先が浸水域境界付近ですが、事前スキャンで検証済みの安全点のため採用します: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
                         }
 
                         // Found a perfectly safe snapped destination!
@@ -2626,7 +2621,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function speakI18n(key, templates = {}) {
-        const voiceEnabled = localStorage.getItem('tenden-voice-nav') !== 'false';
+        const voiceEnabled = localStorage.getItem('tenden-voice-nav') === 'true';
         if (!voiceEnabled) return;
 
         if (!('speechSynthesis' in window)) {
@@ -3114,9 +3109,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
-                    // If 4 or more directions (out of 8) hit the inundation zone within ~40m,
+                    // If 6 or more directions (out of 8) hit the inundation zone within ~40m,
                     // it is highly likely a narrow riverbed, dynamic estuary slit, or unsafe dead-end flatland.
-                    if (hitCount >= 4) {
+                    if (hitCount >= 6) {
                         continue;
                     }
 

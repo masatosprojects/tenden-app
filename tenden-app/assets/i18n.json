@@ -111,7 +111,8 @@
     "guideRule3Title": "3. 戻らない（戻り禁止）",
     "guideRule3Desc": "一度避難したら、絶対に荷物を取りに戻ったり、様子を見に海岸へ戻ってはいけません。警報が解除されるまで留まります。",
     "btnGuideClose": "閉じる",
-    "gpsLowAccuracy": "（屋外での利用推奨）"
+    "gpsLowAccuracy": "（屋外での利用推奨）",
+    "manualPinPopupText": "もし、ここにいたらどう避難しますか？"
   },
   "en": {
     "onboardingTitle": "We will guide you to the nearest<br>safe location.",
@@ -225,7 +226,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "If you were here, how would you evacuate?"
   },
   "zh": {
     "onboardingTitle": "我们将引导您前往最近的<br>安全地点。",
@@ -339,7 +341,8 @@
     "guideRule3Title": "3. 绝不折返（禁止返回）",
     "guideRule3Desc": "一旦开始避难，绝对不要回去拿行李或去海边看情况。请保持在安全地点，直到警报解除。",
     "btnGuideClose": "关闭",
-    "gpsLowAccuracy": "（建议在室外使用）"
+    "gpsLowAccuracy": "（建议在室外使用）",
+    "manualPinPopupText": "如果您在此处，会如何避难？"
   },
   "zh-tw": {
     "onboardingTitle": "我們將引導您前往最近的<br>安全地點。",
@@ -453,7 +456,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "如果您在此處，會如何避難？"
   },
   "ko": {
     "onboardingTitle": "가장 가까운 안전한 장소로<br>안내해 드립니다.",
@@ -567,7 +571,8 @@
     "guideRule3Title": "3. 돌아가지 않기 (귀환 금지)",
     "guideRule3Desc": "일단 대피한 후에는 절대로 짐을 찾으러 돌아가거나 바닷가로 다가가지 마십시오. 경보가 해제될 때까지 대기하십시오.",
     "btnGuideClose": "닫기",
-    "gpsLowAccuracy": "(실외 사용 권장)"
+    "gpsLowAccuracy": "(실외 사용 권장)",
+    "manualPinPopupText": "여기에 있다면 어떻게 대피하시겠습니까?"
   },
   "fr": {
     "onboardingTitle": "Nous vous guiderons vers le lieu<br>sûr le plus proche.",
@@ -681,7 +686,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Si vous étiez ici, comment évacueriez-vous?"
   },
   "es": {
     "onboardingTitle": "Le guiaremos al lugar seguro<br>más cercano.",
@@ -795,7 +801,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "¿Si estuviera aquí, cómo evacuaría?"
   },
   "de": {
     "onboardingTitle": "Wir führen Sie zum nächsten<br>sicheren Ort.",
@@ -909,7 +916,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Wie würden Sie evakuieren, wenn Sie hier wären?"
   },
   "it": {
     "onboardingTitle": "Ti guideremo verso il luogo<br>sicuro più vicino.",
@@ -1023,7 +1031,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Se fossi qui, come evacueresti?"
   },
   "pt": {
     "onboardingTitle": "Iremos guiar você até o local<br>seguro mais próximo.",
@@ -1137,7 +1146,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Se você estivesse aqui, como evacuaria?"
   },
   "ru": {
     "onboardingTitle": "Мы направим вас к ближайшему<br>безопасному месту.",
@@ -1251,7 +1261,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Если бы вы были здесь, как бы вы эвакуировались?"
   },
   "vi": {
     "onboardingTitle": "Chúng tôi sẽ dẫn bạn đến nơi<br>an toàn gần nhất.",
@@ -1365,7 +1376,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Nếu bạn ở đây, bạn sẽ sơ tán thế nào?"
   },
   "th": {
     "onboardingTitle": "เราจะนำทางคุณไปยังสถานที่<br>ที่ปลอดภัยที่สุดใกล้ตัวคุณ",
@@ -1479,7 +1491,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "หากคุณอยู่ที่นี่ คุณจะอพยพอย่างไร?"
   },
   "id": {
     "onboardingTitle": "Kami akan memandu Anda ke tempat<br>aman terdekat.",
@@ -1593,7 +1606,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Jika Anda berada di sini, bagaimana Anda akan mengungsi?"
   },
   "tl": {
     "onboardingTitle": "Gagabayan ka namin sa pinakamalapit<br>na ligtas na lokasyon.",
@@ -1707,7 +1721,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Kung nandito ka, paano ka lilikas?"
   },
   "ms": {
     "onboardingTitle": "Kami akan memandu anda ke lokasi<br>selamat yang terdekat.",
@@ -1821,7 +1836,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Jika anda berada di sini, bagaimana anda akan berpindah?"
   },
   "hi": {
     "onboardingTitle": "हम आपको निकटतम सुरक्षित स्थान<br>तक मार्गदर्शन करेंगे।",
@@ -1935,7 +1951,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "यदि आप यहाँ होते, तो आप कैसे सुरक्षित स्थान पर जाते?"
   },
   "bn": {
     "onboardingTitle": "আমরা আপনাকে নিকটতম নিরাপদ স্থানে<br>গাইড করব।",
@@ -2049,7 +2066,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "আপনি এখানে থাকলে কীভাবে উচ্ছেদ করবেন?"
   },
   "ar": {
     "onboardingTitle": "سنوجهك إلى أقرب<br>مكان آمن.",
@@ -2163,7 +2181,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "إذا كنت هنا، كيف ستخلي؟"
   },
   "fa": {
     "onboardingTitle": "ما شما را به نزدیک‌ترین<br>مکان امن هدایت می‌کنیم.",
@@ -2277,7 +2296,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "اگر اینجا بودید، چگونه تخلیه می کردید؟"
   },
   "tr": {
     "onboardingTitle": "Sizi en yakın güvenli yere<br>yönlendireceğiz.",
@@ -2391,7 +2411,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Burada olsaydınız nasıl tahliye ederdiniz?"
   },
   "nl": {
     "onboardingTitle": "Wij leiden u naar de dichtstbijzijnde<br>veilige locatie.",
@@ -2505,7 +2526,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Als u hier was, hoe zou u dan evacueren?"
   },
   "sv": {
     "onboardingTitle": "Vi leder dig till närmaste<br>säkra plats.",
@@ -2619,7 +2641,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Om du var här, hur skulle du evakuera?"
   },
   "no": {
     "onboardingTitle": "Vi vil lede deg til nærmeste<br>sikre sted.",
@@ -2733,7 +2756,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Hvis du var her, hvordan ville du evakuere?"
   },
   "fi": {
     "onboardingTitle": "Ohjaamme sinut lähimpään<br>turvalliseen paikkaan.",
@@ -2847,7 +2871,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Jos olisit täällä, miten evakuoituisit?"
   },
   "da": {
     "onboardingTitle": "Vi leder dig til det nærmeste<br>sikre sted.",
@@ -2961,7 +2986,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Hvis du var her, hvordan ville du evakuere?"
   },
   "pl": {
     "onboardingTitle": "Poprowadzimy Cię do najbliższego<br>bezpiecznego miejsca.",
@@ -3075,7 +3101,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Gdybyś tu był, jak byś się ewakuował?"
   },
   "uk": {
     "onboardingTitle": "Ми направимо вас до найближчого<br>безпечного місця.",
@@ -3189,7 +3216,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Якби ви були тут, як би вы евакуювалися?"
   },
   "el": {
     "onboardingTitle": "Θα σας οδηγήσουμε στο πλησιέστερο<br>ασφαλές σημείο.",
@@ -3303,7 +3331,8 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "Εάν ήσασταν εδώ, πώς θα εκκενώνατε;"
   },
   "he": {
     "onboardingTitle": "נוביל אותך למקום המבטחים<br>הקרוב ביותר.",
@@ -3417,6 +3446,7 @@
     "guideRule3Title": "3. Never Return",
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
-    "gpsLowAccuracy": "(Outdoor use recommended)"
+    "gpsLowAccuracy": "(Outdoor use recommended)",
+    "manualPinPopupText": "אם היית כאן, איך היית מתפנה?"
   }
 }
