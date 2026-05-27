@@ -99,9 +99,9 @@
                 <div id="bottom-normal-actions">
                     <button class="action-btn primary-btn btn-large btn-flashy" id="btn-test-alert">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="margin-right:8px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                        鎌倉で避難体験
+                        <span data-i18n="testAlertText">鎌倉で避難体験</span>
                     </button>
-                    <button class="action-btn primary-btn btn-large hidden" id="btn-set-pin">
+                    <button class="action-btn primary-btn btn-large hidden" id="btn-set-pin" data-i18n="setPinBtn">
                         ここにピンを打つ (避難開始)
                     </button>
                 </div>
@@ -121,8 +121,8 @@
                     </div>
                     
                     <div class="action-grid mt-10" id="essential-buttons">
-                        <button id="btn-change-route" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 2.13-5.88L2 9"></path></svg> ルート変更</button>
-                        <button id="btn-unlock-pin" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> ピン解除</button>
+                        <button id="btn-change-route" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 2.13-5.88L2 9"></path></svg> <span data-i18n="changeRouteBtn">ルート変更</span></button>
+                        <button id="btn-unlock-pin" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <span data-i18n="unlockPinBtn">ピン解除</span></button>
                         <button id="btn-reset-alert" class="action-btn outline-btn" data-i18n="resetAlert">訓練終了</button>
                     </div>
 
@@ -166,7 +166,7 @@
             </div>
             <h2 id="i18n-error-title" data-i18n="errorTitle">現在地が取得できません</h2>
             <p id="i18n-error-desc" data-i18n="errorDesc">マップを動かして、確認したい場所にピンを合わせてください。</p>
-            <button id="btn-error-ok" class="action-btn primary-btn btn-large w-100" style="margin-top:20px;">現在地からリトライ</button>
+            <button id="btn-error-ok" class="action-btn primary-btn btn-large w-100" style="margin-top:20px;" data-i18n="retryBtn">現在地からリトライ</button>
         </div>
     </div>
 
@@ -184,8 +184,34 @@
                     <option value="auto" data-i18n="langAuto">自動 (Auto)</option>
                     <option value="ja">日本語 (Japanese)</option>
                     <option value="en">English</option>
-                    <option value="zh">中文 (Chinese)</option>
+                    <option value="zh">中文 (简体 Chinese)</option>
+                    <option value="zh-tw">中文 (繁體 Chinese)</option>
                     <option value="ko">한국어 (Korean)</option>
+                    <option value="fr">Français (French)</option>
+                    <option value="es">Español (Spanish)</option>
+                    <option value="de">Deutsch (German)</option>
+                    <option value="it">Italiano (Italian)</option>
+                    <option value="pt">Português (Portuguese)</option>
+                    <option value="ru">Русский (Russian)</option>
+                    <option value="vi">Tiếng Việt (Vietnamese)</option>
+                    <option value="th">ภาษาไทย (Thai)</option>
+                    <option value="id">Bahasa Indonesia (Indonesian)</option>
+                    <option value="tl">Tagalog (Filipino)</option>
+                    <option value="ms">Bahasa Melayu (Malay)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="bn">বাংলা (Bengali)</option>
+                    <option value="ar">العربية (Arabic)</option>
+                    <option value="fa">فارسی (Persian)</option>
+                    <option value="tr">Türkçe (Turkish)</option>
+                    <option value="nl">Nederlands (Dutch)</option>
+                    <option value="sv">Svenska (Swedish)</option>
+                    <option value="no">Norsk (Norwegian)</option>
+                    <option value="fi">Suomi (Finnish)</option>
+                    <option value="da">Dansk (Danish)</option>
+                    <option value="pl">Polski (Polish)</option>
+                    <option value="uk">Українська (Ukrainian)</option>
+                    <option value="el">Ελληνικά (Greek)</option>
+                    <option value="he">עברית (Hebrew)</option>
                 </select>
             </div>
 
@@ -200,32 +226,32 @@
     <div id="layers-overlay" class="overlay hidden">
         <div class="dialog glass-panel settings-dialog">
             <div class="dialog-header">
-                <h2>レイヤー設定</h2>
+                <h2 data-i18n="layersTitle">レイヤー設定</h2>
                 <button id="btn-layers-close" class="close-btn">&times;</button>
             </div>
             
             <div class="toggle-group">
-                <label>避難所ピン</label>
+                <label data-i18n="toggleShelters">避難所ピン</label>
                 <input type="checkbox" id="toggle-shelters" checked class="toggle-switch">
             </div>
 
             <div class="toggle-group">
-                <label>津波浸水想定区域</label>
+                <label data-i18n="toggleHazard">津波浸水想定区域</label>
                 <input type="checkbox" id="toggle-hazard" checked class="toggle-switch">
             </div>
             
             <div class="toggle-group">
-                <label>混雑予測（ヒートマップ）</label>
+                <label data-i18n="toggleCongestion">混雑予測（ヒートマップ）</label>
                 <input type="checkbox" id="toggle-congestion" checked class="toggle-switch">
             </div>
 
             <div class="toggle-group">
-                <label>色別標高図（国土地理院）</label>
+                <label data-i18n="toggleRelief">色別標高図（国土地理院）</label>
                 <input type="checkbox" id="toggle-relief" class="toggle-switch">
             </div>
 
             <div class="toggle-group">
-                <label>第一目標候補点（全安全境界点）</label>
+                <label data-i18n="toggleSafeEdges">第一目標候補点（全安全境界点）</label>
                 <input type="checkbox" id="toggle-safe-edges" class="toggle-switch">
             </div>
         </div>
@@ -239,7 +265,7 @@
             </div>
             <h2 id="alert-title">通知</h2>
             <p id="alert-desc">メッセージ内容</p>
-            <button id="btn-alert-ok" class="primary-btn btn-large w-100">OK</button>
+            <button id="btn-alert-ok" class="primary-btn btn-large w-100" data-i18n="okBtn">OK</button>
         </div>
     </div>
 
@@ -276,7 +302,7 @@
     <div id="location-overlay" class="overlay hidden">
         <div class="dialog glass-panel scenario-dialog">
             <div class="dialog-header">
-                <h2 id="location-dialog-title">避難開始位置の選択</h2>
+                <h2 id="location-dialog-title" data-i18n="locationDialogTitle">避難開始位置の選択</h2>
                 <button id="btn-location-close" class="close-btn">&times;</button>
             </div>
             <p class="dialog-subtitle" data-i18n="locationDesc">避難を開始するシミュレーション現在地（避難開始位置）を選択してください。</p>
@@ -291,9 +317,9 @@
         <div class="route-bottom-sheet glass-panel" style="width: 100%; border-radius: 24px 24px 0 0; padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);">
             <div class="bottom-sheet-handle"></div>
             <div style="text-align:center; margin-bottom:12px;">
-                <strong style="font-size:1.15rem; color:var(--text-color);">🗺 避難ルートを選択</strong>
+                <strong style="font-size:1.15rem; color:var(--text-color);" data-i18n="routeSelectTitle">🗺 避難ルートを選択</strong>
             </div>
-            <div class="route-disclaimer" style="font-size: 0.8rem; opacity: 0.7; text-align: center; margin-bottom: 15px;">
+            <div class="route-disclaimer" style="font-size: 0.8rem; opacity: 0.7; text-align: center; margin-bottom: 15px;" data-i18n="routeDisclaimer">
                 ⚠️ これらはシミュレーション結果に基づく参考情報です。
             </div>
             <div id="route-options-container" style="display:flex; flex-direction:column; gap:10px;"></div>

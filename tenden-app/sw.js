@@ -1,5 +1,5 @@
-const CACHE_NAME = 'tenden-v31';
-const DYNAMIC_CACHE = 'tenden-dynamic-v31';
+const CACHE_NAME = 'tenden-v32';
+const DYNAMIC_CACHE = 'tenden-dynamic-v32';
 
 const urlsToCache = [
   './',
@@ -10,6 +10,7 @@ const urlsToCache = [
   './assets/congestion.geojson',
   './assets/shelters.json',
   './assets/routes.json',
+  './assets/i18n.json',
   './assets/icons/icon.svg',
   './assets/icons/hud-logo.png',
   './assets/icons/TENDEN.gif',

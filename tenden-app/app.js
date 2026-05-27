@@ -29,85 +29,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Kamakura default location (Yuigahama)
     const KAMAKURA_CENTER = [35.3192, 139.5504];
 
-    // Dictionary for i18n
-    const i18nDict = {
-        'en': {
-            onboardingTitle: "We will guide you to the nearest<br>safe location.",
-            onboardingDesc: "Please allow location access to check your daily preparation and clear routes.",
-            okBtn: "OK",
-            errorTitle: "Location Unavailable",
-            errorDesc: "Please move the map to set a pin at your location.",
-            errorBtn: "Set Manually",
-            elevationLabel: "Current Elevation",
-            testAlert: "🚶 Evacuation Demo",
-            evacTitle: "Evacuation Order Issued",
-            evacDesc: "Follow the blue route to higher ground",
-            shareBtn: "Share Status",
-            settingsTitle: "Settings",
-            langLabel: "Language",
-            langAuto: "Auto",
-            dataLabel: "Data Management",
-            clearCacheBtn: "Clear Offline Data",
-            estTime: "Est. Arrival:",
-            estHeight: "Est. Height:",
-            scenarioTitle: "Select Simulation Scenario",
-            scenarioDesc: "Please select a demonstration disaster scenario.",
-            resetAlert: "End Drill"
-        },
-        'zh': {
-            onboardingTitle: "我们将引导您前往最近的<br>安全地点。",
-            onboardingDesc: "请允许访问位置信息，以检查您的日常准备和明确的路线。",
-            okBtn: "确定",
-            errorTitle: "无法获取位置信息",
-            errorDesc: "请移动地图并在您所在的位置设置图钉。",
-            errorBtn: "手动设置",
-            elevationLabel: "当前海拔",
-            testAlert: "🚶 鎌仓避难体验",
-            evacTitle: "避难指示已发布",
-            evacDesc: "请沿着蓝色路线向高处避难",
-            shareBtn: "分享状态",
-            settingsTitle: "设置",
-            langLabel: "语言",
-            langAuto: "自动",
-            dataLabel: "数据管理",
-            clearCacheBtn: "清除离线数据",
-            estTime: "预计到达时间:",
-            estHeight: "预计高度:",
-            scenarioTitle: "选择模拟防灾演练",
-            scenarioDesc: "请选择演示用的灾害场景。",
-            resetAlert: "结束演练"
-        },
-        'ko': {
-            onboardingTitle: "가장 가까운 안전한 장소로<br>안내해 드립니다.",
-            onboardingDesc: "위치 정보 액세스를 허용하여 일상적인 준비와 대피 경로를 확인하십시오.",
-            okBtn: "확인",
-            errorTitle: "위치 정보를 사용할 수 없음",
-            errorDesc: "지도를 이동하여 현재 위치에 핀을 설정하십시오.",
-            errorBtn: "수동으로 설정",
-            elevationLabel: "현재 해발",
-            testAlert: "🚶 가마쿠라 대피 체험",
-            evacTitle: "대피 지시 발령됨",
-            evacDesc: "파란색 경로를 따라 고지대로 대피하십시오",
-            shareBtn: "안부 공유",
-            settingsTitle: "설정",
-            langLabel: "언어",
-            langAuto: "자동",
-            dataLabel: "데이터 관리",
-            clearCacheBtn: "오프ライン 데이터 삭제",
-            estTime: "예상 도착 시간:",
-            estHeight: "예상 높이:",
-            scenarioTitle: "대피 시뮬레이션 선택",
-            scenarioDesc: "데모용 재해 시나리오를 선택하십시오.",
-            resetAlert: "훈련 종료"
-        }
-    };
+    // Dictionary for i18n (loaded asynchronously from assets/i18n.json for 30 global languages)
+    let i18nDict = {};
 
     // Initialize Map
     initMap();
     initUI();
     startClock();
-    initI18n();
     connectP2PQuake();
+
+    // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
+    fetch('assets/i18n.json')
+        .then(res => res.json())
+        .then(data => {
+            i18nDict = data;
+            initI18n();
+            console.log('[TENDEN] i18n.json 30言語辞書の読み込みが完了しました');
+        })
+        .catch(e => {
+            console.warn('[i18n] 外部多言語辞書のロードに失敗しました。フォールバックします。', e);
+            initI18n();
+        });
 
     // Load simulation-derived route data
     fetch('assets/routes.json')
@@ -191,22 +133,52 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         function addShelterMarkers(shelterList) {
+            const lang = getLanguageCode();
+            const dict = i18nDict[lang] || i18nDict['ja'] || {};
+            
             shelterList.forEach(s => {
                 const load = s.predicted_load || 'low';
                 const color = LOAD_COLORS[load] || '#888';
-                const label = LOAD_LABELS[load] || '';
+                
+                // Translate predicted load labels based on language
+                let label = '';
+                if (load === 'low') label = dict.loadLow || '● Low Load';
+                else if (load === 'medium') label = dict.loadMedium || '●● Moderate Load';
+                else if (load === 'high') label = dict.loadHigh || '●●● High Load';
+
                 const icon = L.divIcon({
                     className: `shelter-marker shelter-${load}`,
                     html: `<div class="shelter-marker-inner" style="background:${color};border-color:${color}"></div>`,
                     iconSize: [24, 24],
                     iconAnchor: [12, 12]
                 });
-                const occupancyNote = s.typical_occupancy_pct > 0
-                    ? `<br><span style="color:${color};font-size:0.85em">${label} (典型利用率 ${s.typical_occupancy_pct}%)</span>`
-                    : '';
-                const disclaimer = '<br><em style="font-size:0.78em;opacity:0.7">※シミュレーション統計に基づく予測。リアルタイムデータではありません</em>';
+                
+                // Dynamically translate the prefix '避難所' in names to local equivalents like 'Shelter'
+                const shelterWord = dict.shelterWord || 'Shelter';
+                let localizedName = s.name.replace('避難所', shelterWord);
+
+                // Translate other suffixes dynamically
+                if (dict.elementarySchool) localizedName = localizedName.replace('小学校', dict.elementarySchool);
+                if (dict.juniorHighSchool) localizedName = localizedName.replace('中学校', dict.juniorHighSchool);
+                if (dict.shrinePrecincts) localizedName = localizedName.replace('境内', dict.shrinePrecincts);
+                if (dict.learningCenter) localizedName = localizedName.replace('学習センター', dict.learningCenter);
+
+                // Format multi-language strings with placeholders
+                let capText = dict.shelterCapacity || '収容能力: {capacity}人';
+                capText = capText.replace('{capacity}', s.capacity);
+                
+                let occNote = '';
+                if (s.typical_occupancy_pct > 0) {
+                    let occText = dict.shelterOccupancy || '典型利用率: {occupancy}%';
+                    occText = occText.replace('{occupancy}', s.typical_occupancy_pct);
+                    occNote = `<br><span style="color:${color};font-size:0.85em">${label} (${occText})</span>`;
+                }
+                
+                const disclaimerText = dict.shelterDisclaimer || '※シミュレーション統計に基づく予測。リアルタイムデータではありません';
+                const disclaimer = `<br><em style="font-size:0.78em;opacity:0.7">${disclaimerText}</em>`;
+                
                 L.marker([s.lat, s.lng], { icon })
-                    .bindPopup(`<strong>${s.name}</strong> (収容 ${s.capacity}人)${occupancyNote}${disclaimer}`)
+                    .bindPopup(`<strong>${localizedName}</strong> (${capText})${occNote}${disclaimer}`)
                     .addTo(sheltersLayerGroup);
             });
         }
@@ -391,7 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const btnSetPin = document.getElementById('btn-set-pin');
                 if (btnSetPin) btnSetPin.classList.remove('hidden');
                 
-                showCustomAlert("避難開始位置を決定", "マップをドラッグして、画面中央のターゲット（照準）を避難開始位置に合わせてから、下部のボタンを押してください。", "info");
+                const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                showCustomAlert(dict.alertLocationTitle || "避難開始位置を決定", dict.alertLocationDesc || "マップをドラッグして、画面中央のターゲット（照準）を避難開始位置に合わせてから、下部のボタンを押してください。", "info");
             });
         });
 
@@ -477,15 +450,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         btnShare.addEventListener('click', () => {
+            const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+            const lang = getLanguageCode();
             if (navigator.share && currentLocation) {
+                const shareTitle = dict.alertSosTitle || '安否情報 (現在地)';
+                const shareTextDefault = lang === 'ja' ? '現在、安全な高台へ避難中です。\n現在地: ' : 'I am currently evacuating to safe high ground.\nMy location: ';
+                const shareText = (dict.shareText || shareTextDefault) + `https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`;
                 navigator.share({
-                    title: '安否情報 - TENDEN',
-                    text: `現在、安全な高台へ避難中です。\n現在地: https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`
+                    title: shareTitle,
+                    text: shareText
                 }).catch(console.error);
             } else if (currentLocation) {
-                showCustomAlert("安否情報 (現在地)", `コピーして家族や友人に送信してください：\n\nhttps://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`, "success");
+                const shareTitle = dict.alertSosTitle || "安否情報 (現在地)";
+                const shareDescPrefix = dict.alertSosDesc || "コピーして家族や友人に送信してください：\n\n";
+                showCustomAlert(shareTitle, `${shareDescPrefix}https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`, "success");
             } else {
-                showCustomAlert("安否情報", "現在地を取得できませんでした。まず地図上をタップして現在地を設定してください。", "warning");
+                showCustomAlert(dict.alertSosTitle || "安否情報", dict.alertSosError || "現在地を取得できませんでした。まず地図上をタップして現在地を設定してください。", "warning");
             }
         });
 
@@ -595,15 +575,37 @@ document.addEventListener('DOMContentLoaded', () => {
         langSelect.addEventListener('change', (e) => {
             localStorage.setItem('tenden-lang', e.target.value);
             initI18n();
+            
+            // 1. Re-render all shelter pins to update popup texts
+            if (sheltersLayerGroup && sheltersData && sheltersData.length > 0) {
+                sheltersLayerGroup.clearLayers();
+                addShelterMarkers(sheltersData);
+            }
+            
+            // 2. Re-render safe edges to update their popup texts
+            if (safeEdgesLayerGroup && safeEdgesData && safeEdgesData.length > 0) {
+                drawAllSafeEdges();
+            }
+            
+            // 3. Update manual location popup if active
+            if (!isEmergency && isManualLocation && userMarker && currentLocation) {
+                updateMarker(currentLocation);
+            }
+            
+            // 4. Update evacuation routes, HUD summaries, and intermediate map badges in real-time
+            if (isEmergency && currentLocation) {
+                recalculateRouteFromLocation(currentLocation);
+            }
         });
 
         btnClearCache.addEventListener('click', async () => {
+            const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
             if ('caches' in window) {
                 const keys = await caches.keys();
                 for (let key of keys) {
                     await caches.delete(key);
                 }
-                showCustomAlert("キャッシュ削除完了", "オフラインキャッシュを正常に削除しました。", "success");
+                showCustomAlert(dict.alertCacheTitle || "キャッシュ削除完了", dict.alertCacheDesc || "オフラインキャッシュを正常に削除しました。", "success");
             }
         });
 
@@ -614,7 +616,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnDevReset = document.getElementById('btn-dev-reset');
         if (btnDevReset) {
             btnDevReset.addEventListener('click', async () => {
-                if (confirm('【開発者用】PWAキャッシュとサービスワーカーを完全に削除して再起動しますか？\n(次回読み込み時に最新のコードが強制適用されます)')) {
+                const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                const confirmMsg = dict.confirmDevReset || '【開発者用】PWAキャッシュとサービスワーカーを完全に削除して再起動しますか？\n(次回読み込み時に最新のコードが強制適用されます)';
+                if (confirm(confirmMsg)) {
                     // 1. Clear Cache Storage
                     if ('caches' in window) {
                         const keys = await caches.keys();
@@ -630,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     
-                    showCustomAlert("システムリセット完了", "キャッシュとサービスワーカーのクリアを完了しました。ページを再起動します。", "success", () => {
+                    showCustomAlert(dict.alertResetTitle || "システムリセット完了", dict.alertResetDesc || "キャッシュとサービスワーカーのクリアを完了しました。ページを再起動します。", "success", () => {
                         window.location.reload(true);
                     });
                 }
@@ -730,11 +734,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 popupTimeoutId = null;
             }
 
+            const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+            const title = dict.manualPinPopupTitle || 'もし、ここにいたら・・・';
+            const desc = dict.manualPinPopupDesc || '大津波が迫る中、あなたならどう動き、どこへ逃げますか？';
+
             userMarker.bindPopup(`
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 4px;">
-                    <strong style="color: #ff3b30; font-size: 14px; display: block; margin-bottom: 4px;">もし、ここにいたら・・・</strong>
+                    <strong style="color: #ff3b30; font-size: 14px; display: block; margin-bottom: 4px;">${title}</strong>
                     <span style="font-size: 12px; color: #555; line-height: 1.4; display: block;">
-                        大津波が迫る中、あなたならどう動き、どこへ逃げますか？
+                        ${desc}
                     </span>
                 </div>
             `, {
@@ -1161,12 +1169,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // ---- PRIMARY GOAL MARKER (第一目標: 安全高台) ----
                     if (targetEdge) {
+                        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                        const primaryGoalLabel = dict.primaryGoal || '第一目標';
+                        let edgeName = targetEdge.name;
+                        if (dict.elementarySchool) edgeName = edgeName.replace('小学校', dict.elementarySchool);
+                        if (dict.juniorHighSchool) edgeName = edgeName.replace('中学校', dict.juniorHighSchool);
+                        if (dict.shrinePrecincts) edgeName = edgeName.replace('境内', dict.shrinePrecincts);
+                        if (dict.learningCenter) edgeName = edgeName.replace('学習センター', dict.learningCenter);
+
                         const goalIcon = L.divIcon({
                             className: '',
                             html: `
                                 <div style="display:flex; flex-direction:column; align-items:center;">
                                     <div style="background:#0071e3; color:white; font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:10px; box-shadow:0 3px 8px rgba(0,113,227,0.5); white-space:nowrap; margin-bottom:4px;">
-                                        🏁 第一目標：${targetEdge.name}
+                                        🏁 ${primaryGoalLabel}：${edgeName}
                                     </div>
                                     <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #0071e3;"></div>
                                 </div>
@@ -1219,23 +1235,34 @@ document.addEventListener('DOMContentLoaded', () => {
                         }).addTo(routeLayerGroup);
 
                         // Branch divergence label
+                        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                        const branchToShelterLabel = dict.branchToShelter || '避難所へ分岐';
                         const branchIcon = L.divIcon({
                             className: '',
-                            html: `<div style="background:#ff9500; color:white; font-size:0.65rem; font-weight:700; padding:3px 7px; border-radius:8px; white-space:nowrap; box-shadow:0 2px 5px rgba(255,149,0,0.4);">↘ 避難所へ分岐</div>`,
-                            iconSize: [90, 22],
-                            iconAnchor: [45, 11]
+                            html: `<div style="background:#ff9500; color:white; font-size:0.65rem; font-weight:700; padding:3px 7px; border-radius:8px; white-space:nowrap; box-shadow:0 2px 5px rgba(255,149,0,0.4);">↘ ${branchToShelterLabel}</div>`,
+                            iconSize: [110, 22],
+                            iconAnchor: [55, 11]
                         });
                         L.marker(branchPoint, { icon: branchIcon, zIndexOffset: 900 }).addTo(routeLayerGroup);
 
                         // Secondary goal marker
                         const lastPt = secondaryRoute.waypoints[secondaryRoute.waypoints.length - 1];
                         const shelterName = secondaryRoute.target ? secondaryRoute.target.name : '避難所';
+                        const secondaryGoalLabel = dict.secondaryGoal || '第二目標';
+                        
+                        let localizedShelterName = shelterName;
+                        if (dict.shelterWord) localizedShelterName = localizedShelterName.replace('避難所', dict.shelterWord);
+                        if (dict.elementarySchool) localizedShelterName = localizedShelterName.replace('小学校', dict.elementarySchool);
+                        if (dict.juniorHighSchool) localizedShelterName = localizedShelterName.replace('中学校', dict.juniorHighSchool);
+                        if (dict.shrinePrecincts) localizedShelterName = localizedShelterName.replace('境内', dict.shrinePrecincts);
+                        if (dict.learningCenter) localizedShelterName = localizedShelterName.replace('学習センター', dict.learningCenter);
+
                         const shelterIcon = L.divIcon({
                             className: '',
                             html: `
                                 <div style="display:flex; flex-direction:column; align-items:center;">
                                     <div style="background:#ff9500; color:white; font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:10px; box-shadow:0 3px 8px rgba(255,149,0,0.5); white-space:nowrap; margin-bottom:4px;">
-                                        🏥 第二目標：${shelterName}
+                                        🏥 ${secondaryGoalLabel}：${localizedShelterName}
                                     </div>
                                     <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #ff9500;"></div>
                                 </div>
@@ -1272,7 +1299,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update emergency HUD banner description with chosen destination
         const selectedRoute = activeRoutesList.find(r => r.id === activeSelectedRouteId);
         if (selectedRoute) {
-            document.getElementById('i18n-evac-desc').innerText = `${selectedRoute.label}（${selectedRoute.characteristics.split('。')[0]}）で避難を開始します。`;
+            const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+            const summaryTemplate = dict.evacStartSummary || '{routeLabel}（{routeCharacteristics}）で避難を開始します。';
+            const characteristicsPart = selectedRoute.characteristics.split('。')[0];
+            const summaryText = summaryTemplate
+                .replace('{routeLabel}', selectedRoute.label)
+                .replace('{routeCharacteristics}', characteristicsPart);
+            document.getElementById('i18n-evac-desc').innerText = summaryText;
         }
 
         // Restart simulation along new selected path
@@ -1366,15 +1399,16 @@ document.addEventListener('DOMContentLoaded', () => {
         optionsWrapper.style.gap = '8px';
         optionsWrapper.style.marginTop = '12px';
         
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
         candidates.forEach(c => {
             const isSelected = c.id === activeSelectedRouteId;
             const targetColor = c.color || '#00bbff';
             
             let tagText = '';
-            if (c.id === 'B') tagText = `道路混雑回避`;
-            else if (c.id === 'A') tagText = `最短距離`;
-            else if (c.id === 'D') tagText = `空き避難所`;
-            else if (c.id === 'C') tagText = `♿ バリアフリー（高齢者・児童推奨）`;
+            if (c.id === 'B') tagText = dict.routeAvoid || '道路混雑回避';
+            else if (c.id === 'A') tagText = dict.routeShortest || '最短距離';
+            else if (c.id === 'D') tagText = dict.routeDispersal || '空き避難所';
+            else if (c.id === 'C') tagText = dict.routeBarrier || '♿ バリアフリー（高齢者・児童推奨）';
             
             const btn = document.createElement('button');
             btn.className = `route-option-btn compact-route-btn ${isSelected ? 'active' : ''}`;
@@ -1596,16 +1630,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+        let localizedTargetEdgeName = targetEdge.name;
+        if (dict.elementarySchool) localizedTargetEdgeName = localizedTargetEdgeName.replace('小学校', dict.elementarySchool);
+        if (dict.juniorHighSchool) localizedTargetEdgeName = localizedTargetEdgeName.replace('中学校', dict.juniorHighSchool);
+        if (dict.shrinePrecincts) localizedTargetEdgeName = localizedTargetEdgeName.replace('境内', dict.shrinePrecincts);
+        if (dict.learningCenter) localizedTargetEdgeName = localizedTargetEdgeName.replace('学習センター', dict.learningCenter);
+
         // BUILD ROUTE A (最短ルート -> Pure nearest safe edge)
         if (onlineNearestWaypoints) {
             routeA = {
                 id: 'A',
-                label: '最短避難ルート',
+                label: dict.routeShortestLabel || '最短避難ルート',
                 color: '#0071e3',
                 waypoints: onlineNearestWaypoints,
                 distance_m: onlineNearestDistance,
                 estimated_min: Math.round((onlineNearestDistance / 1.37) / 60),
-                characteristics: `混雑を考慮せず、最も近い安全高台「${targetEdge.name}」へ直行するルート。`,
+                characteristics: (dict.routeShortestDesc || `混雑を考慮せず、最も近い安全高台「{target}」へ直行するルート。`).replace('{target}', localizedTargetEdgeName),
                 congestion_score: 'medium', // Shortest usually gets congested
                 isOSRM: true
             };
@@ -1620,25 +1661,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detourResult) {
             routeB = {
                 id: 'B',
-                label: '道路混雑回避ルート',
+                label: dict.routeAvoidLabel || '道路混雑回避ルート',
                 color: '#34c759',
                 waypoints: detourResult.waypoints,
                 distance_m: detourResult.distance,
                 estimated_min: Math.round((detourResult.distance / 1.37) / 60),
-                characteristics: `シミュレーション上の混雑エリアを自動検知し、迂回路を生成した安全ルート。`,
+                characteristics: dict.routeAvoidDesc || `シミュレーション上の混雑エリアを自動検知し、迂回路を生成した安全ルート。`,
                 congestion_score: 'low',
                 isOSRM: true,
                 blockedPoint: detourResult.blockedPoint
             };
         } else if (onlineNearestWaypoints) {
+            const noCongestionDesc = dict.routeAvoidNoCongestionDesc || `現在交差する混雑がないため、最短距離で「{target}」へ誘導します。`;
             routeB = {
                 id: 'B',
-                label: '道路混雑回避ルート',
+                label: dict.routeAvoidLabel || '道路混雑回避ルート',
                 color: '#34c759',
                 waypoints: onlineNearestWaypoints,
                 distance_m: onlineNearestDistance,
                 estimated_min: Math.round((onlineNearestDistance / 1.37) / 60),
-                characteristics: `現在交差する混雑がないため、最短距離で「${targetEdge.name}」へ誘導します。`,
+                characteristics: noCongestionDesc.replace('{target}', localizedTargetEdgeName),
                 congestion_score: 'low',
                 isOSRM: true
             };
@@ -1735,12 +1777,26 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('[RouteC] Elevation-based slope calculation failed:', e);
         }
 
-        const slopeLabel = routeCMaxSlope !== null ? ` ・最大勾配 ${routeCMaxSlope.toFixed(1)}%` : '';
-        const flatNote = (routeCEdge.id !== targetEdge.id) ? `「${routeCEdge.name}」方面への平坦な道を顏沢。` : `「${routeCEdge.name}」へ向かいますが、これが現在最も平坦な経路です。`;
+        const slopeText = dict.routeSlopeText || '・最大勾配 {slope}%';
+        const slopeLabel = routeCMaxSlope !== null ? slopeText.replace('{slope}', routeCMaxSlope.toFixed(1)) : '';
+        
+        let routeCEdgeName = routeCEdge.name;
+        if (dict.elementarySchool) routeCEdgeName = routeCEdgeName.replace('小学校', dict.elementarySchool);
+        if (dict.juniorHighSchool) routeCEdgeName = routeCEdgeName.replace('中学校', dict.juniorHighSchool);
+        if (dict.shrinePrecincts) routeCEdgeName = routeCEdgeName.replace('境内', dict.shrinePrecincts);
+        if (dict.learningCenter) routeCEdgeName = routeCEdgeName.replace('学習センター', dict.learningCenter);
+
+        let flatNote = '';
+        if (routeCEdge.id !== targetEdge.id) {
+            flatNote = (dict.routeBarrierDesc1 || `「{target}」方面への平坦な道を優先。`).replace('{target}', routeCEdgeName);
+        } else {
+            flatNote = (dict.routeBarrierDesc2 || `「{target}」へ向かいますが、これが現在最も平坦な経路です。`).replace('{target}', routeCEdgeName);
+        }
+
         if (routeCWaypoints) {
             routeC = {
                 id: 'C',
-                label: '♿ バリアフリー・平坦ルート',
+                label: dict.routeBarrierLabel || '♿ バリアフリー・平坦ルート',
                 color: '#5e5ce6',
                 waypoints: routeCWaypoints,
                 distance_m: routeCDistance,
@@ -1764,13 +1820,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Draw multiple routes with default selection 'A' and secondary route
         activeSecondaryRoute = secondaryRoute; // Cache for re-use when route is switched
-        drawMultipleEvacuationRoutes(loc, targetEdge, secondaryRoute, candidates, 'A');
+        drawMultipleEvacuationRoutes(loc, targetEdge, secondaryRoute, candidates, activeSelectedRouteId || 'A');
 
         // Dynamically populate bottom sheet HUD cards and show
         showRouteSelectorHUD(candidates);
 
         // Update emergency HUD text
-        document.getElementById('i18n-evac-desc').innerText = `避難開始地点を設定しました。候補ルートを選択して避難を開始してください。`;
+        document.getElementById('i18n-evac-desc').innerText = dict.routeStartPrompt || `避難開始地点を設定しました。候補ルートを選択して避難を開始してください。`;
     }
 
     /**
@@ -1988,19 +2044,49 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+
         // If we found a good predefined route nearby, slice and splice it!
         if (bestRoute && minWaypointDist < 300) { // Limit to 300m instead of 800m to avoid long diagonal lines
             const customWaypoints = [];
             for (let i = bestSplitIndex; i < bestRoute.waypoints.length; i++) {
                 customWaypoints.push(bestRoute.waypoints[i]);
             }
+            
+            let label = bestRoute.label;
+            let characteristics = bestRoute.characteristics;
+            
+            const shelterName = shelter.name;
+            let localizedShelterName = shelterName;
+            if (dict.shelterWord) localizedShelterName = localizedShelterName.replace('避難所', dict.shelterWord);
+            if (dict.elementarySchool) localizedShelterName = localizedShelterName.replace('小学校', dict.elementarySchool);
+            if (dict.juniorHighSchool) localizedShelterName = localizedShelterName.replace('中学校', dict.juniorHighSchool);
+            if (dict.shrinePrecincts) localizedShelterName = localizedShelterName.replace('境内', dict.shrinePrecincts);
+            if (dict.learningCenter) localizedShelterName = localizedShelterName.replace('学習センター', dict.learningCenter);
+
+            if (type === 'A') {
+                label = dict.routeShortestLabel || '最短避難ルート';
+                characteristics = (dict.routeShortestDesc || '混雑を考慮せず、最も近い安全高台「{target}」へ直行するルート。').replace('{target}', localizedShelterName);
+            } else if (type === 'B') {
+                label = dict.routeAvoidLabel || '道路混雑回避ルート';
+                characteristics = (dict.routeAvoidDesc || 'シミュレーション上の混雑エリアを自動検知し、迂回路を生成した安全ルート。').replace('{target}', localizedShelterName);
+            } else if (type === 'C') {
+                label = dict.routeBarrierLabel || '♿ バリアフリー・平坦ルート';
+                characteristics = (dict.routeBarrierDesc2 || '「{target}」へ向かいますが、これが現在最も平坦な経路です。').replace('{target}', localizedShelterName);
+            }
+            
+            if (dict.elementarySchool) characteristics = characteristics.replace('小学校', dict.elementarySchool);
+            if (dict.juniorHighSchool) characteristics = characteristics.replace('中学校', dict.juniorHighSchool);
+            if (dict.shrinePrecincts) characteristics = characteristics.replace('境内', dict.shrinePrecincts);
+            if (dict.learningCenter) characteristics = characteristics.replace('学習センター', dict.learningCenter);
+
             return {
                 id: type, // Fixed: included the missing type ID!
                 waypoints: customWaypoints,
-                label: type === 'C' ? '高齢者・児童バリアフリールート' : bestRoute.label, // Dynamic premium label
+                label: label,
                 color: bestRoute.color,
                 distance_m: Math.round(minWaypointDist + bestRoute.distance_m * (1 - bestSplitIndex / bestRoute.waypoints.length)),
-                characteristics: bestRoute.characteristics,
+                characteristics: characteristics,
                 congestion_score: bestRoute.congestion_score,
                 isOSRM: false
             };
@@ -2012,10 +2098,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const midPoint = [startLoc.lat, shelterLng]; // corner turn to simulate streets
         
         const fallbackNames = {
-            'A': '最短避難ルート',
-            'B': '道路混雑回避ルート',
-            'C': '♿ バリアフリー・平坦ルート',
-            'D': '分散避難ルート'
+            'A': dict.routeShortestLabel || '最短避難ルート',
+            'B': dict.routeAvoidLabel || '道路混雑回避ルート',
+            'C': dict.routeBarrierLabel || '♿ バリアフリー・平坦ルート',
+            'D': dict.routeDispersal || '分散避難ルート'
         };
         const fallbackColors = {
             'A': '#0071e3',
@@ -2104,7 +2190,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // If distance > 100m, trigger warning
         if (minDistance > 100) {
             console.log("Route deviation detected");
-            document.getElementById('i18n-evac-desc').innerText = "ルートから外れています！青い線に戻ってください。";
+            const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+            document.getElementById('i18n-evac-desc').innerText = dict.routeOffCourse || "ルートから外れています！青い線に戻ってください。";
             document.getElementById('i18n-evac-desc').style.color = 'var(--danger)';
             if ("vibrate" in navigator) {
                 navigator.vibrate([500, 200, 500]);
@@ -2258,11 +2345,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const bar = document.getElementById('p2p-status-bar');
         if (!dot || !label) return;
         dot.className = `p2p-dot p2p-${state}`;
+        
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
         const labels = {
-            connecting:    '警報待機中...',
-            connected:     '警報待機中',
-            alert:         '🚨 大津波警報',
-            disconnected:  '警報: 未接続'
+            connecting:    dict.p2pConnecting || '警報待機中...',
+            connected:     dict.p2pConnected || '警報待機中',
+            alert:         dict.p2pAlert || '🚨 大津波警報',
+            disconnected:  dict.p2pDisconnected || '警報: 未接続'
         };
         label.textContent = labels[state] || '待機中';
         if (bar) {
@@ -2270,15 +2359,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function initI18n() {
+    function getLanguageCode() {
         const savedLang = localStorage.getItem('tenden-lang') || 'auto';
-        let langCode = 'ja';
-        
         if (savedLang !== 'auto') {
-            langCode = savedLang;
-        } else {
-            langCode = (navigator.language || navigator.userLanguage).split('-')[0];
+            return savedLang;
         }
+        const browserLang = (navigator.language || navigator.userLanguage).split('-')[0];
+        return i18nDict[browserLang] ? browserLang : 'ja';
+    }
+
+    function initI18n() {
+        const langCode = getLanguageCode();
 
         // Reset to original Japanese if not in dict
         if (!i18nDict[langCode]) {
@@ -2386,6 +2477,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!safeEdgesLayerGroup) return;
         safeEdgesLayerGroup.clearLayers();
         
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+        const title = dict.safeEdgeTitle || '✅ 安全境界点（第一目標候補）';
+        const coordLabel = dict.coordinateLabel || '座標:';
+        
         safeEdgesData.forEach(edge => {
             L.circleMarker([edge.lat, edge.lng], {
                 radius: 4,
@@ -2395,9 +2490,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 weight: 1.5
             }).bindPopup(`
                 <div style="font-size: 11px; font-family: -apple-system, sans-serif; line-height: 1.4; padding: 2px;">
-                    <strong style="color:#30d158; font-size: 12px;">✅ 安全境界点（第一目標候補）</strong><br>
+                    <strong style="color:#30d158; font-size: 12px;">${title}</strong><br>
                     <span style="color:#666;">ID: ${edge.id || 'scan'}</span><br>
-                    <span style="color:#666;">座標: ${edge.lat.toFixed(5)}, ${edge.lng.toFixed(5)}</span>
+                    <span style="color:#666;">${coordLabel} ${edge.lat.toFixed(5)}, ${edge.lng.toFixed(5)}</span>
                 </div>
             `).addTo(safeEdgesLayerGroup);
         });
@@ -2763,13 +2858,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 画面幅がスマホかどうか（レスポンシブな表記の微調整）
         const isMobile = window.innerWidth <= 600;
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
         
         if (isInundated) {
             box.classList.add('tsunami-status-danger');
-            textSpan.textContent = isMobile ? '⚠️浸水想定 内' : '⚠️ 津波浸水想定区域 内';
+            textSpan.textContent = isMobile 
+                ? (dict.tsunamiStatusDangerMobile || '⚠️浸水想定 内') 
+                : (dict.tsunamiStatusDangerDesktop || '⚠️ 津波浸水想定区域 内');
         } else {
             box.classList.add('tsunami-status-safe');
-            textSpan.textContent = isMobile ? '✅浸水想定 外' : '✅ 津波浸水想定区域 外';
+            textSpan.textContent = isMobile 
+                ? (dict.tsunamiStatusSafeMobile || '✅浸水想定 外') 
+                : (dict.tsunamiStatusSafeDesktop || '✅ 津波浸水想定区域 外');
         }
     }
 
