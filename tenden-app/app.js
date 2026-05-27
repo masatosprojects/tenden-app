@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Basic state
     let isEmergency = false;
-    let map, userMarker, routeLayerGroup, hazardLayer, reliefLayer, sheltersLayerGroup, congestionLayer;
+    let map, userMarker, routeLayerGroup, hazardLayer, reliefLayer, sheltersLayerGroup, congestionLayer, safeEdgesLayerGroup;
     let congestionGeojsonData = null;
     let currentLocation = null; // {lat, lng}
     let isManualLocation = false;
@@ -150,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).addTo(map);
 
         routeLayerGroup = L.layerGroup().addTo(map);
+        safeEdgesLayerGroup = L.layerGroup();
 
         // Official tsunami inundation tile layer (ハザードマップポータルサイト, 国土地理院)
         // Source: https://disaportal.gsi.go.jp/
@@ -232,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 safeEdgesData = data;
                 console.log('[TENDEN] safe_edges.json 読み込み完了 (暫定):', data.length, '件');
                 await verifyAndCleanSafeEdges();
+                drawAllSafeEdges(); // Render layers
             })
             .catch(() => {})
             .finally(() => {
@@ -241,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         safeEdgesData = dynamicEdges;
                         console.log(`[TENDEN] ラスタースキャン完了: ${safeEdgesData.length} 件の安全境界点を検出`);
                         await verifyAndCleanSafeEdges();
+                        drawAllSafeEdges(); // Render layers
                     }
                 }).catch(e => console.warn('[SafeEdge] ラスタースキャン失敗:', e));
             });
@@ -534,6 +537,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (reliefLayer) map.removeLayer(reliefLayer);
             }
         });
+
+        const toggleSafeEdges = document.getElementById('toggle-safe-edges');
+        if (toggleSafeEdges) {
+            toggleSafeEdges.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    drawAllSafeEdges();
+                    if (safeEdgesLayerGroup) safeEdgesLayerGroup.addTo(map);
+                } else {
+                    if (safeEdgesLayerGroup) map.removeLayer(safeEdgesLayerGroup);
+                }
+            });
+        }
 
         const btnGpsLocation = document.getElementById('btn-gps-location');
         if (btnGpsLocation) {
@@ -2365,8 +2380,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
+     * Renders all safe edges as green circle marker dots on a Leaflet layer group for debugging / visualization.
+     */
+    function drawAllSafeEdges() {
+        if (!safeEdgesLayerGroup) return;
+        safeEdgesLayerGroup.clearLayers();
+        
+        safeEdgesData.forEach(edge => {
+            L.circleMarker([edge.lat, edge.lng], {
+                radius: 4,
+                color: '#30d158', // iOS Green
+                fillColor: '#30d158',
+                fillOpacity: 0.6,
+                weight: 1.5
+            }).bindPopup(`
+                <div style="font-size: 11px; font-family: -apple-system, sans-serif; line-height: 1.4; padding: 2px;">
+                    <strong style="color:#30d158; font-size: 12px;">✅ 安全境界点（第一目標候補）</strong><br>
+                    <span style="color:#666;">ID: ${edge.id || 'scan'}</span><br>
+                    <span style="color:#666;">座標: ${edge.lat.toFixed(5)}, ${edge.lng.toFixed(5)}</span>
+                </div>
+            `).addTo(safeEdgesLayerGroup);
+        });
+    }
+
+    /**
      * Helper to check if a lat/lng is near the coastline or rivers in Kamakura.
-     * Excludes points within 200m of the coastline and 50m of Namerikawa/Sakaigawa rivers.
+     * Excludes points within 300m of the coastline and 100m of Namerikawa/Sakaigawa rivers.
      */
     function isNearCoastOrWater(lat, lng) {
         if (!window.turf) return false;
@@ -2431,33 +2470,61 @@ document.addEventListener('DOMContentLoaded', () => {
             [139.562, 35.275]  // Kotsubo outer tip
         ]);
         
-        // Namerikawa River (East/Central Kamakura)
+        // -------------------------------------------------------------
+        // [ENHANCED GEOPROXIMITY FENCING] Comprehensive River network definitions
+        // -------------------------------------------------------------
+        
+        // 1. Namerikawa River System (Main stream: Mouth -> Kamakura Center -> Jomyoji -> Juiso)
         const namerikawaLine = turf.lineString([
             [139.553, 35.308], // Mouth
             [139.554, 35.311],
             [139.556, 35.315],
             [139.558, 35.319],
-            [139.560, 35.323],
-            [139.563, 35.327],
-            [139.567, 35.331]
+            [139.560, 35.323], // Branch point (to Nikaidogawa)
+            [139.564, 35.321], // Jomyoji / Hokokuji front
+            [139.569, 35.320], // Jomyoji East
+            [139.576, 35.320], // Juiso
+            [139.585, 35.318]  // Juiso deep valley
         ]);
         
-        // Sakaigawa/Kobaigawa River (West Kamakura/Koshigoe)
+        // 2. Nikaidogawa River (Namerikawa Tributary branch)
+        const nikaidogawaLine = turf.lineString([
+            [139.560, 35.323], // Branch point from main stream
+            [139.563, 35.326], // Kamakuragu front
+            [139.568, 35.327], // Yofukuji-ato front
+            [139.577, 35.326]  // Zuisenji valley
+        ]);
+
+        // 3. Gokurakujigawa River (West-Central valley)
+        const gokurakujiLine = turf.lineString([
+            [139.525, 35.301], // Mouth at Inamuragasaki
+            [139.528, 35.309], // Gokurakuji Station front
+            [139.524, 35.315]  // Yamazaki valley
+        ]);
+        
+        // 4. Sakaigawa / Kobaigawa River System (West boundary)
         const kobaigawaLine = turf.lineString([
-            [139.480, 35.307], // Mouth
-            [139.482, 35.312],
-            [139.485, 35.318],
-            [139.488, 35.324]
+            [139.480, 35.307], // Mouth at Koshigoe
+            [139.482, 35.312], // Koshigoe Station east
+            [139.485, 35.318], // Tsu
+            [139.488, 35.322], // Nishi-Kamakura Station
+            [139.495, 35.326], // Tebiro
+            [139.505, 35.328], // Fukasawa
+            [139.515, 35.329]  // Kajiwara valley
         ]);
         
         const distToCoast = turf.pointToLineDistance(pt, coastLine, {units: 'meters'});
         const distToNamerikawa = turf.pointToLineDistance(pt, namerikawaLine, {units: 'meters'});
+        const distToNikaidogawa = turf.pointToLineDistance(pt, nikaidogawaLine, {units: 'meters'});
+        const distToGokurakuji = turf.pointToLineDistance(pt, gokurakujiLine, {units: 'meters'});
         const distToKobaigawa = turf.pointToLineDistance(pt, kobaigawaLine, {units: 'meters'});
         
-        // Coast buffer: 300m (stronger safety), Rivers buffer: 50m
+        // Coast buffer: 300m (stronger safety), Rivers buffer: 100m (double safety)
         if (distToCoast < 300) return true;
-        if (distToNamerikawa < 50) return true;
-        if (distToKobaigawa < 50) return true;
+        if (distToNamerikawa < 100) return true;
+        if (distToNikaidogawa < 100) return true;
+        if (distToGokurakuji < 100) return true;
+        if (distToKobaigawa < 100) return true;
         
         return false;
     }
