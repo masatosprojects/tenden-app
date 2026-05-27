@@ -2623,6 +2623,47 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (tooCloseToInundation) continue; // Skip if it's too close to the hazard edge
 
+                    // [GENERALIZED APPROACH B] Topological Ray-Casting River/Slit Filter
+                    // Cast rays in 8 directions up to 4 pixels (~40m) to check if this point is 
+                    // trapped in a narrow riverbed or a flood-prone slit (surrounded by inundation on 4+ sides).
+                    // This mathematically detects water channels and riverbeds generally, without hardcoding coordinates.
+                    let hitCount = 0;
+                    const dirs = [
+                        [0, -1],  // N
+                        [1, -1],  // NE
+                        [1, 0],   // E
+                        [1, 1],   // SE
+                        [0, 1],   // S
+                        [-1, 1],  // SW
+                        [-1, 0],  // W
+                        [-1, -1]  // NW
+                    ];
+                    const RAY_DIST = 4; // Check up to 4 pixels (~40m)
+                    
+                    for (const [dx, dy] of dirs) {
+                        let hitInundation = false;
+                        for (let d = 1; d <= RAY_DIST; d++) {
+                            const nx = px + dx * d;
+                            const ny = py + dy * d;
+                            // Ensure we stay inside the 256x256 tile pixel grid
+                            if (nx >= 0 && nx < 256 && ny >= 0 && ny < 256) {
+                                if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
+                                    hitInundation = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (hitInundation) {
+                            hitCount++;
+                        }
+                    }
+                    
+                    // If 4 or more directions (out of 8) hit the inundation zone within ~40m,
+                    // it is highly likely a narrow riverbed, dynamic estuary slit, or unsafe dead-end flatland.
+                    if (hitCount >= 4) {
+                        continue;
+                    }
+
                     // Verify proximity: at least one pixel in outer shell (2 to 3 pixels away) must be inundated (alpha > 0)
                     let hasInsideNeighbor = false;
                     const R_OUTER = 3;
