@@ -1164,20 +1164,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // ---- SECONDARY ROUTE (第二目標: 避難所への分岐破線) ----
                     if (secondaryRoute && secondaryRoute.waypoints && secondaryRoute.waypoints.length > 0) {
-                        // Find the branching point: the waypoint on the primary route closest to the secondary route's first waypoint
-                        let branchIdx = 0;
-                        let minBranchDist = Infinity;
-                        const secStart = L.latLng(secondaryRoute.waypoints[0][0], secondaryRoute.waypoints[0][1]);
-                        waypoints.forEach((wp, idx) => {
-                            const d = secStart.distanceTo(L.latLng(wp[0], wp[1]));
-                            if (d < minBranchDist) {
-                                minBranchDist = d;
-                                branchIdx = idx;
-                            }
-                        });
+                        // Find the true branching point:
+                        // Walk backward from the shelter towards the start location along the secondary route,
+                        // and find the first waypoint that is extremely close (within 20m) to the primary route.
+                        let branchMainIdx = 0;
+                        let branchSecIdx = 0;
+                        let foundBranch = false;
 
-                        const branchPoint = waypoints[branchIdx];
-                        const secondaryWaypoints = [branchPoint, ...secondaryRoute.waypoints];
+                        for (let i = secondaryRoute.waypoints.length - 1; i >= 0; i--) {
+                            const secPt = L.latLng(secondaryRoute.waypoints[i][0], secondaryRoute.waypoints[i][1]);
+                            let minD = Infinity;
+                            let minIdx = 0;
+
+                            waypoints.forEach((wp, idx) => {
+                                const d = secPt.distanceTo(L.latLng(wp[0], wp[1]));
+                                if (d < minD) {
+                                    minD = d;
+                                    minIdx = idx;
+                                }
+                            });
+
+                            // 20 meters threshold for street matching (allow for OSRM grid deviations)
+                            if (minD < 20.0) {
+                                branchMainIdx = minIdx;
+                                branchSecIdx = i;
+                                foundBranch = true;
+                                break;
+                            }
+                        }
+
+                        const branchPoint = waypoints[branchMainIdx];
+                        const secondaryWaypoints = [branchPoint, ...secondaryRoute.waypoints.slice(branchSecIdx)];
 
                         L.polyline(secondaryWaypoints, {
                             color: '#ff9500',
