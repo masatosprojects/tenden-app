@@ -44,8 +44,16 @@
                     <span class="status-icon">浸水予測:</span>
                     <strong id="tsunami-status-text">判定中...</strong>
                 </div>
+                <div class="status-badge network-badge" id="network-status">
+                    <span class="network-dot"></span>
+                    <strong id="network-text">🟢 Online</strong>
+                </div>
             </div>
             <div class="status-right">
+                <div class="status-badge gps-badge" id="gps-accuracy-box">
+                    <span class="gps-dot"></span>
+                    <strong><span id="gps-accuracy">GPS: --</span></strong>
+                </div>
                 <div class="status-badge elev-badge">
                     <span id="i18n-elevation-label" data-i18n="elevationLabel" class="status-icon">海抜:</span>
                     <strong><span id="elevation-m">--</span>m</strong>
@@ -252,6 +260,22 @@
                 </label>
             </div>
 
+            <!-- Voice Navigation Toggle -->
+            <div class="form-group flex-group">
+                <label data-i18n="voiceNavLabel">音声ナビゲーション</label>
+                <label class="switch-container">
+                    <input type="checkbox" id="toggle-voice-nav" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Evacuation Guide Button -->
+            <div class="form-group">
+                <button id="btn-open-guide" class="action-btn secondary-btn w-100" data-i18n="btnReadGuide" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px;">
+                    📖 <span data-i18n="btnReadGuideText">津波避難の心得・3原則ガイドを読む</span>
+                </button>
+            </div>
+
             <!-- Tsunami Emergency Force Mode Toggle (For Demonstration) -->
             <div class="form-group flex-group">
                 <label data-i18n="emergencyForceLabel">発災モード（緊急ダークモード）の強制プレビュー</label>
@@ -404,6 +428,42 @@
             <div class="tip-card" style="margin-top:15px; padding:12px; border-radius:12px; background:rgba(255,255,255,0.06); font-size:0.8rem; line-height:1.45; opacity:0.85; border:1px solid var(--glass-border);">
                 <span style="font-weight:bold; color:var(--warning); margin-right:4px;">💡 防災ヒント:</span>
                 <span data-i18n="shareCardTip">保存された避難計画画像は、スマートフォンのロック画面やホーム画面の壁紙に設定しておくことで、ネットが切断された災害時でもいつでも避難ルートを確認できます。</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tsunami Evacuation 3-Principles Guide Dialog -->
+    <div id="guide-overlay" class="overlay hidden">
+        <div class="dialog glass-panel scenario-dialog guide-dialog" style="max-width: 480px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="dialog-header" style="flex-shrink: 0; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border);">
+                <h2 data-i18n="guideTitle">津波避難の心得・3原則ガイド</h2>
+                <button id="btn-guide-close" class="close-btn">&times;</button>
+            </div>
+            
+            <div class="guide-scroll-content" style="overflow-y: auto; flex: 1; padding: 15px 0; display: flex; flex-direction: column; gap: 16px;">
+                <p class="dialog-subtitle" data-i18n="guideSubtitle" style="margin-bottom: 5px; font-weight: 500; opacity: 0.9;">命を守るための即時避難の基本原則</p>
+                
+                <!-- Rule 1 -->
+                <div class="guide-card" style="background: rgba(255, 59, 48, 0.08); border: 1px solid rgba(255, 59, 48, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
+                    <h3 style="color: var(--danger); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule1Title">🏃 1. すぐに避難する（即時避難）</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule1Desc">強い揺れを感じたら、あるいは津波警報が出たら、情報待ちをせず即座に避難を開始します。</p>
+                </div>
+
+                <!-- Rule 2 -->
+                <div class="guide-card" style="background: rgba(0, 122, 255, 0.08); border: 1px solid rgba(0, 122, 255, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
+                    <h3 style="color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule2Title">🏢 2. 高い場所へ避難する（垂直避難）</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule2Desc">津波から逃れるためには、海から遠くではなく「高い場所」を目指します。頑丈なビルの3階以上へ避難してください。</p>
+                </div>
+
+                <!-- Rule 3 -->
+                <div class="guide-card" style="background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
+                    <h3 style="color: var(--warning); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule3Title">🛑 3. 戻らない（戻り禁止）</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule3Desc">一度避難したら、絶対に荷物を取りに戻ったり、様子を見に海岸へ戻ってはいけません。警報が解除されるまで留まります。</p>
+                </div>
+            </div>
+            
+            <div style="flex-shrink: 0; padding-top: 12px; border-top: 1px solid var(--glass-border);">
+                <button id="btn-guide-close-bottom" class="action-btn primary-btn w-100 btn-large" style="border-radius: 12px;" data-i18n="btnGuideClose">閉じる</button>
             </div>
         </div>
     </div>

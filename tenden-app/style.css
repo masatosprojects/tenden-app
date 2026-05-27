@@ -440,3 +440,82 @@ input:checked + .slider:before {
     box-shadow: 0 4px 12px rgba(6, 199, 85, 0.3);
 }
 
+/* Communication & GPS Accuracy badges */
+.network-badge, .gps-badge {
+    background: rgba(0,0,0,0.05);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.mode-emergency .network-badge, .mode-emergency .gps-badge {
+    background: rgba(255,255,255,0.1);
+}
+
+.network-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    background-color: var(--success);
+    box-shadow: 0 0 6px var(--success);
+    flex-shrink: 0;
+}
+.network-offline .network-dot {
+    background-color: var(--danger);
+    box-shadow: 0 0 6px var(--danger);
+}
+
+.gps-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    background-color: var(--primary);
+    box-shadow: 0 0 6px var(--primary);
+    flex-shrink: 0;
+}
+.gps-low-accuracy .gps-dot {
+    background-color: var(--warning);
+    box-shadow: 0 0 6px var(--warning);
+}
+
+/* Tsunami Guide Dialog Custom styles */
+.guide-dialog {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
+    border-radius: 24px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+.guide-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: default;
+}
+.guide-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Top bar responsiveness optimization to prevent overlapping on tiny viewports */
+@media (max-width: 380px) {
+    .top-status-bar {
+        padding: max(env(safe-area-inset-top, 8px), 8px) 8px 8px 8px;
+        gap: 4px;
+    }
+    .status-left, .status-right {
+        gap: 4px;
+    }
+    .network-badge, .gps-badge, .elev-badge {
+        padding: 3px 6px;
+        font-size: 0.78rem;
+    }
+    .status-time {
+        font-size: 0.9rem;
+    }
+}
+

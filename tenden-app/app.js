@@ -18,6 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeScenarioId = 1;
     let activeLocationId = 'a';
     
+    // Premium features state variables
+    let lastOffCourseSpeakTime = 0;
+    let isEvacuationCompleted = false;
+    
     // Simulation-derived data
     let routeData = {};  // loaded from assets/routes.json
     let pendingRouteArgs = null; // {scenarioId, locationId, scLoc} while route modal is open
@@ -315,7 +319,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const walkSpeedSelect = document.getElementById('walk-speed-select');
         const toggleP2PAuto = document.getElementById('toggle-p2p-auto');
         const toggleDeviationAlert = document.getElementById('toggle-deviation-alert');
+        const toggleVoiceNav = document.getElementById('toggle-voice-nav');
         const toggleEmergencyForce = document.getElementById('toggle-emergency-force');
+
+        // Evacuation Guide Overlay triggers
+        const btnOpenGuide = document.getElementById('btn-open-guide');
+        const btnGuideClose = document.getElementById('btn-guide-close');
+        const btnGuideCloseBottom = document.getElementById('btn-guide-close-bottom');
+        const guideOverlay = document.getElementById('guide-overlay');
+
+        if (btnOpenGuide && guideOverlay) {
+            btnOpenGuide.addEventListener('click', () => {
+                guideOverlay.classList.remove('hidden');
+                setTimeout(() => guideOverlay.classList.add('active'), 10);
+            });
+        }
+
+        const closeGuideFunc = () => {
+            if (guideOverlay) {
+                guideOverlay.classList.remove('active');
+                setTimeout(() => guideOverlay.classList.add('hidden'), 300);
+            }
+        };
+
+        if (btnGuideClose) btnGuideClose.addEventListener('click', closeGuideFunc);
+        if (btnGuideCloseBottom) btnGuideCloseBottom.addEventListener('click', closeGuideFunc);
+
+        // Network Status initialization & listeners
+        window.addEventListener('online', updateNetworkStatusHUD);
+        window.addEventListener('offline', updateNetworkStatusHUD);
+        updateNetworkStatusHUD(); // Initial call
+
+        // Preload Web Speech API voices
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+        }
+
+        if (toggleVoiceNav) {
+            toggleVoiceNav.checked = localStorage.getItem('tenden-voice-nav') !== 'false';
+            toggleVoiceNav.addEventListener('change', (e) => {
+                localStorage.setItem('tenden-voice-nav', e.target.checked);
+                if (e.target.checked) {
+                    speakI18n('voiceNavLabel');
+                }
+            });
+        }
 
         if (walkSpeedSelect) {
             walkSpeedSelect.value = localStorage.getItem('tenden-walk-speed') || '4.0';
@@ -492,6 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateMarker(currentLocation);
                 fetchElevation(currentLocation);
                 triggerLocationTsunamiCheck(currentLocation);
+                updateGPSAccuracyHUD(null);
                 
                 // Start emergency mode and show routes
                 triggerEmergencyMode(true, 1, 'a');
@@ -774,6 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 position => {
+                    updateGPSAccuracyHUD(position.coords.accuracy);
                     currentLocation = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
@@ -785,6 +835,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Track location changes
                     navigator.geolocation.watchPosition(pos => {
+                        updateGPSAccuracyHUD(pos.coords.accuracy);
                         if (!isManualLocation) {
                             currentLocation = {
                                 lat: pos.coords.latitude,
@@ -796,11 +847,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (isEmergency && !simulationInterval) {
                             checkRouteDeviation({lat: pos.coords.latitude, lng: pos.coords.longitude});
+                            checkShelterArrival({lat: pos.coords.latitude, lng: pos.coords.longitude});
                         }
                     });
                 },
                 error => {
                     console.error("Location error:", error);
+                    updateGPSAccuracyHUD(null);
                     const overlay = document.getElementById('error-overlay');
                     overlay.classList.remove('hidden');
                     setTimeout(() => overlay.classList.add('active'), 10);
@@ -978,6 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function triggerEmergencyMode(isTest = false, scenarioId = 1, locationId = 'a') {
         isEmergency = true;
         isWaitingForPinDrop = false;
+        isEvacuationCompleted = false; // Reset completed status
         activeScenarioId = scenarioId;
         activeLocationId = locationId;
         if (!isTest) {
@@ -1002,6 +1056,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const heightLabel = sc.isLandslide ? "予想浸水深:" : "予想高:";
         detailsEl.innerHTML = `<span>${timeLabel}</span> <strong>${sc.time}</strong> | <span>${heightLabel}</span> <strong>${sc.height}</strong>`;
  
+        // Trigger speech synthesis evac start instruction
+        speakI18n('speechEvacStart');
+ 
         if (isTest) {
             // Keep user's custom location if it is within the Kamakura model area, otherwise fallback to scenario start
             if (!isInModelArea(currentLocation)) {
@@ -1025,6 +1082,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetEmergencyMode() {
         isEmergency = false;
+        isEvacuationCompleted = false;
 
         // Close route selection modal if open
         const routeOverlay = document.getElementById('route-overlay');
@@ -1407,6 +1465,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 .replace('{routeLabel}', selectedRoute.label)
                 .replace('{routeCharacteristics}', characteristicsPart);
             document.getElementById('i18n-evac-desc').innerText = summaryText;
+
+            // Voice Navigation speech for route choice
+            speakI18n('speechRouteSelect', { routeLabel: selectedRoute.label });
         }
 
         // Restart simulation along new selected path
@@ -2305,6 +2366,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
             document.getElementById('i18n-evac-desc').innerText = dict.routeOffCourse || "ルートから外れています！青い線に戻ってください。";
             document.getElementById('i18n-evac-desc').style.color = 'var(--danger)';
+            
+            // Speak deviation alert rate-limited to every 12s to avoid overlap
+            const now = Date.now();
+            if (now - lastOffCourseSpeakTime > 12000) {
+                speakI18n('speechOffCourse');
+                lastOffCourseSpeakTime = now;
+            }
+
             if ("vibrate" in navigator) {
                 navigator.vibrate([500, 200, 500]);
             } else {
@@ -2504,6 +2573,180 @@ document.addEventListener('DOMContentLoaded', () => {
                     el.innerHTML = dict[key];
                 }
             });
+        }
+    }
+
+    // ==========================================================================
+    // Premium Features Helpers (多言語音声ナビ、オフライン検知、GPS精度HUD、避難完了チェック)
+    // ==========================================================================
+    function updateGPSAccuracyHUD(accuracy) {
+        const accuracyEl = document.getElementById('gps-accuracy');
+        const box = document.getElementById('gps-accuracy-box');
+        if (!accuracyEl || !box) return;
+
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+
+        if (accuracy === null || accuracy === undefined) {
+            // Manual pin or mock high accuracy
+            if (isManualLocation) {
+                accuracyEl.innerText = `GPS: ±3m`;
+                box.className = 'status-badge gps-badge';
+            } else {
+                accuracyEl.innerText = 'GPS: --';
+                box.className = 'status-badge gps-badge';
+            }
+            return;
+        }
+
+        const formattedAccuracy = Math.round(accuracy);
+        if (accuracy < 15) {
+            accuracyEl.innerText = `GPS: ±${formattedAccuracy}m`;
+            box.className = 'status-badge gps-badge';
+        } else {
+            const warningText = dict.gpsLowAccuracy || '（屋外推奨）';
+            accuracyEl.innerText = `GPS: ±${formattedAccuracy}m ${warningText}`;
+            box.className = 'status-badge gps-badge gps-low-accuracy';
+        }
+    }
+
+    function updateNetworkStatusHUD() {
+        const netText = document.getElementById('network-text');
+        const netBox = document.getElementById('network-status');
+        if (!netText || !netBox) return;
+
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+
+        if (navigator.onLine) {
+            netText.innerText = dict.onlineBadge || '🟢 Online';
+            netBox.className = 'status-badge network-badge';
+        } else {
+            netText.innerText = dict.offlineBadge || '🔴 Offline (PWA)';
+            netBox.className = 'status-badge network-badge network-offline';
+        }
+    }
+
+    function speakI18n(key, templates = {}) {
+        const voiceEnabled = localStorage.getItem('tenden-voice-nav') !== 'false';
+        if (!voiceEnabled) return;
+
+        if (!('speechSynthesis' in window)) {
+            console.warn('[Speech] Browser does not support speechSynthesis');
+            return;
+        }
+
+        const lang = getLanguageCode();
+        const dict = i18nDict[lang] || i18nDict['ja'] || {};
+        let text = dict[key] || '';
+        
+        if (!text) {
+            const fallbackDict = i18nDict['ja'] || {};
+            text = fallbackDict[key] || '';
+        }
+
+        if (!text) return;
+
+        // Apply templates (e.g. {routeLabel}, {shelterName})
+        for (const [k, v] of Object.entries(templates)) {
+            text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+        }
+
+        // Strip HTML if any
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = text;
+        const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+        try {
+            window.speechSynthesis.cancel(); // Terminate preceding speech
+
+            const utterance = new SpeechSynthesisUtterance(plainText);
+            
+            // Map ISO 639-1 language codes to Speech synthesis locales
+            const voiceLangMap = {
+                'ja': 'ja-JP',
+                'en': 'en-US',
+                'zh': 'zh-CN',
+                'zh-tw': 'zh-TW',
+                'ko': 'ko-KR',
+                'fr': 'fr-FR',
+                'es': 'es-ES',
+                'de': 'de-DE',
+                'it': 'it-IT',
+                'pt': 'pt-PT',
+                'ru': 'ru-RU',
+                'vi': 'vi-VN',
+                'th': 'th-TH',
+                'id': 'id-ID',
+                'tl': 'fil-PH',
+                'ms': 'ms-MY',
+                'hi': 'hi-IN',
+                'bn': 'bn-IN',
+                'ar': 'ar-AE',
+                'fa': 'fa-IR',
+                'tr': 'tr-TR',
+                'nl': 'nl-NL',
+                'sv': 'sv-SE',
+                'no': 'no-NO',
+                'fi': 'fi-FI',
+                'da': 'da-DK',
+                'pl': 'pl-PL',
+                'uk': 'uk-UA',
+                'el': 'el-GR',
+                'he': 'he-IL'
+            };
+
+            const targetLang = voiceLangMap[lang] || 'ja-JP';
+            utterance.lang = targetLang;
+
+            // Find matching voice locale
+            const voices = window.speechSynthesis.getVoices();
+            const voice = voices.find(v => v.lang === targetLang || v.lang.startsWith(targetLang.split('-')[0]));
+            if (voice) {
+                utterance.voice = voice;
+            }
+
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+
+            window.speechSynthesis.speak(utterance);
+        } catch (e) {
+            console.error('[Speech] Error speaking text:', e);
+        }
+    }
+
+    function checkShelterArrival(loc) {
+        if (!isEmergency || isEvacuationCompleted) return;
+
+        let destLatLng = null;
+        
+        if (activeSecondaryRoute && activeSecondaryRoute.target) {
+            destLatLng = L.latLng(activeSecondaryRoute.target.lat, activeSecondaryRoute.target.lng);
+        } else if (mainRouteLine) {
+            const wps = mainRouteLine.getLatLngs();
+            if (wps && wps.length > 0) {
+                destLatLng = wps[wps.length - 1];
+            }
+        }
+
+        if (!destLatLng) return;
+
+        const distance = L.latLng(loc.lat, loc.lng).distanceTo(destLatLng);
+        if (distance < 25) { // Within 25 meters (Apple GPS standard margin)
+            isEvacuationCompleted = true;
+            
+            // Speak arrival
+            speakI18n('speechArrived');
+
+            // Trigger beautiful completion alert popup
+            const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+            showCustomAlert(
+                dict.arrivalTitle || "避難完了！ 🎉",
+                dict.arrivalDesc || "安全な避難先に無事到着しました。引き続きハザードマップ等を確認し、安全を確保してください。",
+                "success",
+                () => {
+                    // Automatically trigger the beautiful evacuation plan card screenshot & share overlay!
+                    takeScreenshot();
+                }
+            );
         }
     }
 
