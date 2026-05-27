@@ -515,6 +515,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        const btnGpsLocation = document.getElementById('btn-gps-location');
+        if (btnGpsLocation) {
+            btnGpsLocation.addEventListener('click', () => {
+                isManualLocation = false;
+                requestLocation();
+            });
+        }
+
         const btnFocusModel = document.getElementById('btn-focus-model');
         if (btnFocusModel) {
             btnFocusModel.addEventListener('click', () => {
