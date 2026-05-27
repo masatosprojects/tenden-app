@@ -721,8 +721,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 className: 'gsi-thought-popup'
             }).openPopup();
         } else {
-            userMarker.closePopup();
-            userMarker.unbindPopup();
+            // Leaflet unbindPopup/closePopup can throw errors if no popup is currently bound.
+            // Safely check using getPopup() first to prevent TypeError app crash!
+            if (userMarker.getPopup && userMarker.getPopup()) {
+                userMarker.closePopup();
+                userMarker.unbindPopup();
+            }
         }
     }
 
