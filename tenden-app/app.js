@@ -1374,7 +1374,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (c.id === 'B') tagText = `道路混雑回避`;
             else if (c.id === 'A') tagText = `最短距離`;
             else if (c.id === 'D') tagText = `空き避難所`;
-            else if (c.id === 'C') tagText = `バリアフリー`;
+            else if (c.id === 'C') tagText = `♿ バリアフリー（高齢者・児童推奨）`;
             
             const btn = document.createElement('button');
             btn.className = `route-option-btn compact-route-btn ${isSelected ? 'active' : ''}`;
@@ -1740,7 +1740,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (routeCWaypoints) {
             routeC = {
                 id: 'C',
-                label: 'バリアフリー・平坦ルート',
+                label: '♿ バリアフリー・平坦ルート',
                 color: '#5e5ce6',
                 waypoints: routeCWaypoints,
                 distance_m: routeCDistance,
@@ -2014,7 +2014,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fallbackNames = {
             'A': '最短避難ルート',
             'B': '道路混雑回避ルート',
-            'C': 'バリアフリー・平坦ルート',
+            'C': '♿ バリアフリー・平坦ルート',
             'D': '分散避難ルート'
         };
         const fallbackColors = {
