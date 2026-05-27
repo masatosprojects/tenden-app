@@ -74,19 +74,28 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </button>
             <button id="btn-gps-location" class="fab-btn" aria-label="現在地(GPS)へ" data-label="現在地">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line></svg>
+                <!-- Precision sniper crosshair target icon -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" stroke-dasharray="3,3"></circle>
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <line x1="1" y1="12" x2="23" y2="12"></line>
+                </svg>
             </button>
             <button id="btn-focus-model" class="fab-btn" aria-label="モデル地区へ" data-label="モデル地区">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 8 2 15 6 22 2 22 18 15 22 8 18 1 22"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="15" y1="6" x2="15" y2="22"></line></svg>
+                <!-- Map warp/jump location teleport icon -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                    <path d="M19 19L14.5 14.5M19 19h-4M19 19v-4" stroke-width="2.5"></path>
+                </svg>
             </button>
             <button id="btn-settings" class="fab-btn" aria-label="設定" data-label="設定">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
             <button id="btn-screenshot" class="fab-btn" aria-label="保存" data-label="保存">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            </button>
-            <button id="btn-dev-reset" class="fab-btn fab-danger" aria-label="再読込" data-label="再読込">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
             </button>
         </div>
 
@@ -215,9 +224,48 @@
                 </select>
             </div>
 
+            <!-- Evacuation Walk Speed Configuration -->
             <div class="form-group">
-                <label data-i18n="dataLabel">データ管理</label>
-                <button id="btn-clear-cache" class="action-btn warning-btn w-100" data-i18n="clearCacheBtn">オフラインデータを削除</button>
+                <label data-i18n="walkSpeedLabel">避難歩行速度設定</label>
+                <select id="walk-speed-select" class="form-control">
+                    <option value="4.0" data-i18n="speedNormal">一般成人 (4.0 km/h)</option>
+                    <option value="3.0" data-i18n="speedSlow">高齢者・児童 (3.0 km/h)</option>
+                    <option value="2.0" data-i18n="speedWheelchair">車いす・要介助 (2.0 km/h)</option>
+                </select>
+            </div>
+
+            <!-- P2P Earthquake/Tsunami Auto-Trigger Toggle -->
+            <div class="form-group flex-group">
+                <label data-i18n="p2pAutoLabel">P2P地震情報の自動検知</label>
+                <label class="switch-container">
+                    <input type="checkbox" id="toggle-p2p-auto" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Route Deviation Warning Toggle -->
+            <div class="form-group flex-group">
+                <label data-i18n="deviationAlertLabel">ルート逸脱警告（振動＆フラッシュ）</label>
+                <label class="switch-container">
+                    <input type="checkbox" id="toggle-deviation-alert" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Tsunami Emergency Force Mode Toggle (For Demonstration) -->
+            <div class="form-group flex-group">
+                <label data-i18n="emergencyForceLabel">発災モード（緊急ダークモード）の強制プレビュー</label>
+                <label class="switch-container">
+                    <input type="checkbox" id="toggle-emergency-force">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Data Management & Safe Initializer reset button -->
+            <div class="form-group">
+                <label data-i18n="dataLabel">データ管理 / システム</label>
+                <button id="btn-clear-cache" class="action-btn warning-btn w-100" data-i18n="clearCacheBtn" style="margin-bottom:10px;">オフラインデータを削除</button>
+                <button id="btn-dev-reset" class="action-btn outline-btn w-100" data-i18n="systemResetBtn">【警告】システムキャッシュを完全初期化</button>
             </div>
         </div>
     </div>
@@ -323,6 +371,40 @@
                 ⚠️ これらはシミュレーション結果に基づく参考情報です。
             </div>
             <div id="route-options-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+    </div>
+
+    <!-- Evacuation Plan Share Dialog -->
+    <div id="share-overlay" class="overlay hidden">
+        <div class="dialog glass-panel scenario-dialog share-dialog" style="max-width: 450px;">
+            <div class="dialog-header">
+                <h2 data-i18n="shareDialogTitle">避難計画カードの保存 ＆ 共有</h2>
+                <button id="btn-share-dialog-close" class="close-btn">&times;</button>
+            </div>
+            <p class="dialog-subtitle" data-i18n="shareDialogDesc">避難地図とHUD画像がダウンロードされました！ご家族や友人と避難ルートを共有しておきましょう。</p>
+            
+            <div class="share-card-container" style="margin-bottom:15px;">
+                <textarea id="share-text-area" class="share-textarea" readonly></textarea>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button id="btn-share-line" class="action-btn share-line-btn w-100" style="padding:14px; border-radius:12px;">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="vertical-align:middle; margin-right:6px;"><path d="M24 10.3c0-4.6-4.9-8.3-11-8.3S2 5.7 2 10.3c0 4.1 3.9 7.6 9.2 8.2.4.1.8.3.9.7l.3 2.1c.1.6.4.8.9.5l2.4-1.7c1.7-.5 3.3-1.4 4.5-2.7 2.4-2.1 3.8-4.4 3.8-7.1z"/></svg>
+                    <span data-i18n="shareLineBtn">LINEで共有</span>
+                </button>
+                <button id="btn-share-system" class="action-btn primary-btn w-100" style="padding:14px; border-radius:12px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle; margin-right:6px;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    <span data-i18n="shareSystemBtn">他の方法で共有 (安否共有)</span>
+                </button>
+                <button id="btn-share-copy" class="action-btn outline-btn w-100" style="padding:12px; border-radius:12px;">
+                    <span data-i18n="shareCopyBtn">テキストをコピー</span>
+                </button>
+            </div>
+            
+            <div class="tip-card" style="margin-top:15px; padding:12px; border-radius:12px; background:rgba(255,255,255,0.06); font-size:0.8rem; line-height:1.45; opacity:0.85; border:1px solid var(--glass-border);">
+                <span style="font-weight:bold; color:var(--warning); margin-right:4px;">💡 防災ヒント:</span>
+                <span data-i18n="shareCardTip">保存された避難計画画像は、スマートフォンのロック画面やホーム画面の壁紙に設定しておくことで、ネットが切断された災害時でもいつでも避難ルートを確認できます。</span>
+            </div>
         </div>
     </div>
 

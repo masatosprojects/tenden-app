@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Official relief tile layer from GSI for elevation color maps
         reliefLayer = L.tileLayer(
-            'https://cyberjapandata2.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png',
+            'https://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png',
             {
                 minZoom: 2,
                 maxZoom: 18,
@@ -311,6 +311,107 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnClearCache = document.getElementById('btn-clear-cache');
         const btnShare = document.getElementById('btn-share');
         
+        // Bind settings elements & load from localStorage
+        const walkSpeedSelect = document.getElementById('walk-speed-select');
+        const toggleP2PAuto = document.getElementById('toggle-p2p-auto');
+        const toggleDeviationAlert = document.getElementById('toggle-deviation-alert');
+        const toggleEmergencyForce = document.getElementById('toggle-emergency-force');
+
+        if (walkSpeedSelect) {
+            walkSpeedSelect.value = localStorage.getItem('tenden-walk-speed') || '4.0';
+            walkSpeedSelect.addEventListener('change', (e) => {
+                localStorage.setItem('tenden-walk-speed', e.target.value);
+                // Dynamically recalculate route evacuation times if active location exists
+                if (currentLocation) {
+                    recalculateRouteFromLocation(currentLocation);
+                }
+            });
+        }
+        if (toggleP2PAuto) {
+            toggleP2PAuto.checked = localStorage.getItem('tenden-p2p-auto') !== 'false';
+            toggleP2PAuto.addEventListener('change', (e) => {
+                localStorage.setItem('tenden-p2p-auto', e.target.checked);
+            });
+        }
+        if (toggleDeviationAlert) {
+            toggleDeviationAlert.checked = localStorage.getItem('tenden-deviation-alert') !== 'false';
+            toggleDeviationAlert.addEventListener('change', (e) => {
+                localStorage.setItem('tenden-deviation-alert', e.target.checked);
+            });
+        }
+        if (toggleEmergencyForce) {
+            toggleEmergencyForce.checked = isEmergency;
+            toggleEmergencyForce.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    // Trigger emergency mode for demonstration
+                    triggerEmergencyMode(true, 1, 'a');
+                } else {
+                    // Turn off emergency mode
+                    isEmergency = false;
+                    isPinLocked = false;
+                    isWaitingForPinDrop = false;
+                    resetEmergencyMode();
+                }
+            });
+        }
+
+        // Bind Evacuation Share Dialog close, LINE, System Share and Copy buttons
+        const btnShareDialogClose = document.getElementById('btn-share-dialog-close');
+        if (btnShareDialogClose) {
+            btnShareDialogClose.addEventListener('click', () => {
+                const shareOverlay = document.getElementById('share-overlay');
+                shareOverlay.classList.remove('active');
+                setTimeout(() => shareOverlay.classList.add('hidden'), 300);
+            });
+        }
+        const btnShareLine = document.getElementById('btn-share-line');
+        if (btnShareLine) {
+            btnShareLine.addEventListener('click', () => {
+                const shareTextArea = document.getElementById('share-text-area');
+                if (shareTextArea) {
+                    const text = encodeURIComponent(shareTextArea.value);
+                    window.open(`https://line.me/R/share?text=${text}`, '_blank');
+                }
+            });
+        }
+        const btnShareSystem = document.getElementById('btn-share-system');
+        if (btnShareSystem) {
+            btnShareSystem.addEventListener('click', async () => {
+                const shareTextArea = document.getElementById('share-text-area');
+                if (shareTextArea && navigator.share) {
+                    try {
+                        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                        await navigator.share({
+                            title: dict.shareDialogTitle || '避難計画カードの保存 ＆ 共有',
+                            text: shareTextArea.value
+                        });
+                    } catch (e) {
+                        console.log("Web Share API failed or cancelled:", e);
+                    }
+                } else {
+                    const btnCopy = document.getElementById('btn-share-copy');
+                    if (btnCopy) btnCopy.click();
+                }
+            });
+        }
+        const btnShareCopy = document.getElementById('btn-share-copy');
+        if (btnShareCopy) {
+            btnShareCopy.addEventListener('click', () => {
+                const shareTextArea = document.getElementById('share-text-area');
+                if (shareTextArea) {
+                    shareTextArea.select();
+                    document.execCommand('copy');
+                    
+                    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                    const originalText = btnShareCopy.innerText;
+                    btnShareCopy.innerText = dict.copiedLabel || 'コピーしました！ ✅';
+                    setTimeout(() => {
+                        btnShareCopy.innerText = originalText;
+                    }, 2000);
+                }
+            });
+        }
+
         btnOnboarding.addEventListener('click', () => {
             const overlay = document.getElementById('onboarding-overlay');
             overlay.classList.remove('active');
@@ -1645,7 +1746,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 color: '#0071e3',
                 waypoints: onlineNearestWaypoints,
                 distance_m: onlineNearestDistance,
-                estimated_min: Math.round((onlineNearestDistance / 1.37) / 60),
+                estimated_min: Math.max(1, Math.round((onlineNearestDistance / getEvacuationSpeed()) / 60)),
                 characteristics: (dict.routeShortestDesc || `混雑を考慮せず、最も近い安全高台「{target}」へ直行するルート。`).replace('{target}', localizedTargetEdgeName),
                 congestion_score: 'medium', // Shortest usually gets congested
                 isOSRM: true
@@ -1665,7 +1766,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 color: '#34c759',
                 waypoints: detourResult.waypoints,
                 distance_m: detourResult.distance,
-                estimated_min: Math.round((detourResult.distance / 1.37) / 60),
+                estimated_min: Math.max(1, Math.round((detourResult.distance / getEvacuationSpeed()) / 60)),
                 characteristics: dict.routeAvoidDesc || `シミュレーション上の混雑エリアを自動検知し、迂回路を生成した安全ルート。`,
                 congestion_score: 'low',
                 isOSRM: true,
@@ -1679,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 color: '#34c759',
                 waypoints: onlineNearestWaypoints,
                 distance_m: onlineNearestDistance,
-                estimated_min: Math.round((onlineNearestDistance / 1.37) / 60),
+                estimated_min: Math.max(1, Math.round((onlineNearestDistance / getEvacuationSpeed()) / 60)),
                 characteristics: noCongestionDesc.replace('{target}', localizedTargetEdgeName),
                 congestion_score: 'low',
                 isOSRM: true
@@ -1800,7 +1901,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 color: '#5e5ce6',
                 waypoints: routeCWaypoints,
                 distance_m: routeCDistance,
-                estimated_min: Math.round((routeCDistance / 0.9) / 60), // slower pace: 0.9m/s
+                estimated_min: Math.max(1, Math.round((routeCDistance / getEvacuationSpeed()) / 60)),
                 characteristics: `${flatNote}${slopeLabel}`,
                 congestion_score: 'low',
                 isOSRM: true
@@ -2080,12 +2181,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (dict.shrinePrecincts) characteristics = characteristics.replace('境内', dict.shrinePrecincts);
             if (dict.learningCenter) characteristics = characteristics.replace('学習センター', dict.learningCenter);
 
+            const customDistance = Math.round(minWaypointDist + bestRoute.distance_m * (1 - bestSplitIndex / bestRoute.waypoints.length));
             return {
                 id: type, // Fixed: included the missing type ID!
                 waypoints: customWaypoints,
                 label: label,
                 color: bestRoute.color,
-                distance_m: Math.round(minWaypointDist + bestRoute.distance_m * (1 - bestSplitIndex / bestRoute.waypoints.length)),
+                distance_m: customDistance,
+                estimated_min: Math.max(1, Math.round((customDistance / getEvacuationSpeed()) / 60)),
                 characteristics: characteristics,
                 congestion_score: bestRoute.congestion_score,
                 isOSRM: false
@@ -2119,7 +2222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 [shelterLat, shelterLng]
             ],
             distance_m: Math.round(startLatLng.distanceTo(L.latLng(shelterLat, shelterLng)) * 1.3),
-            estimated_min: Math.round((startLatLng.distanceTo(L.latLng(shelterLat, shelterLng)) * 1.3 / (type === 'C' ? 1.0 : 1.37)) / 60),
+            estimated_min: Math.max(1, Math.round((startLatLng.distanceTo(L.latLng(shelterLat, shelterLng)) * 1.3 / getEvacuationSpeed()) / 60)),
             characteristics: type === 'C' ? "坂道を避けた緊急平坦ルート。" : "緊急時の最短道路接続ルート。",
             congestion_score: "low",
             isOSRM: false
@@ -2176,6 +2279,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkRouteDeviation(loc) {
         if (!mainRouteLine) return;
         
+        const isAlertEnabled = localStorage.getItem('tenden-deviation-alert') !== 'false';
+        if (!isAlertEnabled) {
+            const labelDesc = document.getElementById('i18n-evac-desc');
+            if (labelDesc) {
+                labelDesc.style.color = 'var(--text-color)';
+            }
+            return;
+        }
+        
         // Simple distance check from the route line
         const latlng = L.latLng(loc.lat, loc.lng);
         // Leaflet doesn't have point-to-line distance natively without geometry libs,
@@ -2228,22 +2340,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function takeScreenshot() {
-        const uiLayer = document.getElementById('ui-layer');
-        document.querySelector('.hud-controls').style.display = 'none';
+        const hudControls = document.querySelector('.hud-controls');
+        if (hudControls) hudControls.style.display = 'none';
         
         html2canvas(document.body, {
             useCORS: true,
             allowTaint: true,
-            ignoreElements: (el) => el.id === 'onboarding-overlay' || el.id === 'error-overlay'
+            ignoreElements: (el) => el.id === 'onboarding-overlay' || el.id === 'error-overlay' || el.id === 'share-overlay' || el.id === 'settings-overlay' || el.id === 'layers-overlay'
         }).then(canvas => {
             const link = document.createElement('a');
             link.download = `tenden_backup_${new Date().toISOString().split('T')[0]}.png`;
             link.href = canvas.toDataURL();
             link.click();
-            document.querySelector('.hud-controls').style.display = 'flex';
+            if (hudControls) hudControls.style.display = 'flex';
+            
+            // Launch dynamic evacuation plan share dialog!
+            showShareEvacuationPlanDialog();
         }).catch(err => {
             console.error("Screenshot failed:", err);
-            document.querySelector('.hud-controls').style.display = 'flex';
+            if (hudControls) hudControls.style.display = 'flex';
+            // Show share dialog anyway as fallback
+            showShareEvacuationPlanDialog();
         });
     }
 
@@ -2289,12 +2406,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         setP2PStatus('alert');
                     }
                     if (isTsunamiWarning && !isEmergency) {
-                        console.warn('[P2P] 津波警報受信 → 緊急モード発動');
-                        // 実際の緊急アラートとして起動（isTest=false）
-                        triggerEmergencyMode(false, 1, 'a');
-                        // バイブレーション（Vibration API）
-                        if ('vibrate' in navigator) {
-                            navigator.vibrate([300, 100, 300, 100, 300]);
+                        console.warn('[P2P] 津波警報受信 → 自動発災トリガー確認');
+                        const p2pAuto = localStorage.getItem('tenden-p2p-auto') !== 'false';
+                        if (p2pAuto) {
+                            triggerEmergencyMode(false, 1, 'a');
+                            if ('vibrate' in navigator) {
+                                navigator.vibrate([300, 100, 300, 100, 300]);
+                            }
                         }
                     }
                 }
@@ -2888,5 +3006,70 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 3. UIに結果を反映
         updateTsunamiStatusUI(isInundated);
+    }
+
+    function getEvacuationSpeed() {
+        const speedKmh = parseFloat(localStorage.getItem('tenden-walk-speed') || '4.0');
+        return speedKmh / 3.6; // Convert km/h to m/s
+    }
+
+    function showShareEvacuationPlanDialog() {
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+        
+        const selectedRoute = activeRoutesList ? activeRoutesList.find(r => r.id === activeSelectedRouteId) : null;
+        
+        let routeLabel = '';
+        if (selectedRoute) {
+            routeLabel = selectedRoute.label;
+        } else {
+            const fallbackNames = {
+                'A': dict.routeShortestLabel || '最短避難ルート',
+                'B': dict.routeAvoidLabel || '道路混雑回避ルート',
+                'C': dict.routeBarrierLabel || '♿ バリアフリー・平坦ルート',
+                'D': dict.routeDispersal || '分散避難ルート'
+            };
+            routeLabel = fallbackNames[activeSelectedRouteId] || fallbackNames['A'];
+        }
+        
+        const destination = activeSecondaryRoute && activeSecondaryRoute.shelter ? activeSecondaryRoute.shelter.name : '指定避難所';
+        
+        let localizedDest = destination;
+        const currentLang = getLanguageCode();
+        if (currentLang !== 'ja') {
+            const replacements = [
+                { jp: '小学校', en: ' Primary School', zh: '小学', ko: '초등학교' },
+                { jp: '中学校', en: ' Middle School', zh: '中学', ko: '중학교' },
+                { jp: '境内', en: ' Temple Precincts', zh: '神社境内', ko: '경내' },
+                { jp: '学習センター', en: ' Community Learning Center', zh: '社区学习中心', ko: '학습 센터' }
+            ];
+            for (const rep of replacements) {
+                if (destination.endsWith(rep.jp)) {
+                    localizedDest = destination.replace(rep.jp, rep[currentLang] || rep['en']);
+                    break;
+                }
+            }
+        }
+        
+        const speed = parseFloat(localStorage.getItem('tenden-walk-speed') || '4.0');
+        const distance_m = selectedRoute ? selectedRoute.distance_m : (activeSecondaryRoute ? activeSecondaryRoute.distance_m : 600);
+        const duration_min = Math.max(1, Math.round((distance_m / (speed * 1000 / 60))));
+        
+        let shareText = '';
+        if (currentLang === 'ja') {
+            shareText = `【TENDENマイ避難計画】\n大津波発生時、私は第一目標（浸水安全境界）を経由し、指定避難所「${localizedDest}」へ避難します。\n・避難ルート: ${routeLabel}\n・避難時間: 約 ${duration_min} 分 (歩行速度設定: ${speed} km/h)\nネットが切断されてもオフラインで動く減災PWAアプリ「TENDEN」で、あなたも避難ルートを今すぐ確認しましょう！\nアプリリンク: https://masatosprojects.github.io/tenden-app/`;
+        } else {
+            shareText = `[TENDEN Personal Evacuation Plan]\nIn the event of a tsunami, I will evacuate to the designated shelter "${localizedDest}" via the 1st safe boundary.\n- Evacuation Route: ${routeLabel}\n- Estimated Time: approx. ${duration_min} min (Speed: ${speed} km/h)\nCheck your own evacuation route now using the offline-first PWA app "TENDEN"!\nApp Link: https://masatosprojects.github.io/tenden-app/`;
+        }
+        
+        const shareTextArea = document.getElementById('share-text-area');
+        if (shareTextArea) {
+            shareTextArea.value = shareText;
+        }
+        
+        const shareOverlay = document.getElementById('share-overlay');
+        if (shareOverlay) {
+            shareOverlay.classList.remove('hidden');
+            setTimeout(() => shareOverlay.classList.add('active'), 50);
+        }
     }
 });

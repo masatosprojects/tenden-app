@@ -23,7 +23,7 @@ const urlsToCache = [
 // Domains whose tiles are cached dynamically (Cache-First after first load)
 const TILE_DOMAINS = [
   'basemaps.cartocdn.com',
-  'cyberjapandata2.gsi.go.jp',
+  'cyberjapandata.gsi.go.jp',
   'disaportaldata.gsi.go.jp'  // official tsunami inundation tiles
 ];
 
