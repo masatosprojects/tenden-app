@@ -742,6 +742,7 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
    ONBOARDING DEMO OVERLAY
    ══════════════════════════════════════════════════ */
 #onboarding-overlay.overlay.active {
+    position: fixed !important;
     z-index: 20000;
     align-items: flex-end;
     padding: 0;

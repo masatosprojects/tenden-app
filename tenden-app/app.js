@@ -3818,8 +3818,14 @@ function startOnboardingDemo() {
     if (!overlay) return;
 
     // Show demo always on first load (localStorage tracks if demo was ever completed)
-    // If user has seen it, still show overlay but allow quick skip
+    // If user has seen it, skip onboarding and immediately request location tracking
     const hasSeen = localStorage.getItem('tenden-demo-seen') === 'true';
+    if (hasSeen) {
+        overlay.classList.remove('active');
+        overlay.classList.add('hidden');
+        requestLocation();
+        return;
+    }
 
     overlay.classList.remove('hidden');
     overlay.classList.add('active');
