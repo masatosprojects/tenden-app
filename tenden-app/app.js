@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastDeviationNotificationTime = 0;
     let hasWarnedLowBattery = false;
     let lastHeading = 0;
+    let lastScanCenter = null;
     
     // Kamakura default location (Yuigahama)
     const KAMAKURA_CENTER = [35.3192, 139.5504];
@@ -282,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateMarker(currentLocation);
             fetchElevation(currentLocation);
             triggerLocationTsunamiCheck(currentLocation);
+            generalizeFirstTargets(currentLocation);
             
             if (isEmergency) {
                 // If already in emergency mode, instantly recalculate the evacuation route
@@ -935,6 +937,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateMarker(currentLocation);
                     fetchElevation(currentLocation);
                     triggerLocationTsunamiCheck(currentLocation);
+                    generalizeFirstTargets(currentLocation);
                     
                     // Track location changes
                     navigator.geolocation.watchPosition(pos => {
@@ -946,6 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             };
                             updateMarker(currentLocation);
                             triggerLocationTsunamiCheck(currentLocation);
+                            generalizeFirstTargets(currentLocation);
                         }
                         
                         if (isEmergency && !simulationInterval) {
@@ -3205,8 +3209,18 @@ document.addEventListener('DOMContentLoaded', () => {
     async function computeSafeEdgesFromRasterScan(prefCode = '14') {
         console.log('[SafeEdge] 津波浸水区域の境界スキャンを開始します...');
         
-        // Kamakura bounding box (strictly within Kamakura municipal limits, avoiding Zushi/Kotsubo in the east)
-        const bbox = { latMin: 35.27, latMax: 35.37, lngMin: 139.47, lngMax: 139.585 };
+        // Dynamic Bounding Box calculation based on currentLocation to generalize to any location in Japan!
+        let bbox = { latMin: 35.27, latMax: 35.37, lngMin: 139.47, lngMax: 139.585 };
+        if (currentLocation && currentLocation.lat && currentLocation.lng) {
+            // Generate a ~10km bounding box centered at the user's current location
+            bbox = {
+                latMin: currentLocation.lat - 0.05,
+                latMax: currentLocation.lat + 0.05,
+                lngMin: currentLocation.lng - 0.06,
+                lngMax: currentLocation.lng + 0.06
+            };
+            console.log(`[SafeEdge] Dynamic Bounding Box generated centered at: ${currentLocation.lat}, ${currentLocation.lng}`);
+        }
         const zoom = 14; // ~10m per pixel — high resolution
         const pow2 = Math.pow(2, zoom);
 
@@ -3692,5 +3706,103 @@ document.addEventListener('DOMContentLoaded', () => {
                 battery.addEventListener('chargingchange', checkBattery);
             });
         }
+    }
+
+    async function getPrefectureCode(lat, lng) {
+        // 1. Try free open reverse-geocoding API first (supports any place in Japan dynamically)
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
+            const data = await res.json();
+            if (data && data.address) {
+                const state = data.address.state || '';
+                const prefMap = {
+                    '北海道': '01', '青森': '02', '岩手': '03', '宮城': '04', '秋田': '05', '山形': '06', '福島': '07',
+                    '茨城': '08', '栃木': '09', '群馬': '10', '埼玉': '11', '千葉': '12', '東京': '13', '神奈川': '14',
+                    '新潟': '15', '富山': '16', '石川': '17', '福井': '18', '山梨': '19', '長野': '20', '岐阜': '21',
+                    '静岡': '22', '愛知': '23', '三重': '24', '滋賀': '25', '京都': '26', '大阪': '27', '兵庫': '28',
+                    '奈良': '29', '和歌山': '30', '鳥取': '31', '島根': '32', '岡山': '33', '広島': '34', '山口': '35',
+                    '徳島': '36', '香川': '37', '愛媛': '38', '高知': '39', '福岡': '40', '佐賀': '41', '長崎': '42',
+                    '熊本': '43', '大分': '44', '宮崎': '45', '鹿児島': '46', '沖縄': '47'
+                };
+                for (const key in prefMap) {
+                    if (state.includes(key)) return prefMap[key];
+                }
+            }
+        } catch (e) {
+            console.warn('[Generalization] Reverse geocoding failed, falling back to proximity check...');
+        }
+
+        // 2. High-performance offline coordinate proximity fallback for coastal Japan prefectures (no internet required!)
+        const centroids = [
+            { code: '01', lat: 43.06, lng: 141.34 }, // Hokkaido
+            { code: '02', lat: 40.82, lng: 140.74 }, // Aomori
+            { code: '03', lat: 39.70, lng: 141.15 }, // Iwate
+            { code: '04', lat: 38.26, lng: 140.87 }, // Miyagi
+            { code: '12', lat: 35.60, lng: 140.12 }, // Chiba
+            { code: '13', lat: 35.68, lng: 139.69 }, // Tokyo
+            { code: '14', lat: 35.44, lng: 139.64 }, // Kanagawa
+            { code: '22', lat: 34.97, lng: 138.38 }, // Shizuoka
+            { code: '23', lat: 35.18, lng: 136.90 }, // Aichi
+            { code: '28', lat: 34.69, lng: 135.19 }, // Hyogo
+            { code: '30', lat: 34.22, lng: 135.16 }, // Wakayama
+            { code: '39', lat: 33.55, lng: 133.53 }, // Kochi
+            { code: '40', lat: 33.60, lng: 130.41 }, // Fukuoka
+            { code: '47', lat: 26.21, lng: 127.67 }  // Okinawa
+        ];
+        
+        let minD = Infinity;
+        let bestCode = '14';
+        for (const c of centroids) {
+            const d = Math.pow(lat - c.lat, 2) + Math.pow(lng - c.lng, 2);
+            if (d < minD) {
+                minD = d;
+                bestCode = c.code;
+            }
+        }
+        return bestCode;
+    }
+
+    async function generalizeFirstTargets(loc) {
+        if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return;
+        
+        // Rate-limit scan calls: only scan if center has shifted by > 3km
+        if (lastScanCenter) {
+            const dist = L.latLng(loc.lat, loc.lng).distanceTo(L.latLng(lastScanCenter.lat, lastScanCenter.lng));
+            if (dist < 3000) {
+                console.log('[Generalization] Shift is under 3km, skipping new raster scan.');
+                return;
+            }
+        }
+        lastScanCenter = { lat: loc.lat, lng: loc.lng };
+        
+        console.log('[Generalization] Target area changed -> reverse geocoding prefecture...');
+        const prefCode = await getPrefectureCode(loc.lat, loc.lng);
+        console.log(`[Generalization] Location reverse geocoded to Prefecture Code: ${prefCode}`);
+        
+        // Trigger background scan in the new BBox region dynamically
+        computeSafeEdgesFromRasterScan(prefCode).then(async (dynamicEdges) => {
+            if (dynamicEdges.length > 0) {
+                // If we are outside Kamakura, we don't have safe_edges.json curated points,
+                // so we just use dynamicEdges directly!
+                const isKamakura = isInModelArea(loc);
+                if (isKamakura) {
+                    const mergedEdges = [...staticSafeEdges];
+                    dynamicEdges.forEach(dyn => {
+                        const isDuplicate = mergedEdges.some(st => {
+                            const dist = L.latLng(st.lat, st.lng).distanceTo(L.latLng(dyn.lat, dyn.lng));
+                            return dist < 50;
+                        });
+                        if (!isDuplicate) {
+                            mergedEdges.push(dyn);
+                        }
+                    });
+                    safeEdgesData = mergedEdges;
+                } else {
+                    safeEdgesData = dynamicEdges;
+                }
+                console.log(`[Generalization] Dynamic targets scanned successfully: ${safeEdgesData.length} points.`);
+                drawAllSafeEdges();
+            }
+        }).catch(e => console.warn('[Generalization] Dynamic raster scan failed:', e));
     }
 });
