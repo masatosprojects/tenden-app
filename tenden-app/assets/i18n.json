@@ -117,7 +117,10 @@
     "systemNotificationLabel": "スマホのシステム通知 (危険進入・逸脱)",
     "smartCompassLabel": "スマートコンパス (進行方向コーン表示)",
     "lowBatteryWarning": "⚠️ バッテリー残量20%以下：画面の明るさを下げ、GPS追従を維持してください。",
-    "privacyNotice": "位置情報は完全に暗号化されて端末内でのみ処理されます。サーバーへ送信・収集されることは一切なく、個人情報の特定は行いません。安心してご利用ください。"
+    "privacyNotice": "位置情報は完全に暗号化されて端末内でのみ処理されます。サーバーへ送信・収集されることは一切なく、個人情報の特定は行いません。安心してご利用ください。",
+    "promoBtnText": "📖 アプリの開発背景・解説サイトを見る",
+    "promoSiteLabel": "アプリ公式サイト・研究背景",
+    "promoSiteBtnText": "🌐 TENDEN 解説サイトを開く"
   },
   "en": {
     "onboardingTitle": "We will guide you to the nearest<br>safe location.",
@@ -237,7 +240,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "zh": {
     "onboardingTitle": "我们将引导您前往最近的<br>安全地点。",
@@ -357,7 +363,10 @@
     "systemNotificationLabel": "智能系统通知 (浸水进入・逸脱)",
     "smartCompassLabel": "智能指南针 (雷达方向锥)",
     "lowBatteryWarning": "⚠️ 电池电量低于20%：请降低屏幕亮度并保持GPS跟踪。",
-    "privacyNotice": "您的位置信息已完全加密，且仅在终端本地处理。绝不会上传或收集到服务器，也不会用于识别个人信息。请放心使用。"
+    "privacyNotice": "您的位置信息已完全加密，且仅在终端本地处理。绝不会上传或收集到服务器，也不会用于识别个人信息。请放心使用。",
+    "promoBtnText": "📖 查看应用开发背景与介绍网站",
+    "promoSiteLabel": "应用官网与研究背景",
+    "promoSiteBtnText": "🌐 打开 TENDEN 介绍网站"
   },
   "zh-tw": {
     "onboardingTitle": "我們將引導您前往最近的<br>安全地點。",
@@ -477,7 +486,10 @@
     "systemNotificationLabel": "智能系統通知 (浸水進入・逸脫)",
     "smartCompassLabel": "智能指南針 (雷達方向錐)",
     "lowBatteryWarning": "⚠️ 電池電量低於20%：請降低螢幕亮度並保持GPS跟蹤。",
-    "privacyNotice": "您的位置資訊已完全加密，且僅在終端本地處理。絕不會上傳或收集到伺服器，頁不會用於識別個人資訊。請放心使用。"
+    "privacyNotice": "您的位置資訊已完全加密，且僅在終端本地處理。絕不會上傳或收集到伺服器，頁不會用於識別個人資訊。請放心使用。",
+    "promoBtnText": "📖 查看應用開發背景與介紹網站",
+    "promoSiteLabel": "應用官網與研究背景",
+    "promoSiteBtnText": "🌐 打開 TENDEN 介紹網站"
   },
   "ko": {
     "onboardingTitle": "가장 가까운 안전한 장소로<br>안내해 드립니다.",
@@ -597,7 +609,10 @@
     "systemNotificationLabel": "스마트 시스템 알림 (진입 및 이탈)",
     "smartCompassLabel": "스마트 나침반 (레이더 방향 표시)",
     "lowBatteryWarning": "⚠️ 배터리 20% 이하: 화면 밝기를 낮추고 GPS 추적을 유지하십시오.",
-    "privacyNotice": "위치 정보는 완전히 암호화되어 기기 내에서만 처리됩니다. 서버로 전송되거나 수집되지 않으며 개인 정보 식별도 수행하지 않으므로 안심하고 사용하십시오."
+    "privacyNotice": "위치 정보는 완전히 암호화되어 기기 내에서만 처리됩니다. 서버로 전송되거나 수집되지 않으며 개인 정보 식별도 수행하지 않으므로 안심하고 사용하십시오.",
+    "promoBtnText": "📖 앱 개발 배경 및 안내 사이트 보기",
+    "promoSiteLabel": "앱 공식 사이트 및 연구 배경",
+    "promoSiteBtnText": "🌐 TENDEN 안내 사이트 열기"
   },
   "fr": {
     "onboardingTitle": "Nous vous guiderons vers le lieu<br>sûr le plus proche.",
@@ -717,7 +732,10 @@
     "systemNotificationLabel": "Notifications système (Entrée et Écart)",
     "smartCompassLabel": "Boussole intelligente (Cône de direction)",
     "lowBatteryWarning": "⚠️ Batterie < 20% : Baissez la luminosité et maintenez le suivi GPS.",
-    "privacyNotice": "Votre position est cryptée et traitée uniquement localement. Elle n'est jamais envoyée à un serveur, garantissant le respect de votre vie privée."
+    "privacyNotice": "Votre position est cryptée et traitée uniquement localement. Elle n'est jamais envoyée à un serveur, garantissant le respect de votre vie privée.",
+    "promoBtnText": "📖 Découvrir le site de recherche de l'application",
+    "promoSiteLabel": "Site officiel et contexte de recherche",
+    "promoSiteBtnText": "🌐 Ouvrir le site explicatif TENDEN"
   },
   "es": {
     "onboardingTitle": "Le guiaremos al lugar seguro<br>más cercano.",
@@ -837,7 +855,10 @@
     "systemNotificationLabel": "Notificaciones del sistema (Ingreso y Desviación)",
     "smartCompassLabel": "Brújula inteligente (Cono de dirección)",
     "lowBatteryWarning": "⚠️ Batería < 20%: Baje el brillo y mantenga el seguimiento GPS.",
-    "privacyNotice": "Su ubicación está encriptada y se procesa solo localmente. Nunca se envía a un servidor, garantizando la máxima protección de su privacidad."
+    "privacyNotice": "Su ubicación está encriptada y se procesa solo localmente. Nunca se envía a un servidor, garantizando la máxima protección de su privacidad.",
+    "promoBtnText": "📖 Ver el sitio web de explicación de la aplicación",
+    "promoSiteLabel": "Sitio oficial y contexto de investigación",
+    "promoSiteBtnText": "🌐 Abrir el sitio explicativo de TENDEN"
   },
   "de": {
     "onboardingTitle": "Wir führen Sie zum nächsten<br>sicheren Ort.",
@@ -957,7 +978,10 @@
     "systemNotificationLabel": "Systembenachrichtigungen (Eintritt & Abweichung)",
     "smartCompassLabel": "Intelligenter Kompass (Gegenwindkegel)",
     "lowBatteryWarning": "⚠️ Batterie < 20%: Helligkeit reduzieren und GPS-Tracking beibehalten.",
-    "privacyNotice": "Ihr Standort wird verschlüsselt und nur lokal verarbeitet. Er wird niemals an einen Server gesendet, was Ihre Privatsphäre absolut schützt."
+    "privacyNotice": "Ihr Standort wird verschlüsselt und nur lokal verarbeitet. Er wird niemals an einen Server gesendet, was Ihre Privatsphäre absolut schützt.",
+    "promoBtnText": "📖 App-Forschungs- und Erklärungsseite lesen",
+    "promoSiteLabel": "Offizielle App- und Forschungswebsite",
+    "promoSiteBtnText": "🌐 TENDEN-Erklärungsseite öffnen"
   },
   "it": {
     "onboardingTitle": "Ti guideremo verso il luogo<br>sicuro più vicino.",
@@ -1077,7 +1101,10 @@
     "systemNotificationLabel": "Notifiche di sistema (Ingresso e Deviazione)",
     "smartCompassLabel": "Bussola intelligente (Cono di direzione)",
     "lowBatteryWarning": "⚠️ Batteria < 20%: Riduci la luminosità e mantieni il tracciamento GPS.",
-    "privacyNotice": "La tua posizione è crittografata e elaborata solo localmente. Non viene mai inviata a un server, garantendo la tua totale privacy."
+    "privacyNotice": "La tua posizione è crittografata e elaborata solo localmente. Non viene mai inviata a un server, garantendo la tua totale privacy.",
+    "promoBtnText": "📖 Leggi il sito di spiegazione dell'app",
+    "promoSiteLabel": "Sito ufficiale e contesto di ricerca",
+    "promoSiteBtnText": "🌐 Apri il sito esplicativo TENDEN"
   },
   "pt": {
     "onboardingTitle": "Iremos guiar você até o local<br>seguro mais próximo.",
@@ -1197,7 +1224,10 @@
     "systemNotificationLabel": "Notificações do sistema (Ingresso e Desvio)",
     "smartCompassLabel": "Bússola inteligente (Cone de direção)",
     "lowBatteryWarning": "⚠️ Bateria < 20%: Reduza o brilho e mantenha o rastreamento GPS.",
-    "privacyNotice": "A sua localização é encriptada e processada apenas localmente. Nunca é enviada para um servidor, garantindo a sua total privacidade."
+    "privacyNotice": "A sua localização é encriptada e processada apenas localmente. Nunca é enviada para um servidor, garantindo a sua total privacidade.",
+    "promoBtnText": "📖 Ver o site de explicação do aplicativo",
+    "promoSiteLabel": "Site oficial e contexto de pesquisa",
+    "promoSiteBtnText": "🌐 Abrir o site explicativo TENDEN"
   },
   "ru": {
     "onboardingTitle": "Мы направим вас к ближайшему<br>безопасному месту.",
@@ -1317,7 +1347,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "vi": {
     "onboardingTitle": "Chúng tôi sẽ dẫn bạn đến nơi<br>an toàn gần nhất.",
@@ -1437,7 +1470,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "th": {
     "onboardingTitle": "เราจะนำทางคุณไปยังสถานที่<br>ที่ปลอดภัยที่สุดใกล้ตัวคุณ",
@@ -1557,7 +1593,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "id": {
     "onboardingTitle": "Kami akan memandu Anda ke tempat<br>aman terdekat.",
@@ -1677,7 +1716,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "tl": {
     "onboardingTitle": "Gagabayan ka namin sa pinakamalapit<br>na ligtas na lokasyon.",
@@ -1797,7 +1839,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "ms": {
     "onboardingTitle": "Kami akan memandu anda ke lokasi<br>selamat yang terdekat.",
@@ -1917,7 +1962,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "hi": {
     "onboardingTitle": "हम आपको निकटतम सुरक्षित स्थान<br>तक मार्गदर्शन करेंगे।",
@@ -2037,7 +2085,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "bn": {
     "onboardingTitle": "আমরা আপনাকে নিকটতম নিরাপদ স্থানে<br>গাইড করব।",
@@ -2157,7 +2208,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "ar": {
     "onboardingTitle": "سنوجهك إلى أقرب<br>مكان آمن.",
@@ -2277,7 +2331,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "fa": {
     "onboardingTitle": "ما شما را به نزدیک‌ترین<br>مکان امن هدایت می‌کنیم.",
@@ -2397,7 +2454,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "tr": {
     "onboardingTitle": "Sizi en yakın güvenli yere<br>yönlendireceğiz.",
@@ -2517,7 +2577,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "nl": {
     "onboardingTitle": "Wij leiden u naar de dichtstbijzijnde<br>veilige locatie.",
@@ -2637,7 +2700,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "sv": {
     "onboardingTitle": "Vi leder dig till närmaste<br>säkra plats.",
@@ -2757,7 +2823,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "no": {
     "onboardingTitle": "Vi vil lede deg til nærmeste<br>sikre sted.",
@@ -2877,7 +2946,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "fi": {
     "onboardingTitle": "Ohjaamme sinut lähimpään<br>turvalliseen paikkaan.",
@@ -2997,7 +3069,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "da": {
     "onboardingTitle": "Vi leder dig til det nærmeste<br>sikre sted.",
@@ -3117,7 +3192,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "pl": {
     "onboardingTitle": "Poprowadzimy Cię do najbliższego<br>bezpiecznego miejsca.",
@@ -3237,7 +3315,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "uk": {
     "onboardingTitle": "Ми направимо вас до найближчого<br>безпечного місця.",
@@ -3357,7 +3438,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "el": {
     "onboardingTitle": "Θα σας οδηγήσουμε στο πλησιέστερο<br>ασφαλές σημείο.",
@@ -3477,7 +3561,10 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   },
   "he": {
     "onboardingTitle": "נוביל אותך למקום המבטחים<br>הקרוב ביותר.",
@@ -3597,6 +3684,9 @@
     "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
     "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
     "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind."
+    "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+    "promoBtnText": "📖 Read App Research & Promo Site",
+    "promoSiteLabel": "Official App & Research Website",
+    "promoSiteBtnText": "🌐 Open TENDEN Explanation Site"
   }
 }
