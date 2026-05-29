@@ -3838,6 +3838,21 @@ function startOnboardingDemo() {
     let routesAnimFrame = null;
     let flowAnimFrame = null;
 
+    // Automatic slideshow timer
+    let slideshowTimeout = null;
+
+    function stopAutoSlideshow() {
+        if (slideshowTimeout) {
+            clearTimeout(slideshowTimeout);
+            slideshowTimeout = null;
+        }
+    }
+
+    function startAutoSlideshow() {
+        stopAutoSlideshow();
+        goToStep(0, true);
+    }
+
     // ── i18n helper (uses global i18nDict once loaded)
     function getDemoText(key, fallback) {
         try {
@@ -3845,7 +3860,24 @@ function startOnboardingDemo() {
                 ? (navigator.language || 'ja').split('-')[0]
                 : localStorage.getItem('tenden-lang');
             const dict = (typeof i18nDict !== 'undefined' && i18nDict[lang]) || {};
-            return dict[key] || fallback;
+            if (dict[key]) return dict[key];
+
+            // Safety Warning Multilingual fallback
+            if (key === 'demoSimWarning') {
+                const warnings = {
+                    ja: '⚠️ これは訓練用のシミュレーション画面です。実際の災害ではありません。',
+                    en: '⚠️ This is a simulated training demo. NOT an actual disaster.',
+                    zh: '⚠️ 这是用于训练的模拟演示画面。并非真实灾害。',
+                    'zh-tw': '⚠️ 這是用於訓練的模擬演示畫面。並非真實災害。',
+                    ko: '⚠️ 이것은 훈련용 시뮬레이션 데모입니다. 실제 재난이 아닙니다.',
+                    fr: '⚠️ Il s\'agit d\'une simulation d\'entraînement. Pas de catastrophe réelle.',
+                    es: '⚠️ Esta es una demostración de simulación. NO es un desastre real.',
+                    de: '⚠️ Dies ist eine simulierte Trainingsdemo. Kein echtes Katastrophenszenario.',
+                    it: '⚠️ Questa è una demo di simulazione di addestramento. NON è un vero disastro.'
+                };
+                return warnings[lang] || warnings['en'];
+            }
+            return fallback;
         } catch (e) { return fallback; }
     }
 
@@ -3859,6 +3891,7 @@ function startOnboardingDemo() {
         const elStep2Desc  = document.getElementById('demo-desc-2');
         const elStep3Title = document.getElementById('demo-title-3');
         const elStep3Desc  = document.getElementById('demo-desc-3');
+        const elSimWarning = document.getElementById('demo-sim-warning');
 
         if (elStep0Title) elStep0Title.textContent = getDemoText('demoStep0Title', '津波から命を守るために');
         if (elStep0Sub)   elStep0Sub.textContent   = getDemoText('demoStep0Sub',   '日本全国の沿岸エリアで使える避難支援アプリ');
@@ -3868,6 +3901,7 @@ function startOnboardingDemo() {
         if (elStep2Desc)  elStep2Desc.textContent  = getDemoText('demoStep2Desc',  '最短・混雑回避・急坂回避の3ルートを同時表示。あなたが選びます。');
         if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', 'TENDENは、あなたに選択肢を渡します');
         if (elStep3Desc)  elStep3Desc.textContent  = getDemoText('demoStep3Desc',  'その土地を知らない観光客も、外国語話者も、迷わず逃げ出せる支援を。');
+        if (elSimWarning) elSimWarning.textContent = getDemoText('demoSimWarning', '⚠️ これは訓練用のシミュレーション画面です。実際の災害ではありません。');
 
         // Next/skip buttons
         document.querySelectorAll('[data-i18n="demoBtnSkip"]').forEach(el => {
@@ -3887,7 +3921,7 @@ function startOnboardingDemo() {
     setTimeout(applyDemoI18n, 1200);
 
     // ── Step navigation
-    function goToStep(step) {
+    function goToStep(step, isAutoFlow = false) {
         // Stop any running animations
         if (mapAnimFrame)    { cancelAnimationFrame(mapAnimFrame);    mapAnimFrame = null; }
         if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
@@ -3911,9 +3945,22 @@ function startOnboardingDemo() {
         if (step === 1) setTimeout(animateMapCanvas, 200);
         if (step === 2) setTimeout(animateRoutesCanvas, 200);
         if (step === 3) setTimeout(animateFlowCanvas, 200);
+
+        // Handle auto slideshow transitions
+        stopAutoSlideshow();
+        if (isAutoFlow) {
+            if (step === 0) {
+                slideshowTimeout = setTimeout(() => goToStep(1, true), 3800);
+            } else if (step === 1) {
+                slideshowTimeout = setTimeout(() => goToStep(2, true), 4800);
+            } else if (step === 2) {
+                slideshowTimeout = setTimeout(() => goToStep(3, true), 5800);
+            }
+        }
     }
 
     function closeDemo() {
+        stopAutoSlideshow();
         if (mapAnimFrame)    { cancelAnimationFrame(mapAnimFrame);    mapAnimFrame = null; }
         if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
         if (flowAnimFrame)   { cancelAnimationFrame(flowAnimFrame);   flowAnimFrame = null; }
@@ -3932,18 +3979,19 @@ function startOnboardingDemo() {
     const btnUse    = document.getElementById('btn-demo-use-here');
     const btnReplay = document.getElementById('btn-demo-replay');
 
-    if (btn0Next)  btn0Next.addEventListener('click', () => goToStep(1));
-    if (btn0Skip)  btn0Skip.addEventListener('click', () => { closeDemo(); requestLocation(); });
-    if (btn1Next)  btn1Next.addEventListener('click', () => goToStep(2));
-    if (btn1Skip)  btn1Skip.addEventListener('click', () => { closeDemo(); requestLocation(); });
-    if (btn2Next)  btn2Next.addEventListener('click', () => goToStep(3));
-    if (btn2Skip)  btn2Skip.addEventListener('click', () => { closeDemo(); requestLocation(); });
-    if (btnReplay) btnReplay.addEventListener('click', () => goToStep(0));
-    if (btnUse)    btnUse.addEventListener('click', () => { closeDemo(); requestLocation(); });
+    if (btn0Next)  btn0Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(1); });
+    if (btn0Skip)  btn0Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); requestLocation(); });
+    if (btn1Next)  btn1Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(2); });
+    if (btn1Skip)  btn1Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); requestLocation(); });
+    if (btn2Next)  btn2Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(3); });
+    if (btn2Skip)  btn2Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); requestLocation(); });
+    if (btnReplay) btnReplay.addEventListener('click', () => { startAutoSlideshow(); });
+    if (btnUse)    btnUse.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); requestLocation(); });
 
     // Dot clicks
     document.querySelectorAll('.demo-dot').forEach(dot => {
         dot.addEventListener('click', () => {
+            stopAutoSlideshow();
             const step = parseInt(dot.dataset.step);
             if (!isNaN(step)) goToStep(step);
         });
@@ -3963,7 +4011,7 @@ function startOnboardingDemo() {
             setTimeout(() => {
                 overlay.classList.remove('hidden');
                 setTimeout(() => overlay.classList.add('active'), 10);
-                goToStep(0);
+                startAutoSlideshow();
             }, 350);
         });
     }
@@ -4357,8 +4405,8 @@ function startOnboardingDemo() {
         flowAnimFrame = requestAnimationFrame(frame);
     }
 
-    // Start from step 0
-    goToStep(0);
+    // Start automatic slideshow
+    startAutoSlideshow();
 
     console.log('[TENDEN] Onboarding demo started.');
 }
