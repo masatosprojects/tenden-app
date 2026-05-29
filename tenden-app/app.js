@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let safeEdgesData = [];
     let staticSafeEdges = [];
     
+    // Smartphone-specific state variables
+    let wakeLock = null;
+    let lastInundationNotificationTime = 0;
+    let lastDeviationNotificationTime = 0;
+    let hasWarnedLowBattery = false;
+    let lastHeading = 0;
+    
     // Kamakura default location (Yuigahama)
     const KAMAKURA_CENTER = [35.3192, 139.5504];
 
@@ -430,6 +437,71 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        const toggleWakeLock = document.getElementById('toggle-wake-lock');
+        const toggleSystemNotification = document.getElementById('toggle-system-notification');
+        const toggleSmartCompass = document.getElementById('toggle-smart-compass');
+
+        if (toggleWakeLock) {
+            toggleWakeLock.checked = localStorage.getItem('tenden-wake-lock') !== 'false';
+            toggleWakeLock.addEventListener('change', (e) => {
+                localStorage.setItem('tenden-wake-lock', e.target.checked);
+                const statusText = e.target.checked ? "ON" : "OFF";
+                const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                triggerDynamicIsland((dict.wakeLockLabel || "画面消灯防止") + ": " + statusText, "info");
+                triggerHapticTick();
+                if (e.target.checked && isEmergency) {
+                    requestWakeLock();
+                } else {
+                    releaseWakeLock();
+                }
+            });
+        }
+
+        if (toggleSystemNotification) {
+            toggleSystemNotification.checked = localStorage.getItem('tenden-system-notification') !== 'false';
+            toggleSystemNotification.addEventListener('change', (e) => {
+                localStorage.setItem('tenden-system-notification', e.target.checked);
+                const statusText = e.target.checked ? "ON" : "OFF";
+                const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                triggerDynamicIsland((dict.systemNotificationLabel || "スマホシステム通知") + ": " + statusText, "info");
+                triggerHapticTick();
+                if (e.target.checked) {
+                    requestNotificationPermission();
+                }
+            });
+        }
+
+        if (toggleSmartCompass) {
+            toggleSmartCompass.checked = localStorage.getItem('tenden-smart-compass') !== 'false';
+            toggleSmartCompass.addEventListener('change', (e) => {
+                localStorage.setItem('tenden-smart-compass', e.target.checked);
+                const statusText = e.target.checked ? "ON" : "OFF";
+                const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                triggerDynamicIsland((dict.smartCompassLabel || "スマートコンパス") + ": " + statusText, "info");
+                triggerHapticTick();
+                
+                const arrow = document.querySelector('.user-marker-arrow');
+                if (arrow) {
+                    arrow.style.display = (e.target.checked && lastHeading !== 0) ? 'block' : 'none';
+                }
+                
+                if (e.target.checked) {
+                    requestOrientationPermission();
+                }
+            });
+        }
+
+        // Global haptic feedback on clicking any actionable buttons
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.fab-btn, .action-btn, .close-btn, .switch-container');
+            if (btn) {
+                triggerHapticTick();
+            }
+        });
+
+        // Start Low Battery Life Watcher
+        initBatteryWatcher();
+
         // Bind Evacuation Share Dialog close, LINE, System Share and Copy buttons
         const btnShareDialogClose = document.getElementById('btn-share-dialog-close');
         if (btnShareDialogClose) {
@@ -713,6 +785,9 @@ document.addEventListener('DOMContentLoaded', () => {
             btnGpsLocation.addEventListener('click', () => {
                 isManualLocation = false;
                 requestLocation();
+                requestOrientationPermission();
+                requestNotificationPermission();
+                triggerHapticTick();
             });
         }
 
@@ -908,6 +983,16 @@ document.addEventListener('DOMContentLoaded', () => {
             userMarker = L.marker([loc.lat, loc.lng], { icon: userIcon }).addTo(map);
         }
 
+        // Keep compass arrow rotated and visible
+        const arrow = document.querySelector('.user-marker-arrow');
+        if (arrow) {
+            const isCompassEnabled = localStorage.getItem('tenden-smart-compass') !== 'false';
+            arrow.style.display = (isCompassEnabled && lastHeading !== 0) ? 'block' : 'none';
+            if (lastHeading !== 0) {
+                arrow.style.transform = `rotate(${lastHeading}deg)`;
+            }
+        }
+
         // Show a simple thought-provoking popup if user placed the pin manually
         if (isManualLocation) {
             // Cancel any pending popup close timeouts
@@ -1062,6 +1147,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isTest) {
             document.body.classList.add('emergency-mode');
         }
+
+        // スマホ特化機能の初期化
+        requestWakeLock();
+        requestNotificationPermission();
+        requestOrientationPermission();
         
         document.getElementById('bottom-normal-actions').classList.add('hidden');
         document.getElementById('btn-test-alert').classList.add('hidden');
@@ -1109,6 +1199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetEmergencyMode() {
         isEmergency = false;
         isEvacuationCompleted = false;
+        releaseWakeLock();
 
         // Close route selection modal if open
         const routeOverlay = document.getElementById('route-overlay');
@@ -2420,6 +2511,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (now - lastOffCourseSpeakTime > 12000) {
                 speakI18n('speechOffCourse');
                 triggerDynamicIsland(dict.routeOffCourse || "ルートから外れています！青い線に戻ってください。", "error");
+                
+                // Smartphone Background Notification
+                sendSystemNotification(
+                    dict.deviationAlertLabel || "ルート逸脱警告",
+                    dict.routeOffCourse || "避難経路から外れています。元の青いルートに戻ってください。",
+                    "deviation-alert"
+                );
+                
                 lastOffCourseSpeakTime = now;
             }
 
@@ -2822,8 +2921,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // Speak arrival
             speakI18n('speechArrived');
 
-            // Trigger beautiful completion alert popup
+            // Smartphone Background Notification & Celebration Vibration
             const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+            sendSystemNotification(
+                dict.arrivalTitle || "避難完了！ 🎉",
+                dict.arrivalDesc || "安全な避難先に無事到着しました。訓練お疲れ様でした！",
+                "arrival-alert"
+            );
+            if ('vibrate' in navigator) {
+                navigator.vibrate([100, 50, 100, 50, 200]);
+            }
+            releaseWakeLock();
+
+            // Trigger beautiful completion alert popup
             showCustomAlert(
                 dict.arrivalTitle || "避難完了！ 🎉",
                 dict.arrivalDesc || "安全な避難先に無事到着しました。引き続きハザードマップ等を確認し、安全を確保してください。",
@@ -3313,6 +3423,22 @@ document.addEventListener('DOMContentLoaded', () => {
             textSpan.textContent = isMobile 
                 ? (dict.tsunamiStatusDangerMobile || '⚠️浸水想定 内') 
                 : (dict.tsunamiStatusDangerDesktop || '⚠️ 津波浸水想定区域 内');
+            
+            // Smartphone Background System Notification & Warning Vibration for Ingress
+            if (isEmergency && !isEvacuationCompleted) {
+                const now = Date.now();
+                if (now - lastInundationNotificationTime > 12000) {
+                    sendSystemNotification(
+                        dict.tsunamiWarningTitle || "🚨 浸水想定域進入アラート",
+                        dict.tsunamiWarningDesc || "警告：津波浸水予測区域内に進入しました！直ちに高台（第一目標）へ避難してください！",
+                        "inundation-alert"
+                    );
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate([400, 100, 400, 100, 400]);
+                    }
+                    lastInundationNotificationTime = now;
+                }
+            }
         } else {
             box.classList.add('tsunami-status-safe');
             textSpan.textContent = isMobile 
@@ -3400,6 +3526,157 @@ document.addEventListener('DOMContentLoaded', () => {
         if (shareOverlay) {
             shareOverlay.classList.remove('hidden');
             setTimeout(() => shareOverlay.classList.add('active'), 50);
+        }
+    }
+
+    // ==========================================================================
+    // Smartphone Premium Features Core Logic (Wake Lock, Compass, Native Notifications, Haptics, Battery Status)
+    // ==========================================================================
+
+    function triggerHapticTick() {
+        if ('vibrate' in navigator) {
+            navigator.vibrate([15]);
+        }
+    }
+
+    async function requestWakeLock() {
+        const isWakeLockEnabled = localStorage.getItem('tenden-wake-lock') !== 'false';
+        if (!isWakeLockEnabled || wakeLock) return;
+
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('[WakeLock] Screen Wake Lock acquired!');
+            }
+        } catch (err) {
+            console.warn('[WakeLock] Failed to acquire Screen Wake Lock:', err);
+        }
+    }
+
+    function releaseWakeLock() {
+        if (wakeLock) {
+            wakeLock.release().then(() => {
+                wakeLock = null;
+                console.log('[WakeLock] Screen Wake Lock released.');
+            });
+        }
+    }
+
+    // Handle visibility changes for Wake Lock
+    document.addEventListener('visibilitychange', async () => {
+        if (wakeLock !== null && document.visibilityState === 'visible' && isEmergency) {
+            await requestWakeLock();
+        }
+    });
+
+    async function requestNotificationPermission() {
+        const isNotificationEnabled = localStorage.getItem('tenden-system-notification') !== 'false';
+        if (!isNotificationEnabled) return;
+
+        if ('Notification' in window) {
+            if (Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    console.log('[Notification] Notification permission granted!');
+                    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                    triggerDynamicIsland(dict.notificationGranted || "通知許可が有効になりました", "success");
+                }
+            }
+        }
+    }
+
+    function sendSystemNotification(title, body, tag = 'tenden-drill') {
+        const isNotificationEnabled = localStorage.getItem('tenden-system-notification') !== 'false';
+        if (!isNotificationEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+
+        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(title, {
+                    body: body,
+                    icon: 'assets/icons/icon.svg',
+                    vibrate: [500, 100, 500],
+                    tag: tag,
+                    renotify: true
+                });
+            });
+        } else {
+            new Notification(title, {
+                body: body,
+                icon: 'assets/icons/icon.svg',
+                tag: tag
+            });
+        }
+    }
+
+    async function requestOrientationPermission() {
+        const isCompassEnabled = localStorage.getItem('tenden-smart-compass') !== 'false';
+        if (!isCompassEnabled) return;
+
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permissionState = await DeviceOrientationEvent.requestPermission();
+                if (permissionState === 'granted') {
+                    console.log('[Compass] DeviceOrientation permission granted!');
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                }
+            } catch (error) {
+                console.warn('[Compass] DeviceOrientation permission request failed:', error);
+            }
+        } else {
+            window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+            window.addEventListener('deviceorientation', handleOrientation, true);
+        }
+    }
+
+    function handleOrientation(event) {
+        const isCompassEnabled = localStorage.getItem('tenden-smart-compass') !== 'false';
+        if (!isCompassEnabled) {
+            const arrow = document.querySelector('.user-marker-arrow');
+            if (arrow) arrow.style.display = 'none';
+            return;
+        }
+
+        let heading = null;
+        if (event.webkitCompassHeading) {
+            heading = event.webkitCompassHeading;
+        } else if (event.absolute && event.alpha) {
+            heading = 360 - event.alpha;
+        } else if (event.alpha) {
+            heading = 360 - event.alpha;
+        }
+
+        if (heading !== null) {
+            lastHeading = heading;
+            const arrow = document.querySelector('.user-marker-arrow');
+            if (arrow) {
+                arrow.style.display = 'block';
+                arrow.style.transform = `rotate(${heading}deg)`;
+            }
+        }
+    }
+
+    function initBatteryWatcher() {
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(battery => {
+                const checkBattery = () => {
+                    if (battery.level <= 0.20 && !battery.charging && !hasWarnedLowBattery) {
+                        hasWarnedLowBattery = true;
+                        if ('vibrate' in navigator) {
+                            navigator.vibrate([100, 100, 100]);
+                        }
+                        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+                        const alertMsg = dict.lowBatteryWarning || "⚠️ バッテリー残量20%以下：画面の明るさを下げ、GPS追従を維持してください。";
+                        triggerDynamicIsland(alertMsg, "warning");
+                        sendSystemNotification("🔋 TENDEN バッテリー低下", alertMsg, "battery-alert");
+                    } else if (battery.level > 0.20 || battery.charging) {
+                        hasWarnedLowBattery = false;
+                    }
+                };
+
+                checkBattery();
+                battery.addEventListener('levelchange', checkBattery);
+                battery.addEventListener('chargingchange', checkBattery);
+            });
         }
     }
 });

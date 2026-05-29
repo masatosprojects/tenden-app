@@ -112,7 +112,11 @@
     "guideRule3Desc": "一度避難したら、絶対に荷物を取りに戻ったり、様子を見に海岸へ戻ってはいけません。警報が解除されるまで留まります。",
     "btnGuideClose": "閉じる",
     "gpsLowAccuracy": "（屋外での利用推奨）",
-    "manualPinPopupText": "もし、ここにいたらどう避難しますか？"
+    "manualPinPopupText": "もし、ここにいたらどう避難しますか？",
+    "wakeLockLabel": "画面消灯を防止 (Wake Lock)",
+    "systemNotificationLabel": "スマホのシステム通知 (危険進入・逸脱)",
+    "smartCompassLabel": "スマートコンパス (進行方向コーン表示)",
+    "lowBatteryWarning": "⚠️ バッテリー残量20%以下：画面の明るさを下げ、GPS追従を維持してください。"
   },
   "en": {
     "onboardingTitle": "We will guide you to the nearest<br>safe location.",
@@ -227,7 +231,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "If you were here, how would you evacuate?"
+    "manualPinPopupText": "If you were here, how would you evacuate?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "zh": {
     "onboardingTitle": "我们将引导您前往最近的<br>安全地点。",
@@ -342,7 +350,11 @@
     "guideRule3Desc": "一旦开始避难，绝对不要回去拿行李或去海边看情况。请保持在安全地点，直到警报解除。",
     "btnGuideClose": "关闭",
     "gpsLowAccuracy": "（建议在室外使用）",
-    "manualPinPopupText": "如果您在此处，会如何避难？"
+    "manualPinPopupText": "如果您在此处，会如何避难？",
+    "wakeLockLabel": "防止屏幕休眠 (Wake Lock)",
+    "systemNotificationLabel": "智能系统通知 (浸水进入・逸脱)",
+    "smartCompassLabel": "智能指南针 (雷达方向锥)",
+    "lowBatteryWarning": "⚠️ 电池电量低于20%：请降低屏幕亮度并保持GPS跟踪。"
   },
   "zh-tw": {
     "onboardingTitle": "我們將引導您前往最近的<br>安全地點。",
@@ -457,7 +469,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "如果您在此處，會如何避難？"
+    "manualPinPopupText": "如果您在此處，會如何避難？",
+    "wakeLockLabel": "防止螢幕休眠 (Wake Lock)",
+    "systemNotificationLabel": "智能系統通知 (浸水進入・逸脫)",
+    "smartCompassLabel": "智能指南針 (雷達方向錐)",
+    "lowBatteryWarning": "⚠️ 電池電量低於20%：請降低螢幕亮度並保持GPS跟蹤。"
   },
   "ko": {
     "onboardingTitle": "가장 가까운 안전한 장소로<br>안내해 드립니다.",
@@ -572,7 +588,11 @@
     "guideRule3Desc": "일단 대피한 후에는 절대로 짐을 찾으러 돌아가거나 바닷가로 다가가지 마십시오. 경보가 해제될 때까지 대기하십시오.",
     "btnGuideClose": "닫기",
     "gpsLowAccuracy": "(실외 사용 권장)",
-    "manualPinPopupText": "여기에 있다면 어떻게 대피하시겠습니까?"
+    "manualPinPopupText": "여기에 있다면 어떻게 대피하시겠습니까?",
+    "wakeLockLabel": "화면 꺼짐 방지 (Wake Lock)",
+    "systemNotificationLabel": "스마트 시스템 알림 (진입 및 이탈)",
+    "smartCompassLabel": "스마트 나침반 (레이더 방향 표시)",
+    "lowBatteryWarning": "⚠️ 배터리 20% 이하: 화면 밝기를 낮추고 GPS 추적을 유지하십시오."
   },
   "fr": {
     "onboardingTitle": "Nous vous guiderons vers le lieu<br>sûr le plus proche.",
@@ -687,7 +707,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Si vous étiez ici, comment évacueriez-vous?"
+    "manualPinPopupText": "Si vous étiez ici, comment évacueriez-vous?",
+    "wakeLockLabel": "Empêcher la mise en veille de l'écran",
+    "systemNotificationLabel": "Notifications système (Entrée et Écart)",
+    "smartCompassLabel": "Boussole intelligente (Cône de direction)",
+    "lowBatteryWarning": "⚠️ Batterie < 20% : Baissez la luminosité et maintenez le suivi GPS."
   },
   "es": {
     "onboardingTitle": "Le guiaremos al lugar seguro<br>más cercano.",
@@ -802,7 +826,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "¿Si estuviera aquí, cómo evacuaría?"
+    "manualPinPopupText": "¿Si estuviera aquí, cómo evacuaría?",
+    "wakeLockLabel": "Evitar la suspensión de pantalla",
+    "systemNotificationLabel": "Notificaciones del sistema (Ingreso y Desviación)",
+    "smartCompassLabel": "Brújula inteligente (Cono de dirección)",
+    "lowBatteryWarning": "⚠️ Batería < 20%: Baje el brillo y mantenga el seguimiento GPS."
   },
   "de": {
     "onboardingTitle": "Wir führen Sie zum nächsten<br>sicheren Ort.",
@@ -917,7 +945,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Wie würden Sie evakuieren, wenn Sie hier wären?"
+    "manualPinPopupText": "Wie würden Sie evakuieren, wenn Sie hier wären?",
+    "wakeLockLabel": "Bildschirmschlaf verhindern",
+    "systemNotificationLabel": "Systembenachrichtigungen (Eintritt & Abweichung)",
+    "smartCompassLabel": "Intelligenter Kompass (Gegenwindkegel)",
+    "lowBatteryWarning": "⚠️ Batterie < 20%: Helligkeit reduzieren und GPS-Tracking beibehalten."
   },
   "it": {
     "onboardingTitle": "Ti guideremo verso il luogo<br>sicuro più vicino.",
@@ -1032,7 +1064,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Se fossi qui, come evacueresti?"
+    "manualPinPopupText": "Se fossi qui, come evacueresti?",
+    "wakeLockLabel": "Previeni lo spegnimento dello schermo",
+    "systemNotificationLabel": "Notifiche di sistema (Ingresso e Deviazione)",
+    "smartCompassLabel": "Bussola intelligente (Cono di direzione)",
+    "lowBatteryWarning": "⚠️ Batteria < 20%: Riduci la luminosità e mantieni il tracciamento GPS."
   },
   "pt": {
     "onboardingTitle": "Iremos guiar você até o local<br>seguro mais próximo.",
@@ -1147,7 +1183,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Se você estivesse aqui, como evacuaria?"
+    "manualPinPopupText": "Se você estivesse aqui, como evacuaria?",
+    "wakeLockLabel": "Prevenir o repouso do ecrã",
+    "systemNotificationLabel": "Notificações do sistema (Ingresso e Desvio)",
+    "smartCompassLabel": "Bússola inteligente (Cone de direção)",
+    "lowBatteryWarning": "⚠️ Bateria < 20%: Reduza o brilho e mantenha o rastreamento GPS."
   },
   "ru": {
     "onboardingTitle": "Мы направим вас к ближайшему<br>безопасному месту.",
@@ -1262,7 +1302,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Если бы вы были здесь, как бы вы эвакуировались?"
+    "manualPinPopupText": "Если бы вы были здесь, как бы вы эвакуировались?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "vi": {
     "onboardingTitle": "Chúng tôi sẽ dẫn bạn đến nơi<br>an toàn gần nhất.",
@@ -1377,7 +1421,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Nếu bạn ở đây, bạn sẽ sơ tán thế nào?"
+    "manualPinPopupText": "Nếu bạn ở đây, bạn sẽ sơ tán thế nào?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "th": {
     "onboardingTitle": "เราจะนำทางคุณไปยังสถานที่<br>ที่ปลอดภัยที่สุดใกล้ตัวคุณ",
@@ -1492,7 +1540,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "หากคุณอยู่ที่นี่ คุณจะอพยพอย่างไร?"
+    "manualPinPopupText": "หากคุณอยู่ที่นี่ คุณจะอพยพอย่างไร?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "id": {
     "onboardingTitle": "Kami akan memandu Anda ke tempat<br>aman terdekat.",
@@ -1607,7 +1659,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Jika Anda berada di sini, bagaimana Anda akan mengungsi?"
+    "manualPinPopupText": "Jika Anda berada di sini, bagaimana Anda akan mengungsi?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "tl": {
     "onboardingTitle": "Gagabayan ka namin sa pinakamalapit<br>na ligtas na lokasyon.",
@@ -1722,7 +1778,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Kung nandito ka, paano ka lilikas?"
+    "manualPinPopupText": "Kung nandito ka, paano ka lilikas?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "ms": {
     "onboardingTitle": "Kami akan memandu anda ke lokasi<br>selamat yang terdekat.",
@@ -1837,7 +1897,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Jika anda berada di sini, bagaimana anda akan berpindah?"
+    "manualPinPopupText": "Jika anda berada di sini, bagaimana anda akan berpindah?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "hi": {
     "onboardingTitle": "हम आपको निकटतम सुरक्षित स्थान<br>तक मार्गदर्शन करेंगे।",
@@ -1952,7 +2016,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "यदि आप यहाँ होते, तो आप कैसे सुरक्षित स्थान पर जाते?"
+    "manualPinPopupText": "यदि आप यहाँ होते, तो आप कैसे सुरक्षित स्थान पर जाते?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "bn": {
     "onboardingTitle": "আমরা আপনাকে নিকটতম নিরাপদ স্থানে<br>গাইড করব।",
@@ -2067,7 +2135,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "আপনি এখানে থাকলে কীভাবে উচ্ছেদ করবেন?"
+    "manualPinPopupText": "আপনি এখানে থাকলে কীভাবে উচ্ছেদ করবেন?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "ar": {
     "onboardingTitle": "سنوجهك إلى أقرب<br>مكان آمن.",
@@ -2182,7 +2254,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "إذا كنت هنا، كيف ستخلي؟"
+    "manualPinPopupText": "إذا كنت هنا، كيف ستخلي؟",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "fa": {
     "onboardingTitle": "ما شما را به نزدیک‌ترین<br>مکان امن هدایت می‌کنیم.",
@@ -2297,7 +2373,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "اگر اینجا بودید، چگونه تخلیه می کردید؟"
+    "manualPinPopupText": "اگر اینجا بودید، چگونه تخلیه می کردید؟",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "tr": {
     "onboardingTitle": "Sizi en yakın güvenli yere<br>yönlendireceğiz.",
@@ -2412,7 +2492,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Burada olsaydınız nasıl tahliye ederdiniz?"
+    "manualPinPopupText": "Burada olsaydınız nasıl tahliye ederdiniz?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "nl": {
     "onboardingTitle": "Wij leiden u naar de dichtstbijzijnde<br>veilige locatie.",
@@ -2527,7 +2611,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Als u hier was, hoe zou u dan evacueren?"
+    "manualPinPopupText": "Als u hier was, hoe zou u dan evacueren?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "sv": {
     "onboardingTitle": "Vi leder dig till närmaste<br>säkra plats.",
@@ -2642,7 +2730,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Om du var här, hur skulle du evakuera?"
+    "manualPinPopupText": "Om du var här, hur skulle du evakuera?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "no": {
     "onboardingTitle": "Vi vil lede deg til nærmeste<br>sikre sted.",
@@ -2757,7 +2849,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Hvis du var her, hvordan ville du evakuere?"
+    "manualPinPopupText": "Hvis du var her, hvordan ville du evakuere?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "fi": {
     "onboardingTitle": "Ohjaamme sinut lähimpään<br>turvalliseen paikkaan.",
@@ -2872,7 +2968,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Jos olisit täällä, miten evakuoituisit?"
+    "manualPinPopupText": "Jos olisit täällä, miten evakuoituisit?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "da": {
     "onboardingTitle": "Vi leder dig til det nærmeste<br>sikre sted.",
@@ -2987,7 +3087,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Hvis du var her, hvordan ville du evakuere?"
+    "manualPinPopupText": "Hvis du var her, hvordan ville du evakuere?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "pl": {
     "onboardingTitle": "Poprowadzimy Cię do najbliższego<br>bezpiecznego miejsca.",
@@ -3102,7 +3206,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Gdybyś tu był, jak byś się ewakuował?"
+    "manualPinPopupText": "Gdybyś tu był, jak byś się ewakuował?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "uk": {
     "onboardingTitle": "Ми направимо вас до найближчого<br>безпечного місця.",
@@ -3217,7 +3325,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Якби ви були тут, як би вы евакуювалися?"
+    "manualPinPopupText": "Якби ви були тут, як би вы евакуювалися?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "el": {
     "onboardingTitle": "Θα σας οδηγήσουμε στο πλησιέστερο<br>ασφαλές σημείο.",
@@ -3332,7 +3444,11 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "Εάν ήσασταν εδώ, πώς θα εκκενώνατε;"
+    "manualPinPopupText": "Εάν ήσασταν εδώ, πώς θα εκκενώνατε;",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   },
   "he": {
     "onboardingTitle": "נוביל אותך למקום המבטחים<br>הקרוב ביותר.",
@@ -3447,6 +3563,10 @@
     "guideRule3Desc": "Once evacuated, never return to retrieve belongings or check the shore. Stay safe until all warnings are fully cleared.",
     "btnGuideClose": "Close",
     "gpsLowAccuracy": "(Outdoor use recommended)",
-    "manualPinPopupText": "אם היית כאן, איך היית מתפנה?"
+    "manualPinPopupText": "אם היית כאן, איך היית מתפנה?",
+    "wakeLockLabel": "Prevent Screen Sleep (Wake Lock)",
+    "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
+    "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
+    "lowBatteryWarning": "⚠️ Battery under 20%: Lower screen brightness and maintain GPS tracking."
   }
 }
