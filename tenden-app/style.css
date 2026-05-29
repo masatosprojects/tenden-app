@@ -1035,3 +1035,75 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     width: 18px;
     border-radius: 3px;
 }
+
+/* ─────────────────────────────────────────────────
+   DESKTOP VIEWPORT SIMULATOR (iPhone-like Centering)
+   ───────────────────────────────────────────────── */
+@media (min-width: 769px) {
+    body {
+        background: #151618 !important; /* Premium dark outer environment */
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    
+    /* Limit width of all key mobile-first components and center them */
+    #map, 
+    .top-status-bar, 
+    .bottom-sheet, 
+    .overlay, 
+    #dynamic-island, 
+    #splash-screen,
+    #flash-overlay {
+        max-width: 430px !important;
+        width: 100% !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        margin: 0 auto;
+    }
+    
+    /* Add elegant visual outer frame borders on desktop */
+    #map,
+    #splash-screen,
+    #flash-overlay {
+        height: 100% !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 0 100px rgba(0,0,0,0.8);
+    }
+    
+    .top-status-bar {
+        border-left: 1px solid var(--glass-border);
+        border-right: 1px solid var(--glass-border);
+    }
+    
+    .bottom-sheet {
+        border-left: 1px solid var(--glass-border);
+        border-right: 1px solid var(--glass-border);
+        border-radius: 28px 28px 0 0;
+        bottom: 0 !important;
+    }
+    
+    .overlay {
+        position: fixed !important;
+        height: 100% !important;
+        border-left: 1px solid rgba(0,0,0,0.1);
+        border-right: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    #onboarding-overlay.overlay.active {
+        position: fixed !important;
+        height: 100% !important;
+    }
+    
+    /* Recalculate floating action buttons placement for desktop simulator width */
+    .map-action-fabs {
+        right: calc(50% - 215px + 16px) !important;
+    }
+    
+    /* Center Dynamic Island island correctly inside restricted simulator width */
+    #dynamic-island {
+        width: calc(100% - 32px) !important;
+    }
+}
