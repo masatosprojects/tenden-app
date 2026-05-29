@@ -51,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initUI();
     startClock();
     connectP2PQuake();
+    // Launch onboarding demo (checks localStorage to skip on repeat visits)
+    startOnboardingDemo();
+
 
     // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
     fetch('assets/i18n.json')
@@ -3806,3 +3809,551 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(e => console.warn('[Generalization] Dynamic raster scan failed:', e));
     }
 });
+
+// ══════════════════════════════════════════════════════════════════
+// ONBOARDING DEMO — Cinematic 4-step scenario animation
+// ══════════════════════════════════════════════════════════════════
+function startOnboardingDemo() {
+    const overlay = document.getElementById('onboarding-overlay');
+    if (!overlay) return;
+
+    // Show demo always on first load (localStorage tracks if demo was ever completed)
+    // If user has seen it, still show overlay but allow quick skip
+    const hasSeen = localStorage.getItem('tenden-demo-seen') === 'true';
+
+    overlay.classList.remove('hidden');
+    overlay.classList.add('active');
+
+    let currentStep = 0;
+    const totalSteps = 4;
+
+    // Canvas animation handles
+    let mapAnimFrame = null;
+    let routesAnimFrame = null;
+    let flowAnimFrame = null;
+
+    // ── i18n helper (uses global i18nDict once loaded)
+    function getDemoText(key, fallback) {
+        try {
+            const lang = (localStorage.getItem('tenden-lang') === 'auto' || !localStorage.getItem('tenden-lang'))
+                ? (navigator.language || 'ja').split('-')[0]
+                : localStorage.getItem('tenden-lang');
+            const dict = (typeof i18nDict !== 'undefined' && i18nDict[lang]) || {};
+            return dict[key] || fallback;
+        } catch (e) { return fallback; }
+    }
+
+    // ── Apply i18n to all demo text nodes
+    function applyDemoI18n() {
+        const elStep0Title = document.getElementById('demo-title-0');
+        const elStep0Sub   = document.getElementById('demo-sub-0');
+        const elStep1Title = document.getElementById('demo-title-1');
+        const elStep1Desc  = document.getElementById('demo-desc-1');
+        const elStep2Title = document.getElementById('demo-title-2');
+        const elStep2Desc  = document.getElementById('demo-desc-2');
+        const elStep3Title = document.getElementById('demo-title-3');
+        const elStep3Desc  = document.getElementById('demo-desc-3');
+
+        if (elStep0Title) elStep0Title.textContent = getDemoText('demoStep0Title', '津波から命を守るために');
+        if (elStep0Sub)   elStep0Sub.textContent   = getDemoText('demoStep0Sub',   '日本全国の沿岸エリアで使える避難支援アプリ');
+        if (elStep1Title) elStep1Title.textContent = getDemoText('demoStep1Title', '⚠️ 地震が発生しました');
+        if (elStep1Desc)  elStep1Desc.textContent  = getDemoText('demoStep1Desc',  '津波の危険があります。今すぐ避難を開始してください。');
+        if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', '🗺 3つの避難ルートを提示します');
+        if (elStep2Desc)  elStep2Desc.textContent  = getDemoText('demoStep2Desc',  '最短・混雑回避・急坂回避の3ルートを同時表示。あなたが選びます。');
+        if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', 'TENDENは、あなたに選択肢を渡します');
+        if (elStep3Desc)  elStep3Desc.textContent  = getDemoText('demoStep3Desc',  'その土地を知らない観光客も、外国語話者も、迷わず逃げ出せる支援を。');
+
+        // Next/skip buttons
+        document.querySelectorAll('[data-i18n="demoBtnSkip"]').forEach(el => {
+            el.textContent = getDemoText('demoBtnSkip', 'スキップ');
+        });
+        const useHereSpan = document.querySelector('[data-i18n="demoBtnUseHere"]');
+        if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', '今いる場所で使ってみる');
+        const replaySpan = document.querySelector('[data-i18n="demoBtnReplay"]');
+        if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'もう一度見る');
+        const settingsDemoSpan = document.querySelector('[data-i18n="settingsDemoBtn"]');
+        if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', '🎬 オンボーディングデモを再生する');
+    }
+
+    // Apply i18n immediately (may use fallbacks), then re-apply when i18n loads
+    applyDemoI18n();
+    // Re-apply after 1s to catch i18n async load
+    setTimeout(applyDemoI18n, 1200);
+
+    // ── Step navigation
+    function goToStep(step) {
+        // Stop any running animations
+        if (mapAnimFrame)    { cancelAnimationFrame(mapAnimFrame);    mapAnimFrame = null; }
+        if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
+        if (flowAnimFrame)   { cancelAnimationFrame(flowAnimFrame);   flowAnimFrame = null; }
+
+        // Hide all steps
+        document.querySelectorAll('.demo-step').forEach(el => el.classList.remove('active'));
+        // Show target step
+        const target = document.getElementById(`demo-step-${step}`);
+        if (target) {
+            target.classList.add('active');
+        }
+        // Update dots
+        document.querySelectorAll('.demo-dot').forEach((dot, i) => {
+            dot.classList.toggle('active', i === step);
+        });
+
+        currentStep = step;
+
+        // Trigger canvas animations for steps
+        if (step === 1) setTimeout(animateMapCanvas, 200);
+        if (step === 2) setTimeout(animateRoutesCanvas, 200);
+        if (step === 3) setTimeout(animateFlowCanvas, 200);
+    }
+
+    function closeDemo() {
+        if (mapAnimFrame)    { cancelAnimationFrame(mapAnimFrame);    mapAnimFrame = null; }
+        if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
+        if (flowAnimFrame)   { cancelAnimationFrame(flowAnimFrame);   flowAnimFrame = null; }
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.classList.add('hidden'), 300);
+        localStorage.setItem('tenden-demo-seen', 'true');
+    }
+
+    // ── Button wiring
+    const btn0Next  = document.getElementById('btn-demo-next-0');
+    const btn0Skip  = document.getElementById('btn-demo-skip-0');
+    const btn1Next  = document.getElementById('btn-demo-next-1');
+    const btn1Skip  = document.getElementById('btn-demo-skip-1');
+    const btn2Next  = document.getElementById('btn-demo-next-2');
+    const btn2Skip  = document.getElementById('btn-demo-skip-2');
+    const btnUse    = document.getElementById('btn-demo-use-here');
+    const btnReplay = document.getElementById('btn-demo-replay');
+
+    if (btn0Next)  btn0Next.addEventListener('click', () => goToStep(1));
+    if (btn0Skip)  btn0Skip.addEventListener('click', () => { closeDemo(); requestLocation(); });
+    if (btn1Next)  btn1Next.addEventListener('click', () => goToStep(2));
+    if (btn1Skip)  btn1Skip.addEventListener('click', () => { closeDemo(); requestLocation(); });
+    if (btn2Next)  btn2Next.addEventListener('click', () => goToStep(3));
+    if (btn2Skip)  btn2Skip.addEventListener('click', () => { closeDemo(); requestLocation(); });
+    if (btnReplay) btnReplay.addEventListener('click', () => goToStep(0));
+    if (btnUse)    btnUse.addEventListener('click', () => { closeDemo(); requestLocation(); });
+
+    // Dot clicks
+    document.querySelectorAll('.demo-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+            const step = parseInt(dot.dataset.step);
+            if (!isNaN(step)) goToStep(step);
+        });
+    });
+
+    // Settings panel replay button
+    const btnReplaySettings = document.getElementById('btn-replay-demo');
+    if (btnReplaySettings) {
+        btnReplaySettings.addEventListener('click', () => {
+            // Close settings panel first
+            const settingsOverlay = document.getElementById('settings-overlay');
+            if (settingsOverlay) {
+                settingsOverlay.classList.remove('active');
+                setTimeout(() => settingsOverlay.classList.add('hidden'), 300);
+            }
+            // Show demo again
+            setTimeout(() => {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.add('active'), 10);
+                goToStep(0);
+            }, 350);
+        });
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 1: Map Canvas — zoom-in effect + earthquake epicenter
+    // ──────────────────────────────────────────────────────────
+    function animateMapCanvas() {
+        const canvas = document.getElementById('demo-map-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+
+        // Kamakura coastline approximate points (simplified, normalized to canvas)
+        // These represent the shape of Yuigahama beach area
+        const coast = [
+            [0, 0.7], [0.1, 0.65], [0.25, 0.62], [0.4, 0.60],
+            [0.55, 0.58], [0.65, 0.60], [0.75, 0.62], [0.85, 0.65], [1.0, 0.68]
+        ];
+
+        // Land grid (roads approx)
+        const roads = [
+            { x1:0.1, y1:0.62, x2:0.3, y2:0.3 },
+            { x1:0.3, y1:0.3,  x2:0.6, y2:0.25 },
+            { x1:0.6, y1:0.25, x2:0.85, y2:0.2 },
+            { x1:0.15, y1:0.62, x2:0.5, y2:0.55 },
+            { x1:0.5, y1:0.55, x2:0.75, y2:0.50 },
+        ];
+
+        // Epicenter dot position
+        const epicX = 0.2 * W, epicY = 0.85 * H;
+
+        let zoom = 0.6;
+        let targetZoom = 1.0;
+        let opacity = 0;
+        let waveRadius = 0;
+        let startTime = null;
+
+        function frame(ts) {
+            if (!startTime) startTime = ts;
+            const elapsed = ts - startTime;
+
+            zoom = Math.min(targetZoom, 0.6 + (elapsed / 1200) * 0.4);
+            opacity = Math.min(1, elapsed / 600);
+            waveRadius = Math.min(W * 0.7, (elapsed / 2000) * W * 1.2);
+
+            ctx.clearRect(0, 0, W, H);
+            ctx.save();
+            ctx.globalAlpha = opacity;
+
+            // Background (ocean)
+            ctx.fillStyle = '#dbe8f5';
+            ctx.fillRect(0, 0, W, H);
+
+            // Apply zoom from center
+            const cx = W * 0.5, cy = H * 0.5;
+            ctx.translate(cx, cy);
+            ctx.scale(zoom, zoom);
+            ctx.translate(-cx, -cy);
+
+            // Land (above coast line)
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(W, 0);
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.lineTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.lineTo(W, 0);
+            ctx.closePath();
+            ctx.fillStyle = '#e8f0e0';
+            ctx.fill();
+
+            // Coastline
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.strokeStyle = '#8ab4d4';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Roads
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+            roads.forEach(r => {
+                ctx.beginPath();
+                ctx.moveTo(r.x1*W, r.y1*H);
+                ctx.lineTo(r.x2*W, r.y2*H);
+                ctx.stroke();
+            });
+
+            ctx.restore();
+            ctx.save();
+            ctx.globalAlpha = opacity;
+
+            // Tsunami wave rings from ocean
+            if (waveRadius > 0) {
+                for (let i = 0; i < 3; i++) {
+                    const r = Math.max(0, waveRadius - i * 40);
+                    if (r <= 0) continue;
+                    ctx.beginPath();
+                    ctx.arc(epicX, epicY, r, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(255, 59, 48, ${0.3 - i * 0.08})`;
+                    ctx.lineWidth = 2 - i * 0.5;
+                    ctx.stroke();
+                }
+            }
+
+            // Epicenter dot
+            ctx.beginPath();
+            ctx.arc(epicX, epicY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff3b30';
+            ctx.fill();
+
+            // Warning text
+            if (elapsed > 500) {
+                ctx.font = 'bold 11px Inter, sans-serif';
+                ctx.fillStyle = '#ff3b30';
+                ctx.textAlign = 'center';
+                ctx.fillText('震源', epicX, epicY - 12);
+                ctx.fillStyle = '#1c1c1e';
+                ctx.font = '10px Inter, sans-serif';
+                ctx.fillText('鎌倉市 由比ヶ浜', W * 0.5, 18);
+            }
+
+            ctx.restore();
+
+            if (elapsed < 3000) {
+                mapAnimFrame = requestAnimationFrame(frame);
+            }
+        }
+        mapAnimFrame = requestAnimationFrame(frame);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 2: Routes Canvas — 3 routes drawn sequentially
+    // ──────────────────────────────────────────────────────────
+    function animateRoutesCanvas() {
+        const canvas = document.getElementById('demo-routes-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+
+        // Starting point (beach) → 3 different safe highlands
+        const start = [0.2, 0.82];
+
+        // Route A: shortest straight-ish path
+        const routeA = [
+            [0.2, 0.82], [0.22, 0.72], [0.28, 0.62], [0.36, 0.52],
+            [0.44, 0.42], [0.50, 0.32], [0.52, 0.22]
+        ];
+        // Route B: wider detour avoiding center
+        const routeB = [
+            [0.2, 0.82], [0.18, 0.70], [0.14, 0.58], [0.16, 0.46],
+            [0.24, 0.38], [0.35, 0.30], [0.46, 0.25], [0.54, 0.20]
+        ];
+        // Route C: slope-friendly, goes around
+        const routeC = [
+            [0.2, 0.82], [0.30, 0.78], [0.42, 0.72], [0.56, 0.65],
+            [0.68, 0.56], [0.74, 0.45], [0.76, 0.34], [0.73, 0.24]
+        ];
+
+        const routes = [
+            { pts: routeA, color: '#34c759', label: '🟢 A' },
+            { pts: routeB, color: '#007aff', label: '🔵 B' },
+            { pts: routeC, color: '#5e5ce6', label: '🟣 C' }
+        ];
+
+        // Coastline
+        const coast = [
+            [0, 0.88], [0.15, 0.85], [0.35, 0.83],
+            [0.55, 0.82], [0.75, 0.84], [0.9, 0.87], [1.0, 0.90]
+        ];
+
+        let startTime = null;
+        const ROUTE_DRAW_MS = 1200; // ms per route
+        const GAP_MS = 200;
+        const totalDuration = (ROUTE_DRAW_MS + GAP_MS) * 3 + 500;
+
+        function drawBase() {
+            ctx.clearRect(0, 0, W, H);
+            // Background
+            ctx.fillStyle = '#f0f4f0';
+            ctx.fillRect(0, 0, W, H);
+            // Ocean (below coast)
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+            ctx.fillStyle = '#c8dff0';
+            ctx.fill();
+            // Coastline stroke
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.strokeStyle = '#7aabcc';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            // Hazard hatch overlay on coast area
+            ctx.fillStyle = 'rgba(255,59,48,0.07)';
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawRoutePartial(pts, color, progress) {
+            if (pts.length < 2) return;
+            const totalSegs = pts.length - 1;
+            const segsToFill = progress * totalSegs;
+            const fullSegs = Math.floor(segsToFill);
+            const partial = segsToFill - fullSegs;
+
+            ctx.beginPath();
+            ctx.moveTo(pts[0][0]*W, pts[0][1]*H);
+            for (let i = 0; i < fullSegs && i < totalSegs; i++) {
+                ctx.lineTo(pts[i+1][0]*W, pts[i+1][1]*H);
+            }
+            if (fullSegs < totalSegs) {
+                const x1 = pts[fullSegs][0]*W, y1 = pts[fullSegs][1]*H;
+                const x2 = pts[fullSegs+1][0]*W, y2 = pts[fullSegs+1][1]*H;
+                ctx.lineTo(x1 + (x2-x1)*partial, y1 + (y2-y1)*partial);
+            }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+
+        function frame(ts) {
+            if (!startTime) startTime = ts;
+            const elapsed = ts - startTime;
+
+            drawBase();
+
+            routes.forEach((route, ri) => {
+                const routeStart = ri * (ROUTE_DRAW_MS + GAP_MS);
+                const routeElapsed = Math.max(0, elapsed - routeStart);
+                const progress = Math.min(1, routeElapsed / ROUTE_DRAW_MS);
+                if (progress > 0) {
+                    drawRoutePartial(route.pts, route.color, progress);
+                    // Label at end
+                    if (progress >= 1) {
+                        const end = route.pts[route.pts.length - 1];
+                        ctx.font = 'bold 10px Inter, sans-serif';
+                        ctx.fillStyle = route.color;
+                        ctx.textAlign = 'center';
+                        ctx.fillText(route.label, end[0]*W, end[1]*H - 8);
+                    }
+                }
+            });
+
+            // Start marker
+            ctx.beginPath();
+            ctx.arc(start[0]*W, start[1]*H, 7, 0, Math.PI*2);
+            ctx.fillStyle = '#ff3b30';
+            ctx.fill();
+            ctx.font = 'bold 9px Inter, sans-serif';
+            ctx.fillStyle = '#ff3b30';
+            ctx.textAlign = 'center';
+            ctx.fillText('現在地', start[0]*W, start[1]*H - 10);
+
+            if (elapsed < totalDuration + 1000) {
+                routesAnimFrame = requestAnimationFrame(frame);
+            }
+        }
+        routesAnimFrame = requestAnimationFrame(frame);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // STEP 3: Flow Canvas — people dots dispersing on 3 routes
+    // ──────────────────────────────────────────────────────────
+    function animateFlowCanvas() {
+        const canvas = document.getElementById('demo-flow-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+
+        const routeGroups = [
+            { color: '#34c759', pts: [[0.2,0.85],[0.28,0.68],[0.38,0.52],[0.48,0.38],[0.52,0.22]] },
+            { color: '#007aff', pts: [[0.2,0.85],[0.14,0.65],[0.18,0.48],[0.30,0.35],[0.48,0.22]] },
+            { color: '#5e5ce6', pts: [[0.2,0.85],[0.35,0.78],[0.55,0.68],[0.70,0.52],[0.74,0.26]] }
+        ];
+
+        // Create 45 people dots spread across 3 routes
+        const dots = [];
+        for (let ri = 0; ri < 3; ri++) {
+            for (let di = 0; di < 15; di++) {
+                dots.push({
+                    routeIdx: ri,
+                    progress: -di * 0.07, // staggered start
+                    speed: 0.004 + Math.random() * 0.003,
+                    opacity: 0
+                });
+            }
+        }
+
+        const coast = [
+            [0, 0.90], [0.15, 0.87], [0.35, 0.85],
+            [0.55, 0.86], [0.75, 0.88], [1.0, 0.92]
+        ];
+
+        let startTime = null;
+
+        function getPointOnRoute(pts, progress) {
+            const p = Math.max(0, Math.min(1, progress));
+            const totalSegs = pts.length - 1;
+            const seg = p * totalSegs;
+            const si = Math.min(Math.floor(seg), totalSegs - 1);
+            const t = seg - si;
+            return [
+                pts[si][0] + (pts[si+1][0] - pts[si][0]) * t,
+                pts[si][1] + (pts[si+1][1] - pts[si][1]) * t
+            ];
+        }
+
+        function frame(ts) {
+            if (!startTime) startTime = ts;
+
+            ctx.clearRect(0, 0, W, H);
+
+            // Background
+            ctx.fillStyle = '#f0f4f0';
+            ctx.fillRect(0, 0, W, H);
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+            ctx.fillStyle = '#c8dff0';
+            ctx.fill();
+
+            // Draw faint route lines
+            routeGroups.forEach(rg => {
+                ctx.beginPath();
+                rg.pts.forEach((p, i) => {
+                    if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                    else ctx.lineTo(p[0]*W, p[1]*H);
+                });
+                ctx.strokeStyle = rg.color + '44';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            });
+
+            // Move and draw dots
+            dots.forEach(dot => {
+                dot.progress += dot.speed;
+                dot.opacity = Math.min(1, (dot.progress + 0.1) * 5);
+
+                if (dot.progress < 0 || dot.progress > 1.1) return;
+
+                const rg = routeGroups[dot.routeIdx];
+                const [px, py] = getPointOnRoute(rg.pts, dot.progress);
+
+                ctx.beginPath();
+                ctx.arc(px * W, py * H, 4, 0, Math.PI * 2);
+                ctx.fillStyle = rg.color;
+                ctx.globalAlpha = dot.opacity * 0.85;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            });
+
+            // Origin pulse
+            const ox = 0.2 * W, oy = 0.85 * H;
+            ctx.beginPath();
+            ctx.arc(ox, oy, 7, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff3b30';
+            ctx.fill();
+
+            // Legend overlay
+            ctx.font = 'bold 10px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            routeGroups.forEach((rg, i) => {
+                ctx.fillStyle = rg.color;
+                ctx.fillText(['A', 'B', 'C'][i], W * 0.85, 18 + i * 15);
+            });
+
+            flowAnimFrame = requestAnimationFrame(frame);
+        }
+        flowAnimFrame = requestAnimationFrame(frame);
+    }
+
+    // Start from step 0
+    goToStep(0);
+
+    console.log('[TENDEN] Onboarding demo started.');
+}
+

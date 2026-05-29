@@ -1,5 +1,5 @@
-const CACHE_NAME = 'tenden-v43';
-const DYNAMIC_CACHE = 'tenden-dynamic-v43';
+const CACHE_NAME = 'tenden-v44';
+const DYNAMIC_CACHE = 'tenden-dynamic-v44';
 
 
 
