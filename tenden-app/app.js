@@ -925,6 +925,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+
+        // FAB text labels click delegation to activate their corresponding button
+        document.querySelectorAll('.fab-label').forEach(label => {
+            label.addEventListener('click', () => {
+                const btn = label.previousElementSibling;
+                if (btn && btn.classList.contains('fab-btn')) {
+                    btn.click();
+                }
+            });
+        });
     }
 
     function requestLocation() {

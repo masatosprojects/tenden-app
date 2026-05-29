@@ -132,7 +132,12 @@
     "demoBtnUseHere": "今いる場所で使ってみる",
     "demoBtnReplay": "もう一度見る",
     "demoBtnSkip": "スキップ",
-    "settingsDemoBtn": "🎬 オンボーディングデモを再生する"
+    "settingsDemoBtn": "🎬 オンボーディングデモを再生する",
+    "fabLayers": "レイヤー",
+    "fabGps": "現在地",
+    "fabModel": "モデル地区",
+    "fabSettings": "設定",
+    "fabScreenshot": "保存"
   },
   "en": {
     "onboardingTitle": "We will guide you to the nearest<br>safe location.",
@@ -267,7 +272,12 @@
     "demoBtnUseHere": "Use at my current location",
     "demoBtnReplay": "Watch again",
     "demoBtnSkip": "Skip",
-    "settingsDemoBtn": "🎬 Replay Onboarding Demo"
+    "settingsDemoBtn": "🎬 Replay Onboarding Demo",
+    "fabLayers": "Layers",
+    "fabGps": "Location",
+    "fabModel": "Model Area",
+    "fabSettings": "Settings",
+    "fabScreenshot": "Save"
   },
   "zh": {
     "onboardingTitle": "我们将引导您前往最近的<br>安全地点。",
@@ -402,7 +412,12 @@
     "demoBtnUseHere": "在当前位置使用",
     "demoBtnReplay": "再看一次",
     "demoBtnSkip": "跳过",
-    "settingsDemoBtn": "🎬 重播引导演示"
+    "settingsDemoBtn": "🎬 重播引导演示",
+    "fabLayers": "图层",
+    "fabGps": "当前位置",
+    "fabModel": "示范区",
+    "fabSettings": "设置",
+    "fabScreenshot": "保存"
   },
   "zh-tw": {
     "onboardingTitle": "我們將引導您前往最近的<br>安全地點。",
@@ -537,7 +552,12 @@
     "demoBtnUseHere": "在當前位置使用",
     "demoBtnReplay": "再看一次",
     "demoBtnSkip": "跳過",
-    "settingsDemoBtn": "🎬 重播引導演示"
+    "settingsDemoBtn": "🎬 重播引導演示",
+    "fabLayers": "圖層",
+    "fabGps": "目前位置",
+    "fabModel": "示範區",
+    "fabSettings": "設定",
+    "fabScreenshot": "儲存"
   },
   "ko": {
     "onboardingTitle": "가장 가까운 안전한 장소로<br>안내해 드립니다.",
@@ -672,7 +692,12 @@
     "demoBtnUseHere": "현재 위치에서 사용하기",
     "demoBtnReplay": "다시 보기",
     "demoBtnSkip": "건너뛰기",
-    "settingsDemoBtn": "🎬 온보딩 데모 재생"
+    "settingsDemoBtn": "🎬 온보딩 데모 재생",
+    "fabLayers": "레이어",
+    "fabGps": "현재 위치",
+    "fabModel": "모델 지구",
+    "fabSettings": "설정",
+    "fabScreenshot": "저장"
   },
   "fr": {
     "onboardingTitle": "Nous vous guiderons vers le lieu<br>sûr le plus proche.",
@@ -807,7 +832,12 @@
     "demoBtnUseHere": "Utiliser à ma position actuelle",
     "demoBtnReplay": "Revoir",
     "demoBtnSkip": "Ignorer",
-    "settingsDemoBtn": "🎬 Revoir la démonstration d'accueil"
+    "settingsDemoBtn": "🎬 Revoir la démonstration d'accueil",
+    "fabLayers": "Calques",
+    "fabGps": "Position",
+    "fabModel": "Zone démo",
+    "fabSettings": "Réglages",
+    "fabScreenshot": "Capturer"
   },
   "es": {
     "onboardingTitle": "Le guiaremos al lugar seguro<br>más cercano.",
@@ -942,7 +972,12 @@
     "demoBtnUseHere": "Usar en mi ubicación actual",
     "demoBtnReplay": "Ver de nuevo",
     "demoBtnSkip": "Saltar",
-    "settingsDemoBtn": "🎬 Reproducir demo de incorporación"
+    "settingsDemoBtn": "🎬 Reproducir demo de incorporación",
+    "fabLayers": "Capas",
+    "fabGps": "Ubicación",
+    "fabModel": "Zona demo",
+    "fabSettings": "Ajustes",
+    "fabScreenshot": "Guardar"
   },
   "de": {
     "onboardingTitle": "Wir führen Sie zum nächsten<br>sicheren Ort.",
@@ -1077,7 +1112,12 @@
     "demoBtnUseHere": "An meinem aktuellen Standort verwenden",
     "demoBtnReplay": "Erneut ansehen",
     "demoBtnSkip": "Überspringen",
-    "settingsDemoBtn": "🎬 Onboarding-Demo abspielen"
+    "settingsDemoBtn": "🎬 Onboarding-Demo abspielen",
+    "fabLayers": "Ebenen",
+    "fabGps": "Standort",
+    "fabModel": "Demobereich",
+    "fabSettings": "Optionen",
+    "fabScreenshot": "Speichern"
   },
   "it": {
     "onboardingTitle": "Ti guideremo verso il luogo<br>sicuro più vicino.",
@@ -1212,7 +1252,12 @@
     "demoBtnUseHere": "Usa nella mia posizione attuale",
     "demoBtnReplay": "Guarda di nuovo",
     "demoBtnSkip": "Salta",
-    "settingsDemoBtn": "🎬 Riproduci demo di onboarding"
+    "settingsDemoBtn": "🎬 Riproduci demo di onboarding",
+    "fabLayers": "Livelli",
+    "fabGps": "Posizione",
+    "fabModel": "Zona demo",
+    "fabSettings": "Opzioni",
+    "fabScreenshot": "Salva"
   },
   "pt": {
     "onboardingTitle": "Iremos guiar você até o local<br>seguro mais próximo.",
@@ -1347,7 +1392,12 @@
     "demoBtnUseHere": "Usar na minha localização atual",
     "demoBtnReplay": "Ver novamente",
     "demoBtnSkip": "Pular",
-    "settingsDemoBtn": "🎬 Reproduzir demonstração de integração"
+    "settingsDemoBtn": "🎬 Reproduzir demonstração de integração",
+    "fabLayers": "Camadas",
+    "fabGps": "Localização",
+    "fabModel": "Zona demo",
+    "fabSettings": "Ajustes",
+    "fabScreenshot": "Gravar"
   },
   "ru": {
     "onboardingTitle": "Мы направим вас к ближайшему<br>безопасному месту.",
@@ -1482,7 +1532,12 @@
     "demoBtnUseHere": "Использовать в текущем местоположении",
     "demoBtnReplay": "Посмотреть снова",
     "demoBtnSkip": "Пропустить",
-    "settingsDemoBtn": "🎬 Воспроизвести вступительную демонстрацию"
+    "settingsDemoBtn": "🎬 Воспроизвести вступительную демонстрацию",
+    "fabLayers": "Слои",
+    "fabGps": "Геопозиция",
+    "fabModel": "Демо-зона",
+    "fabSettings": "Настройки",
+    "fabScreenshot": "Сохранить"
   },
   "vi": {
     "onboardingTitle": "Chúng tôi sẽ dẫn bạn đến nơi<br>an toàn gần nhất.",
@@ -1617,7 +1672,12 @@
     "demoBtnUseHere": "Sử dụng tại vị trí hiện tại của tôi",
     "demoBtnReplay": "Xem lại",
     "demoBtnSkip": "Bỏ qua",
-    "settingsDemoBtn": "🎬 Phát lại demo giới thiệu"
+    "settingsDemoBtn": "🎬 Phát lại demo giới thiệu",
+    "fabLayers": "Bản đồ",
+    "fabGps": "Vị trí",
+    "fabModel": "Khu vực mẫu",
+    "fabSettings": "Cài đặt",
+    "fabScreenshot": "Lưu"
   },
   "th": {
     "onboardingTitle": "เราจะนำทางคุณไปยังสถานที่<br>ที่ปลอดภัยที่สุดใกล้ตัวคุณ",
@@ -1752,7 +1812,12 @@
     "demoBtnUseHere": "ใช้ที่ตำแหน่งปัจจุบันของฉัน",
     "demoBtnReplay": "ดูอีกครั้ง",
     "demoBtnSkip": "ข้าม",
-    "settingsDemoBtn": "🎬 เล่นการสาธิตการเริ่มต้นใหม่"
+    "settingsDemoBtn": "🎬 เล่นการสาธิตการเริ่มต้นใหม่",
+    "fabLayers": "เลเยอร์",
+    "fabGps": "ตำแหน่ง",
+    "fabModel": "พื้นที่สาธิต",
+    "fabSettings": "ตั้งค่า",
+    "fabScreenshot": "บันทึก"
   },
   "id": {
     "onboardingTitle": "Kami akan memandu Anda ke tempat<br>aman terdekat.",
@@ -1887,7 +1952,12 @@
     "demoBtnUseHere": "Gunakan di lokasi saya saat ini",
     "demoBtnReplay": "Tonton lagi",
     "demoBtnSkip": "Lewati",
-    "settingsDemoBtn": "🎬 Putar Demo Orientasi"
+    "settingsDemoBtn": "🎬 Putar Demo Orientasi",
+    "fabLayers": "Lapisan",
+    "fabGps": "Lokasi",
+    "fabModel": "Area Demo",
+    "fabSettings": "Pengaturan",
+    "fabScreenshot": "Simpan"
   },
   "tl": {
     "onboardingTitle": "Gagabayan ka namin sa pinakamalapit<br>na ligtas na lokasyon.",
@@ -2022,7 +2092,12 @@
     "demoBtnUseHere": "Gamitin sa aking kasalukuyang lokasyon",
     "demoBtnReplay": "Panoorin muli",
     "demoBtnSkip": "Laktawan",
-    "settingsDemoBtn": "🎬 I-replay ang Onboarding Demo"
+    "settingsDemoBtn": "🎬 I-replay ang Onboarding Demo",
+    "fabLayers": "Layers",
+    "fabGps": "Lokasyon",
+    "fabModel": "Demo Area",
+    "fabSettings": "Settings",
+    "fabScreenshot": "I-save"
   },
   "ms": {
     "onboardingTitle": "Kami akan memandu anda ke lokasi<br>selamat yang terdekat.",
@@ -2157,7 +2232,12 @@
     "demoBtnUseHere": "Guna di lokasi semasa saya",
     "demoBtnReplay": "Tonton semula",
     "demoBtnSkip": "Langkau",
-    "settingsDemoBtn": "🎬 Main Semula Demo Orientasi"
+    "settingsDemoBtn": "🎬 Main Semula Demo Orientasi",
+    "fabLayers": "Lapisan",
+    "fabGps": "Lokasi",
+    "fabModel": "Kawasan Demo",
+    "fabSettings": "Tetapan",
+    "fabScreenshot": "Simpan"
   },
   "hi": {
     "onboardingTitle": "हम आपको निकटतम सुरक्षित स्थान<br>तक मार्गदर्शन करेंगे।",
@@ -2292,7 +2372,12 @@
     "demoBtnUseHere": "मेरी वर्तमान स्थान पर उपयोग करें",
     "demoBtnReplay": "फिर से देखें",
     "demoBtnSkip": "छोड़ें",
-    "settingsDemoBtn": "🎬 ऑनबोर्डिंग डेमो चलाएं"
+    "settingsDemoBtn": "🎬 ऑनबोर्डिंग डेमो चलाएं",
+    "fabLayers": "परतें",
+    "fabGps": "स्थान",
+    "fabModel": "डेमो क्षेत्र",
+    "fabSettings": "सेटिंग्स",
+    "fabScreenshot": "सहेजें"
   },
   "bn": {
     "onboardingTitle": "আমরা আপনাকে নিকটতম নিরাপদ স্থানে<br>গাইড করব।",
@@ -2427,7 +2512,12 @@
     "demoBtnUseHere": "আমার বর্তমান অবস্থানে ব্যবহার করুন",
     "demoBtnReplay": "আবার দেখুন",
     "demoBtnSkip": "এড়িয়ে যান",
-    "settingsDemoBtn": "🎬 অনবোর্ডিং ডেমো চালান"
+    "settingsDemoBtn": "🎬 অনবোর্ডিং ডেমো চালান",
+    "fabLayers": "স্তরগুলি",
+    "fabGps": "অবস্থান",
+    "fabModel": "ডেমো এলাকা",
+    "fabSettings": "সেটিংস",
+    "fabScreenshot": "সংরक्षण"
   },
   "ar": {
     "onboardingTitle": "سنوجهك إلى أقرب<br>مكان آمن.",
@@ -2562,7 +2652,12 @@
     "demoBtnUseHere": "استخدم في موقعي الحالي",
     "demoBtnReplay": "شاهد مرة أخرى",
     "demoBtnSkip": "تخطي",
-    "settingsDemoBtn": "🎬 تشغيل عرض التهيئة"
+    "settingsDemoBtn": "🎬 تشغيل عرض التهيئة",
+    "fabLayers": "الطبقات",
+    "fabGps": "الموقع",
+    "fabModel": "منطقة العرض",
+    "fabSettings": "الإعدادات",
+    "fabScreenshot": "حفظ"
   },
   "fa": {
     "onboardingTitle": "ما شما را به نزدیک‌ترین<br>مکان امن هدایت می‌کنیم.",
@@ -2697,7 +2792,12 @@
     "demoBtnUseHere": "در موقعیت فعلی من استفاده کنید",
     "demoBtnReplay": "دوباره تماشا کنید",
     "demoBtnSkip": "رد شوید",
-    "settingsDemoBtn": "🎬 پخش نمایش آشنایی"
+    "settingsDemoBtn": "🎬 پخش نمایش آشنایی",
+    "fabLayers": "لایه‌ها",
+    "fabGps": "موقعیت",
+    "fabModel": "منطقه دمو",
+    "fabSettings": "تنظیمات",
+    "fabScreenshot": "ذخیره"
   },
   "tr": {
     "onboardingTitle": "Sizi en yakın güvenli yere<br>yönlendireceğiz.",
@@ -2832,7 +2932,12 @@
     "demoBtnUseHere": "Mevcut konumumda kullan",
     "demoBtnReplay": "Tekrar izle",
     "demoBtnSkip": "Atla",
-    "settingsDemoBtn": "🎬 Başlangıç Demosunu Oynat"
+    "settingsDemoBtn": "🎬 Başlangıç Demosunu Oynat",
+    "fabLayers": "Katmanlar",
+    "fabGps": "Konum",
+    "fabModel": "Demo Alanı",
+    "fabSettings": "Ayarlar",
+    "fabScreenshot": "Kaydet"
   },
   "nl": {
     "onboardingTitle": "Wij leiden u naar de dichtstbijzijnde<br>veilige locatie.",
@@ -2967,7 +3072,12 @@
     "demoBtnUseHere": "Gebruik op mijn huidige locatie",
     "demoBtnReplay": "Opnieuw bekijken",
     "demoBtnSkip": "Overslaan",
-    "settingsDemoBtn": "🎬 Onboarding-demo afspelen"
+    "settingsDemoBtn": "🎬 Onboarding-demo afspelen",
+    "fabLayers": "Lagen",
+    "fabGps": "Locatie",
+    "fabModel": "Demogebied",
+    "fabSettings": "Instellingen",
+    "fabScreenshot": "Opslaan"
   },
   "sv": {
     "onboardingTitle": "Vi leder dig till närmaste<br>säkra plats.",
@@ -3102,7 +3212,12 @@
     "demoBtnUseHere": "Använd på min nuvarande plats",
     "demoBtnReplay": "Se igen",
     "demoBtnSkip": "Hoppa över",
-    "settingsDemoBtn": "🎬 Spela upp introduktionsdemo"
+    "settingsDemoBtn": "🎬 Spela upp introduktionsdemo",
+    "fabLayers": "Lager",
+    "fabGps": "Plats",
+    "fabModel": "Demoområde",
+    "fabSettings": "Inställningar",
+    "fabScreenshot": "Spara"
   },
   "no": {
     "onboardingTitle": "Vi vil lede deg til nærmeste<br>sikre sted.",
@@ -3237,7 +3352,12 @@
     "demoBtnUseHere": "Bruk på min nåværende plassering",
     "demoBtnReplay": "Se igjen",
     "demoBtnSkip": "Hopp over",
-    "settingsDemoBtn": "🎬 Spill av onboarding-demo"
+    "settingsDemoBtn": "🎬 Spill av onboarding-demo",
+    "fabLayers": "Lag",
+    "fabGps": "Posisjon",
+    "fabModel": "Demoområde",
+    "fabSettings": "Innstillinger",
+    "fabScreenshot": "Lagre"
   },
   "fi": {
     "onboardingTitle": "Ohjaamme sinut lähimpään<br>turvalliseen paikkaan.",
@@ -3372,7 +3492,12 @@
     "demoBtnUseHere": "Käytä nykyisessä sijainnissani",
     "demoBtnReplay": "Katso uudelleen",
     "demoBtnSkip": "Ohita",
-    "settingsDemoBtn": "🎬 Toista perehdytysesittely"
+    "settingsDemoBtn": "🎬 Toista perehdytysesittely",
+    "fabLayers": "Tasot",
+    "fabGps": "Sijainti",
+    "fabModel": "Demoalue",
+    "fabSettings": "Asetukset",
+    "fabScreenshot": "Tallenna"
   },
   "da": {
     "onboardingTitle": "Vi leder dig til det nærmeste<br>sikre sted.",
@@ -3507,7 +3632,12 @@
     "demoBtnUseHere": "Brug på min nuværende placering",
     "demoBtnReplay": "Se igen",
     "demoBtnSkip": "Spring over",
-    "settingsDemoBtn": "🎬 Afspil onboarding-demo"
+    "settingsDemoBtn": "🎬 Afspil onboarding-demo",
+    "fabLayers": "Lag",
+    "fabGps": "Placering",
+    "fabModel": "Demoområde",
+    "fabSettings": "Indstillinger",
+    "fabScreenshot": "Gem"
   },
   "pl": {
     "onboardingTitle": "Poprowadzimy Cię do najbliższego<br>bezpiecznego miejsca.",
@@ -3642,7 +3772,12 @@
     "demoBtnUseHere": "Użyj w mojej bieżącej lokalizacji",
     "demoBtnReplay": "Obejrzyj ponownie",
     "demoBtnSkip": "Pomiń",
-    "settingsDemoBtn": "🎬 Odtwórz demo wprowadzenia"
+    "settingsDemoBtn": "🎬 Odtwórz demo wprowadzenia",
+    "fabLayers": "Warstwy",
+    "fabGps": "Lokalizacja",
+    "fabModel": "Obszar demo",
+    "fabSettings": "Ustawienia",
+    "fabScreenshot": "Zapisz"
   },
   "uk": {
     "onboardingTitle": "Ми направимо вас до найближчого<br>безпечного місця.",
@@ -3777,7 +3912,12 @@
     "demoBtnUseHere": "Використовувати в моєму поточному місці",
     "demoBtnReplay": "Переглянути знову",
     "demoBtnSkip": "Пропустити",
-    "settingsDemoBtn": "🎬 Відтворити демонстрацію введення"
+    "settingsDemoBtn": "🎬 Відтворити демонстрацію введення",
+    "fabLayers": "Шари",
+    "fabGps": "Локація",
+    "fabModel": "Демо-зона",
+    "fabSettings": "Налаштування",
+    "fabScreenshot": "Зберегти"
   },
   "el": {
     "onboardingTitle": "Θα σας οδηγήσουμε στο πλησιέστερο<br>ασφαλές σημείο.",
@@ -3912,7 +4052,12 @@
     "demoBtnUseHere": "Χρήση στην τρέχουσα τοποθεσία μου",
     "demoBtnReplay": "Παρακολούθηση ξανά",
     "demoBtnSkip": "Παράβλεψη",
-    "settingsDemoBtn": "🎬 Αναπαραγωγή επίδειξης εισαγωγής"
+    "settingsDemoBtn": "🎬 Αναπαραγωγή επίδειξης εισαγωγής",
+    "fabLayers": "Επίπεδα",
+    "fabGps": "Τοποθεσία",
+    "fabModel": "Περιοχή Demo",
+    "fabSettings": "Ρυθμίσεις",
+    "fabScreenshot": "Αποθήκευση"
   },
   "he": {
     "onboardingTitle": "נוביל אותך למקום המבטחים<br>הקרוב ביותר.",
@@ -4047,6 +4192,11 @@
     "demoBtnUseHere": "השתמש במיקום הנוכחי שלי",
     "demoBtnReplay": "צפה שוב",
     "demoBtnSkip": "דלג",
-    "settingsDemoBtn": "🎬 הפעל מחדש הדגמת הצטרפות"
+    "settingsDemoBtn": "🎬 הפעל מחדש הדגמת הצטרפות",
+    "fabLayers": "שכבות",
+    "fabGps": "מיקום",
+    "fabModel": "אזור הדגמה",
+    "fabSettings": "הגدرות",
+    "fabScreenshot": "שמור"
   }
 }

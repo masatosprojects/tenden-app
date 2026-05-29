@@ -96,8 +96,20 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     right: 16px;
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 12px;
     z-index: 900;
+}
+.fab-container {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    pointer-events: none;
+}
+.fab-container > * {
+    pointer-events: auto;
 }
 .fab-btn {
     width: 44px; height: 44px;
@@ -110,22 +122,17 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     color: var(--text-color);
     display: flex; justify-content: center; align-items: center;
     cursor: pointer; transition: all 0.2s;
-    position: relative; /* Enabled for absolute label mapping */
+    position: relative;
 }
 .fab-btn svg { width: 20px; height: 20px; }
 .fab-btn:active { transform: scale(0.92); }
 .fab-danger { color: var(--danger); border-color: rgba(255,59,48,0.3); }
 
-/* Premium tooltip labels to solve visual ambiguity of icon-only FAB buttons */
-.fab-btn::before {
-    content: attr(data-label);
-    position: absolute;
-    right: 54px;
-    top: 50%;
-    transform: translateY(-50%) scale(0.95);
+/* Premium visible labels next to circular FAB buttons */
+.fab-label {
     background: var(--glass-bg);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
     color: var(--text-color);
     font-size: 11px;
@@ -133,24 +140,32 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     padding: 5px 10px;
     border-radius: 12px;
     white-space: nowrap;
-    pointer-events: none;
-    opacity: 0.8;
     box-shadow: var(--shadow-sm);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0.95;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
 }
-.fab-btn:hover::before {
+
+/* Hover behaviors for premium micro-interactions */
+.fab-container:hover .fab-label {
     opacity: 1;
-    transform: translateY(-50%) scale(1.03);
+    transform: scale(1.04) translateX(-2px);
     background: var(--primary);
     color: #fff;
     border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0, 187, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 187, 255, 0.25);
 }
-.fab-danger:hover::before {
-    background: var(--danger);
-    border-color: var(--danger);
-    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+.fab-container:hover .fab-btn {
+    transform: scale(1.04);
+    box-shadow: var(--shadow-md);
 }
+.fab-container:active .fab-label,
+.fab-container:active .fab-btn {
+    transform: scale(0.95);
+}
+
 
 /* Bottom Sheet */
 .bottom-sheet {
