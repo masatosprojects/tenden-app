@@ -12,7 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- SVG Pattern definition for Color Universal Design (CUD) Hazard Hatching -->
+    <!-- App Container to center mobile view on PC screens -->
+    <div id="app-container">
+        <!-- SVG Pattern definition for Color Universal Design (CUD) Hazard Hatching -->
     <svg style="position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none;">
         <defs>
             <pattern id="hazard-hatch" width="16" height="16" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
@@ -597,6 +599,8 @@
 
     <!-- Capture Container (used for html2canvas to ensure clean rendering) -->
     <div id="capture-container"></div>
+
+    </div> <!-- /#app-container -->
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>

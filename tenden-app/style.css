@@ -1037,17 +1037,41 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 }
 
 /* ─────────────────────────────────────────────────
-   DESKTOP VIEWPORT SIMULATOR (iPhone-like Centering)
+   APP CONTAINER WRAPPER
+   ───────────────────────────────────────────────── */
+#app-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────────
+   DESKTOP VIEWPORT SIMULATOR (Premium Smartphone Mockup)
    ───────────────────────────────────────────────── */
 @media (min-width: 769px) {
     body {
-        background: #151618 !important; /* Premium dark outer environment */
+        background: #111214 !important; /* Premium dark background surrounding the phone */
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
+        width: 100% !important;
+        height: 100% !important;
     }
     
-    /* Limit width of all key mobile-first components and center them */
+    #app-container {
+        width: 420px !important;
+        height: 88vh !important;
+        max-height: 880px !important;
+        border-radius: 40px !important;
+        border: 12px solid #2d3135 !important; /* Solid smartphone outer bezel frame */
+        box-shadow: 0 25px 65px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255,255,255,0.05) !important;
+        position: relative !important;
+        overflow: hidden !important;
+        background: var(--bg-color) !important;
+    }
+    
+    /* Center and restrict key components cleanly inside the simulated frame parent width, avoiding any Leaflet mouse offset clicks */
     #map, 
     .top-status-bar, 
     .bottom-sheet, 
@@ -1055,54 +1079,40 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     #dynamic-island, 
     #splash-screen,
     #flash-overlay {
-        max-width: 430px !important;
+        max-width: 100% !important;
         width: 100% !important;
-        left: 50% !important;
-        right: auto !important;
-        transform: translateX(-50%) !important;
-        margin: 0 auto;
+        left: 0 !important;
+        right: 0 !important;
+        transform: none !important;
     }
     
-    /* Add elegant visual outer frame borders on desktop */
-    #map,
-    #splash-screen,
-    #flash-overlay {
-        height: 100% !important;
-        border-left: 1px solid rgba(255, 255, 255, 0.05);
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: 0 0 100px rgba(0,0,0,0.8);
-    }
-    
+    /* Ensure positioned layers align exactly relative to their centered smartphone frame parent (#app-container) */
     .top-status-bar {
-        border-left: 1px solid var(--glass-border);
-        border-right: 1px solid var(--glass-border);
+        position: absolute !important;
+        top: 0 !important;
     }
     
     .bottom-sheet {
-        border-left: 1px solid var(--glass-border);
-        border-right: 1px solid var(--glass-border);
-        border-radius: 28px 28px 0 0;
+        position: absolute !important;
         bottom: 0 !important;
     }
     
     .overlay {
-        position: fixed !important;
+        position: absolute !important;
         height: 100% !important;
-        border-left: 1px solid rgba(0,0,0,0.1);
-        border-right: 1px solid rgba(0,0,0,0.1);
     }
     
     #onboarding-overlay.overlay.active {
-        position: fixed !important;
+        position: absolute !important;
         height: 100% !important;
     }
     
-    /* Recalculate floating action buttons placement for desktop simulator width */
+    /* Floating action buttons aligned cleanly to the right side of the device screen */
     .map-action-fabs {
-        right: calc(50% - 215px + 16px) !important;
+        right: 16px !important;
     }
     
-    /* Center Dynamic Island island correctly inside restricted simulator width */
+    /* Center Dynamic Island notification neatly */
     #dynamic-island {
         width: calc(100% - 32px) !important;
     }
