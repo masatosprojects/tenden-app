@@ -3547,6 +3547,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if ('wakeLock' in navigator) {
                 wakeLock = await navigator.wakeLock.request('screen');
                 console.log('[WakeLock] Screen Wake Lock acquired!');
+                
+                // Clear wakeLock object on release so it can be re-acquired on visibility focus
+                wakeLock.addEventListener('release', () => {
+                    wakeLock = null;
+                    console.log('[WakeLock] Screen Wake Lock was released.');
+                });
             }
         } catch (err) {
             console.warn('[WakeLock] Failed to acquire Screen Wake Lock:', err);
@@ -3564,7 +3570,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle visibility changes for Wake Lock
     document.addEventListener('visibilitychange', async () => {
-        if (wakeLock !== null && document.visibilityState === 'visible' && isEmergency) {
+        if (document.visibilityState === 'visible' && isEmergency) {
             await requestWakeLock();
         }
     });
@@ -3600,11 +3606,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         } else {
-            new Notification(title, {
-                body: body,
-                icon: 'assets/icons/icon.svg',
-                tag: tag
-            });
+            try {
+                new Notification(title, {
+                    body: body,
+                    icon: 'assets/icons/icon.svg',
+                    tag: tag
+                });
+            } catch (e) {
+                console.warn('[Notification] Fallback standard Notification failed:', e);
+            }
         }
     }
 
@@ -3623,8 +3633,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('[Compass] DeviceOrientation permission request failed:', error);
             }
         } else {
-            window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-            window.addEventListener('deviceorientation', handleOrientation, true);
+            // Support absolute orientation for Android to prevent double event firing and reduce battery drain
+            if ('ondeviceorientationabsolute' in window) {
+                window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+            } else {
+                window.addEventListener('deviceorientation', handleOrientation, true);
+            }
         }
     }
 
