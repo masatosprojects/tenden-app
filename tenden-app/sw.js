@@ -1,5 +1,5 @@
-const CACHE_NAME = 'tenden-v45';
-const DYNAMIC_CACHE = 'tenden-dynamic-v45';
+const CACHE_NAME = 'tenden-v46';
+const DYNAMIC_CACHE = 'tenden-dynamic-v46';
 
 
 
@@ -12,21 +12,26 @@ const urlsToCache = [
   './assets/congestion.geojson',
   './assets/shelters.json',
   './assets/routes.json',
+  './assets/safe_edges.json',
+  './assets/logo.png',
   './assets/i18n.json',
   './assets/icons/icon.svg',
   './assets/icons/hud-logo.png',
   './assets/icons/TENDEN.gif',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js',
   'https://html2canvas.hertzen.com/dist/html2canvas.min.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap'
 ];
 
 // Domains whose tiles are cached dynamically (Cache-First after first load)
 const TILE_DOMAINS = [
   'basemaps.cartocdn.com',
   'cyberjapandata.gsi.go.jp',
-  'disaportaldata.gsi.go.jp'  // official tsunami inundation tiles
+  'disaportaldata.gsi.go.jp',  // official tsunami inundation tiles
+  'fonts.googleapis.com',
+  'fonts.gstatic.com'
 ];
 
 self.addEventListener('install', event => {
