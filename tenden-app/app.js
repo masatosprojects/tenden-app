@@ -2588,7 +2588,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // We use a slight delay and responsive padding so it doesn't break on small screens
  setTimeout(() => {
  if (routeLayerGroup && mainRouteLine) {
- map.fitBounds(routeLayerGroup.getBounds(), {
+ map.fitBounds(mainRouteLine.getBounds(), {
  paddingTopLeft: [20, 80], // top-status-bar height is ~52px
  paddingBottomRight: [20, 150], // Bottom sheet expanded
  animate: true,
