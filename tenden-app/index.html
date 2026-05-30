@@ -1,625 +1,625 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TENDEN - 日頃の備えと迷わないルートを。</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    <!-- Google Fonts for Apple-like Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <title>TENDEN - 日頃の備えと迷わないルートを。</title>
+ <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+ <link rel="stylesheet" href="style.css">
+ <link rel="manifest" href="manifest.json">
+ <meta name="theme-color" content="#ffffff">
+ <!-- Google Fonts for Apple-like Typography -->
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- App Container to center mobile view on PC screens -->
-    <div id="app-container">
-        <!-- SVG Pattern definition for Color Universal Design (CUD) Hazard Hatching -->
-    <svg style="position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none;">
-        <defs>
-            <pattern id="hazard-hatch" width="16" height="16" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="0" x2="0" y2="16" stroke="#ff9f0a" stroke-width="4" opacity="0.5" />
-            </pattern>
-        </defs>
-    </svg>
+ <!-- App Container to center mobile view on PC screens -->
+ <div id="app-container">
+ <!-- SVG Pattern definition for Color Universal Design (CUD) Hazard Hatching -->
+ <svg style="position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none;">
+ <defs>
+ <pattern id="hazard-hatch" width="16" height="16" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+ <line x1="0" y1="0" x2="0" y2="16" stroke="#ff9f0a" stroke-width="4" opacity="0.5" />
+ </pattern>
+ </defs>
+ </svg>
 
-    <!-- Splash Screen -->
-    <div id="splash-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s;">
-        <img src="assets/icons/TENDEN.gif" alt="TENDEN Logo" style="width: 280px; max-width: 80%; height: auto; filter: drop-shadow(0 12px 32px rgba(0,0,0,0.15));">
-    </div>
+ <!-- Splash Screen -->
+ <div id="splash-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s;">
+ <img src="assets/icons/TENDEN.gif" alt="TENDEN Logo" style="width: 280px; max-width: 80%; height: auto; filter: drop-shadow(0 12px 32px rgba(0,0,0,0.15));">
+ </div>
 
-    <!-- Map Container -->
-    <div id="map"></div>
+ <!-- Map Container -->
+ <div id="map"></div>
 
-    <!-- UI Overlay Layer (Mobile First & Google Maps Style) -->
-    <div id="ui-layer" class="mode-normal">
-        
-        <!-- Apple-style Dynamic Island Notification HUD -->
-        <div id="dynamic-island" class="dynamic-island-collapsed hidden">
-            <div class="island-content">
-                <span id="island-icon" class="island-icon">ℹ️</span>
-                <span id="island-text" class="island-text">通知メッセージ</span>
-            </div>
-        </div>
-        
-        <!-- Top Status Bar (Full width rectangular) -->
-        <div class="top-status-bar glass-panel">
-            <div class="status-left">
-                <!-- Keep IDs for JS compatibility -->
-                <div id="p2p-status-bar" style="display: none;">
-                    <span id="p2p-dot" class="p2p-dot p2p-connecting"></span>
-                    <span id="p2p-label" class="status-text">待機中</span>
-                </div>
-                <div class="status-badge" id="tsunami-status-box">
-                    <span class="status-icon">浸水予測:</span>
-                    <strong id="tsunami-status-text">判定中...</strong>
-                </div>
-                <div class="status-badge network-badge" id="network-status">
-                    <span class="network-dot"></span>
-                    <strong id="network-text">🟢 Online</strong>
-                </div>
-            </div>
-            <div class="status-right">
-                <div class="status-badge gps-badge" id="gps-accuracy-box">
-                    <span class="gps-dot"></span>
-                    <strong><span id="gps-accuracy">GPS: --</span></strong>
-                </div>
-                <div class="status-badge elev-badge">
-                    <span id="i18n-elevation-label" data-i18n="elevationLabel" class="status-icon">海抜:</span>
-                    <strong><span id="elevation-m">--</span>m</strong>
-                </div>
-                <div class="status-time">
-                    <span id="current-time">--:--</span>
-                </div>
-            </div>
-        </div>
+ <!-- UI Overlay Layer (Mobile First & Google Maps Style) -->
+ <div id="ui-layer" class="mode-normal">
+ 
+ <!-- Apple-style Dynamic Island Notification HUD -->
+ <div id="dynamic-island" class="dynamic-island-collapsed hidden">
+ <div class="island-content">
+ <span id="island-icon" class="island-icon">ℹ</span>
+ <span id="island-text" class="island-text">通知メッセージ</span>
+ </div>
+ </div>
+ 
+ <!-- Top Status Bar (Full width rectangular) -->
+ <div class="top-status-bar glass-panel">
+ <div class="status-left">
+ <!-- Keep IDs for JS compatibility -->
+ <div id="p2p-status-bar" style="display: none;">
+ <span id="p2p-dot" class="p2p-dot p2p-connecting"></span>
+ <span id="p2p-label" class="status-text">待機中</span>
+ </div>
+ <div class="status-badge" id="tsunami-status-box">
+ <span class="status-icon">浸水予測:</span>
+ <strong id="tsunami-status-text">判定中...</strong>
+ </div>
+ <div class="status-badge network-badge" id="network-status">
+ <span class="network-dot"></span>
+ <strong id="network-text">● Online</strong>
+ </div>
+ </div>
+ <div class="status-right">
+ <div class="status-badge gps-badge" id="gps-accuracy-box">
+ <span class="gps-dot"></span>
+ <strong><span id="gps-accuracy">GPS: --</span></strong>
+ </div>
+ <div class="status-badge elev-badge">
+ <span id="i18n-elevation-label" data-i18n="elevationLabel" class="status-icon">海抜:</span>
+ <strong><span id="elevation-m">--</span>m</strong>
+ </div>
+ <div class="status-time">
+ <span id="current-time">--:--</span>
+ </div>
+ </div>
+ </div>
 
-        <!-- Crosshair for Pin Drop (Hidden by default) -->
-        <div id="crosshair-target" class="hidden">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="40" stroke="var(--primary)" stroke-width="4" fill="none" opacity="0.8"/>
-                <circle cx="50" cy="50" r="4" fill="var(--danger)"/>
-                <line x1="50" y1="0" x2="50" y2="30" stroke="var(--primary)" stroke-width="4" stroke-linecap="round"/>
-                <line x1="50" y1="100" x2="50" y2="70" stroke="var(--primary)" stroke-width="4" stroke-linecap="round"/>
-                <line x1="0" y1="50" x2="30" y2="50" stroke="var(--primary)" stroke-width="4" stroke-linecap="round"/>
-                <line x1="100" y1="50" x2="70" y2="50" stroke="var(--primary)" stroke-width="4" stroke-linecap="round"/>
-            </svg>
-        </div>
+ <!-- Crosshair for Pin Drop (Hidden by default) -->
+ <div id="crosshair-target" class="hidden">
+ <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+ <circle cx="50" cy="50" r="40" stroke="var(--primary)" stroke-width="4" fill="none" opacity="0.8"/>
+ <circle cx="50" cy="50" r="4" fill="var(--danger)"/>
+ <line x1="50" y1="0" x2="50" y2="30" stroke="var(--primary)" stroke-width="4" stroke-linecap="round"/>
+ <line x1="50" y1="100" x2="50" y2="70" stroke="var(--primary)" stroke-width="4" stroke-linecap="round"/>
+ <line x1="0" y1="50" x2="30" y2="50" stroke="var(--primary)" stroke-width="4" stroke-linecap="round"/>
+ <line x1="100" y1="50" x2="70" y2="50" stroke="var(--primary)" stroke-width="4" stroke-linecap="round"/>
+ </svg>
+ </div>
 
-        <!-- Right Side Floating Action Buttons (FABs) -->
-        <div class="map-action-fabs">
-            <div class="fab-container">
-                <button id="btn-toggle-layers" class="fab-btn" aria-label="レイヤー切替">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                </button>
-                <span class="fab-label" data-i18n="fabLayers">レイヤー</span>
-            </div>
-            <div class="fab-container">
-                <button id="btn-gps-location" class="fab-btn" aria-label="現在地(GPS)へ">
-                    <!-- Precision sniper crosshair target icon -->
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10" stroke-dasharray="3,3"></circle>
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
-                        <line x1="12" y1="1" x2="12" y2="23"></line>
-                        <line x1="1" y1="12" x2="23" y2="12"></line>
-                    </svg>
-                </button>
-                <span class="fab-label" data-i18n="fabGps">現在地</span>
-            </div>
-            <div class="fab-container">
-                <button id="btn-focus-model" class="fab-btn" aria-label="モデル地区へ">
-                    <!-- Map warp/jump location teleport icon -->
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                        <path d="M19 19L14.5 14.5M19 19h-4M19 19v-4" stroke-width="2.5"></path>
-                    </svg>
-                </button>
-                <span class="fab-label" data-i18n="fabModel">モデル地区</span>
-            </div>
-            <div class="fab-container">
-                <button id="btn-settings" class="fab-btn" aria-label="設定">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                </button>
-                <span class="fab-label" data-i18n="fabSettings">設定</span>
-            </div>
-            <div class="fab-container">
-                <button id="btn-screenshot" class="fab-btn" aria-label="保存">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                </button>
-                <span class="fab-label" data-i18n="fabScreenshot">保存</span>
-            </div>
-        </div>
+ <!-- Right Side Floating Action Buttons (FABs) -->
+ <div class="map-action-fabs">
+ <div class="fab-container">
+ <button id="btn-toggle-layers" class="fab-btn" aria-label="レイヤー切替">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+ </button>
+ <span class="fab-label" data-i18n="fabLayers">レイヤー</span>
+ </div>
+ <div class="fab-container">
+ <button id="btn-gps-location" class="fab-btn" aria-label="現在地(GPS)へ">
+ <!-- Precision sniper crosshair target icon -->
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+ <circle cx="12" cy="12" r="10" stroke-dasharray="3,3"></circle>
+ <circle cx="12" cy="12" r="5"></circle>
+ <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+ <line x1="12" y1="1" x2="12" y2="23"></line>
+ <line x1="1" y1="12" x2="23" y2="12"></line>
+ </svg>
+ </button>
+ <span class="fab-label" data-i18n="fabGps">現在地</span>
+ </div>
+ <div class="fab-container">
+ <button id="btn-focus-model" class="fab-btn" aria-label="モデル地区へ">
+ <!-- Map warp/jump location teleport icon -->
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+ <circle cx="12" cy="10" r="3"></circle>
+ <path d="M19 19L14.5 14.5M19 19h-4M19 19v-4" stroke-width="2.5"></path>
+ </svg>
+ </button>
+ <span class="fab-label" data-i18n="fabModel">モデル地区</span>
+ </div>
+ <div class="fab-container">
+ <button id="btn-settings" class="fab-btn" aria-label="設定">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+ </button>
+ <span class="fab-label" data-i18n="fabSettings">設定</span>
+ </div>
+ <div class="fab-container">
+ <button id="btn-screenshot" class="fab-btn" aria-label="保存">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+ </button>
+ <span class="fab-label" data-i18n="fabScreenshot">保存</span>
+ </div>
+ </div>
 
-        <!-- Bottom Sheet -->
-        <div class="bottom-sheet glass-panel" id="main-bottom-sheet">
-            <div class="bottom-sheet-handle"></div>
-            
-            <div class="bottom-sheet-content">
-                <!-- Normal Mode Actions -->
-                <div id="bottom-normal-actions">
-                    <button class="action-btn primary-btn btn-large btn-flashy" id="btn-test-alert">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="margin-right:8px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                        <span data-i18n="testAlertText">鎌倉で避難体験</span>
-                    </button>
-                    <button class="action-btn primary-btn btn-large hidden" id="btn-set-pin" data-i18n="setPinBtn">
-                        ここにピンを打つ (避難開始)
-                    </button>
-                </div>
+ <!-- Bottom Sheet -->
+ <div class="bottom-sheet glass-panel" id="main-bottom-sheet">
+ <div class="bottom-sheet-handle"></div>
+ 
+ <div class="bottom-sheet-content">
+ <!-- Normal Mode Actions -->
+ <div id="bottom-normal-actions">
+ <button class="action-btn primary-btn btn-large btn-flashy" id="btn-test-alert">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="margin-right:8px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+ <span data-i18n="testAlertText">鎌倉で避難体験</span>
+ </button>
+ <button class="action-btn primary-btn btn-large hidden" id="btn-set-pin" data-i18n="setPinBtn">
+ ここにピンを打つ (避難開始)
+ </button>
+ </div>
 
-                <!-- Emergency Mode Banner (Takes over bottom sheet during evac) -->
-                <div id="evacuation-banner" class="hidden emergency-mode-actions">
-                    <!-- ALWAYS VISIBLE PART (Collapsed) -->
-                    <div class="emergency-header" id="banner-toggle" style="cursor: pointer; align-items: flex-start; padding-bottom: 8px;">
-                        <div style="flex: 1;">
-                            <div class="eh-title">⚠️ <span id="i18n-evac-title" data-i18n="evacTitle">避難指示発令中</span></div>
-                            <div style="font-size: 0.9rem; color: var(--warning); margin-top: 4px;" id="disaster-details">
-                                <span data-i18n="estTime">予想到達時間:</span> <strong>15:30</strong> | 
-                                <span data-i18n="estHeight">予想高:</span> <strong>10m</strong>
-                            </div>
-                        </div>
-                        <svg id="banner-chevron" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </div>
-                    
-                    <div class="action-grid mt-10" id="essential-buttons">
-                        <button id="btn-change-route" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 2.13-5.88L2 9"></path></svg> <span data-i18n="changeRouteBtn">ルート変更</span></button>
-                        <button id="btn-unlock-pin" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <span data-i18n="unlockPinBtn">ピン解除</span></button>
-                        <button id="btn-reset-alert" class="action-btn outline-btn" data-i18n="resetAlert">訓練終了</button>
-                    </div>
+ <!-- Emergency Mode Banner (Takes over bottom sheet during evac) -->
+ <div id="evacuation-banner" class="hidden emergency-mode-actions">
+ <!-- ALWAYS VISIBLE PART (Collapsed) -->
+ <div class="emergency-header" id="banner-toggle" style="cursor: pointer; align-items: flex-start; padding-bottom: 8px;">
+ <div style="flex: 1;">
+ <div class="eh-title"> <span id="i18n-evac-title" data-i18n="evacTitle">避難指示発令中</span></div>
+ <div style="font-size: 0.9rem; color: var(--warning); margin-top: 4px;" id="disaster-details">
+ <span data-i18n="estTime">予想到達時間:</span> <strong>15:30</strong> | 
+ <span data-i18n="estHeight">予想高:</span> <strong>10m</strong>
+ </div>
+ </div>
+ <svg id="banner-chevron" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+ </div>
+ 
+ <div class="action-grid mt-10" id="essential-buttons">
+ <button id="btn-change-route" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 2.13-5.88L2 9"></path></svg> <span data-i18n="changeRouteBtn">ルート変更</span></button>
+ <button id="btn-unlock-pin" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <span data-i18n="unlockPinBtn">ピン解除</span></button>
+ <button id="btn-reset-alert" class="action-btn outline-btn" data-i18n="resetAlert">訓練終了</button>
+ </div>
 
-                    <!-- EXPANDED PART (Hidden by default) -->
-                    <div id="banner-content-expanded" class="emergency-body" style="display: none; margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px;">
-                        <p id="i18n-evac-desc" data-i18n="evacDesc" class="evac-instruction" style="font-size:0.95rem;">青いルートに沿って高台へ避難してください</p>
-                        <div class="action-grid mt-15">
-                            <button id="btn-share" class="action-btn secondary-btn" data-i18n="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg> 安否共有</button>
-                            <button id="btn-sos" class="action-btn sos-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> SOS</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+ <!-- EXPANDED PART (Hidden by default) -->
+ <div id="banner-content-expanded" class="emergency-body" style="display: none; margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px;">
+ <p id="i18n-evac-desc" data-i18n="evacDesc" class="evac-instruction" style="font-size:0.95rem;">青いルートに沿って高台へ避難してください</p>
+ <div class="action-grid mt-15">
+ <button id="btn-share" class="action-btn secondary-btn" data-i18n="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg> 安否共有</button>
+ <button id="btn-sos" class="action-btn sos-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> SOS</button>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-    <!-- Onboarding Demo Overlay (4-step cinematic scenario) -->
-    <div id="onboarding-overlay" class="overlay hidden">
-        <div class="demo-overlay-inner">
-            <!-- Simulation Safety Disclaimer (Avoids panic/confusion) -->
-            <div class="demo-sim-banner">
-                <span class="demo-sim-badge">DEMO / 訓練</span>
-                <span class="demo-sim-text" id="demo-sim-warning">⚠️ これは訓練用のシミュレーション画面です。実際の災害ではありません。</span>
-            </div>
+ <!-- Onboarding Demo Overlay (4-step cinematic scenario) -->
+ <div id="onboarding-overlay" class="overlay hidden">
+ <div class="demo-overlay-inner">
+ <!-- Simulation Safety Disclaimer (Avoids panic/confusion) -->
+ <div class="demo-sim-banner">
+ <span class="demo-sim-badge">DEMO / 訓練</span>
+ <span class="demo-sim-text" id="demo-sim-warning"> これは訓練用のシミュレーション画面です。実際の災害ではありません。</span>
+ </div>
 
-            <!-- Step 0: Hero intro -->
-            <div class="demo-step active" id="demo-step-0">
-                <div class="demo-logo-wrap">
-                    <img src="assets/icons/TENDEN.gif" alt="TENDEN" class="demo-logo-gif">
-                </div>
-                <h1 class="demo-hero-title" id="demo-title-0">津波から命を守るために</h1>
-                <p class="demo-hero-sub" id="demo-sub-0">日本全国の沿岸エリアで使える避難支援アプリ</p>
-                <div class="demo-nav">
-                    <button class="demo-btn-primary" id="btn-demo-next-0">次へ →</button>
-                    <button class="demo-btn-ghost" id="btn-demo-skip-0" data-i18n="demoBtnSkip">スキップ</button>
-                </div>
-            </div>
+ <!-- Step 0: Hero intro -->
+ <div class="demo-step active" id="demo-step-0">
+ <div class="demo-logo-wrap">
+ <img src="assets/icons/TENDEN.gif" alt="TENDEN" class="demo-logo-gif">
+ </div>
+ <h1 class="demo-hero-title" id="demo-title-0">津波から命を守るために</h1>
+ <p class="demo-hero-sub" id="demo-sub-0">日本全国の沿岸エリアで使える避難支援アプリ</p>
+ <div class="demo-nav">
+ <button class="demo-btn-primary" id="btn-demo-next-0">次へ →</button>
+ <button class="demo-btn-ghost" id="btn-demo-skip-0" data-i18n="demoBtnSkip">スキップ</button>
+ </div>
+ </div>
 
-            <!-- Step 1: Earthquake scenario -->
-            <div class="demo-step" id="demo-step-1">
-                <div class="demo-scenario-badge">
-                    <span class="demo-badge-dot"></span>
-                    <span id="demo-badge-label">鎌倉市 由比ヶ浜</span>
-                </div>
-                <div class="demo-alert-box" id="demo-alert-box">
-                    <div class="demo-alert-icon">⚠️</div>
-                    <h2 class="demo-alert-title" id="demo-title-1">地震が発生しました</h2>
-                    <p class="demo-alert-desc" id="demo-desc-1">津波の危険があります。今すぐ避難を開始してください。</p>
-                </div>
-                <!-- Mini map canvas for animation -->
-                <canvas id="demo-map-canvas" width="320" height="200" class="demo-canvas"></canvas>
-                <div class="demo-nav">
-                    <button class="demo-btn-primary" id="btn-demo-next-1">ルートを見る →</button>
-                    <button class="demo-btn-ghost" id="btn-demo-skip-1" data-i18n="demoBtnSkip">スキップ</button>
-                </div>
-            </div>
+ <!-- Step 1: Earthquake scenario -->
+ <div class="demo-step" id="demo-step-1">
+ <div class="demo-scenario-badge">
+ <span class="demo-badge-dot"></span>
+ <span id="demo-badge-label">鎌倉市 由比ヶ浜</span>
+ </div>
+ <div class="demo-alert-box" id="demo-alert-box">
+ <div class="demo-alert-icon"></div>
+ <h2 class="demo-alert-title" id="demo-title-1">地震が発生しました</h2>
+ <p class="demo-alert-desc" id="demo-desc-1">津波の危険があります。今すぐ避難を開始してください。</p>
+ </div>
+ <!-- Mini map canvas for animation -->
+ <canvas id="demo-map-canvas" width="320" height="200" class="demo-canvas"></canvas>
+ <div class="demo-nav">
+ <button class="demo-btn-primary" id="btn-demo-next-1">ルートを見る →</button>
+ <button class="demo-btn-ghost" id="btn-demo-skip-1" data-i18n="demoBtnSkip">スキップ</button>
+ </div>
+ </div>
 
-            <!-- Step 2: 3 Routes animation -->
-            <div class="demo-step" id="demo-step-2">
-                <h2 class="demo-step-title" id="demo-title-2">🗺 3つの避難ルートを提示します</h2>
-                <p class="demo-step-desc" id="demo-desc-2">最短・混雑回避・急坂回避の3ルートを同時表示。あなたが選びます。</p>
-                <canvas id="demo-routes-canvas" width="320" height="240" class="demo-canvas"></canvas>
-                <div class="demo-route-legend">
-                    <span class="legend-item legend-green">🟢 最短・混雑回避</span>
-                    <span class="legend-item legend-blue">🔵 避難所分散</span>
-                    <span class="legend-item legend-purple">🟣 坂道配慮</span>
-                </div>
-                <div class="demo-nav">
-                    <button class="demo-btn-primary" id="btn-demo-next-2">人の流れを見る →</button>
-                    <button class="demo-btn-ghost" id="btn-demo-skip-2" data-i18n="demoBtnSkip">スキップ</button>
-                </div>
-            </div>
+ <!-- Step 2: 3 Routes animation -->
+ <div class="demo-step" id="demo-step-2">
+ <h2 class="demo-step-title" id="demo-title-2"> 3つの避難ルートを提示します</h2>
+ <p class="demo-step-desc" id="demo-desc-2">最短・混雑回避・急坂回避の3ルートを同時表示。あなたが選びます。</p>
+ <canvas id="demo-routes-canvas" width="320" height="240" class="demo-canvas"></canvas>
+ <div class="demo-route-legend">
+ <span class="legend-item legend-green">● 最短・混雑回避</span>
+ <span class="legend-item legend-blue">● 避難所分散</span>
+ <span class="legend-item legend-purple">● 坂道配慮</span>
+ </div>
+ <div class="demo-nav">
+ <button class="demo-btn-primary" id="btn-demo-next-2">人の流れを見る →</button>
+ <button class="demo-btn-ghost" id="btn-demo-skip-2" data-i18n="demoBtnSkip">スキップ</button>
+ </div>
+ </div>
 
-            <!-- Step 3: People flow + CTA -->
-            <div class="demo-step" id="demo-step-3">
-                <h2 class="demo-step-title" id="demo-title-3">TENDENは、あなたに選択肢を渡します</h2>
-                <p class="demo-step-desc" id="demo-desc-3">その土地を知らない観光客も、外国語話者も、迷わず逃げ出せる支援を。</p>
-                <canvas id="demo-flow-canvas" width="320" height="200" class="demo-canvas"></canvas>
-                <div class="demo-cta-area">
-                    <button class="demo-btn-primary demo-btn-use" id="btn-demo-use-here">
-                        📍 <span data-i18n="demoBtnUseHere">今いる場所で使ってみる</span>
-                    </button>
-                    <button class="demo-btn-secondary" id="btn-demo-replay">
-                        🔄 <span data-i18n="demoBtnReplay">もう一度見る</span>
-                    </button>
-                    <a href="https://masatosprojects.github.io/tenden-promo/" target="_blank" rel="noopener" class="demo-btn-ghost demo-link">
-                        📖 アプリの解説サイトを見る
-                    </a>
-                </div>
-            </div>
+ <!-- Step 3: People flow + CTA -->
+ <div class="demo-step" id="demo-step-3">
+ <h2 class="demo-step-title" id="demo-title-3">TENDENは、あなたに選択肢を渡します</h2>
+ <p class="demo-step-desc" id="demo-desc-3">その土地を知らない観光客も、外国語話者も、迷わず逃げ出せる支援を。</p>
+ <canvas id="demo-flow-canvas" width="320" height="200" class="demo-canvas"></canvas>
+ <div class="demo-cta-area">
+ <button class="demo-btn-primary demo-btn-use" id="btn-demo-use-here">
+ <span data-i18n="demoBtnUseHere">今いる場所で使ってみる</span>
+ </button>
+ <button class="demo-btn-secondary" id="btn-demo-replay">
+ <span data-i18n="demoBtnReplay">もう一度見る</span>
+ </button>
+ <a href="https://masatosprojects.github.io/tenden-promo/" target="_blank" rel="noopener" class="demo-btn-ghost demo-link">
+ アプリの解説サイトを見る
+ </a>
+ </div>
+ </div>
 
-            <!-- Step indicator dots -->
-            <div class="demo-dots" id="demo-dots">
-                <span class="demo-dot active" data-step="0"></span>
-                <span class="demo-dot" data-step="1"></span>
-                <span class="demo-dot" data-step="2"></span>
-                <span class="demo-dot" data-step="3"></span>
-            </div>
-        </div>
-    </div>
+ <!-- Step indicator dots -->
+ <div class="demo-dots" id="demo-dots">
+ <span class="demo-dot active" data-step="0"></span>
+ <span class="demo-dot" data-step="1"></span>
+ <span class="demo-dot" data-step="2"></span>
+ <span class="demo-dot" data-step="3"></span>
+ </div>
+ </div>
+ </div>
 
-    <!-- Hidden compat element: btn-onboarding-ok is still referenced by legacy JS, keep as hidden -->
-    <button id="btn-onboarding-ok" style="display:none;" aria-hidden="true"></button>
+ <!-- Hidden compat element: btn-onboarding-ok is still referenced by legacy JS, keep as hidden -->
+ <button id="btn-onboarding-ok" style="display:none;" aria-hidden="true"></button>
 
-    <!-- Error/Manual Location Dialog -->
-    <div id="error-overlay" class="overlay hidden">
-        <div class="dialog glass-panel">
-            <div class="dialog-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48" style="color: var(--danger);">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-            </div>
-            <h2 id="i18n-error-title" data-i18n="errorTitle">現在地が取得できません</h2>
-            <p id="i18n-error-desc" data-i18n="errorDesc">マップを動かして、確認したい場所にピンを合わせてください。</p>
-            <button id="btn-error-ok" class="action-btn primary-btn btn-large w-100" style="margin-top:20px;" data-i18n="retryBtn">現在地からリトライ</button>
-        </div>
-    </div>
+ <!-- Error/Manual Location Dialog -->
+ <div id="error-overlay" class="overlay hidden">
+ <div class="dialog glass-panel">
+ <div class="dialog-icon">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48" style="color: var(--danger);">
+ <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+ <line x1="12" y1="9" x2="12" y2="13"></line>
+ <line x1="12" y1="17" x2="12.01" y2="17"></line>
+ </svg>
+ </div>
+ <h2 id="i18n-error-title" data-i18n="errorTitle">現在地が取得できません</h2>
+ <p id="i18n-error-desc" data-i18n="errorDesc">マップを動かして、確認したい場所にピンを合わせてください。</p>
+ <button id="btn-error-ok" class="action-btn primary-btn btn-large w-100" style="margin-top:20px;" data-i18n="retryBtn">現在地からリトライ</button>
+ </div>
+ </div>
 
-    <!-- Settings Dialog -->
-    <div id="settings-overlay" class="overlay hidden">
-        <div class="dialog glass-panel settings-dialog">
-            <div class="dialog-header">
-                <h2 data-i18n="settingsTitle">設定</h2>
-                <button id="btn-settings-close" class="close-btn">&times;</button>
-            </div>
-            
-            <div class="form-group">
-                <label data-i18n="langLabel">言語設定 (Language)</label>
-                <select id="lang-select" class="form-control">
-                    <option value="auto" data-i18n="langAuto">自動 (Auto)</option>
-                    <option value="ja">日本語 (Japanese)</option>
-                    <option value="en">English</option>
-                    <option value="zh">中文 (简体 Chinese)</option>
-                    <option value="zh-tw">中文 (繁體 Chinese)</option>
-                    <option value="ko">한국어 (Korean)</option>
-                    <option value="fr">Français (French)</option>
-                    <option value="es">Español (Spanish)</option>
-                    <option value="de">Deutsch (German)</option>
-                    <option value="it">Italiano (Italian)</option>
-                    <option value="pt">Português (Portuguese)</option>
-                    <option value="ru">Русский (Russian)</option>
-                    <option value="vi">Tiếng Việt (Vietnamese)</option>
-                    <option value="th">ภาษาไทย (Thai)</option>
-                    <option value="id">Bahasa Indonesia (Indonesian)</option>
-                    <option value="tl">Tagalog (Filipino)</option>
-                    <option value="ms">Bahasa Melayu (Malay)</option>
-                    <option value="hi">हिन्दी (Hindi)</option>
-                    <option value="bn">বাংলা (Bengali)</option>
-                    <option value="ar">العربية (Arabic)</option>
-                    <option value="fa">فارسی (Persian)</option>
-                    <option value="tr">Türkçe (Turkish)</option>
-                    <option value="nl">Nederlands (Dutch)</option>
-                    <option value="sv">Svenska (Swedish)</option>
-                    <option value="no">Norsk (Norwegian)</option>
-                    <option value="fi">Suomi (Finnish)</option>
-                    <option value="da">Dansk (Danish)</option>
-                    <option value="pl">Polski (Polish)</option>
-                    <option value="uk">Українська (Ukrainian)</option>
-                    <option value="el">Ελληνικά (Greek)</option>
-                    <option value="he">עברית (Hebrew)</option>
-                </select>
-            </div>
+ <!-- Settings Dialog -->
+ <div id="settings-overlay" class="overlay hidden">
+ <div class="dialog glass-panel settings-dialog">
+ <div class="dialog-header">
+ <h2 data-i18n="settingsTitle">設定</h2>
+ <button id="btn-settings-close" class="close-btn">&times;</button>
+ </div>
+ 
+ <div class="form-group">
+ <label data-i18n="langLabel">言語設定 (Language)</label>
+ <select id="lang-select" class="form-control">
+ <option value="auto" data-i18n="langAuto">自動 (Auto)</option>
+ <option value="ja">日本語 (Japanese)</option>
+ <option value="en">English</option>
+ <option value="zh">中文 (简体 Chinese)</option>
+ <option value="zh-tw">中文 (繁體 Chinese)</option>
+ <option value="ko">한국어 (Korean)</option>
+ <option value="fr">Français (French)</option>
+ <option value="es">Español (Spanish)</option>
+ <option value="de">Deutsch (German)</option>
+ <option value="it">Italiano (Italian)</option>
+ <option value="pt">Português (Portuguese)</option>
+ <option value="ru">Русский (Russian)</option>
+ <option value="vi">Tiếng Việt (Vietnamese)</option>
+ <option value="th">ภาษาไทย (Thai)</option>
+ <option value="id">Bahasa Indonesia (Indonesian)</option>
+ <option value="tl">Tagalog (Filipino)</option>
+ <option value="ms">Bahasa Melayu (Malay)</option>
+ <option value="hi">हिन्दी (Hindi)</option>
+ <option value="bn">বাংলা (Bengali)</option>
+ <option value="ar">العربية (Arabic)</option>
+ <option value="fa">فارسی (Persian)</option>
+ <option value="tr">Türkçe (Turkish)</option>
+ <option value="nl">Nederlands (Dutch)</option>
+ <option value="sv">Svenska (Swedish)</option>
+ <option value="no">Norsk (Norwegian)</option>
+ <option value="fi">Suomi (Finnish)</option>
+ <option value="da">Dansk (Danish)</option>
+ <option value="pl">Polski (Polish)</option>
+ <option value="uk">Українська (Ukrainian)</option>
+ <option value="el">Ελληνικά (Greek)</option>
+ <option value="he">עברית (Hebrew)</option>
+ </select>
+ </div>
 
-            <!-- Evacuation Walk Speed Configuration -->
-            <div class="form-group">
-                <label data-i18n="walkSpeedLabel">避難歩行速度設定</label>
-                <select id="walk-speed-select" class="form-control">
-                    <option value="4.0" data-i18n="speedNormal">一般成人 (4.0 km/h)</option>
-                    <option value="3.0" data-i18n="speedSlow">高齢者・児童 (3.0 km/h)</option>
-                    <option value="2.0" data-i18n="speedWheelchair">車いす・要介助 (2.0 km/h)</option>
-                </select>
-            </div>
+ <!-- Evacuation Walk Speed Configuration -->
+ <div class="form-group">
+ <label data-i18n="walkSpeedLabel">避難歩行速度設定</label>
+ <select id="walk-speed-select" class="form-control">
+ <option value="4.0" data-i18n="speedNormal">一般成人 (4.0 km/h)</option>
+ <option value="3.0" data-i18n="speedSlow">高齢者・児童 (3.0 km/h)</option>
+ <option value="2.0" data-i18n="speedWheelchair">車いす・要介助 (2.0 km/h)</option>
+ </select>
+ </div>
 
-            <!-- P2P Earthquake/Tsunami Auto-Trigger Toggle -->
-            <div class="form-group flex-group">
-                <label data-i18n="p2pAutoLabel">P2P地震情報の自動検知</label>
-                <label class="switch-container">
-                    <input type="checkbox" id="toggle-p2p-auto" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
+ <!-- P2P Earthquake/Tsunami Auto-Trigger Toggle -->
+ <div class="form-group flex-group">
+ <label data-i18n="p2pAutoLabel">P2P地震情報の自動検知</label>
+ <label class="switch-container">
+ <input type="checkbox" id="toggle-p2p-auto" checked>
+ <span class="slider"></span>
+ </label>
+ </div>
 
-            <!-- Route Deviation Warning Toggle -->
-            <div class="form-group flex-group">
-                <label data-i18n="deviationAlertLabel">ルート逸脱警告（振動＆フラッシュ）</label>
-                <label class="switch-container">
-                    <input type="checkbox" id="toggle-deviation-alert" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
+ <!-- Route Deviation Warning Toggle -->
+ <div class="form-group flex-group">
+ <label data-i18n="deviationAlertLabel">ルート逸脱警告（振動＆フラッシュ）</label>
+ <label class="switch-container">
+ <input type="checkbox" id="toggle-deviation-alert" checked>
+ <span class="slider"></span>
+ </label>
+ </div>
 
-            <!-- Voice Navigation Toggle -->
-            <div class="form-group flex-group">
-                <label data-i18n="voiceNavLabel">音声ナビゲーション</label>
-                <label class="switch-container">
-                    <input type="checkbox" id="toggle-voice-nav" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
+ <!-- Voice Navigation Toggle -->
+ <div class="form-group flex-group">
+ <label data-i18n="voiceNavLabel">音声ナビゲーション</label>
+ <label class="switch-container">
+ <input type="checkbox" id="toggle-voice-nav" checked>
+ <span class="slider"></span>
+ </label>
+ </div>
 
-            <!-- Screen Wake Lock Toggle -->
-            <div class="form-group flex-group">
-                <label data-i18n="wakeLockLabel">画面消灯防止（Wake Lock）</label>
-                <label class="switch-container">
-                    <input type="checkbox" id="toggle-wake-lock" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
+ <!-- Screen Wake Lock Toggle -->
+ <div class="form-group flex-group">
+ <label data-i18n="wakeLockLabel">画面消灯防止（Wake Lock）</label>
+ <label class="switch-container">
+ <input type="checkbox" id="toggle-wake-lock" checked>
+ <span class="slider"></span>
+ </label>
+ </div>
 
-            <!-- System Notifications Toggle -->
-            <div class="form-group flex-group">
-                <label data-i18n="systemNotificationLabel">スマホシステム通知（浸水警告・ルート逸脱）</label>
-                <label class="switch-container">
-                    <input type="checkbox" id="toggle-system-notification" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
+ <!-- System Notifications Toggle -->
+ <div class="form-group flex-group">
+ <label data-i18n="systemNotificationLabel">スマホシステム通知（浸水警告・ルート逸脱）</label>
+ <label class="switch-container">
+ <input type="checkbox" id="toggle-system-notification" checked>
+ <span class="slider"></span>
+ </label>
+ </div>
 
-            <!-- Smart Compass Toggle -->
-            <div class="form-group flex-group">
-                <label data-i18n="smartCompassLabel">スマートコンパス（進行方向コーン表示）</label>
-                <label class="switch-container">
-                    <input type="checkbox" id="toggle-smart-compass" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
+ <!-- Smart Compass Toggle -->
+ <div class="form-group flex-group">
+ <label data-i18n="smartCompassLabel">スマートコンパス（進行方向コーン表示）</label>
+ <label class="switch-container">
+ <input type="checkbox" id="toggle-smart-compass" checked>
+ <span class="slider"></span>
+ </label>
+ </div>
 
-            <!-- Demo Replay Button -->
-            <div class="form-group">
-                <button id="btn-replay-demo" class="action-btn secondary-btn w-100" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px;">
-                    <span data-i18n="settingsDemoBtn">🎬 オンボーディングデモを再生する</span>
-                </button>
-            </div>
+ <!-- Demo Replay Button -->
+ <div class="form-group">
+ <button id="btn-replay-demo" class="action-btn secondary-btn w-100" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px;">
+ <span data-i18n="settingsDemoBtn"> オンボーディングデモを再生する</span>
+ </button>
+ </div>
 
-            <!-- Evacuation Guide Button -->
-            <div class="form-group">
-                <button id="btn-open-guide" class="action-btn secondary-btn w-100" data-i18n="btnReadGuide" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px;">
-                    📖 <span data-i18n="btnReadGuideText">津波避難の心得・3原則ガイドを読む</span>
-                </button>
-            </div>
+ <!-- Evacuation Guide Button -->
+ <div class="form-group">
+ <button id="btn-open-guide" class="action-btn secondary-btn w-100" data-i18n="btnReadGuide" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px;">
+ <span data-i18n="btnReadGuideText">津波避難の心得・3原則ガイドを読む</span>
+ </button>
+ </div>
 
 
-            <!-- App Promotion Site Link -->
-            <div class="form-group">
-                <label data-i18n="promoSiteLabel">アプリ公式サイト・研究背景</label>
-                <a href="https://masatosprojects.github.io/tenden-promo/" target="_blank" rel="noopener" class="action-btn secondary-btn w-100" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px; text-decoration: none;">
-                    <span data-i18n="promoSiteBtnText">🌐 TENDEN 解説サイトを開く</span>
-                </a>
-            </div>
+ <!-- App Promotion Site Link -->
+ <div class="form-group">
+ <label data-i18n="promoSiteLabel">アプリ公式サイト・研究背景</label>
+ <a href="https://masatosprojects.github.io/tenden-promo/" target="_blank" rel="noopener" class="action-btn secondary-btn w-100" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px; text-decoration: none;">
+ <span data-i18n="promoSiteBtnText"> TENDEN 解説サイトを開く</span>
+ </a>
+ </div>
 
-            <!-- Tsunami Emergency Force Mode Toggle (For Demonstration) -->
-            <div class="form-group flex-group">
-                <label data-i18n="emergencyForceLabel">発災モード（緊急ダークモード）の強制プレビュー</label>
-                <label class="switch-container">
-                    <input type="checkbox" id="toggle-emergency-force">
-                    <span class="slider"></span>
-                </label>
-            </div>
+ <!-- Tsunami Emergency Force Mode Toggle (For Demonstration) -->
+ <div class="form-group flex-group">
+ <label data-i18n="emergencyForceLabel">発災モード（緊急ダークモード）の強制プレビュー</label>
+ <label class="switch-container">
+ <input type="checkbox" id="toggle-emergency-force">
+ <span class="slider"></span>
+ </label>
+ </div>
 
-            <!-- Data Management & Safe Initializer reset button -->
-            <div class="form-group">
-                <label data-i18n="dataLabel">データ管理 / システム</label>
-                <button id="btn-clear-cache" class="action-btn warning-btn w-100" data-i18n="clearCacheBtn" style="margin-bottom:10px;">オフラインデータを削除</button>
-                <button id="btn-dev-reset" class="action-btn outline-btn w-100" data-i18n="systemResetBtn">【警告】システムキャッシュを完全初期化</button>
-            </div>
-        </div>
-    </div>
+ <!-- Data Management & Safe Initializer reset button -->
+ <div class="form-group">
+ <label data-i18n="dataLabel">データ管理 / システム</label>
+ <button id="btn-clear-cache" class="action-btn warning-btn w-100" data-i18n="clearCacheBtn" style="margin-bottom:10px;">オフラインデータを削除</button>
+ <button id="btn-dev-reset" class="action-btn outline-btn w-100" data-i18n="systemResetBtn">【警告】システムキャッシュを完全初期化</button>
+ </div>
+ </div>
+ </div>
 
-    <!-- Layers Dialog -->
-    <div id="layers-overlay" class="overlay hidden">
-        <div class="dialog glass-panel settings-dialog">
-            <div class="dialog-header">
-                <h2 data-i18n="layersTitle">レイヤー設定</h2>
-                <button id="btn-layers-close" class="close-btn">&times;</button>
-            </div>
-            
-            <div class="toggle-group">
-                <label data-i18n="toggleShelters">避難所ピン</label>
-                <input type="checkbox" id="toggle-shelters" checked class="toggle-switch">
-            </div>
+ <!-- Layers Dialog -->
+ <div id="layers-overlay" class="overlay hidden">
+ <div class="dialog glass-panel settings-dialog">
+ <div class="dialog-header">
+ <h2 data-i18n="layersTitle">レイヤー設定</h2>
+ <button id="btn-layers-close" class="close-btn">&times;</button>
+ </div>
+ 
+ <div class="toggle-group">
+ <label data-i18n="toggleShelters">避難所ピン</label>
+ <input type="checkbox" id="toggle-shelters" checked class="toggle-switch">
+ </div>
 
-            <div class="toggle-group">
-                <label data-i18n="toggleHazard">津波浸水想定区域</label>
-                <input type="checkbox" id="toggle-hazard" checked class="toggle-switch">
-            </div>
-            
-            <div class="toggle-group">
-                <label data-i18n="toggleCongestion">混雑予測（ヒートマップ）</label>
-                <input type="checkbox" id="toggle-congestion" checked class="toggle-switch">
-            </div>
+ <div class="toggle-group">
+ <label data-i18n="toggleHazard">津波浸水想定区域</label>
+ <input type="checkbox" id="toggle-hazard" checked class="toggle-switch">
+ </div>
+ 
+ <div class="toggle-group">
+ <label data-i18n="toggleCongestion">混雑予測（ヒートマップ）</label>
+ <input type="checkbox" id="toggle-congestion" checked class="toggle-switch">
+ </div>
 
-            <div class="toggle-group">
-                <label data-i18n="toggleRelief">色別標高図（国土地理院）</label>
-                <input type="checkbox" id="toggle-relief" class="toggle-switch">
-            </div>
+ <div class="toggle-group">
+ <label data-i18n="toggleRelief">色別標高図（国土地理院）</label>
+ <input type="checkbox" id="toggle-relief" class="toggle-switch">
+ </div>
 
-            <div class="toggle-group">
-                <label data-i18n="toggleSafeEdges">第一目標候補点（全安全境界点）</label>
-                <input type="checkbox" id="toggle-safe-edges" class="toggle-switch">
-            </div>
-        </div>
-    </div>
+ <div class="toggle-group">
+ <label data-i18n="toggleSafeEdges">第一目標候補点（全安全境界点）</label>
+ <input type="checkbox" id="toggle-safe-edges" class="toggle-switch">
+ </div>
+ </div>
+ </div>
 
-    <!-- Custom Alert Overlay -->
-    <div id="alert-overlay" class="overlay hidden">
-        <div class="dialog glass-panel">
-            <div class="dialog-icon" id="alert-icon" style="color: var(--primary);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-            </div>
-            <h2 id="alert-title">通知</h2>
-            <p id="alert-desc">メッセージ内容</p>
-            <button id="btn-alert-ok" class="action-btn primary-btn btn-large w-100" data-i18n="okBtn">OK</button>
-        </div>
-    </div>
+ <!-- Custom Alert Overlay -->
+ <div id="alert-overlay" class="overlay hidden">
+ <div class="dialog glass-panel">
+ <div class="dialog-icon" id="alert-icon" style="color: var(--primary);">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+ </div>
+ <h2 id="alert-title">通知</h2>
+ <p id="alert-desc">メッセージ内容</p>
+ <button id="btn-alert-ok" class="action-btn primary-btn btn-large w-100" data-i18n="okBtn">OK</button>
+ </div>
+ </div>
 
-    <!-- Scenario Selection Dialog -->
-    <div id="scenario-overlay" class="overlay hidden">
-        <div class="dialog glass-panel scenario-dialog">
-            <div class="dialog-header">
-                <h2 data-i18n="scenarioTitle">避難シミュレーション選択</h2>
-                <button id="btn-scenario-close" class="close-btn">&times;</button>
-            </div>
-            <p class="dialog-subtitle" data-i18n="scenarioDesc">デモンストレーション用の災害シナリオを選択してください。避難開始地点を選択後、シミュレーションが始まります。</p>
-            
-            <div class="scenario-list">
-                <button class="scenario-option-btn s-warning" data-scenario="1">
-                    <div class="sc-header">
-                        <strong>① 由比ヶ浜：大津波警報</strong>
-                        <span class="badge">巨大津波</span>
-                    </div>
-                    <div class="sc-body">到達予測: 15分 | 予想高さ: 10m<br>対象エリア: 由比ヶ浜・和田塚・材木座周辺</div>
-                </button>
-                
-                <button class="scenario-option-btn s-info" data-scenario="2">
-                    <div class="sc-header">
-                        <strong>② 七里ヶ浜：津波警報</strong>
-                        <span class="badge">津波</span>
-                    </div>
-                    <div class="sc-body">到達予測: 30分 | 予想高さ: 3m<br>対象エリア: 七里ヶ浜海岸・駅周辺</div>
-                </button>
-            </div>
-        </div>
-    </div>
+ <!-- Scenario Selection Dialog -->
+ <div id="scenario-overlay" class="overlay hidden">
+ <div class="dialog glass-panel scenario-dialog">
+ <div class="dialog-header">
+ <h2 data-i18n="scenarioTitle">避難シミュレーション選択</h2>
+ <button id="btn-scenario-close" class="close-btn">&times;</button>
+ </div>
+ <p class="dialog-subtitle" data-i18n="scenarioDesc">デモンストレーション用の災害シナリオを選択してください。避難開始地点を選択後、シミュレーションが始まります。</p>
+ 
+ <div class="scenario-list">
+ <button class="scenario-option-btn s-warning" data-scenario="1">
+ <div class="sc-header">
+ <strong>① 由比ヶ浜：大津波警報</strong>
+ <span class="badge">巨大津波</span>
+ </div>
+ <div class="sc-body">到達予測: 15分 | 予想高さ: 10m<br>対象エリア: 由比ヶ浜・和田塚・材木座周辺</div>
+ </button>
+ 
+ <button class="scenario-option-btn s-info" data-scenario="2">
+ <div class="sc-header">
+ <strong>② 七里ヶ浜：津波警報</strong>
+ <span class="badge">津波</span>
+ </div>
+ <div class="sc-body">到達予測: 30分 | 予想高さ: 3m<br>対象エリア: 七里ヶ浜海岸・駅周辺</div>
+ </button>
+ </div>
+ </div>
+ </div>
 
-    <!-- Location Selection Dialog -->
-    <div id="location-overlay" class="overlay hidden">
-        <div class="dialog glass-panel scenario-dialog">
-            <div class="dialog-header">
-                <h2 id="location-dialog-title" data-i18n="locationDialogTitle">避難開始位置の選択</h2>
-                <button id="btn-location-close" class="close-btn">&times;</button>
-            </div>
-            <p class="dialog-subtitle" data-i18n="locationDesc">避難を開始するシミュレーション現在地（避難開始位置）を選択してください。</p>
-            <div id="location-options-container" class="scenario-list">
-                <!-- JavaScript will populate location buttons here -->
-            </div>
-        </div>
-    </div>
+ <!-- Location Selection Dialog -->
+ <div id="location-overlay" class="overlay hidden">
+ <div class="dialog glass-panel scenario-dialog">
+ <div class="dialog-header">
+ <h2 id="location-dialog-title" data-i18n="locationDialogTitle">避難開始位置の選択</h2>
+ <button id="btn-location-close" class="close-btn">&times;</button>
+ </div>
+ <p class="dialog-subtitle" data-i18n="locationDesc">避難を開始するシミュレーション現在地（避難開始位置）を選択してください。</p>
+ <div id="location-options-container" class="scenario-list">
+ <!-- JavaScript will populate location buttons here -->
+ </div>
+ </div>
+ </div>
 
-    <!-- Route Selection Bottom Sheet -->
-    <div id="route-overlay" class="overlay hidden" style="align-items: flex-end; padding-bottom: 0;">
-        <div class="route-bottom-sheet glass-panel" style="width: 100%; border-radius: 24px 24px 0 0; padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);">
-            <div class="bottom-sheet-handle"></div>
-            <div style="text-align:center; margin-bottom:12px;">
-                <strong style="font-size:1.15rem; color:var(--text-color);" data-i18n="routeSelectTitle">🗺 避難ルートを選択</strong>
-            </div>
-            <div class="route-disclaimer" style="font-size: 0.8rem; opacity: 0.7; text-align: center; margin-bottom: 15px;" data-i18n="routeDisclaimer">
-                ⚠️ これらはシミュレーション結果に基づく参考情報です。
-            </div>
-            <div id="route-options-container" style="display:flex; flex-direction:column; gap:10px;"></div>
-        </div>
-    </div>
+ <!-- Route Selection Bottom Sheet -->
+ <div id="route-overlay" class="overlay hidden" style="align-items: flex-end; padding-bottom: 0;">
+ <div class="route-bottom-sheet glass-panel" style="width: 100%; border-radius: 24px 24px 0 0; padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);">
+ <div class="bottom-sheet-handle"></div>
+ <div style="text-align:center; margin-bottom:12px;">
+ <strong style="font-size:1.15rem; color:var(--text-color);" data-i18n="routeSelectTitle"> 避難ルートを選択</strong>
+ </div>
+ <div class="route-disclaimer" style="font-size: 0.8rem; opacity: 0.7; text-align: center; margin-bottom: 15px;" data-i18n="routeDisclaimer">
+ これらはシミュレーション結果に基づく参考情報です。
+ </div>
+ <div id="route-options-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+ </div>
+ </div>
 
-    <!-- Evacuation Plan Share Dialog -->
-    <div id="share-overlay" class="overlay hidden">
-        <div class="dialog glass-panel scenario-dialog share-dialog" style="max-width: 450px;">
-            <div class="dialog-header">
-                <h2 data-i18n="shareDialogTitle">避難計画カードの保存 ＆ 共有</h2>
-                <button id="btn-share-dialog-close" class="close-btn">&times;</button>
-            </div>
-            <p class="dialog-subtitle" data-i18n="shareDialogDesc">避難地図とHUD画像がダウンロードされました！ご家族や友人と避難ルートを共有しておきましょう。</p>
-            
-            <div class="share-card-container" style="margin-bottom:15px;">
-                <textarea id="share-text-area" class="share-textarea" readonly></textarea>
-            </div>
-            
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                <button id="btn-share-line" class="action-btn share-line-btn w-100" style="padding:14px; border-radius:12px;">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="vertical-align:middle; margin-right:6px;"><path d="M24 10.3c0-4.6-4.9-8.3-11-8.3S2 5.7 2 10.3c0 4.1 3.9 7.6 9.2 8.2.4.1.8.3.9.7l.3 2.1c.1.6.4.8.9.5l2.4-1.7c1.7-.5 3.3-1.4 4.5-2.7 2.4-2.1 3.8-4.4 3.8-7.1z"/></svg>
-                    <span data-i18n="shareLineBtn">LINEで共有</span>
-                </button>
-                <button id="btn-share-system" class="action-btn primary-btn w-100" style="padding:14px; border-radius:12px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle; margin-right:6px;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                    <span data-i18n="shareSystemBtn">他の方法で共有 (安否共有)</span>
-                </button>
-                <button id="btn-share-copy" class="action-btn outline-btn w-100" style="padding:12px; border-radius:12px;">
-                    <span data-i18n="shareCopyBtn">テキストをコピー</span>
-                </button>
-            </div>
-            
-            <div class="tip-card" style="margin-top:15px; padding:12px; border-radius:12px; background:rgba(255,255,255,0.06); font-size:0.8rem; line-height:1.45; opacity:0.85; border:1px solid var(--glass-border);">
-                <span style="font-weight:bold; color:var(--warning); margin-right:4px;">💡 防災ヒント:</span>
-                <span data-i18n="shareCardTip">保存された避難計画画像は、スマートフォンのロック画面やホーム画面の壁紙に設定しておくことで、ネットが切断された災害時でもいつでも避難ルートを確認できます。</span>
-            </div>
-        </div>
-    </div>
+ <!-- Evacuation Plan Share Dialog -->
+ <div id="share-overlay" class="overlay hidden">
+ <div class="dialog glass-panel scenario-dialog share-dialog" style="max-width: 450px;">
+ <div class="dialog-header">
+ <h2 data-i18n="shareDialogTitle">避難計画カードの保存 ＆ 共有</h2>
+ <button id="btn-share-dialog-close" class="close-btn">&times;</button>
+ </div>
+ <p class="dialog-subtitle" data-i18n="shareDialogDesc">避難地図とHUD画像がダウンロードされました！ご家族や友人と避難ルートを共有しておきましょう。</p>
+ 
+ <div class="share-card-container" style="margin-bottom:15px;">
+ <textarea id="share-text-area" class="share-textarea" readonly></textarea>
+ </div>
+ 
+ <div style="display:flex; flex-direction:column; gap:10px;">
+ <button id="btn-share-line" class="action-btn share-line-btn w-100" style="padding:14px; border-radius:12px;">
+ <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="vertical-align:middle; margin-right:6px;"><path d="M24 10.3c0-4.6-4.9-8.3-11-8.3S2 5.7 2 10.3c0 4.1 3.9 7.6 9.2 8.2.4.1.8.3.9.7l.3 2.1c.1.6.4.8.9.5l2.4-1.7c1.7-.5 3.3-1.4 4.5-2.7 2.4-2.1 3.8-4.4 3.8-7.1z"/></svg>
+ <span data-i18n="shareLineBtn">LINEで共有</span>
+ </button>
+ <button id="btn-share-system" class="action-btn primary-btn w-100" style="padding:14px; border-radius:12px;">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle; margin-right:6px;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+ <span data-i18n="shareSystemBtn">他の方法で共有 (安否共有)</span>
+ </button>
+ <button id="btn-share-copy" class="action-btn outline-btn w-100" style="padding:12px; border-radius:12px;">
+ <span data-i18n="shareCopyBtn">テキストをコピー</span>
+ </button>
+ </div>
+ 
+ <div class="tip-card" style="margin-top:15px; padding:12px; border-radius:12px; background:rgba(255,255,255,0.06); font-size:0.8rem; line-height:1.45; opacity:0.85; border:1px solid var(--glass-border);">
+ <span style="font-weight:bold; color:var(--warning); margin-right:4px;"> 防災ヒント:</span>
+ <span data-i18n="shareCardTip">保存された避難計画画像は、スマートフォンのロック画面やホーム画面の壁紙に設定しておくことで、ネットが切断された災害時でもいつでも避難ルートを確認できます。</span>
+ </div>
+ </div>
+ </div>
 
-    <!-- Tsunami Evacuation 3-Principles Guide Dialog -->
-    <div id="guide-overlay" class="overlay hidden">
-        <div class="dialog glass-panel scenario-dialog guide-dialog" style="max-width: 480px; max-height: 90vh; display: flex; flex-direction: column;">
-            <div class="dialog-header" style="flex-shrink: 0; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border);">
-                <h2 data-i18n="guideTitle">津波避難の心得・3原則ガイド</h2>
-                <button id="btn-guide-close" class="close-btn">&times;</button>
-            </div>
-            
-            <div class="guide-scroll-content" style="overflow-y: auto; flex: 1; padding: 15px 0; display: flex; flex-direction: column; gap: 16px;">
-                <p class="dialog-subtitle" data-i18n="guideSubtitle" style="margin-bottom: 5px; font-weight: 500; opacity: 0.9;">命を守るための即時避難の基本原則</p>
-                
-                <!-- Rule 1 -->
-                <div class="guide-card" style="background: rgba(255, 59, 48, 0.08); border: 1px solid rgba(255, 59, 48, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
-                    <h3 style="color: var(--danger); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule1Title">🏃 1. すぐに避難する（即時避難）</h3>
-                    <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule1Desc">強い揺れを感じたら、あるいは津波警報が出たら、情報待ちをせず即座に避難を開始します。</p>
-                </div>
+ <!-- Tsunami Evacuation 3-Principles Guide Dialog -->
+ <div id="guide-overlay" class="overlay hidden">
+ <div class="dialog glass-panel scenario-dialog guide-dialog" style="max-width: 480px; max-height: 90vh; display: flex; flex-direction: column;">
+ <div class="dialog-header" style="flex-shrink: 0; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border);">
+ <h2 data-i18n="guideTitle">津波避難の心得・3原則ガイド</h2>
+ <button id="btn-guide-close" class="close-btn">&times;</button>
+ </div>
+ 
+ <div class="guide-scroll-content" style="overflow-y: auto; flex: 1; padding: 15px 0; display: flex; flex-direction: column; gap: 16px;">
+ <p class="dialog-subtitle" data-i18n="guideSubtitle" style="margin-bottom: 5px; font-weight: 500; opacity: 0.9;">命を守るための即時避難の基本原則</p>
+ 
+ <!-- Rule 1 -->
+ <div class="guide-card" style="background: rgba(255, 59, 48, 0.08); border: 1px solid rgba(255, 59, 48, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
+ <h3 style="color: var(--danger); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule1Title"> 1. すぐに避難する（即時避難）</h3>
+ <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule1Desc">強い揺れを感じたら、あるいは津波警報が出たら、情報待ちをせず即座に避難を開始します。</p>
+ </div>
 
-                <!-- Rule 2 -->
-                <div class="guide-card" style="background: rgba(0, 122, 255, 0.08); border: 1px solid rgba(0, 122, 255, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
-                    <h3 style="color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule2Title">🏢 2. 高い場所へ避難する（垂直避難）</h3>
-                    <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule2Desc">津波から逃れるためには、海から遠くではなく「高い場所」を目指します。頑丈なビルの3階以上へ避難してください。</p>
-                </div>
+ <!-- Rule 2 -->
+ <div class="guide-card" style="background: rgba(0, 122, 255, 0.08); border: 1px solid rgba(0, 122, 255, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
+ <h3 style="color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule2Title"> 2. 高い場所へ避難する（垂直避難）</h3>
+ <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule2Desc">津波から逃れるためには、海から遠くではなく「高い場所」を目指します。頑丈なビルの3階以上へ避難してください。</p>
+ </div>
 
-                <!-- Rule 3 -->
-                <div class="guide-card" style="background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
-                    <h3 style="color: var(--warning); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule3Title">🛑 3. 戻らない（戻り禁止）</h3>
-                    <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule3Desc">一度避難したら、絶対に荷物を取りに戻ったり、様子を見に海岸へ戻ってはいけません。警報が解除されるまで留まります。</p>
-                </div>
-            </div>
-            
-            <div style="flex-shrink: 0; padding-top: 12px; border-top: 1px solid var(--glass-border);">
-                <button id="btn-guide-close-bottom" class="action-btn primary-btn w-100 btn-large" style="border-radius: 12px;" data-i18n="btnGuideClose">閉じる</button>
-            </div>
-        </div>
-    </div>
+ <!-- Rule 3 -->
+ <div class="guide-card" style="background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
+ <h3 style="color: var(--warning); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule3Title"> 3. 戻らない（戻り禁止）</h3>
+ <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule3Desc">一度避難したら、絶対に荷物を取りに戻ったり、様子を見に海岸へ戻ってはいけません。警報が解除されるまで留まります。</p>
+ </div>
+ </div>
+ 
+ <div style="flex-shrink: 0; padding-top: 12px; border-top: 1px solid var(--glass-border);">
+ <button id="btn-guide-close-bottom" class="action-btn primary-btn w-100 btn-large" style="border-radius: 12px;" data-i18n="btnGuideClose">閉じる</button>
+ </div>
+ </div>
+ </div>
 
-    <!-- Flash Overlay for SOS -->
-    <div id="flash-overlay" class="hidden"></div>
+ <!-- Flash Overlay for SOS -->
+ <div id="flash-overlay" class="hidden"></div>
 
-    <!-- Capture Container (used for html2canvas to ensure clean rendering) -->
-    <div id="capture-container"></div>
+ <!-- Capture Container (used for html2canvas to ensure clean rendering) -->
+ <div id="capture-container"></div>
 
-    </div> <!-- /#app-container -->
+ </div> <!-- /#app-container -->
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <script src="app.js"></script>
+ <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+ <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+ <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+ <script src="app.js"></script>
 </body>
 </html>
