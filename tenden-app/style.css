@@ -600,30 +600,56 @@ input:checked + .slider:before {
 /* Top bar responsiveness optimization to prevent overlapping on tiny viewports */
 @media (max-width: 480px) {
     .top-status-bar {
-        padding: max(env(safe-area-inset-top, 8px), 8px) 10px 8px 10px;
-        gap: 6px;
+        padding: max(env(safe-area-inset-top, 10px), 10px) 12px 10px 12px;
+        display: flex;
+        flex-direction: column; /* Stack into 2 premium rows */
+        gap: 8px;
+        background: var(--glass-bg);
+        border-bottom: 1px solid var(--glass-border);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.06);
     }
     .status-left, .status-right {
-        gap: 6px;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        justify-content: space-between; /* Space out elements evenly */
+        gap: 8px;
+    }
+    /* Add a subtle separation border between rows for premium HUD feel */
+    .status-left {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding-bottom: 6px;
+    }
+    .mode-emergency .status-left {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+    .status-right {
+        padding-top: 2px;
     }
     .status-badge {
-        font-size: 0.88rem;
-        gap: 4px;
+        font-size: 0.85rem;
+        gap: 5px;
     }
-    /* Show label descriptions on mobile with a subtle, clean opacity contrast */
     .status-badge .status-icon {
         display: inline !important;
-        font-size: 0.8rem;
-        opacity: 0.7;
+        font-size: 0.78rem;
+        opacity: 0.65;
     }
     .network-badge, .gps-badge, .elev-badge {
         padding: 4px 8px;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         border-radius: 6px;
+        background: rgba(0, 0, 0, 0.04);
+    }
+    .mode-emergency .network-badge,
+    .mode-emergency .gps-badge,
+    .mode-emergency .elev-badge {
+        background: rgba(255, 255, 255, 0.08);
     }
     .status-time {
-        font-size: 0.92rem;
-        margin-left: 2px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-left: auto; /* Pin time to the far right */
     }
 }
 
