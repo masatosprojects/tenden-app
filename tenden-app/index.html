@@ -8,7 +8,34 @@
  <link rel="stylesheet" href="style.css">
  <link rel="manifest" href="manifest.json">
  <meta name="theme-color" content="#ffffff">
- <!-- Google Fonts for Apple-like Typography -->
+    <!-- Mobile Runtime Error Debugger -->
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            const errorMsg = `JS Error: ${message}\nLine: ${lineno}\nCol: ${colno}\nFile: ${source}`;
+            alert(errorMsg);
+            try {
+                const splashText = document.createElement('div');
+                splashText.style.position = 'absolute';
+                splashText.style.bottom = '20px';
+                splashText.style.left = '10px';
+                splashText.style.right = '10px';
+                splashText.style.color = '#ff3b30';
+                splashText.style.fontSize = '11px';
+                splashText.style.fontFamily = 'monospace';
+                splashText.style.padding = '14px';
+                splashText.style.background = 'rgba(0,0,0,0.85)';
+                splashText.style.border = '1px solid #ff3b30';
+                splashText.style.borderRadius = '8px';
+                splashText.style.zIndex = '100000';
+                splashText.style.whiteSpace = 'pre-wrap';
+                splashText.style.wordBreak = 'break-all';
+                splashText.innerText = errorMsg;
+                document.body.appendChild(splashText);
+            } catch(e) {}
+            return false;
+        };
+    </script>
+    <!-- Google Fonts for Apple-like Typography -->
  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
