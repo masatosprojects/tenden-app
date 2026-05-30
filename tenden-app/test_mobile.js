@@ -93,6 +93,11 @@ if (!executablePath) {
         console.log("Navigating to http://127.0.0.1:8082 ...");
         await page.goto('http://127.0.0.1:8082', { waitUntil: 'networkidle2' });
 
+        // Skip onboarding demo if active
+        await page.evaluate(() => {
+            if (typeof closeDemo === 'function') closeDemo();
+        });
+
         // Save initial screenshot
         await page.screenshot({ path: path.join(__dirname, 'screenshot_1_loaded.png') });
         console.log("Screenshot 1 saved: Loaded");
@@ -102,7 +107,7 @@ if (!executablePath) {
         console.log("Clicking Test Alert button...");
         await page.click('#btn-test-alert');
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 2500)); // Allow map flyTo to finish
         await page.screenshot({ path: path.join(__dirname, 'screenshot_2_test_alert_clicked.png') });
         console.log("Screenshot 2 saved: Test Alert dialog");
 
@@ -115,9 +120,10 @@ if (!executablePath) {
         });
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Click on the map to drop a pin
-        console.log("Clicking on the map (center-bottom) to drop a pin...");
-        await page.mouse.click(195, 500);
+        // Click '#btn-set-pin' to drop pin in crosshair mode
+        console.log("Clicking '#btn-set-pin' to lock pin location in crosshair mode...");
+        await page.waitForSelector('#btn-set-pin', { timeout: 5000 });
+        await page.click('#btn-set-pin');
 
         await new Promise(resolve => setTimeout(resolve, 3000));
         await page.screenshot({ path: path.join(__dirname, 'screenshot_3_route_options.png') });
