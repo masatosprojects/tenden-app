@@ -939,49 +939,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function requestLocation() {
         if ("geolocation" in navigator) {
+            const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+            triggerDynamicIsland(dict.fetchingLocationLabel || "📍 現在地を検出中...", "info");
+
+            const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
             navigator.geolocation.getCurrentPosition(
                 position => {
-                    updateGPSAccuracyHUD(position.coords.accuracy);
-                    currentLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    map.setView([currentLocation.lat, currentLocation.lng], 16);
-                    updateMarker(currentLocation);
-                    fetchElevation(currentLocation);
-                    triggerLocationTsunamiCheck(currentLocation);
-                    generalizeFirstTargets(currentLocation);
-                    
-                    // Track location changes
-                    navigator.geolocation.watchPosition(pos => {
-                        updateGPSAccuracyHUD(pos.coords.accuracy);
-                        if (!isManualLocation) {
-                            currentLocation = {
-                                lat: pos.coords.latitude,
-                                lng: pos.coords.longitude
-                            };
-                            updateMarker(currentLocation);
-                            triggerLocationTsunamiCheck(currentLocation);
-                            generalizeFirstTargets(currentLocation);
-                        }
-                        
-                        if (isEmergency && !simulationInterval) {
-                            checkRouteDeviation({lat: pos.coords.latitude, lng: pos.coords.longitude});
-                            checkShelterArrival({lat: pos.coords.latitude, lng: pos.coords.longitude});
-                        }
-                    });
+                    handleLocationSuccess(position);
                 },
                 error => {
-                    console.error("Location error:", error);
-                    updateGPSAccuracyHUD(null);
-                    const overlay = document.getElementById('error-overlay');
-                    overlay.classList.remove('hidden');
-                    setTimeout(() => overlay.classList.add('active'), 10);
+                    console.warn("High accuracy geolocation failed, trying standard accuracy (IP/Wi-Fi)...", error);
+                    // Fallback to standard accuracy (which is faster and works indoors/desktops)
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            handleLocationSuccess(position);
+                        },
+                        fallbackError => {
+                            console.error("Standard accuracy geolocation also failed:", fallbackError);
+                            showLocationErrorOverlay();
+                        },
+                        { enableHighAccuracy: false, timeout: 10000 }
+                    );
                 },
-                { enableHighAccuracy: true, timeout: 5000 }
+                options
             );
         } else {
-            const overlay = document.getElementById('error-overlay');
+            showLocationErrorOverlay();
+        }
+    }
+
+    function handleLocationSuccess(position) {
+        updateGPSAccuracyHUD(position.coords.accuracy);
+        currentLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+        };
+        map.setView([currentLocation.lat, currentLocation.lng], 16);
+        updateMarker(currentLocation);
+        fetchElevation(currentLocation);
+        triggerLocationTsunamiCheck(currentLocation);
+        generalizeFirstTargets(currentLocation);
+        
+        const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+        triggerDynamicIsland(dict.locationAcquiredLabel || "✅ 現在地を同期しました", "success");
+
+        // Track location changes
+        navigator.geolocation.watchPosition(pos => {
+            updateGPSAccuracyHUD(pos.coords.accuracy);
+            if (!isManualLocation) {
+                currentLocation = {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude
+                };
+                updateMarker(currentLocation);
+                triggerLocationTsunamiCheck(currentLocation);
+                generalizeFirstTargets(currentLocation);
+            }
+            
+            if (isEmergency && !simulationInterval) {
+                checkRouteDeviation({lat: pos.coords.latitude, lng: pos.coords.longitude});
+                checkShelterArrival({lat: pos.coords.latitude, lng: pos.coords.longitude});
+            }
+        }, err => console.warn("Watch position error:", err), { enableHighAccuracy: false, timeout: 10000 });
+    }
+
+    function showLocationErrorOverlay() {
+        updateGPSAccuracyHUD(null);
+        const overlay = document.getElementById('error-overlay');
+        if (overlay) {
             overlay.classList.remove('hidden');
             setTimeout(() => overlay.classList.add('active'), 10);
         }
@@ -4073,7 +4098,7 @@ function startOnboardingDemo() {
             ctx.globalAlpha = opacity;
 
             // Background (ocean)
-            ctx.fillStyle = '#dbe8f5';
+            ctx.fillStyle = '#bce0f5';
             ctx.fillRect(0, 0, W, H);
 
             // Apply zoom from center
@@ -4082,38 +4107,91 @@ function startOnboardingDemo() {
             ctx.scale(zoom, zoom);
             ctx.translate(-cx, -cy);
 
-            // Land (above coast line)
+            // Land background (above coast line)
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.lineTo(W, 0);
-            coast.forEach((p, i) => {
-                if (i === 0) ctx.lineTo(p[0]*W, p[1]*H);
-                else ctx.lineTo(p[0]*W, p[1]*H);
-            });
-            ctx.lineTo(W, 0);
+            ctx.lineTo(W, coast[coast.length-1][1]*H);
+            for (let i = coast.length - 1; i >= 0; i--) {
+                ctx.lineTo(coast[i][0]*W, coast[i][1]*H);
+            }
+            ctx.lineTo(0, coast[0][1]*H);
             ctx.closePath();
-            ctx.fillStyle = '#e8f0e0';
+            ctx.fillStyle = '#e8efe8';
             ctx.fill();
 
-            // Coastline
+            // Draw Green Mountains / Hills (Kamakura terrain) in Zoomed Map
+            // Left (Western Hills - Gokurakuji/Hase side)
+            ctx.fillStyle = '#bad4ba';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0.18 * W, 0);
+            ctx.quadraticCurveTo(0.20 * W, 0.25 * H, 0.12 * W, 0.5 * H);
+            ctx.lineTo(0, 0.6 * H);
+            ctx.closePath();
+            ctx.fill();
+
+            // Right (Eastern Hills - Zaimokuza/Kohaiza side)
+            ctx.beginPath();
+            ctx.moveTo(W, 0);
+            ctx.lineTo(0.70 * W, 0);
+            ctx.quadraticCurveTo(0.68 * W, 0.25 * H, 0.80 * W, 0.55 * H);
+            ctx.lineTo(W, 0.65 * H);
+            ctx.closePath();
+            ctx.fill();
+
+            // Central avenue (若宮大路)
+            ctx.beginPath();
+            ctx.moveTo(0.50 * W, 0.60 * H);
+            ctx.lineTo(0.51 * W, 0.45 * H);
+            ctx.lineTo(0.52 * W, 0.30 * H);
+            ctx.lineTo(0.53 * W, 0.10 * H);
+            ctx.strokeStyle = '#d0d5d0';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Draw Sand/Beach (Yuigahama 砂浜)
             ctx.beginPath();
             coast.forEach((p, i) => {
                 if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
                 else ctx.lineTo(p[0]*W, p[1]*H);
             });
-            ctx.strokeStyle = '#8ab4d4';
-            ctx.lineWidth = 3;
+            for (let i = coast.length - 1; i >= 0; i--) {
+                ctx.lineTo(coast[i][0]*W, (coast[i][1] - 0.04)*H);
+            }
+            ctx.closePath();
+            ctx.fillStyle = '#e8d7b3'; // Sand
+            ctx.fill();
+
+            // Coastline stroke
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.strokeStyle = '#71a3c7';
+            ctx.lineWidth = 2.5;
             ctx.stroke();
 
-            // Roads
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-            roads.forEach(r => {
-                ctx.beginPath();
-                ctx.moveTo(r.x1*W, r.y1*H);
-                ctx.lineTo(r.x2*W, r.y2*H);
-                ctx.stroke();
-            });
+            // Landmark Text Labels
+            ctx.fillStyle = '#657d65';
+            ctx.font = 'bold 8px "Helvetica Neue", Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('極楽寺・Hase方面', 0.02 * W, 0.3 * H);
+            ctx.textAlign = 'right';
+            ctx.fillText('名越切通方面', 0.98 * W, 0.3 * H);
+            
+            ctx.fillStyle = '#6c757d';
+            ctx.save();
+            ctx.translate(0.57 * W, 0.38 * H);
+            ctx.rotate(Math.PI / 2.1);
+            ctx.fillText('若宮大路', 0, 0);
+            ctx.restore();
 
             ctx.restore();
             ctx.save();
@@ -4205,9 +4283,99 @@ function startOnboardingDemo() {
 
         function drawBase() {
             ctx.clearRect(0, 0, W, H);
-            // Background
-            ctx.fillStyle = '#f0f4f0';
+            // Land background (light warm gray/green)
+            ctx.fillStyle = '#e8efe8';
             ctx.fillRect(0, 0, W, H);
+
+            // Draw Green Mountains / Hills (Kamakura terrain)
+            // Left (Western Hills - Gokurakuji/Hase side)
+            ctx.fillStyle = '#bad4ba';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0.15 * W, 0);
+            ctx.quadraticCurveTo(0.18 * W, 0.3 * H, 0.12 * W, 0.6 * H);
+            ctx.lineTo(0, 0.8 * H);
+            ctx.closePath();
+            ctx.fill();
+
+            // Right (Eastern Hills - Zaimokuza side)
+            ctx.beginPath();
+            ctx.moveTo(W, 0);
+            ctx.lineTo(0.72 * W, 0);
+            ctx.quadraticCurveTo(0.70 * W, 0.3 * H, 0.78 * W, 0.7 * H);
+            ctx.lineTo(W, 0.85 * H);
+            ctx.closePath();
+            ctx.fill();
+
+            // Add some hill details/ridges
+            ctx.strokeStyle = '#a4c2a4';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0.05 * W, 0.1 * H);
+            ctx.quadraticCurveTo(0.08 * W, 0.3 * H, 0.04 * W, 0.5 * H);
+            ctx.moveTo(0.85 * W, 0.1 * H);
+            ctx.quadraticCurveTo(0.80 * W, 0.4 * H, 0.88 * W, 0.6 * H);
+            ctx.stroke();
+
+            // Draw major roads in Kamakura (Wakamiya Oji, etc. as faint gray basemaps)
+            // Central road (若宮大路)
+            ctx.beginPath();
+            ctx.moveTo(0.20 * W, 0.82 * H);
+            ctx.lineTo(0.22 * W, 0.72 * H);
+            ctx.lineTo(0.28 * W, 0.62 * H);
+            ctx.lineTo(0.36 * W, 0.52 * H);
+            ctx.lineTo(0.44 * W, 0.42 * H);
+            ctx.lineTo(0.50 * W, 0.32 * H);
+            ctx.lineTo(0.52 * W, 0.22 * H);
+            ctx.strokeStyle = '#d2dcd2';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Parallel roads
+            ctx.beginPath();
+            ctx.moveTo(0.20 * W, 0.82 * H);
+            ctx.lineTo(0.18 * W, 0.70 * H);
+            ctx.lineTo(0.14 * W, 0.58 * H);
+            ctx.lineTo(0.16 * W, 0.46 * H);
+            ctx.lineTo(0.24 * W, 0.38 * H);
+            ctx.lineTo(0.35 * W, 0.30 * H);
+            ctx.lineTo(0.46 * W, 0.25 * H);
+            ctx.lineTo(0.54 * W, 0.20 * H);
+            ctx.strokeStyle = '#d6dbd6';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0.20 * W, 0.82 * H);
+            ctx.lineTo(0.30 * W, 0.78 * H);
+            ctx.lineTo(0.42 * W, 0.72 * H);
+            ctx.lineTo(0.56 * W, 0.65 * H);
+            ctx.lineTo(0.68 * W, 0.56 * H);
+            ctx.lineTo(0.74 * W, 0.45 * H);
+            ctx.lineTo(0.76 * W, 0.34 * H);
+            ctx.lineTo(0.73 * W, 0.24 * H);
+            ctx.strokeStyle = '#d6dbd6';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // Draw Sand/Beach (Yuigahama 砂浜)
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            for (let i = coast.length - 1; i >= 0; i--) {
+                ctx.lineTo(coast[i][0]*W, (coast[i][1] - 0.05)*H);
+            }
+            ctx.closePath();
+            ctx.fillStyle = '#e8d7b3'; // Sand color
+            ctx.fill();
+
             // Ocean (below coast)
             ctx.beginPath();
             coast.forEach((p, i) => {
@@ -4215,19 +4383,21 @@ function startOnboardingDemo() {
                 else ctx.lineTo(p[0]*W, p[1]*H);
             });
             ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-            ctx.fillStyle = '#c8dff0';
+            ctx.fillStyle = '#bce0f5'; // Vibrant ocean blue
             ctx.fill();
+
             // Coastline stroke
             ctx.beginPath();
             coast.forEach((p, i) => {
                 if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
                 else ctx.lineTo(p[0]*W, p[1]*H);
             });
-            ctx.strokeStyle = '#7aabcc';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#71a3c7';
+            ctx.lineWidth = 2.5;
             ctx.stroke();
-            // Hazard hatch overlay on coast area
-            ctx.fillStyle = 'rgba(255,59,48,0.07)';
+
+            // Hazard hatch overlay on coast/beach area
+            ctx.fillStyle = 'rgba(255,59,48,0.08)';
             ctx.beginPath();
             coast.forEach((p, i) => {
                 if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
@@ -4235,6 +4405,25 @@ function startOnboardingDemo() {
             });
             ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
             ctx.fill();
+
+            // Landmark Text Labels
+            ctx.fillStyle = '#657d65';
+            ctx.font = 'bold 9px "Helvetica Neue", Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('源氏山方面', 0.02 * W, 0.4 * H);
+            ctx.textAlign = 'right';
+            ctx.fillText('衣張山方面', 0.98 * W, 0.4 * H);
+
+            ctx.fillStyle = '#8f7a63';
+            ctx.textAlign = 'center';
+            ctx.fillText('由比ヶ浜海岸', 0.5 * W, 0.81 * H);
+            
+            ctx.fillStyle = '#6c757d';
+            ctx.save();
+            ctx.translate(0.33 * W, 0.58 * H);
+            ctx.rotate(-Math.PI / 4.5);
+            ctx.fillText('若宮大路', 0, 0);
+            ctx.restore();
         }
 
         function drawRoutePartial(pts, color, progress) {
@@ -4336,6 +4525,151 @@ function startOnboardingDemo() {
 
         let startTime = null;
 
+        function drawBase() {
+            ctx.clearRect(0, 0, W, H);
+            // Land background (light warm gray/green)
+            ctx.fillStyle = '#e8efe8';
+            ctx.fillRect(0, 0, W, H);
+
+            // Draw Green Mountains / Hills (Kamakura terrain)
+            // Left (Western Hills - Gokurakuji/Hase side)
+            ctx.fillStyle = '#bad4ba';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0.15 * W, 0);
+            ctx.quadraticCurveTo(0.18 * W, 0.3 * H, 0.12 * W, 0.6 * H);
+            ctx.lineTo(0, 0.8 * H);
+            ctx.closePath();
+            ctx.fill();
+
+            // Right (Eastern Hills - Zaimokuza side)
+            ctx.beginPath();
+            ctx.moveTo(W, 0);
+            ctx.lineTo(0.72 * W, 0);
+            ctx.quadraticCurveTo(0.70 * W, 0.3 * H, 0.78 * W, 0.7 * H);
+            ctx.lineTo(W, 0.85 * H);
+            ctx.closePath();
+            ctx.fill();
+
+            // Add some hill details/ridges
+            ctx.strokeStyle = '#a4c2a4';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0.05 * W, 0.1 * H);
+            ctx.quadraticCurveTo(0.08 * W, 0.3 * H, 0.04 * W, 0.5 * H);
+            ctx.moveTo(0.85 * W, 0.1 * H);
+            ctx.quadraticCurveTo(0.80 * W, 0.4 * H, 0.88 * W, 0.6 * H);
+            ctx.stroke();
+
+            // Draw major roads in Kamakura (Wakamiya Oji, etc. as faint gray basemaps)
+            // Central road (若宮大路)
+            ctx.beginPath();
+            ctx.moveTo(0.20 * W, 0.82 * H);
+            ctx.lineTo(0.22 * W, 0.72 * H);
+            ctx.lineTo(0.28 * W, 0.62 * H);
+            ctx.lineTo(0.36 * W, 0.52 * H);
+            ctx.lineTo(0.44 * W, 0.42 * H);
+            ctx.lineTo(0.50 * W, 0.32 * H);
+            ctx.lineTo(0.52 * W, 0.22 * H);
+            ctx.strokeStyle = '#d2dcd2';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Parallel roads
+            ctx.beginPath();
+            ctx.moveTo(0.20 * W, 0.82 * H);
+            ctx.lineTo(0.18 * W, 0.70 * H);
+            ctx.lineTo(0.14 * W, 0.58 * H);
+            ctx.lineTo(0.16 * W, 0.46 * H);
+            ctx.lineTo(0.24 * W, 0.38 * H);
+            ctx.lineTo(0.35 * W, 0.30 * H);
+            ctx.lineTo(0.46 * W, 0.25 * H);
+            ctx.lineTo(0.54 * W, 0.20 * H);
+            ctx.strokeStyle = '#d6dbd6';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0.20 * W, 0.82 * H);
+            ctx.lineTo(0.30 * W, 0.78 * H);
+            ctx.lineTo(0.42 * W, 0.72 * H);
+            ctx.lineTo(0.56 * W, 0.65 * H);
+            ctx.lineTo(0.68 * W, 0.56 * H);
+            ctx.lineTo(0.74 * W, 0.45 * H);
+            ctx.lineTo(0.76 * W, 0.34 * H);
+            ctx.lineTo(0.73 * W, 0.24 * H);
+            ctx.strokeStyle = '#d6dbd6';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // Draw Sand/Beach (Yuigahama 砂浜)
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            for (let i = coast.length - 1; i >= 0; i--) {
+                ctx.lineTo(coast[i][0]*W, (coast[i][1] - 0.05)*H);
+            }
+            ctx.closePath();
+            ctx.fillStyle = '#e8d7b3'; // Sand color
+            ctx.fill();
+
+            // Ocean (below coast)
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+            ctx.fillStyle = '#bce0f5'; // Vibrant ocean blue
+            ctx.fill();
+
+            // Coastline stroke
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.strokeStyle = '#71a3c7';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Hazard hatch overlay on coast/beach area
+            ctx.fillStyle = 'rgba(255,59,48,0.08)';
+            ctx.beginPath();
+            coast.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
+                else ctx.lineTo(p[0]*W, p[1]*H);
+            });
+            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+            ctx.fill();
+
+            // Landmark Text Labels
+            ctx.fillStyle = '#657d65';
+            ctx.font = 'bold 9px "Helvetica Neue", Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('源氏山方面', 0.02 * W, 0.4 * H);
+            ctx.textAlign = 'right';
+            ctx.fillText('衣張山方面', 0.98 * W, 0.4 * H);
+
+            ctx.fillStyle = '#8f7a63';
+            ctx.textAlign = 'center';
+            ctx.fillText('由比ヶ浜海岸', 0.5 * W, 0.81 * H);
+            
+            ctx.fillStyle = '#6c757d';
+            ctx.save();
+            ctx.translate(0.33 * W, 0.58 * H);
+            ctx.rotate(-Math.PI / 4.5);
+            ctx.fillText('若宮大路', 0, 0);
+            ctx.restore();
+        }
+
         function getPointOnRoute(pts, progress) {
             const p = Math.max(0, Math.min(1, progress));
             const totalSegs = pts.length - 1;
@@ -4354,16 +4688,7 @@ function startOnboardingDemo() {
             ctx.clearRect(0, 0, W, H);
 
             // Background
-            ctx.fillStyle = '#f0f4f0';
-            ctx.fillRect(0, 0, W, H);
-            ctx.beginPath();
-            coast.forEach((p, i) => {
-                if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
-                else ctx.lineTo(p[0]*W, p[1]*H);
-            });
-            ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
-            ctx.fillStyle = '#c8dff0';
-            ctx.fill();
+            drawBase();
 
             // Draw faint route lines
             routeGroups.forEach(rg => {
