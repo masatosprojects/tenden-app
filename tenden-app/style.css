@@ -607,20 +607,22 @@ input:checked + .slider:before {
         gap: 6px;
     }
     .status-badge {
-        font-size: 0.8rem;
+        font-size: 0.88rem;
         gap: 4px;
     }
-    /* Hide label descriptions on mobile to fit the bar elegantly on one line */
+    /* Show label descriptions on mobile with a subtle, clean opacity contrast */
     .status-badge .status-icon {
-        display: none !important;
+        display: inline !important;
+        font-size: 0.8rem;
+        opacity: 0.7;
     }
     .network-badge, .gps-badge, .elev-badge {
         padding: 4px 8px;
-        font-size: 0.78rem;
+        font-size: 0.85rem;
         border-radius: 6px;
     }
     .status-time {
-        font-size: 0.85rem;
+        font-size: 0.92rem;
         margin-left: 2px;
     }
 }
