@@ -3843,7 +3843,6 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  }).catch(e => console.warn('[Generalization] Dynamic raster scan failed:', e));
  }
-});
 
 // ══════════════════════════════════════════════════════════════════
 // ONBOARDING DEMO — Cinematic 4-step scenario animation
@@ -4746,3 +4745,5 @@ function startOnboardingDemo() {
  console.log('[TENDEN] Onboarding demo started.');
 }
 
+
+});
