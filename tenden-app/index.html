@@ -425,6 +425,14 @@
  </button>
  </div>
 
+ <!-- Add to Home Screen (optional, manual trigger) -->
+ <div class="form-group">
+ <label>ホーム画面に追加（任意）</label>
+ <button id="btn-show-home-guide" class="action-btn secondary-btn w-100" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px;">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+ <span>ホーム画面に追加する方法を見る</span>
+ </button>
+ </div>
 
  <!-- App Promotion Site Link -->
  <div class="form-group">
@@ -632,101 +640,33 @@
  <!-- Capture Container (used for html2canvas to ensure clean rendering) -->
  <div id="capture-container"></div>
 
-  <!-- Android/Generic PWA Install Banner -->
-  <div id="pwa-install-banner" class="pwa-install-banner hidden">
-    <div class="pwa-banner-content">
-      <img src="assets/logo.png" class="pwa-banner-logo" alt="TENDEN Logo">
-      <div class="pwa-banner-text">
-        <h4 data-i18n="pwaInstallTitle">TENDENをホーム画面に追加</h4>
-        <p data-i18n="pwaInstallDesc">アプリ感覚で素早くルート探索を開始</p>
-      </div>
-    </div>
-    <div class="pwa-banner-actions">
-      <button id="btn-pwa-install-action" class="action-btn primary-btn btn-small" data-i18n="btnPwaInstall">追加</button>
-      <button id="btn-pwa-install-close" class="banner-close-btn">&times;</button>
-    </div>
-  </div>
 
-  <!-- iOS Safari Install Instruction Modal -->
-  <div id="ios-install-modal" class="overlay hidden">
+
+  <!-- Home Screen Add Guide Modal (triggered manually from settings) -->
+  <div id="home-guide-modal" class="overlay hidden">
     <div class="ios-install-sheet glass-panel">
       <div class="ios-sheet-header">
         <img src="assets/logo.png" class="ios-install-logo" alt="TENDEN Logo">
-        <h3 data-i18n="iosInstallTitle">TENDEN をインストール</h3>
-        <p data-i18n="iosInstallDesc">ホーム画面に追加して、全画面での快適な避難シミュレーション体験を開始できます。</p>
+        <h3>ホーム画面に追加</h3>
+        <p>アプリのようにワンタップで起動できます。</p>
       </div>
       <div class="ios-sheet-steps">
         <div class="ios-step">
-          <span class="step-num">1</span>
-          <p data-i18n="iosStep1">Safariの画面下部にある<strong>共有ボタン</strong>を押します。</p>
+          <span class="step-num">iOS</span>
+          <p>Safariの<strong>共有ボタン</strong>をタップ →「<strong>ホーム画面に追加</strong>」を選択</p>
           <span class="step-icon-wrapper">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: #007aff;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
           </span>
         </div>
         <div class="ios-step">
-          <span class="step-num">2</span>
-          <p data-i18n="iosStep2">メニューをスクロールし、「<strong>ホーム画面に追加</strong>」を選択します。</p>
+          <span class="step-num">Android</span>
+          <p>Chromeの<strong>メニュー（⋮）</strong>をタップ →「<strong>ホーム画面に追加</strong>」を選択</p>
           <span class="step-icon-wrapper">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: #8e8e93;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: #34c759;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
           </span>
         </div>
       </div>
-      <button id="btn-ios-install-close" class="action-btn secondary-btn w-100" style="margin-top: 15px; border-radius: 12px;" data-i18n="btnGuideClose">閉じる</button>
-    </div>
-  </div>
-
-  <!-- DEVELOPER DEBUG BADGE & CONTROL DRAWER -->
-  <div id="dev-debug-badge" class="dev-debug-badge hidden">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    <span>DEV</span>
-  </div>
-
-  <div id="dev-debug-drawer" class="dev-debug-drawer hidden">
-    <div class="dev-drawer-header">
-      <h3>🛠️ DEV実機コンソール</h3>
-      <button id="btn-dev-drawer-close" class="close-btn">&times;</button>
-    </div>
-    
-    <div class="dev-drawer-body">
-      <!-- Location Teleporter -->
-      <div class="dev-control-group">
-        <label>📍 座標テレポート（テスト・検証用）</label>
-        <select id="dev-teleport-select" class="dev-select">
-          <option value="none">-- 選択してください --</option>
-          <option value="yuigahama">由比ヶ浜ビーチ (浸水エリア)</option>
-          <option value="kamakura_station">鎌倉駅東口</option>
-          <option value="zushi_beach">逗子海岸 (一般化検証)</option>
-          <option value="real_gps">実機リアルGPS</option>
-        </select>
-      </div>
-
-      <!-- System State -->
-      <div class="dev-control-group">
-        <label>📟 システム情報</label>
-        <div class="dev-state-grid">
-          <div><span>座標:</span> <strong id="dev-state-coords">-</strong></div>
-          <div><span>海抜:</span> <strong id="dev-state-elev">-</strong></div>
-          <div><span>OSRM:</span> <strong id="dev-state-osrm">未検証</strong></div>
-          <div><span>モード:</span> <strong id="dev-state-mode">Normal</strong></div>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="dev-control-group">
-        <label>⚡ クイック操作</label>
-        <div style="display:flex; gap:8px; margin-top:5px;">
-          <button id="btn-dev-clear-cache" class="action-btn outline-btn w-100" style="padding:8px 6px; font-size:0.75rem; border-radius:8px;">キャッシュ破棄</button>
-          <button id="btn-dev-sim-alert" class="action-btn primary-btn w-100" style="padding:8px 6px; font-size:0.75rem; border-radius:8px; background:var(--danger); border:none;">津波警報発令</button>
-        </div>
-      </div>
-
-      <!-- Real-time logs -->
-      <div class="dev-control-group" style="flex: 1; display:flex; flex-direction:column; overflow:hidden;">
-        <label>📟 実機コンソール出力 (リアルタイム)</label>
-        <div id="dev-log-container" class="dev-log-container">
-          <div class="log-item info">[DEV] コンソール監視が開始されました。</div>
-        </div>
-      </div>
+      <button id="btn-home-guide-close" class="action-btn secondary-btn w-100" style="margin-top: 15px; border-radius: 12px;">閉じる</button>
     </div>
   </div>
 

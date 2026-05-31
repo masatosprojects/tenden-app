@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --primary: #007aff;
     --danger: #ff3b30;
     --warning: #ff9f0a;
@@ -657,10 +657,10 @@ input:checked + .slider:before {
 }
 
 /* ==========================================================================
-   5大プレミアム・デザイン・システム・アップデート
+   5螟ｧ繝励Ξ繝溘い繝繝ｻ繝・じ繧､繝ｳ繝ｻ繧ｷ繧ｹ繝・Β繝ｻ繧｢繝・・繝・・繝・
    ========================================================================== */
 
-/* 1. 流体モーフィング・テーマ移行アニメーション */
+/* 1. 豬∽ｽ薙Δ繝ｼ繝輔ぅ繝ｳ繧ｰ繝ｻ繝・・繝樒ｧｻ陦後い繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ */
 body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, button, input, textarea {
     transition: background-color 0.8s cubic-bezier(0.16, 1, 0.3, 1),
                 border-color 0.8s cubic-bezier(0.16, 1, 0.3, 1),
@@ -670,7 +670,7 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
                 -webkit-backdrop-filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 2. ネオン・ルミナス発光する多重発光避難ルート */
+/* 2. 繝阪が繝ｳ繝ｻ繝ｫ繝溘リ繧ｹ逋ｺ蜈峨☆繧句､夐㍾逋ｺ蜈蛾∩髮｣繝ｫ繝ｼ繝・*/
 .route-glow-base {
     animation: neonPulse 2.5s infinite ease-in-out;
     stroke-linecap: round;
@@ -695,7 +695,7 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     to { stroke-dashoffset: -500; }
 }
 
-/* 3. Appleライクな「ダイナミック・アイランド（上部伸縮カプセル通知）」 */
+/* 3. Apple繝ｩ繧､繧ｯ縺ｪ縲後ム繧､繝翫Α繝・け繝ｻ繧｢繧､繝ｩ繝ｳ繝会ｼ井ｸ企Κ莨ｸ邵ｮ繧ｫ繝励そ繝ｫ騾夂衍・峨・*/
 #dynamic-island {
     position: absolute;
     left: 50%;
@@ -762,7 +762,7 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     width: 100%;
 }
 
-/* 4. ボタンの「3Dマイクロ・リフレクション（ガラス光沢反射）」効果 */
+/* 4. 繝懊ち繝ｳ縺ｮ縲・D繝槭う繧ｯ繝ｭ繝ｻ繝ｪ繝輔Ξ繧ｯ繧ｷ繝ｧ繝ｳ・医ぎ繝ｩ繧ｹ蜈画ｲ｢蜿榊ｰ・ｼ峨榊柑譫・*/
 .fab-btn, .action-btn {
     position: relative;
     overflow: hidden;
@@ -789,14 +789,14 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     transform: rotate(-45deg) translate(100%, 100%);
 }
 
-/* 5. 地図（Leaflet）レイヤー切替時の「流体フェード」効果 */
+/* 5. 蝨ｰ蝗ｳ・・eaflet・峨Ξ繧､繝､繝ｼ蛻・崛譎ゅ・縲梧ｵ∽ｽ薙ヵ繧ｧ繝ｼ繝峨榊柑譫・*/
 .leaflet-tile {
     transition: opacity 0.6s ease-in-out !important;
 }
 
-/* ══════════════════════════════════════════════════
+/* 笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武
    ONBOARDING DEMO OVERLAY
-   ══════════════════════════════════════════════════ */
+   笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武 */
 #onboarding-overlay.overlay.active {
     position: fixed !important;
     z-index: 20000;
@@ -1092,9 +1092,9 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     border-radius: 3px;
 }
 
-/* ─────────────────────────────────────────────────
+/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
    APP CONTAINER WRAPPER
-   ───────────────────────────────────────────────── */
+   笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */
 #app-container {
     width: 100%;
     height: 100%;
@@ -1102,9 +1102,9 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     overflow: hidden;
 }
 
-/* ─────────────────────────────────────────────────
+/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
    DESKTOP VIEWPORT SIMULATOR (Premium Smartphone Mockup)
-   ───────────────────────────────────────────────── */
+   笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */
 @media (min-width: 769px) {
     body {
         background: #111214 !important; /* Premium dark background surrounding the phone */
@@ -1174,9 +1174,9 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     }
 }
 
-/* ══════════════════════════════════════════════════════════════════
+/* 笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武
    COASTAL PROXIMITY LINE NEON VECTOR & SHORELINE RIPPLE STYLES
-   ══════════════════════════════════════════════════════════════════ */
+   笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武 */
 .coastal-proximity-line {
     animation: strokePulse 2s infinite linear;
     filter: drop-shadow(0 0 8px #ff2d55);
@@ -1229,284 +1229,5 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     border: 1px solid rgba(255,255,255,0.2);
 }
 
-/* PWA Floating Install Banner */
-.pwa-install-banner {
-    position: absolute;
-    bottom: 20px;
-    left: 16px;
-    right: 16px;
-    z-index: 9999;
-    padding: 14px 16px;
-    border-radius: 18px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: var(--glass-shadow);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    animation: pwaSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@keyframes pwaSlideUp {
-    0% { transform: translateY(120px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
-}
-.pwa-banner-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.pwa-banner-logo {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    object-fit: cover;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-.pwa-banner-text h4 {
-    margin: 0;
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: var(--text-color);
-}
-.pwa-banner-text p {
-    margin: 2px 0 0 0;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-}
-.pwa-banner-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.banner-close-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 1.4rem;
-    cursor: pointer;
-    padding: 0 4px;
-    line-height: 1;
-    transition: color 0.2s;
-}
-.banner-close-btn:hover {
-    color: var(--text-color);
-}
 
-/* iOS Safari Install Sheet */
-.ios-install-sheet {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    border-radius: 30px 30px 0 0 !important;
-    padding: 24px 24px max(env(safe-area-inset-bottom, 16px), 24px) 24px;
-    animation: iosSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@keyframes iosSlideUp {
-    0% { transform: translateY(100%); }
-    100% { transform: translateY(0); }
-}
-.ios-sheet-header {
-    text-align: center;
-    margin-bottom: 24px;
-}
-.ios-install-logo {
-    width: 60px;
-    height: 60px;
-    border-radius: 14px;
-    margin-bottom: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
-}
-.ios-sheet-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-}
-.ios-sheet-header p {
-    margin: 8px 0 0 0;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    line-height: 1.4;
-}
-.ios-sheet-steps {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-.ios-step {
-    display: flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 12px 16px;
-    gap: 12px;
-}
-.ios-step p {
-    margin: 0;
-    font-size: 0.88rem;
-    line-height: 1.4;
-    flex: 1;
-}
-.step-num {
-    background: var(--primary);
-    color: #fff;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.78rem;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-.step-icon-wrapper {
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 8px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-/* DEVELOPER DEBUG BADGE */
-.dev-debug-badge {
-    position: absolute;
-    top: max(env(safe-area-inset-top, 16px), 16px);
-    left: 16px;
-    z-index: 10001; /* Above overlays */
-    background: rgba(191, 90, 242, 0.25);
-    border: 1px solid rgba(191, 90, 242, 0.45);
-    color: #bf5af2;
-    padding: 6px 10px;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-.dev-debug-badge:hover {
-    transform: scale(1.05);
-    background: rgba(191, 90, 242, 0.35);
-}
-
-/* DEVELOPER DEBUG DRAWER */
-.dev-debug-drawer {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 10002;
-    background: rgba(11, 12, 16, 0.95);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    color: #f5f5f7;
-    animation: devSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@keyframes devSlideIn {
-    0% { transform: scale(0.96); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
-.dev-drawer-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    padding-bottom: 12px;
-    margin-bottom: 16px;
-    flex-shrink: 0;
-}
-.dev-drawer-header h3 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #bf5af2;
-}
-.dev-drawer-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    overflow-y: auto;
-}
-.dev-control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-.dev-control-group label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-}
-.dev-select {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: #fff;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 0.88rem;
-    outline: none;
-}
-.dev-select option {
-    background: #111214;
-}
-.dev-state-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 12px;
-    font-size: 0.82rem;
-}
-.dev-state-grid div {
-    display: flex;
-    justify-content: space-between;
-    color: var(--text-muted);
-}
-.dev-state-grid strong {
-    color: var(--text-color);
-}
-.dev-log-container {
-    background: #000;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 10px;
-    padding: 10px;
-    flex: 1;
-    overflow-y: auto;
-    font-family: monospace;
-    font-size: 0.7rem;
-    line-height: 1.4;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 250px;
-}
-.log-item {
-    padding: 2px 4px;
-    border-radius: 3px;
-    word-break: break-all;
-}
-.log-item.info { color: #8e8e93; }
-.log-item.log { color: #34c759; }
-.log-item.warn { color: #ff9f0a; background: rgba(255,159,10,0.1); }
 .log-item.error { color: #ff3b30; background: rgba(255,59,48,0.1); }
