@@ -791,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  const lang = getLanguageCode();
  if (navigator.share && currentLocation) {
-  const shareTitle = dict.alertSosTitle || 'SOS Safety Status (Current Location)';
+  const shareTitle = dict.alertSosTitle || '安否情報 (現在地)';
  const shareTextDefault = lang === 'ja' ? '現在、安全な高台へ避難中です。\n現在地: ' : 'I am currently evacuating to safe high ground.\nMy location: ';
  const shareText = (dict.shareText || shareTextDefault) + `https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`;
  navigator.share({
@@ -799,7 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
  text: shareText
  }).catch(console.error);
  } else if (currentLocation) {
-  const shareTitle = dict.alertSosTitle || 'SOS Safety Status (Current Location)';
+  const shareTitle = dict.alertSosTitle || '安否情報 (現在地)';
   const shareDescPrefix = dict.alertSosDesc || "Please copy and send to family and friends:\n\n";
  showCustomAlert(shareTitle, `${shareDescPrefix}https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`, "success");
  } else {
@@ -2084,7 +2084,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (onlineNearestWaypoints) {
  routeA = {
  id: 'A',
-  label: dict.routeShortestLabel || 'Shortest Route',
+  label: dict.routeShortestLabel || '最短ルート',
  color: '#0071e3',
  waypoints: onlineNearestWaypoints,
  distance_m: onlineNearestDistance,
@@ -2104,7 +2104,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (detourResult) {
  routeB = {
  id: 'B',
-  label: dict.routeAvoidLabel || 'Avoid Congestion Route',
+  label: dict.routeAvoidLabel || '混雑回避ルート',
  color: '#34c759',
  waypoints: detourResult.waypoints,
  distance_m: detourResult.distance,
@@ -2118,7 +2118,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const noCongestionDesc = dict.routeAvoidNoCongestionDesc || 'No heavy simulated traffic detected. Directing to {target} via the shortest route.';
  routeB = {
  id: 'B',
-  label: dict.routeAvoidLabel || 'Avoid Congestion Route',
+  label: dict.routeAvoidLabel || '混雑回避ルート',
  color: '#34c759',
  waypoints: onlineNearestWaypoints,
  distance_m: onlineNearestDistance,
@@ -2239,7 +2239,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (routeCWaypoints) {
  routeC = {
  id: 'C',
-  label: dict.routeBarrierLabel || 'Barrier-Free Route',
+  label: dict.routeBarrierLabel || 'バリアフリールート',
  color: '#5e5ce6',
  waypoints: routeCWaypoints,
  distance_m: routeCDistance,
@@ -2269,7 +2269,7 @@ document.addEventListener('DOMContentLoaded', () => {
  showRouteSelectorHUD(candidates);
 
  // Update emergency HUD text
-  document.getElementById('i18n-evac-desc').innerText = dict.routeStartPrompt || 'Evacuation start point set. Please select a route to start evacuation.';
+  document.getElementById('i18n-evac-desc').innerText = dict.routeStartPrompt || '避難開始位置を設定しました。ルートを選んで避難を開始してください。';
  }
 
  /**
@@ -2514,13 +2514,13 @@ document.addEventListener('DOMContentLoaded', () => {
  if (dict.learningCenter) localizedShelterName = localizedShelterName.replace('学習センター', dict.learningCenter);
 
  if (type === 'A') {
-  label = dict.routeShortestLabel || 'Shortest Route';
+  label = dict.routeShortestLabel || '最短ルート';
   characteristics = (dict.routeShortestDesc || 'Direct route to the nearest safe high ground {target}').replace('{target}', localizedShelterName);
  } else if (type === 'B') {
-  label = dict.routeAvoidLabel || 'Avoid Congestion Route';
+  label = dict.routeAvoidLabel || '混雑回避ルート';
   characteristics = (dict.routeAvoidDesc || 'Avoids simulated traffic and congestion to ensure a safe route to {target}').replace('{target}', localizedShelterName);
  } else if (type === 'C') {
-  label = dict.routeBarrierLabel || 'Barrier-Free Route';
+  label = dict.routeBarrierLabel || 'バリアフリールート';
   characteristics = (dict.routeBarrierDesc2 || 'Accessible and relatively flat route heading to {target}').replace('{target}', localizedShelterName);
  }
  
@@ -2549,9 +2549,9 @@ document.addEventListener('DOMContentLoaded', () => {
  const midPoint = [startLoc.lat, shelterLng]; // corner turn to simulate streets
  
  const fallbackNames = {
-  'A': dict.routeShortestLabel || 'Shortest Route',
-  'B': dict.routeAvoidLabel || 'Avoid Congestion Route',
-  'C': dict.routeBarrierLabel || 'Barrier-Free Route',
+  'A': dict.routeShortestLabel || '最短ルート',
+  'B': dict.routeAvoidLabel || '混雑回避ルート',
+  'C': dict.routeBarrierLabel || 'バリアフリールート',
   'D': dict.routeDispersal || 'Dispersed Route'
  };
  const fallbackColors = {
@@ -2611,11 +2611,11 @@ document.addEventListener('DOMContentLoaded', () => {
  iconContainer.style.color = iconColor;
  iconContainer.innerHTML = iconHtml;
  
- const hideAlert = () => {
+ const hideAlert = (e) => { if(e) e.stopPropagation();
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
  btnOk.removeEventListener('click', hideAlert);
- if (callback) callback();
+ if (callback) setTimeout(callback, 50);
  };
  
  btnOk.addEventListener('click', hideAlert);
@@ -2651,18 +2651,18 @@ document.addEventListener('DOMContentLoaded', () => {
  if (minDistance > 100) {
  console.log("Route deviation detected");
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
-  document.getElementById('i18n-evac-desc').innerText = dict.routeOffCourse || 'Off course! Please return to the blue path.';
+  document.getElementById('i18n-evac-desc').innerText = dict.routeOffCourse || '避難経路から外れています。元のルートに戻ってください。';
  document.getElementById('i18n-evac-desc').style.color = 'var(--danger)';
  
  // Speak deviation alert rate-limited to every 12s to avoid overlap
  const now = Date.now();
  if (now - lastOffCourseSpeakTime > 12000) {
  speakI18n('speechOffCourse');
-  triggerDynamicIsland(dict.routeOffCourse || 'Off course! Please return to the blue path.', 'error');
+  triggerDynamicIsland(dict.routeOffCourse || '避難経路から外れています。元のルートに戻ってください。', 'error');
  
  // Smartphone Background Notification
  sendSystemNotification(
-  dict.routeOffCourse || 'You have deviated from the evacuation route. Please return to the blue route.',
+  dict.routeOffCourse || '避難経路から外れています。元のルートに戻ってください。',
  "deviation-alert"
  );
  
@@ -2921,7 +2921,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (accuracy === null || accuracy === undefined) {
  // Manual pin or mock high accuracy
  if (isManualLocation) {
- accuracyEl.innerText = `GPS: ﾂｱ3m`;
+ accuracyEl.innerText = `GPS: ±3m`;
  box.className = 'status-badge gps-badge';
  } else {
  accuracyEl.innerText = 'GPS: --';
@@ -2932,11 +2932,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
  const formattedAccuracy = Math.round(accuracy);
  if (accuracy < 15) {
- accuracyEl.innerText = `GPS: ﾂｱ${formattedAccuracy}m`;
+ accuracyEl.innerText = `GPS: ±${formattedAccuracy}m`;
  box.className = 'status-badge gps-badge';
  } else {
   const warningText = dict.gpsLowAccuracy || '(Outdoor Use Recommended)';
- accuracyEl.innerText = `GPS: ﾂｱ${formattedAccuracy}m ${warningText}`;
+ accuracyEl.innerText = `GPS: ±${formattedAccuracy}m ${warningText}`;
  box.className = 'status-badge gps-badge gps-low-accuracy';
  }
  }
@@ -3838,9 +3838,9 @@ document.addEventListener('DOMContentLoaded', () => {
  routeLabel = selectedRoute.label;
  } else {
  const fallbackNames = {
-  'A': dict.routeShortestLabel || 'Shortest Route',
-  'B': dict.routeAvoidLabel || 'Avoid Congestion Route',
-  'C': dict.routeBarrierLabel || 'Barrier-Free Route',
+  'A': dict.routeShortestLabel || '最短ルート',
+  'B': dict.routeAvoidLabel || '混雑回避ルート',
+  'C': dict.routeBarrierLabel || 'バリアフリールート',
   'D': dict.routeDispersal || 'Dispersed Route'
  };
  routeLabel = fallbackNames[activeSelectedRouteId] || fallbackNames['A'];
