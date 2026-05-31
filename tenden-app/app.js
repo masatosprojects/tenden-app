@@ -1,5 +1,27 @@
 // app.js
 document.addEventListener('DOMContentLoaded', () => {
+
+ // ── スプラッシュ画面の確実な除去 ──────────────────────────────────────
+ // 他の初期化コードがエラーで止まっても必ず消えるよう、最初に登録する。
+ // 500ms (最低保証) と 3000ms (フォールバック) の2段構えで確実に除去。
+ (function removeSplash() {
+   function doHide() {
+     try {
+       var sp = document.getElementById('splash-screen');
+       if (sp && sp.style.display !== 'none') {
+         sp.style.transition = 'opacity 0.4s ease';
+         sp.style.opacity = '0';
+         setTimeout(function() {
+           if (sp) { sp.style.display = 'none'; sp.style.visibility = 'hidden'; }
+         }, 420);
+       }
+     } catch(e) {}
+   }
+   setTimeout(doHide, 500);   // 通常ケース
+   setTimeout(doHide, 3000);  // フォールバック（CDN遅延・エラー時）
+ })();
+
+ // ── 初期化関数を個別 try/catch で保護 ────────────────────────────────────
  // Basic state
  let isEmergency = false;
   let coastalProximityLine = null;
@@ -48,13 +70,12 @@ document.addEventListener('DOMContentLoaded', () => {
  // Dictionary for i18n (loaded asynchronously from assets/i18n.json for 30 global languages)
  let i18nDict = {};
 
- // Initialize Map
- initMap();
- initUI();
- startClock();
- connectP2PQuake();
- // Launch onboarding demo (checks localStorage to skip on repeat visits)
- startOnboardingDemo();
+ // Initialize (各関数をtry/catchで保護 — どれかがエラーでもスプラッシュは消える)
+ try { initMap(); } catch(e) { console.error('[TENDEN] initMap error:', e); }
+ try { initUI(); } catch(e) { console.error('[TENDEN] initUI error:', e); }
+ try { startClock(); } catch(e) {}
+ try { connectP2PQuake(); } catch(e) {}
+ try { startOnboardingDemo(); } catch(e) { console.error('[TENDEN] onboarding error:', e); }
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
@@ -76,14 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
  .then(data => { routeData = data; console.log('[TENDEN] routes.json 隱ｭ縺ｿ霎ｼ縺ｿ螳御ｺ・); })
  .catch(e => console.log('[TENDEN] routes.json 縺ｪ縺・(fallback to static routes)', e));
 
- // Remove Splash Screen after initial load (1000ms animation + 500ms wait = 1500ms total)
- setTimeout(() => {
- const splash = document.getElementById('splash-screen');
- if (splash) {
- splash.style.opacity = '0';
- setTimeout(() => splash.style.display = 'none', 500);
- }
- }, 1500);
+
 
  // Register Service Worker
  if ('serviceWorker' in navigator) {

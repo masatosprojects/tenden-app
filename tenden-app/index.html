@@ -699,29 +699,11 @@
  <script src="app.js"></script>
 
 <!-- ======================================================
-     PWA インストール誘導バナー ＆ ホーム画面追加ガイド
+     ホーム画面追加ガイド（手動トリガーのみ）
+     自動ポップアップは出さない。
+     設定画面内の「ホーム画面に追加」ボタンから呼び出す。
      ====================================================== -->
 <style>
-/* ── インストールバナー（Android / Chrome）── */
-#pwa-install-banner {
-  display: none; position: fixed; bottom: 80px; left: 50%;
-  transform: translateX(-50%); z-index: 99999;
-  background: #fff; color: #1a1a1a; border-radius: 18px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.22); padding: 14px 18px 14px 16px;
-  max-width: 360px; width: calc(100vw - 32px);
-  display: none; align-items: center; gap: 12px;
-  border: 1px solid rgba(0,122,255,.18); animation: pwaSlideUp .4s ease;
-}
-@keyframes pwaSlideUp { from { transform: translateX(-50%) translateY(30px); opacity:0; } }
-#pwa-install-banner img { width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; }
-#pwa-install-banner .pwa-text { flex: 1; }
-#pwa-install-banner .pwa-text strong { display: block; font-size: .9rem; font-weight: 700; margin-bottom: 2px; }
-#pwa-install-banner .pwa-text span { font-size: .78rem; color: #555; }
-#pwa-install-btn { background: #007aff; color: #fff; border: none; border-radius: 10px;
-  font-weight: 700; font-size: .82rem; padding: 9px 15px; cursor: pointer; white-space: nowrap; }
-#pwa-install-btn:hover { background: #005ecb; }
-#pwa-dismiss-btn { background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer;
-  padding: 4px; line-height: 1; flex-shrink: 0; }
 
 /* ── iOS ガイドモーダル ── */
 #ios-guide-modal {
@@ -750,17 +732,6 @@
 #ios-guide-close:hover { background: #333; }
 </style>
 
-<!-- Android/Chrome: インストールバナー -->
-<div id="pwa-install-banner">
-  <img src="assets/icons/icon-192.png" alt="TENDEN">
-  <div class="pwa-text">
-    <strong>TENDENをインストール</strong>
-    <span>ホーム画面に追加して、いつでもすぐ起動</span>
-  </div>
-  <button id="pwa-install-btn">追加</button>
-  <button id="pwa-dismiss-btn" aria-label="閉じる">✕</button>
-</div>
-
 <!-- iOS: ホーム画面追加ガイドモーダル -->
 <div id="ios-guide-modal" role="dialog" aria-modal="true" aria-labelledby="ios-guide-title">
   <div id="ios-guide-content">
@@ -783,66 +754,35 @@
 </div>
 
 <script>
+// ── ホーム画面追加ガイド（手動呼び出し専用）──────────────────────────
+// 自動ポップアップなし。設定画面の「ホーム画面に追加」ボタンから呼ぶ。
 (function() {
   'use strict';
-  var DISMISS_KEY = 'tenden_pwa_dismissed';
-  var GUIDE_KEY   = 'tenden_ios_guide_shown';
+  var _deferredPrompt = null;
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-  // ── デバイス判定 ──
-  var isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  var isAndroid = /android/i.test(navigator.userAgent);
-  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
-                  || window.navigator.standalone === true;
-
-  if (isStandalone) return; // 既にインストール済み
-
-  // ── Android/Chrome: beforeinstallprompt ──
-  var deferredPrompt = null;
+  // beforeinstallprompt をキャプチャするだけ（自動表示はしない）
   window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault();
-    deferredPrompt = e;
-    if (!localStorage.getItem(DISMISS_KEY)) {
-      var banner = document.getElementById('pwa-install-banner');
-      if (banner) { banner.style.display = 'flex'; }
-    }
+    _deferredPrompt = e;
   });
 
+  // 外部から呼べる関数を公開
+  window.tendenShowInstallGuide = function() {
+    if (_deferredPrompt) {
+      // Android/Chrome: ネイティブ追加ダイアログ
+      _deferredPrompt.prompt();
+      _deferredPrompt.userChoice.then(function() { _deferredPrompt = null; });
+    } else {
+      // iOS / その他: ガイドモーダルを表示
+      var modal = document.getElementById('ios-guide-modal');
+      if (modal) modal.classList.add('active');
+    }
+  };
+
   document.addEventListener('DOMContentLoaded', function() {
-    var installBtn  = document.getElementById('pwa-install-btn');
-    var dismissBtn  = document.getElementById('pwa-dismiss-btn');
-    var iosModal    = document.getElementById('ios-guide-modal');
-    var iosClose    = document.getElementById('ios-guide-close');
-    var banner      = document.getElementById('pwa-install-banner');
-
-    if (installBtn) {
-      installBtn.addEventListener('click', function() {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then(function(r) {
-            if (r.outcome === 'accepted') {
-              if (banner) banner.style.display = 'none';
-            }
-            deferredPrompt = null;
-          });
-        }
-      });
-    }
-    if (dismissBtn) {
-      dismissBtn.addEventListener('click', function() {
-        if (banner) banner.style.display = 'none';
-        try { localStorage.setItem(DISMISS_KEY, '1'); } catch(e){}
-      });
-    }
-
-    // ── iOS: 初回だけガイドを表示（15秒後） ──
-    if (isIOS && !localStorage.getItem(GUIDE_KEY)) {
-      setTimeout(function() {
-        if (iosModal) {
-          iosModal.classList.add('active');
-          try { localStorage.setItem(GUIDE_KEY, '1'); } catch(e){}
-        }
-      }, 15000);
-    }
+    var iosModal = document.getElementById('ios-guide-modal');
+    var iosClose = document.getElementById('ios-guide-close');
     if (iosClose && iosModal) {
       iosClose.addEventListener('click', function() { iosModal.classList.remove('active'); });
     }
