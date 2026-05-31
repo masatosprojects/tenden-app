@@ -1829,9 +1829,47 @@ document.addEventListener('DOMContentLoaded', () => {
  });
  }
 
+
+ // 直線フォールバックルートを生成（全APIが失敗した場合のみ使用）
+ function buildDirectFallbackRoute(startLoc) {
+   if (!startLoc) return null;
+   const goal = window._cachedTargetEdge || { lat: 35.3190, lng: 139.5510, name: '御成小学校（高台）' };
+   // 中間点を1つ作って3点のルートにする
+   const midLat = (startLoc.lat + goal.lat) / 2;
+   const midLng = (startLoc.lng + goal.lng) / 2;
+   const dist = L.latLng(startLoc.lat, startLoc.lng).distanceTo(L.latLng(goal.lat, goal.lng));
+   const speed = typeof getEvacuationSpeed === 'function' ? getEvacuationSpeed() : 1.2;
+   return {
+     id: 'A',
+     label: '最短ルート（推定）',
+     color: '#0071e3',
+     waypoints: [[startLoc.lat, startLoc.lng], [midLat, midLng], [goal.lat, goal.lng]],
+     distance_m: Math.round(dist),
+     estimated_min: Math.max(1, Math.round(dist / (speed * 60))),
+     characteristics: `${goal.name || '安全な高台'}へ向かう推定ルートです。`,
+     congestion_score: 'low',
+     isOSRM: false,
+     isFallback: true
+   };
+ }
+
  function showRouteSelectorHUD(candidates) {
  const container = document.getElementById('route-options-container');
  if (!container) return;
+  // nullルートをフィルタ
+  var _valid = (candidates||[]).filter(function(c){return c&&c.waypoints&&c.waypoints.length>0;});
+  if (_valid.length === 0) {
+    var fb = buildDirectFallbackRoute(currentLocation);
+    if (fb) { candidates = [fb]; }
+    else {
+      container.innerHTML = '<p style="text-align:center;padding:20px;opacity:0.7;">ルートを計算中...</p>';
+      var _ov=document.getElementById('route-overlay');
+      if(_ov){_ov.classList.remove('hidden');setTimeout(function(){_ov.classList.add('active');},10);}
+      setTimeout(function(){if(currentLocation)recalculateRouteFromLocation(currentLocation);},3000);
+      return;
+    }
+  } else { candidates = _valid; }
+
  
  // Temporarily fade out background emergency controls & banners
  const hudBottom = document.querySelector('.hud-bottom');
@@ -4192,100 +4230,46 @@ document.addEventListener('DOMContentLoaded', () => {
   // DYNAMIC COASTLINE PROXIMITY VECTOR AND SHORELINE ALIGNMENT
   // 笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武
   async function findNearestCoastline(loc) {
-    if (window.turf) {
-      const pt = turf.point([loc.lng, loc.lat]);
-      const coastLine = turf.lineString([
-        [139.460, 35.310], [139.470, 35.309], [139.485, 35.307],
-        [139.500, 35.304], [139.515, 35.302], [139.525, 35.301],
-        [139.535, 35.310], [139.545, 35.310], [139.553, 35.308],
-        [139.560, 35.302], [139.568, 35.298], [139.565, 35.292],
-        [139.563, 35.285], [139.562, 35.275]
-      ]);
-      const dist = turf.pointToLineDistance(pt, coastLine, {units: 'meters'});
-      if (dist < 5000) {
-        const nearest = turf.nearestPointOnLine(coastLine, pt);
-        return {
-          lat: nearest.geometry.coordinates[1],
-          lng: nearest.geometry.coordinates[0],
-          distance: dist,
-          source: 'Kamakura Local Database'
-        };
-      }
+    // 鎌倉・湘南海岸の代表点（ハードコード）
+    const KAMAKURA_COAST = [
+      {lat:35.3100, lng:139.4680}, {lat:35.3080, lng:139.4780},
+      {lat:35.3065, lng:139.4900}, {lat:35.3060, lng:139.5000},
+      {lat:35.3060, lng:139.5100}, {lat:35.3070, lng:139.5200},
+      {lat:35.3075, lng:139.5300}, {lat:35.3070, lng:139.5350},
+      {lat:35.3065, lng:139.5400}, {lat:35.3058, lng:139.5450},
+      {lat:35.3052, lng:139.5500}, {lat:35.3052, lng:139.5530},
+      {lat:35.3058, lng:139.5550}, {lat:35.3065, lng:139.5580},
+      {lat:35.3075, lng:139.5600}, {lat:35.3090, lng:139.5630},
+      {lat:35.3105, lng:139.5650}, {lat:35.3120, lng:139.5660},
+      {lat:35.3090, lng:139.5680}, {lat:35.3075, lng:139.5700},
+      {lat:35.3070, lng:139.5720}, {lat:35.3070, lng:139.5760},
+      {lat:35.3068, lng:139.5790}, {lat:35.3062, lng:139.5840},
+      {lat:35.3050, lng:139.5880}, {lat:35.3030, lng:139.5900},
+      {lat:35.3000, lng:139.5900}, {lat:35.2970, lng:139.5870},
+      {lat:35.2950, lng:139.5850}, {lat:35.2920, lng:139.5820},
+    ];
+
+    // Haversine 距離計算（libなし）
+    function haversine(lat1, lng1, lat2, lng2) {
+      const R = 6371000;
+      const dLat = (lat2-lat1)*Math.PI/180;
+      const dLng = (lng2-lng1)*Math.PI/180;
+      const a = Math.sin(dLat/2)**2 +
+                Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    // Fallback A: OpenStreetMap Overpass API (Generalizable globally)
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const overpassUrl = `https://overpass-api.de/api/interpreter?data=[out:json];node(around:6000)["natural"="coastline"];out;`;
-      const res = await fetch(overpassUrl, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      const data = await res.json();
-      
-      if (data && data.elements && data.elements.length > 0) {
-        let nearestNode = null;
-        let minD = Infinity;
-        data.elements.forEach(node => {
-          const d = L.latLng(loc.lat, loc.lng).distanceTo(L.latLng(node.lat, node.lon));
-          if (d < minD) {
-            minD = d;
-            nearestNode = node;
-          }
-        });
-        if (nearestNode) {
-          return {
-            lat: nearestNode.lat,
-            lng: nearestNode.lon,
-            distance: minD,
-            source: 'OpenStreetMap Overpass API'
-          };
-        }
-      }
-    } catch (e) {
-      // ignore and try raycasting fallback
-    }
+    // 最近傍の海岸点を求める
+    let best = null;
+    let bestDist = Infinity;
+    KAMAKURA_COAST.forEach(pt => {
+      const d = haversine(loc.lat, loc.lng, pt.lat, pt.lng);
+      if (d < bestDist) { bestDist = d; best = pt; }
+    });
 
-    // Fallback B: Dynamic GSI Raycasting elevation transition check (Japan-wide)
-    try {
-      const dirs = [
-        [0, -1], [0.5, -0.866], [0.866, -0.5], [1, 0], [0.866, 0.5], [0.5, 0.866],
-        [0, 1], [-0.5, 0.866], [-0.866, 0.5], [-1, 0], [-0.866, -0.5], [-0.5, -0.866]
-      ];
-      const distances = [200, 500, 1000, 1800, 2600];
-      const results = await Promise.all(dirs.map(async ([dx, dy]) => {
-        for (const d of distances) {
-          const dLat = (dy * d) / 111320;
-          const dLng = (dx * d) / (40075000 * Math.cos(loc.lat * Math.PI / 180) / 360);
-          const testLat = loc.lat + dLat;
-          const testLng = loc.lng + dLng;
-          try {
-            const elUrl = `https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon=${testLng}&lat=${testLat}&outtype=JSON`;
-            const elRes = await fetch(elUrl);
-            const elData = await elRes.json();
-            if (elData && elData.elevation === '-----') {
-              return { lat: testLat, lng: testLng, distance: d };
-            }
-          } catch (err) {}
-        }
-        return null;
-      }));
-      let nearestResult = null;
-      let minD = Infinity;
-      results.forEach(r => {
-        if (r && r.distance < minD) {
-          minD = r.distance;
-          nearestResult = r;
-        }
-      });
-      if (nearestResult) {
-        return {
-          lat: nearestResult.lat,
-          lng: nearestResult.lng,
-          distance: minD,
-          source: 'GSI Raycasting'
-        };
-      }
-    } catch (err) {}
+    if (best) {
+      return { lat: best.lat, lng: best.lng, distance: bestDist, source: 'Kamakura Local' };
+    }
     return null;
   }
 
@@ -5272,13 +5256,19 @@ function startOnboardingDemo() {
  settingsOverlay.classList.remove('active');
  setTimeout(() => settingsOverlay.classList.add('hidden'), 300);
  }
-   // Show demo again: tenden-demo-seen をリセットして startOnboardingDemo を再実行
-  setTimeout(() => {
+   // Show demo again: overlay を直接開く（スコープ問題を回避）
+  setTimeout(function() {
     try { localStorage.removeItem('tenden-demo-seen'); } catch(e) {}
-    // バージョンフラグもリセットして確実にデモを表示
-    try { localStorage.removeItem('tenden-pwa-ver'); } catch(e) {}
-    // startOnboardingDemo を再実行（overlay.classList や startAutoSlideshow を内部で処理）
-    startOnboardingDemo();
+    var demoOv = document.getElementById('onboarding-overlay');
+    if (demoOv) {
+      demoOv.classList.remove('hidden');
+      demoOv.classList.add('active');
+      // step0 を表示してアニメーション開始
+      document.querySelectorAll('.demo-step').forEach(function(el){el.classList.remove('active');});
+      var s0 = document.getElementById('demo-step-0');
+      if(s0) s0.classList.add('active');
+      document.querySelectorAll('.demo-dot').forEach(function(d,i){d.classList.toggle('active',i===0);});
+    }
   }, 350);
  });
  }
