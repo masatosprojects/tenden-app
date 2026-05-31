@@ -12,6 +12,25 @@ document.addEventListener('DOMContentLoaded', () => {
    } catch(e) {}
  })();
 
+ // ── 言語初期化（i18n.json ロード前に必ず日本語で表示開始）
+ (function() {
+   try {
+     // localStorage に言語設定がなければデフォルトで日本語
+     var saved = localStorage.getItem('tenden-lang');
+     if (!saved || saved === 'auto') {
+       // ブラウザ言語が日本語か判定し、それ以外はそのまま
+       var bl = (navigator.language || 'ja').split('-')[0];
+       var forceLang = (bl === 'ja') ? 'ja' : bl;
+       // body に lang クラスを設定
+       document.body.classList.remove('lang-en','lang-zh','lang-ko','lang-es','lang-fr');
+       document.body.classList.add('lang-' + forceLang);
+     } else {
+       document.body.classList.remove('lang-ja','lang-en','lang-zh','lang-ko','lang-es','lang-fr');
+       document.body.classList.add('lang-' + saved);
+     }
+   } catch(e) {}
+ })();
+
  // Basic state
  let isEmergency = false;
   let coastalProximityLine = null;
@@ -4411,26 +4430,26 @@ function startOnboardingDemo() {
  const elStep3Desc = document.getElementById('demo-desc-3');
  const elSimWarning = document.getElementById('demo-sim-warning');
 
-  if (elStep0Title) elStep0Title.textContent = getDemoText('demoStep0Title', 'To Protect Lives from Tsunamis');
-  if (elStep0Sub) elStep0Sub.textContent = getDemoText('demoStep0Sub', 'Tsunami evacuation assistant app for all coastal areas of Japan');
-  if (elStep1Title) elStep1Title.textContent = getDemoText('demoStep1Title', 'An Earthquake Has Occurred');
-  if (elStep1Desc) elStep1Desc.textContent = getDemoText('demoStep1Desc', 'Tsunami danger detected. Please start evacuating immediately.');
-  if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', 'Presenting 3 evacuation routes');
-  if (elStep2Desc) elStep2Desc.textContent = getDemoText('demoStep2Desc', 'Displays Shortest, Avoid Congestion, and Flat routes simultaneously. You decide.');
-  if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', 'TENDEN gives you choices');
-  if (elStep3Desc) elStep3Desc.textContent = getDemoText('demoStep3Desc', 'Helping tourists and foreign speakers evacuate safely without confusion.');
-  if (elSimWarning) elSimWarning.textContent = getDemoText('demoSimWarning', 'This is a simulation for training purposes. It is not a real disaster.');
+  if (elStep0Title) elStep0Title.textContent = getDemoText('demoStep0Title', '津波から命を守るために');
+  if (elStep0Sub) elStep0Sub.textContent = getDemoText('demoStep0Sub', '日本全国の沿岸エリアで使える避難支援アプリ');
+  if (elStep1Title) elStep1Title.textContent = getDemoText('demoStep1Title', '地震が発生しました');
+  if (elStep1Desc) elStep1Desc.textContent = getDemoText('demoStep1Desc', '津波の危険があります。今すぐ避難を開始してください。');
+  if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', '3つの避難ルートを提示します');
+  if (elStep2Desc) elStep2Desc.textContent = getDemoText('demoStep2Desc', '最短・混雑回避・急坂回避の3ルートを同時表示。あなたが選びます。');
+  if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', 'TENDENは、あなたに選択肢を渡します');
+  if (elStep3Desc) elStep3Desc.textContent = getDemoText('demoStep3Desc', 'その土地を知らない観光客も、外国語話者も、迷わず逃げ出せる支援を。');
+  if (elSimWarning) elSimWarning.textContent = getDemoText('demoSimWarning', ' これは訓練用のシミュレーション画面です。実際の災害ではありません。');
 
  // Next/skip buttons
  document.querySelectorAll('[data-i18n="demoBtnSkip"]').forEach(el => {
-    el.textContent = getDemoText('demoBtnSkip', 'Skip');
+    el.textContent = getDemoText('demoBtnSkip', 'スキップ');
  });
-  if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', 'Try at your current location');
-  if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', 'Try at your current location');
-  if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'Replay Guide');
-  if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'Replay Guide');
-  if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'Replay Onboarding Guide');
-  if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'Replay Onboarding Guide');
+  if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', '今いる場所で使ってみる');
+  if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', '今いる場所で使ってみる');
+  if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'もう一度見る');
+  if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'もう一度見る');
+  if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'オンボーディングデモを起動する');
+  if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'オンボーディングデモを起動する');
  }
 
  // Apply i18n immediately (may use fallbacks), then re-apply when i18n loads
