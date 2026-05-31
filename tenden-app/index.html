@@ -61,10 +61,36 @@
  </defs>
  </svg>
 
- <!-- Splash Screen -->
- <div id="splash-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s;">
- <img src="assets/icons/TENDEN.gif" alt="TENDEN Logo" style="width: 280px; max-width: 80%; height: auto; filter: drop-shadow(0 12px 32px rgba(0,0,0,0.15));">
+ <!-- Splash Screen — CSSアニメーションで自動消去（JS不要） -->
+ <style>
+ @keyframes _splashFadeOut {
+   0%   { opacity: 1; visibility: visible; }
+   80%  { opacity: 1; }
+   100% { opacity: 0; visibility: hidden; pointer-events: none; }
+ }
+ #splash-screen {
+   animation: _splashFadeOut 0.6s ease 1.8s forwards;
+ }
+ </style>
+ <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#ffffff; z-index:99999; display:flex; justify-content:center; align-items:center;">
+   <img src="assets/icons/TENDEN.gif" alt="TENDEN" style="width:220px; max-width:72%; height:auto;">
  </div>
+ <!-- スプラッシュ除去：CSSアニメーション後にDOMから除去するだけ。外部JSに依存しない。 -->
+ <script>
+ (function(){
+   var sp = document.getElementById('splash-screen');
+   if (!sp) return;
+   // CSS animation が終わったらDOMから除去
+   sp.addEventListener('animationend', function() {
+     sp.style.display = 'none';
+     sp.remove();
+   });
+   // フォールバック：何があっても3秒後に強制除去
+   setTimeout(function() {
+     try { sp.style.display='none'; sp.remove(); } catch(e){}
+   }, 3200);
+ })();
+ </script>
 
  <!-- Map Container -->
  <div id="map"></div>

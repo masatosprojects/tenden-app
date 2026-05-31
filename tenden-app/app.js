@@ -1,27 +1,8 @@
 // app.js
 document.addEventListener('DOMContentLoaded', () => {
 
- // ── スプラッシュ画面の確実な除去 ──────────────────────────────────────
- // 他の初期化コードがエラーで止まっても必ず消えるよう、最初に登録する。
- // 500ms (最低保証) と 3000ms (フォールバック) の2段構えで確実に除去。
- (function removeSplash() {
-   function doHide() {
-     try {
-       var sp = document.getElementById('splash-screen');
-       if (sp && sp.style.display !== 'none') {
-         sp.style.transition = 'opacity 0.4s ease';
-         sp.style.opacity = '0';
-         setTimeout(function() {
-           if (sp) { sp.style.display = 'none'; sp.style.visibility = 'hidden'; }
-         }, 420);
-       }
-     } catch(e) {}
-   }
-   setTimeout(doHide, 500);   // 通常ケース
-   setTimeout(doHide, 3000);  // フォールバック（CDN遅延・エラー時）
- })();
-
  // ── 初期化関数を個別 try/catch で保護 ────────────────────────────────────
+ // (スプラッシュ除去はindex.htmlのインラインCSSアニメーションで処理済み)
  // Basic state
  let isEmergency = false;
   let coastalProximityLine = null;
