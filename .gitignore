@@ -1,7 +1,8 @@
 # Ignore development screenshots and original logo assets
-tenden-app/assets/icons/*.png
-!tenden-app/assets/icons/icon.svg
-!tenden-app/assets/icons/hud-logo.png
+# 本番PWAアイコン（icon-192/512・maskable・apple-touch）は追跡する
+tenden-app/assets/icons/og-image-square.png
 ロゴ/
+ホーム画面設置時のアイコン/
 *.DS_Store
 node_modules/
+tenden-app/assets/icon-512.png
