@@ -1180,8 +1180,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
  const SCENARIOS = {
  1: {
-  title: "Evacuation Order (Major Tsunami Warning)",
-  time: "15 min (15:30)",
+  title: "大津波警報・避難指示",
+  time: "15分後（15:30）",
  height: "10m",
  locations: {
  'a': {
@@ -1221,8 +1221,8 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  },
  2: {
-  title: "Evacuation Advisory (Tsunami Warning)",
-  time: "30 min (15:45)",
+  title: "津波警報・避難推奨",
+  time: "30分後（15:45）",
  height: "3m",
  locations: {
  'a': {
@@ -1293,7 +1293,7 @@ document.addEventListener('DOMContentLoaded', () => {
  
  const detailsEl = document.getElementById('disaster-details');
  const timeLabel = sc.isLandslide ? "到達予測:" : "予想到達時間";
- const heightLabel = sc.isLandslide ? "莠域Φ豬ｸ豌ｴ豺ｱ:" : "莠域Φ鬮・";
+ const heightLabel = sc.isLandslide ? "土砂到達予測:" : "予想津波高さ:";
  detailsEl.innerHTML = `<span>${timeLabel}</span> <strong>${sc.time}</strong> | <span>${heightLabel}</span> <strong>${sc.height}</strong>`;
  
  // Trigger speech synthesis evac start instruction
@@ -1306,8 +1306,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!isKamakura) {
     const lang = getLanguageCode();
     const generalDescs = {
-      'ja': 'Evacuate immediately to nearby safe high ground.',
-      'en': 'Evacuate immediately to a nearby safe high ground (First Goal).',
+      'ja': '直ちに最寄りの安全な高台（第一目標）へ避難してください。',
+      'en': 'Evacuate immediately to the nearest safe highland (First Goal).',
       'zh': 'Evacuate immediately to nearby safe high ground.',
       'ko': 'Evacuate immediately to nearby safe high ground.',
     };
@@ -2884,13 +2884,13 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  const icons = {
- info: '邃ｹ',
+ info: 'ℹ️',
  success: '',
  warning: '',
  error: '',
  copied: ''
  };
- iconEl.innerText = icons[type] || '邃ｹ';
+ iconEl.innerText = icons[type] || 'ℹ️';
  textEl.innerText = message;
 
  island.classList.remove('hidden');
@@ -4412,7 +4412,7 @@ function startOnboardingDemo() {
  de: ' Dies ist eine simulierte Trainingsdemo. Kein echtes Katastrophenszenario.',
  it: ' Questa ﾃｨ una demo di simulazione di addestramento. NON ﾃｨ un vero disastro.'
  };
- return warnings[lang] || warnings['en'];
+ return warnings[lang] || warnings['ja'];
  }
  return fallback;
  } catch (e) { return fallback; }
