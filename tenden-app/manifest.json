@@ -1,21 +1,76 @@
 {
     "name": "TENDEN - 日頃の備えと迷わないルートを",
     "short_name": "TENDEN",
-    "description": "平時の「減災・備え」と発災時の「避難誘導」をシームレスに繋ぐWebアプリケーション",
-    "start_url": "./index.html",
+    "description": "津波発生時に「迷わず逃げる」ための避難ナビ。3ルート同時提示・リアルタイム浸水判定・オフライン対応・30言語。",
+    "start_url": "./index.html?utm_source=pwa",
+    "scope": "./",
     "display": "standalone",
-    "background_color": "#0d0f12",
-    "theme_color": "#0d0f12",
-    "icons": [
+    "orientation": "portrait",
+    "background_color": "#ffffff",
+    "theme_color": "#007aff",
+    "lang": "ja",
+    "categories": [
+        "navigation",
+        "utilities"
+    ],
+    "screenshots": [
         {
-            "src": "assets/icons/icon.svg",
-            "sizes": "192x192 512x512",
-            "type": "image/svg+xml"
+            "src": "assets/screenshots/screen1.png",
+            "sizes": "1170x2532",
+            "type": "image/png",
+            "label": "平時モード — 地図・避難所・海抜HUD"
         },
         {
-            "src": "assets/logo.png",
+            "src": "assets/screenshots/screen2.png",
+            "sizes": "1170x2532",
+            "type": "image/png",
+            "label": "緊急モード — 3ルート同時提示"
+        },
+        {
+            "src": "assets/screenshots/screen3.png",
+            "sizes": "1170x2532",
+            "type": "image/png",
+            "label": "ルート候補の選択"
+        }
+    ],
+    "icons": [
+        {
+            "src": "assets/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "assets/icons/icon-512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "assets/icons/icon-192-maskable.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "assets/icons/icon-512-maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "今すぐ避難開始",
+            "short_name": "避難開始",
+            "description": "緊急モードで即座に避難ルートを確認",
+            "url": "./index.html?mode=emergency&utm_source=pwa_shortcut",
+            "icons": [
+                {
+                    "src": "assets/icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
         }
     ]
 }
