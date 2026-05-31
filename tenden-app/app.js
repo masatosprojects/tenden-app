@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // Kamakura default location (Yuigahama)
  const KAMAKURA_CENTER = [35.3192, 139.5504];
 
- // Dictionary for i18n (loaded asynchronously from assets/i18n.json for 30 global languages)
+    console.log('[TENDEN] i18n.json 30-languages dictionary loaded successfully');
  let i18nDict = {};
 
  // Initialize (各関数をtry/catchで保護 — どれかがエラーでもスプラッシュは消える)
@@ -65,18 +65,18 @@ document.addEventListener('DOMContentLoaded', () => {
  .then(data => {
  i18nDict = data;
  initI18n();
- console.log('[TENDEN] i18n.json 30險隱櫁ｾ樊嶌縺ｮ隱ｭ縺ｿ霎ｼ縺ｿ縺悟ｮ御ｺ・＠縺ｾ縺励◆');
+    console.log('[TENDEN] i18n.json 30-languages dictionary loaded successfully');
  })
  .catch(e => {
- console.warn('[i18n] 螟夜Κ螟夊ｨ隱櫁ｾ樊嶌縺ｮ繝ｭ繝ｼ繝峨↓螟ｱ謨励＠縺ｾ縺励◆縲ゅヵ繧ｩ繝ｼ繝ｫ繝舌ャ繧ｯ縺励∪縺吶・, e);
+    console.warn('[i18n] Failed to load external dictionary. Falling back.', e);
  initI18n();
  });
 
  // Load simulation-derived route data
  fetch('assets/routes.json')
  .then(res => res.json())
- .then(data => { routeData = data; console.log('[TENDEN] routes.json 隱ｭ縺ｿ霎ｼ縺ｿ螳御ｺ・); })
- .catch(e => console.log('[TENDEN] routes.json 縺ｪ縺・(fallback to static routes)', e));
+  .then(data => { routeData = data; console.log('[TENDEN] routes.json loaded'); })
+  .catch(e => console.log('[TENDEN] routes.json not found (fallback to static routes)', e));
 
 
 
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  L.control.attribution({
  position: 'bottomleft',
- prefix: '蜃ｺ蜈ｸ: <a href="https://disaportal.gsi.go.jp/" target="_blank">繝上じ繝ｼ繝峨・繝・・繝昴・繧ｿ繝ｫ繧ｵ繧､繝・/a> (蝗ｽ蝨溷慍逅・劼) | Leaflet'
+    prefix: 'Source: GSI Hazard Map Portal (GSI Japan) | Leaflet',
  }).addTo(map);
 
  routeLayerGroup = L.layerGroup().addTo(map);
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
  minZoom: 2,
  maxZoom: 17,
  opacity: 0.65,
- attribution: '豢･豕｢豬ｸ豌ｴ諠ｳ螳・ <a href="https://disaportal.gsi.go.jp/" target="_blank">繝上じ繝ｼ繝峨・繝・・繝昴・繧ｿ繝ｫ繧ｵ繧､繝・/a>'
+    attribution: 'Tsunami Inundation: GSI Hazard Map Portal (GSI Japan)',
  }
  );
  
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
  minZoom: 2,
  maxZoom: 18,
  opacity: 0.6,
- attribution: '濶ｲ蛻･讓咎ｫ伜峙: <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">蝗ｽ蝨溷慍逅・劼</a>'
+    attribution: 'Elevation: GSI Japan'
  }
  );
  // Note: tile layer is instantiated but not added to map until toggle button is activated
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // Initialize Shelter markers 窶・dynamic load from simulation data
  sheltersLayerGroup = L.layerGroup();
  const LOAD_COLORS = { low: '#00a63e', medium: '#f5a623', high: '#c0392b' };
- const LOAD_LABELS = { low: '笳・豺ｷ髮大ｰ・, medium: '笳鞘酪 繧・ｄ豺ｷ髮・, high: '笳鞘酪笳・豺ｷ髮台ｺ域ｸｬ' };
+  const LOAD_LABELS = { low: 'o Low', medium: '! Medium', high: 'x High' };
  const FALLBACK_SHELTERS = [
  { name: "蠕｡謌仙ｰ丞ｭｦ譬｡", lat: 35.3190, lng: 139.5510, predicted_load: 'low', capacity: 910, typical_occupancy_pct: 4.7 },
  { name: "骼悟牙ｸょｽｹ謇", lat: 35.3180, lng: 139.5400, predicted_load: 'low', capacity: 1000, typical_occupancy_pct: 0 },
@@ -224,12 +224,12 @@ document.addEventListener('DOMContentLoaded', () => {
  .then(data => {
  sheltersData = data;
  addShelterMarkers(data);
- console.log('[TENDEN] shelters.json 隱ｭ縺ｿ霎ｼ縺ｿ螳御ｺ・', data.length, '莉ｶ');
+    console.log('[TENDEN] shelters.json loaded', data.length);
  })
  .catch(() => {
  sheltersData = FALLBACK_SHELTERS;
  addShelterMarkers(FALLBACK_SHELTERS);
- console.log('[TENDEN] shelters.json 縺ｪ縺・竊・fallback 菴ｿ逕ｨ');
+    console.log('[TENDEN] shelters.json not found, using fallback');
  });
 
  // Load safe edges data: start with static JSON for instant availability,
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
  .then(async (data) => {
  staticSafeEdges = data;
  safeEdgesData = data;
- console.log('[TENDEN] safe_edges.json 隱ｭ縺ｿ霎ｼ縺ｿ螳御ｺ・(證ｫ螳・:', data.length, '莉ｶ');
+    console.log('[TENDEN] safe_edges.json loaded:', data.length);
  await verifyAndCleanSafeEdges();
  drawAllSafeEdges(); // Render layers
  })
@@ -261,11 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  });
  safeEdgesData = mergedEdges;
- console.log(`[TENDEN] 繝ｩ繧ｹ繧ｿ繝ｼ繧ｹ繧ｭ繝｣繝ｳ螳御ｺ・ ${safeEdgesData.length} 莉ｶ・磯撕逧・ ${staticSafeEdges.length}莉ｶ縲∝虚逧・・繝ｼ繧ｸ: ${dynamicEdges.length}莉ｶ・峨・螳牙・蠅・阜轤ｹ繧呈､懷・`);
+    console.log(`[TENDEN] Raster scan finished. Scanned ${safeEdgesData.length} edges (static: ${staticSafeEdges.length}, dynamic: ${dynamicEdges.length})`);
  await verifyAndCleanSafeEdges();
  drawAllSafeEdges(); // Render layers
  }
- }).catch(e => console.warn('[SafeEdge] 繝ｩ繧ｹ繧ｿ繝ｼ繧ｹ繧ｭ繝｣繝ｳ螟ｱ謨・', e));
+  }).catch(e => console.warn('[SafeEdge] Raster scan failed', e));
  });
 
  // Load congestion heatmap from simulation data
@@ -284,9 +284,9 @@ document.addEventListener('DOMContentLoaded', () => {
  if (chkToggle && chkToggle.checked) {
  congestionLayer.addTo(map);
  }
- console.log('[TENDEN] congestion.geojson 隱ｭ縺ｿ霎ｼ縺ｿ螳御ｺ・', data.features.length, '莉ｶ');
+  console.log('[TENDEN] congestion.geojson loaded', data.features.length);
  })
- .catch(e => console.log('[TENDEN] congestion.geojson 縺ｪ縺・, e));
+  .catch(e => console.log('[TENDEN] congestion.geojson not found', e));
 
  // Initialize Device Orientation for Compass
  if (window.DeviceOrientationEvent) {
@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
  localStorage.setItem('tenden-voice-nav', e.target.checked);
  const statusText = e.target.checked ? "ON" : "OFF";
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- triggerDynamicIsland((dict.voiceNavLabel || "髻ｳ螢ｰ繝翫ン繧ｲ繝ｼ繧ｷ繝ｧ繝ｳ") + ": " + statusText, "info");
+  triggerDynamicIsland((dict.voiceNavLabel || "Voice Navigation") + ": " + statusText, "info");
  if (e.target.checked) {
  speakI18n('voiceNavLabel');
  }
@@ -419,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
  localStorage.setItem('tenden-walk-speed', e.target.value);
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  const speedText = walkSpeedSelect.options[walkSpeedSelect.selectedIndex].text;
- triggerDynamicIsland((dict.walkSpeedLabel || "驕ｿ髮｣豁ｩ陦碁溷ｺｦ") + ": " + speedText, "info");
+  triggerDynamicIsland((dict.walkSpeedLabel || "Evacuation Walk Speed") + ": " + speedText, "info");
  // Dynamically recalculate route evacuation times if active location exists
  if (currentLocation) {
  recalculateRouteFromLocation(currentLocation);
@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
  localStorage.setItem('tenden-p2p-auto', e.target.checked);
  const statusText = e.target.checked ? "ON" : "OFF";
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- triggerDynamicIsland((dict.p2pAutoLabel || "P2P閾ｪ蜍墓､懃衍") + ": " + statusText, "info");
+  triggerDynamicIsland((dict.p2pAutoLabel || "P2P Auto Detection") + ": " + statusText, "info");
  });
  }
  if (toggleDeviationAlert) {
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
  localStorage.setItem('tenden-deviation-alert', e.target.checked);
  const statusText = e.target.checked ? "ON" : "OFF";
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- triggerDynamicIsland((dict.deviationAlertLabel || "繝ｫ繝ｼ繝磯ｸ閼ｱ隴ｦ蜻・) + ": " + statusText, "info");
+  triggerDynamicIsland((dict.deviationAlertLabel || "Route Deviation Warning") + ": " + statusText, "info");
  });
  }
  if (toggleEmergencyForce) {
@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
  localStorage.setItem('tenden-wake-lock', e.target.checked);
  const statusText = e.target.checked ? "ON" : "OFF";
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- triggerDynamicIsland((dict.wakeLockLabel || "逕ｻ髱｢豸育・髦ｲ豁｢") + ": " + statusText, "info");
+  triggerDynamicIsland((dict.wakeLockLabel || "Screen Wake Lock") + ": " + statusText, "info");
  triggerHapticTick();
  if (e.target.checked && isEmergency) {
  requestWakeLock();
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
  localStorage.setItem('tenden-system-notification', e.target.checked);
  const statusText = e.target.checked ? "ON" : "OFF";
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- triggerDynamicIsland((dict.systemNotificationLabel || "繧ｹ繝槭・繧ｷ繧ｹ繝・Β騾夂衍") + ": " + statusText, "info");
+  triggerDynamicIsland((dict.systemNotificationLabel || "System Notifications") + ": " + statusText, "info");
  triggerHapticTick();
  if (e.target.checked) {
  requestNotificationPermission();
@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
  localStorage.setItem('tenden-smart-compass', e.target.checked);
  const statusText = e.target.checked ? "ON" : "OFF";
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- triggerDynamicIsland((dict.smartCompassLabel || "繧ｹ繝槭・繝医さ繝ｳ繝代せ") + ": " + statusText, "info");
+  triggerDynamicIsland((dict.smartCompassLabel || "Smart Compass") + ": " + statusText, "info");
  triggerHapticTick();
  
  const arrow = document.querySelector('.user-marker-arrow');
@@ -552,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
  try {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  await navigator.share({
- title: dict.shareDialogTitle || '驕ｿ髮｣險育判繧ｫ繝ｼ繝峨・菫晏ｭ・・・蜈ｱ譛・,
+  title: dict.shareDialogTitle || 'Save & Share Evacuation Plan',
  text: shareTextArea.value
  });
  } catch (e) {
@@ -574,8 +574,8 @@ document.addEventListener('DOMContentLoaded', () => {
  
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  const originalText = btnShareCopy.innerText;
- btnShareCopy.innerText = dict.copiedLabel || '繧ｳ繝斐・縺励∪縺励◆・・';
- triggerDynamicIsland(dict.copiedLabel || '繧ｳ繝斐・縺励∪縺励◆・・', 'copied');
+  btnShareCopy.innerText = dict.copiedLabel || 'Copied!';
+  triggerDynamicIsland(dict.copiedLabel || 'Copied!', 'copied');
  setTimeout(() => {
  btnShareCopy.innerText = originalText;
  }, 2000);
@@ -635,6 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const spBtn = document.getElementById('btn-set-pin');
   if (spBtn) spBtn.classList.remove('hidden');
   
+  }); // Close map.once!
+  }); // Close btnTestAlert!
   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   
  // Set Pin button listener for Crosshair mode
@@ -723,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  const lang = getLanguageCode();
  if (navigator.share && currentLocation) {
- const shareTitle = dict.alertSosTitle || '螳牙凄諠・ｱ (迴ｾ蝨ｨ蝨ｰ)';
+  const shareTitle = dict.alertSosTitle || 'SOS Safety Status (Current Location)';
  const shareTextDefault = lang === 'ja' ? '迴ｾ蝨ｨ縲∝ｮ牙・縺ｪ鬮伜床縺ｸ驕ｿ髮｣荳ｭ縺ｧ縺吶・n迴ｾ蝨ｨ蝨ｰ: ' : 'I am currently evacuating to safe high ground.\nMy location: ';
  const shareText = (dict.shareText || shareTextDefault) + `https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`;
  navigator.share({
@@ -731,11 +733,11 @@ document.addEventListener('DOMContentLoaded', () => {
  text: shareText
  }).catch(console.error);
  } else if (currentLocation) {
- const shareTitle = dict.alertSosTitle || "螳牙凄諠・ｱ (迴ｾ蝨ｨ蝨ｰ)";
- const shareDescPrefix = dict.alertSosDesc || "繧ｳ繝斐・縺励※螳ｶ譌上ｄ蜿倶ｺｺ縺ｫ騾∽ｿ｡縺励※縺上□縺輔＞・喀n\n";
+  const shareTitle = dict.alertSosTitle || 'SOS Safety Status (Current Location)';
+  const shareDescPrefix = dict.alertSosDesc || "Please copy and send to family and friends:\n\n";
  showCustomAlert(shareTitle, `${shareDescPrefix}https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`, "success");
  } else {
- showCustomAlert(dict.alertSosTitle || "螳牙凄諠・ｱ", dict.alertSosError || "迴ｾ蝨ｨ蝨ｰ繧貞叙蠕励〒縺阪∪縺帙ｓ縺ｧ縺励◆縲ゅ∪縺壼慍蝗ｳ荳翫ｒ繧ｿ繝・・縺励※迴ｾ蝨ｨ蝨ｰ繧定ｨｭ螳壹＠縺ｦ縺上□縺輔＞縲・, "warning");
+  showCustomAlert(dict.alertSosTitle || "Safety Status", dict.alertSosError || "Failed to get current location. Please tap the map to set a location.", "warning");
  }
  });
 
@@ -878,7 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
  for (let key of keys) {
  await caches.delete(key);
  }
- triggerDynamicIsland(dict.alertCacheTitle || "繧ｭ繝｣繝・す繝･蜑企勁螳御ｺ・, "success");
+  triggerDynamicIsland(dict.alertCacheTitle || "Cache Cleared", "success");
  }
  });
 
@@ -890,7 +892,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (btnDevReset) {
  btnDevReset.addEventListener('click', async () => {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- const confirmMsg = dict.confirmDevReset || '縲宣幕逋ｺ閠・畑縲善WA繧ｭ繝｣繝・す繝･縺ｨ繧ｵ繝ｼ繝薙せ繝ｯ繝ｼ繧ｫ繝ｼ繧貞ｮ悟・縺ｫ蜑企勁縺励※蜀崎ｵｷ蜍輔＠縺ｾ縺吶°・歃n(谺｡蝗櫁ｪｭ縺ｿ霎ｼ縺ｿ譎ゅ↓譛譁ｰ縺ｮ繧ｳ繝ｼ繝峨′蠑ｷ蛻ｶ驕ｩ逕ｨ縺輔ｌ縺ｾ縺・';
+  const confirmMsg = dict.confirmDevReset || 'Reset PWA Cache and Service Worker?';
  if (confirm(confirmMsg)) {
  // 1. Clear Cache Storage
  if ('caches' in window) {
@@ -907,7 +909,7 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  }
  
- showCustomAlert(dict.alertResetTitle || "繧ｷ繧ｹ繝・Β繝ｪ繧ｻ繝・ヨ螳御ｺ・, dict.alertResetDesc || "繧ｭ繝｣繝・す繝･縺ｨ繧ｵ繝ｼ繝薙せ繝ｯ繝ｼ繧ｫ繝ｼ縺ｮ繧ｯ繝ｪ繧｢繧貞ｮ御ｺ・＠縺ｾ縺励◆縲ゅ・繝ｼ繧ｸ繧貞・襍ｷ蜍輔＠縺ｾ縺吶・, "success", () => {
+    showCustomAlert(dict.alertResetTitle || "System Reset Complete", dict.alertResetDesc || "Cache cleared successfully", "success", () => {
  window.location.reload(true);
  });
  }
@@ -1060,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  // Extremely concise: a single horizontal query phrase to prevent awkward wrapping
- const queryText = dict.manualPinPopupText || '繧ゅ＠縲√％縺薙↓縺・◆繧峨←縺・∩髮｣縺励∪縺吶°・・;
+  const queryText = dict.manualPinPopupText || 'How would you evacuate from here?';
 
  userMarker.bindPopup(`
  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; white-space: nowrap; padding: 2px 4px; font-size: 11px; font-weight: 600; color: #ff3b30;">
@@ -1112,8 +1114,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
  const SCENARIOS = {
  1: {
- title: "驕ｿ髮｣謖・､ｺ・亥､ｧ豢･豕｢隴ｦ蝣ｱ・・,
- time: "15蛻・ｼ・5:30・・,
+  title: "Evacuation Order (Major Tsunami Warning)",
+  time: "15 min (15:30)",
  height: "10m",
  locations: {
  'a': {
@@ -1153,8 +1155,8 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  },
  2: {
- title: "驕ｿ髮｣蜍ｧ蜻奇ｼ域ｴ･豕｢隴ｦ蝣ｱ・・,
- time: "30蛻・ｼ・5:45・・,
+  title: "Evacuation Advisory (Tsunami Warning)",
+  time: "30 min (15:45)",
  height: "3m",
  locations: {
  'a': {
@@ -1238,10 +1240,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!isKamakura) {
     const lang = getLanguageCode();
     const generalDescs = {
-      'ja': '逶ｴ縺｡縺ｫ霑代￥縺ｮ螳牙・縺ｪ鬮伜床・育ｬｬ荳逶ｮ讓呻ｼ峨∈驕ｿ髮｣縺励※縺上□縺輔＞縲・,
+      'ja': 'Evacuate immediately to nearby safe high ground.',
       'en': 'Evacuate immediately to a nearby safe high ground (First Goal).',
-      'zh': '隸ｷ遶句叉謦､遖ｻ蛻ｰ髯・ｿ大ｮ牙・逧・ｫ伜慍・育ｬｬ荳逶ｮ譬・ｼ峨・,
-      'ko': '・餓亨 ・ｸ・ｼ・・・溢・復 ・・・(・・ ・ｩ岺・・・・嵓ｼ﨑們強・懍丶.'
+      'zh': 'Evacuate immediately to nearby safe high ground.',
+      'ko': 'Evacuate immediately to nearby safe high ground.',
     };
     localizedDesc = generalDescs[lang] || generalDescs['en'];
   }
@@ -1330,7 +1332,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const routeKey = `${scenarioId}_${locationId}`;
  const candidates = routeData[routeKey] || [];
 
- const CONG_LABELS = { low: '菴・, medium: '荳ｭ', high: '鬮・ };
+ const CONG_LABELS = { low: 'Low', medium: 'Medium', high: 'High' };
  const CONG_BAR = { low: '笆笆｡笆｡ (1/3)', medium: '笆笆笆｡ (2/3)', high: '笆笆笆 (3/3)' };
 
  const container = document.getElementById('route-options-container');
@@ -1541,7 +1543,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ---- PRIMARY GOAL MARKER (隨ｬ荳逶ｮ讓・ 螳牙・鬮伜床) ----
  if (targetEdge) {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- const primaryGoalLabel = dict.primaryGoal || '隨ｬ荳逶ｮ讓・;
+  const primaryGoalLabel = dict.primaryGoal || 'First Goal';
  let edgeName = targetEdge.name;
  if (dict.elementarySchool) edgeName = edgeName.replace('蟆丞ｭｦ譬｡', dict.elementarySchool);
  if (dict.juniorHighSchool) edgeName = edgeName.replace('荳ｭ蟄ｦ譬｡', dict.juniorHighSchool);
@@ -1607,7 +1609,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // Branch divergence label
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- const branchToShelterLabel = dict.branchToShelter || '驕ｿ髮｣謇縺ｸ蛻・ｲ・;
+  const branchToShelterLabel = dict.branchToShelter || 'Branch to Shelter';
  const branchIcon = L.divIcon({
  className: '',
  html: `<div style="background:#ff9500; color:white; font-size:0.65rem; font-weight:700; padding:3px 7px; border-radius:8px; white-space:nowrap; box-shadow:0 2px 5px rgba(255,149,0,0.4);">竊・${branchToShelterLabel}</div>`,
@@ -1619,7 +1621,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // Secondary goal marker
  const lastPt = secondaryRoute.waypoints[secondaryRoute.waypoints.length - 1];
  const shelterName = secondaryRoute.target ? secondaryRoute.target.name : '驕ｿ髮｣謇';
- const secondaryGoalLabel = dict.secondaryGoal || '隨ｬ莠檎岼讓・;
+  const secondaryGoalLabel = dict.secondaryGoal || 'Second Goal';
  
  let localizedShelterName = shelterName;
  if (dict.shelterWord) localizedShelterName = localizedShelterName.replace('驕ｿ髮｣謇', dict.shelterWord);
@@ -1671,8 +1673,8 @@ document.addEventListener('DOMContentLoaded', () => {
  const selectedRoute = activeRoutesList.find(r => r.id === activeSelectedRouteId);
  if (selectedRoute) {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- const summaryTemplate = dict.evacStartSummary || '{routeLabel}・・routeCharacteristics}・峨〒驕ｿ髮｣繧帝幕蟋九＠縺ｾ縺吶・;
- const characteristicsPart = selectedRoute.characteristics.split('縲・)[0];
+  const summaryTemplate = dict.evacStartSummary || 'Starting evacuation via {routeLabel} ({routeCharacteristics})';
+  const characteristicsPart = selectedRoute.characteristics.split(',')[0];
  const summaryText = summaryTemplate
  .replace('{routeLabel}', selectedRoute.label)
  .replace('{routeCharacteristics}', characteristicsPart);
@@ -1680,7 +1682,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // Voice Navigation speech for route choice
  speakI18n('speechRouteSelect', { routeLabel: selectedRoute.label });
- triggerDynamicIsland((dict.routeSelectSuccess || "繝ｫ繝ｼ繝・{routeLabel} 繧帝∈謚槭＠縺ｾ縺励◆").replace('{routeLabel}', selectedRoute.label), 'success');
+  triggerDynamicIsland((dict.routeSelectSuccess || 'Selected Route {routeLabel}').replace('{routeLabel}', selectedRoute.label), 'success');
  }
 
  // Restart simulation along new selected path
@@ -1780,10 +1782,10 @@ document.addEventListener('DOMContentLoaded', () => {
  const targetColor = c.color || '#00bbff';
  
  let tagText = '';
- if (c.id === 'B') tagText = dict.routeAvoid || '驕楢ｷｯ豺ｷ髮大屓驕ｿ';
- else if (c.id === 'A') tagText = dict.routeShortest || '譛遏ｭ霍晞屬';
- else if (c.id === 'D') tagText = dict.routeDispersal || '遨ｺ縺埼∩髮｣謇';
- else if (c.id === 'C') tagText = dict.routeBarrier || ' 繝舌Μ繧｢繝輔Μ繝ｼ・磯ｫ倬ｽ｢閠・・蜈千ｫ･謗ｨ螂ｨ・・;
+  if (c.id === 'B') tagText = dict.routeAvoid || 'Avoid Congestion';
+  else if (c.id === 'A') tagText = dict.routeShortest || 'Shortest Distance';
+  else if (c.id === 'D') tagText = dict.routeDispersal || 'Dispersed Evacuation';
+  else if (c.id === 'C') tagText = dict.routeBarrier || 'Barrier-Free / Accessible';
  
  const btn = document.createElement('button');
  btn.className = `route-option-btn compact-route-btn ${isSelected ? 'active' : ''}`;
@@ -2016,12 +2018,12 @@ document.addEventListener('DOMContentLoaded', () => {
  if (onlineNearestWaypoints) {
  routeA = {
  id: 'A',
- label: dict.routeShortestLabel || '譛遏ｭ驕ｿ髮｣繝ｫ繝ｼ繝・,
+  label: dict.routeShortestLabel || 'Shortest Route',
  color: '#0071e3',
  waypoints: onlineNearestWaypoints,
  distance_m: onlineNearestDistance,
  estimated_min: Math.max(1, Math.round((onlineNearestDistance / getEvacuationSpeed()) / 60)),
- characteristics: (dict.routeShortestDesc || `豺ｷ髮代ｒ閠・・縺帙★縲∵怙繧りｿ代＞螳牙・鬮伜床縲鶏target}縲阪∈逶ｴ陦後☆繧九Ν繝ｼ繝医Ａ).replace('{target}', localizedTargetEdgeName),
+  characteristics: (dict.routeShortestDesc || 'Direct route to the nearest safe high ground {target}').replace('{target}', localizedTargetEdgeName),
  congestion_score: 'medium', // Shortest usually gets congested
  isOSRM: true
  };
@@ -2036,21 +2038,21 @@ document.addEventListener('DOMContentLoaded', () => {
  if (detourResult) {
  routeB = {
  id: 'B',
- label: dict.routeAvoidLabel || '驕楢ｷｯ豺ｷ髮大屓驕ｿ繝ｫ繝ｼ繝・,
+  label: dict.routeAvoidLabel || 'Avoid Congestion Route',
  color: '#34c759',
  waypoints: detourResult.waypoints,
  distance_m: detourResult.distance,
  estimated_min: Math.max(1, Math.round((detourResult.distance / getEvacuationSpeed()) / 60)),
- characteristics: dict.routeAvoidDesc || `繧ｷ繝溘Η繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ荳翫・豺ｷ髮代お繝ｪ繧｢繧定・蜍墓､懃衍縺励∬ｿょ屓霍ｯ繧堤函謌舌＠縺溷ｮ牙・繝ｫ繝ｼ繝医Ａ,
+  characteristics: (dict.routeAvoidDesc || 'Dynamically avoids heavy simulated traffic to ensure a safe route to {target}').replace('{target}', localizedShelterName),
  congestion_score: 'low',
  isOSRM: true,
  blockedPoint: detourResult.blockedPoint
  };
  } else if (onlineNearestWaypoints) {
- const noCongestionDesc = dict.routeAvoidNoCongestionDesc || `迴ｾ蝨ｨ莠､蟾ｮ縺吶ｋ豺ｷ髮代′縺ｪ縺・◆繧√∵怙遏ｭ霍晞屬縺ｧ縲鶏target}縲阪∈隱伜ｰ弱＠縺ｾ縺吶Ａ;
+  const noCongestionDesc = dict.routeAvoidNoCongestionDesc || 'No heavy simulated traffic detected. Directing to {target} via the shortest route.';
  routeB = {
  id: 'B',
- label: dict.routeAvoidLabel || '驕楢ｷｯ豺ｷ髮大屓驕ｿ繝ｫ繝ｼ繝・,
+  label: dict.routeAvoidLabel || 'Avoid Congestion Route',
  color: '#34c759',
  waypoints: onlineNearestWaypoints,
  distance_m: onlineNearestDistance,
@@ -2163,15 +2165,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
  let flatNote = '';
  if (routeCEdge.id !== targetEdge.id) {
- flatNote = (dict.routeBarrierDesc1 || `縲鶏target}縲肴婿髱｢縺ｸ縺ｮ蟷ｳ蝮ｦ縺ｪ驕薙ｒ蜆ｪ蜈医Ａ).replace('{target}', routeCEdgeName);
+  flatNote = (dict.routeBarrierDesc1 || 'Prioritizing flat paths toward {target}').replace('{target}', routeCEdgeName);
  } else {
- flatNote = (dict.routeBarrierDesc2 || `縲鶏target}縲阪∈蜷代°縺・∪縺吶′縲√％繧後′迴ｾ蝨ｨ譛繧ょｹｳ蝮ｦ縺ｪ邨瑚ｷｯ縺ｧ縺吶Ａ).replace('{target}', routeCEdgeName);
+  flatNote = (dict.routeBarrierDesc2 || 'Heading to {target}, currently the flattest route').replace('{target}', routeCEdgeName);
  }
 
  if (routeCWaypoints) {
  routeC = {
  id: 'C',
- label: dict.routeBarrierLabel || ' 繝舌Μ繧｢繝輔Μ繝ｼ繝ｻ蟷ｳ蝮ｦ繝ｫ繝ｼ繝・,
+  label: dict.routeBarrierLabel || 'Barrier-Free Route',
  color: '#5e5ce6',
  waypoints: routeCWaypoints,
  distance_m: routeCDistance,
@@ -2201,7 +2203,7 @@ document.addEventListener('DOMContentLoaded', () => {
  showRouteSelectorHUD(candidates);
 
  // Update emergency HUD text
- document.getElementById('i18n-evac-desc').innerText = dict.routeStartPrompt || `驕ｿ髮｣髢句ｧ句慍轤ｹ繧定ｨｭ螳壹＠縺ｾ縺励◆縲ょ呵｣懊Ν繝ｼ繝医ｒ驕ｸ謚槭＠縺ｦ驕ｿ髮｣繧帝幕蟋九＠縺ｦ縺上□縺輔＞縲Ａ;
+  document.getElementById('i18n-evac-desc').innerText = dict.routeStartPrompt || 'Evacuation start point set. Please select a route to start evacuation.';
  }
 
  /**
@@ -2446,14 +2448,14 @@ document.addEventListener('DOMContentLoaded', () => {
  if (dict.learningCenter) localizedShelterName = localizedShelterName.replace('蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ', dict.learningCenter);
 
  if (type === 'A') {
- label = dict.routeShortestLabel || '譛遏ｭ驕ｿ髮｣繝ｫ繝ｼ繝・;
- characteristics = (dict.routeShortestDesc || '豺ｷ髮代ｒ閠・・縺帙★縲∵怙繧りｿ代＞螳牙・鬮伜床縲鶏target}縲阪∈逶ｴ陦後☆繧九Ν繝ｼ繝医・).replace('{target}', localizedShelterName);
+  label = dict.routeShortestLabel || 'Shortest Route';
+  characteristics = (dict.routeShortestDesc || 'Direct route to the nearest safe high ground {target}').replace('{target}', localizedShelterName);
  } else if (type === 'B') {
- label = dict.routeAvoidLabel || '驕楢ｷｯ豺ｷ髮大屓驕ｿ繝ｫ繝ｼ繝・;
- characteristics = (dict.routeAvoidDesc || '繧ｷ繝溘Η繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ荳翫・豺ｷ髮代お繝ｪ繧｢繧定・蜍墓､懃衍縺励∬ｿょ屓霍ｯ繧堤函謌舌＠縺溷ｮ牙・繝ｫ繝ｼ繝医・).replace('{target}', localizedShelterName);
+  label = dict.routeAvoidLabel || 'Avoid Congestion Route';
+  characteristics = (dict.routeAvoidDesc || 'Avoids simulated traffic and congestion to ensure a safe route to {target}').replace('{target}', localizedShelterName);
  } else if (type === 'C') {
- label = dict.routeBarrierLabel || ' 繝舌Μ繧｢繝輔Μ繝ｼ繝ｻ蟷ｳ蝮ｦ繝ｫ繝ｼ繝・;
- characteristics = (dict.routeBarrierDesc2 || '縲鶏target}縲阪∈蜷代°縺・∪縺吶′縲√％繧後′迴ｾ蝨ｨ譛繧ょｹｳ蝮ｦ縺ｪ邨瑚ｷｯ縺ｧ縺吶・).replace('{target}', localizedShelterName);
+  label = dict.routeBarrierLabel || 'Barrier-Free Route';
+  characteristics = (dict.routeBarrierDesc2 || 'Accessible and relatively flat route heading to {target}').replace('{target}', localizedShelterName);
  }
  
  if (dict.elementarySchool) characteristics = characteristics.replace('蟆丞ｭｦ譬｡', dict.elementarySchool);
@@ -2481,10 +2483,10 @@ document.addEventListener('DOMContentLoaded', () => {
  const midPoint = [startLoc.lat, shelterLng]; // corner turn to simulate streets
  
  const fallbackNames = {
- 'A': dict.routeShortestLabel || '譛遏ｭ驕ｿ髮｣繝ｫ繝ｼ繝・,
- 'B': dict.routeAvoidLabel || '驕楢ｷｯ豺ｷ髮大屓驕ｿ繝ｫ繝ｼ繝・,
- 'C': dict.routeBarrierLabel || ' 繝舌Μ繧｢繝輔Μ繝ｼ繝ｻ蟷ｳ蝮ｦ繝ｫ繝ｼ繝・,
- 'D': dict.routeDispersal || '蛻・淵驕ｿ髮｣繝ｫ繝ｼ繝・
+  'A': dict.routeShortestLabel || 'Shortest Route',
+  'B': dict.routeAvoidLabel || 'Avoid Congestion Route',
+  'C': dict.routeBarrierLabel || 'Barrier-Free Route',
+  'D': dict.routeDispersal || 'Dispersed Route'
  };
  const fallbackColors = {
  'A': '#0071e3',
@@ -2495,7 +2497,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  return {
  id: type,
- label: fallbackNames[type] || '邱頑･驕ｿ髮｣繝ｫ繝ｼ繝・,
+  label: fallbackNames[type] || 'Emergency Evacuation Route',
  color: fallbackColors[type] || '#ff3b30',
  waypoints: [
  midPoint,
@@ -2503,7 +2505,7 @@ document.addEventListener('DOMContentLoaded', () => {
  ],
  distance_m: Math.round(startLatLng.distanceTo(L.latLng(shelterLat, shelterLng)) * 1.3),
  estimated_min: Math.max(1, Math.round((startLatLng.distanceTo(L.latLng(shelterLat, shelterLng)) * 1.3 / getEvacuationSpeed()) / 60)),
- characteristics: type === 'C' ? "蝮る％繧帝∩縺代◆邱頑･蟷ｳ蝮ｦ繝ｫ繝ｼ繝医・ : "邱頑･譎ゅ・譛遏ｭ驕楢ｷｯ謗･邯壹Ν繝ｼ繝医・,
+  characteristics: type === 'C' ? 'Flat route avoiding steep slopes (Fallback)' : 'Shortest direct route (Fallback)',
  congestion_score: "low",
  isOSRM: false
  };
@@ -2583,19 +2585,18 @@ document.addEventListener('DOMContentLoaded', () => {
  if (minDistance > 100) {
  console.log("Route deviation detected");
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- document.getElementById('i18n-evac-desc').innerText = dict.routeOffCourse || "繝ｫ繝ｼ繝医°繧牙､悶ｌ縺ｦ縺・∪縺呻ｼ・搨縺・ｷ壹↓謌ｻ縺｣縺ｦ縺上□縺輔＞縲・;
+  document.getElementById('i18n-evac-desc').innerText = dict.routeOffCourse || 'Off course! Please return to the blue path.';
  document.getElementById('i18n-evac-desc').style.color = 'var(--danger)';
  
  // Speak deviation alert rate-limited to every 12s to avoid overlap
  const now = Date.now();
  if (now - lastOffCourseSpeakTime > 12000) {
  speakI18n('speechOffCourse');
- triggerDynamicIsland(dict.routeOffCourse || "繝ｫ繝ｼ繝医°繧牙､悶ｌ縺ｦ縺・∪縺呻ｼ・搨縺・ｷ壹↓謌ｻ縺｣縺ｦ縺上□縺輔＞縲・, "error");
+  triggerDynamicIsland(dict.routeOffCourse || 'Off course! Please return to the blue path.', 'error');
  
  // Smartphone Background Notification
  sendSystemNotification(
- dict.deviationAlertLabel || "繝ｫ繝ｼ繝磯ｸ閼ｱ隴ｦ蜻・,
- dict.routeOffCourse || "驕ｿ髮｣邨瑚ｷｯ縺九ｉ螟悶ｌ縺ｦ縺・∪縺吶ょ・縺ｮ髱偵＞繝ｫ繝ｼ繝医↓謌ｻ縺｣縺ｦ縺上□縺輔＞縲・,
+  dict.routeOffCourse || 'You have deviated from the evacuation route. Please return to the blue route.',
  "deviation-alert"
  );
  
@@ -2670,15 +2671,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
  function connect() {
  try {
- ws = new WebSocket('wss://api.p2pquake.net/v2/ws');
+  ws = new WebSocket('wss://api.p2pquake.net/v2/ws');
  } catch (e) {
- console.warn('[P2P] WebSocket 謗･邯壼､ｱ謨暦ｼ医が繝輔Λ繧､繝ｳ?・・', e);
+  console.warn('[P2P] WebSocket connection failed (offline?):', e);
  scheduleReconnect();
  return;
  }
 
  ws.onopen = () => {
- console.log('[P2P] WebSocket 謗･邯壼ｮ御ｺ・(api.p2pquake.net)');
+  console.log('[P2P] WebSocket connected (api.p2pquake.net)');
  setP2PStatus('connected');
  };
 
@@ -2703,7 +2704,7 @@ document.addEventListener('DOMContentLoaded', () => {
  setP2PStatus('alert');
  }
  if (isTsunamiWarning && !isEmergency) {
- console.warn('[P2P] 豢･豕｢隴ｦ蝣ｱ蜿嶺ｿ｡ 竊・閾ｪ蜍慕匱轣ｽ繝医Μ繧ｬ繝ｼ遒ｺ隱・);
+  console.warn('[P2P] Tsunami warning received -> Triggering auto-evacuation check...');
  const p2pAuto = localStorage.getItem('tenden-p2p-auto') !== 'false';
  if (p2pAuto) {
  triggerEmergencyMode(false, 1, 'a');
@@ -2716,11 +2717,11 @@ document.addEventListener('DOMContentLoaded', () => {
  };
 
  ws.onerror = (err) => {
- console.warn('[P2P] WebSocket 繧ｨ繝ｩ繝ｼ:', err);
+  console.warn('[P2P] WebSocket error:', err);
  };
 
  ws.onclose = () => {
- console.log('[P2P] WebSocket 蛻・妙 竊・5遘貞ｾ後↓蜀肴磁邯・);
+  console.log('[P2P] WebSocket disconnected, reconnecting in 5s...');
  setP2PStatus('connecting');
  scheduleReconnect();
  };
@@ -2763,10 +2764,10 @@ document.addEventListener('DOMContentLoaded', () => {
  
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  const labels = {
- connecting: dict.p2pConnecting || '隴ｦ蝣ｱ蠕・ｩ滉ｸｭ...',
- connected: dict.p2pConnected || '隴ｦ蝣ｱ蠕・ｩ滉ｸｭ',
- alert: dict.p2pAlert || ' 螟ｧ豢･豕｢隴ｦ蝣ｱ',
- disconnected: dict.p2pDisconnected || '隴ｦ蝣ｱ: 譛ｪ謗･邯・
+  connecting: dict.p2pConnecting || 'P2P Reconnecting...',
+  connected: dict.p2pConnected || 'P2P Connected (Monitoring)',
+  alert: dict.p2pAlert || 'Tsunami Warning Active!',
+  disconnected: dict.p2pDisconnected || 'P2P Offline'
  };
  label.textContent = labels[state] || '蠕・ｩ滉ｸｭ';
  if (bar) {
@@ -2868,7 +2869,7 @@ document.addEventListener('DOMContentLoaded', () => {
  accuracyEl.innerText = `GPS: ﾂｱ${formattedAccuracy}m`;
  box.className = 'status-badge gps-badge';
  } else {
- const warningText = dict.gpsLowAccuracy || '・亥ｱ句､匁耳螂ｨ・・;
+  const warningText = dict.gpsLowAccuracy || '(Outdoor Use Recommended)';
  accuracyEl.innerText = `GPS: ﾂｱ${formattedAccuracy}m ${warningText}`;
  box.className = 'status-badge gps-badge gps-low-accuracy';
  }
@@ -3004,8 +3005,8 @@ document.addEventListener('DOMContentLoaded', () => {
  // Smartphone Background Notification & Celebration Vibration
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  sendSystemNotification(
- dict.arrivalTitle || "驕ｿ髮｣螳御ｺ・ｼ・",
- dict.arrivalDesc || "螳牙・縺ｪ驕ｿ髮｣蜈医↓辟｡莠句芦逹縺励∪縺励◆縲りｨ鍋ｷｴ縺顔夢繧梧ｧ倥〒縺励◆・・,
+  dict.arrivalTitle || "Evacuation Completed!",
+      dict.arrivalDesc || 'You have successfully reached a safe location. Please remain here.',
  "arrival-alert"
  );
  if ('vibrate' in navigator) {
@@ -3015,8 +3016,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // Trigger beautiful completion alert popup
  showCustomAlert(
- dict.arrivalTitle || "驕ｿ髮｣螳御ｺ・ｼ・",
- dict.arrivalDesc || "螳牙・縺ｪ驕ｿ髮｣蜈医↓辟｡莠句芦逹縺励∪縺励◆縲ょｼ輔″邯壹″繝上じ繝ｼ繝峨・繝・・遲峨ｒ遒ｺ隱阪＠縲∝ｮ牙・繧堤｢ｺ菫昴＠縺ｦ縺上□縺輔＞縲・,
+  dict.arrivalTitle || "Evacuation Completed!",
+      dict.arrivalDesc || 'You have successfully reached a safe location. Please remain here.',
  "success",
  () => {
  // Automatically trigger the beautiful evacuation plan card screenshot & share overlay!
@@ -3115,8 +3116,8 @@ document.addEventListener('DOMContentLoaded', () => {
  safeEdgesLayerGroup.clearLayers();
  
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- const title = dict.safeEdgeTitle || ' 螳牙・蠅・阜轤ｹ・育ｬｬ荳逶ｮ讓吝呵｣懶ｼ・;
- const coordLabel = dict.coordinateLabel || '蠎ｧ讓・';
+  const title = dict.safeEdgeTitle || 'Safe Boundary Point (First Goal Candidate)';
+  const coordLabel = dict.coordinateLabel || 'Coordinates';
  
  safeEdgesData.forEach(edge => {
  L.circleMarker([edge.lat, edge.lng], {
@@ -3713,16 +3714,16 @@ document.addEventListener('DOMContentLoaded', () => {
  if (isInundated) {
  box.classList.add('tsunami-status-danger');
  textSpan.textContent = isMobile 
- ? (dict.tsunamiStatusDangerMobile || '豬ｸ豌ｴ諠ｳ螳・蜀・) 
- : (dict.tsunamiStatusDangerDesktop || ' 豢･豕｢豬ｸ豌ｴ諠ｳ螳壼玄蝓・蜀・);
+  ? (dict.tsunamiStatusDangerMobile || 'Inside Inundation Zone') 
+  : (dict.tsunamiStatusDangerDesktop || 'Inside Tsunami Inundation Zone');
  
  // Smartphone Background System Notification & Warning Vibration for Ingress
  if (isEmergency && !isEvacuationCompleted) {
  const now = Date.now();
  if (now - lastInundationNotificationTime > 12000) {
  sendSystemNotification(
- dict.tsunamiWarningTitle || " 豬ｸ豌ｴ諠ｳ螳壼沺騾ｲ蜈･繧｢繝ｩ繝ｼ繝・,
- dict.tsunamiWarningDesc || "隴ｦ蜻奇ｼ壽ｴ･豕｢豬ｸ豌ｴ莠域ｸｬ蛹ｺ蝓溷・縺ｫ騾ｲ蜈･縺励∪縺励◆・∫峩縺｡縺ｫ鬮伜床・育ｬｬ荳逶ｮ讓呻ｼ峨∈驕ｿ髮｣縺励※縺上□縺輔＞・・,
+  dict.tsunamiWarningTitle || 'Tsunami Hazard Warning',
+  dict.tsunamiWarningDesc || 'Warning: Entered tsunami inundation zone. Please move to higher ground immediately.',
  "inundation-alert"
  );
  if ('vibrate' in navigator) {
@@ -3734,8 +3735,8 @@ document.addEventListener('DOMContentLoaded', () => {
  } else {
  box.classList.add('tsunami-status-safe');
  textSpan.textContent = isMobile 
- ? (dict.tsunamiStatusSafeMobile || '豬ｸ豌ｴ諠ｳ螳・螟・) 
- : (dict.tsunamiStatusSafeDesktop || ' 豢･豕｢豬ｸ豌ｴ諠ｳ螳壼玄蝓・螟・);
+  ? (dict.tsunamiStatusSafeMobile || 'Outside Inundation Zone') 
+  : (dict.tsunamiStatusSafeDesktop || 'Outside Tsunami Inundation Zone');
  }
  }
 
@@ -3771,10 +3772,10 @@ document.addEventListener('DOMContentLoaded', () => {
  routeLabel = selectedRoute.label;
  } else {
  const fallbackNames = {
- 'A': dict.routeShortestLabel || '譛遏ｭ驕ｿ髮｣繝ｫ繝ｼ繝・,
- 'B': dict.routeAvoidLabel || '驕楢ｷｯ豺ｷ髮大屓驕ｿ繝ｫ繝ｼ繝・,
- 'C': dict.routeBarrierLabel || ' 繝舌Μ繧｢繝輔Μ繝ｼ繝ｻ蟷ｳ蝮ｦ繝ｫ繝ｼ繝・,
- 'D': dict.routeDispersal || '蛻・淵驕ｿ髮｣繝ｫ繝ｼ繝・
+  'A': dict.routeShortestLabel || 'Shortest Route',
+  'B': dict.routeAvoidLabel || 'Avoid Congestion Route',
+  'C': dict.routeBarrierLabel || 'Barrier-Free Route',
+  'D': dict.routeDispersal || 'Dispersed Route'
  };
  routeLabel = fallbackNames[activeSelectedRouteId] || fallbackNames['A'];
  }
@@ -3785,10 +3786,10 @@ document.addEventListener('DOMContentLoaded', () => {
  const currentLang = getLanguageCode();
  if (currentLang !== 'ja') {
  const replacements = [
- { jp: '蟆丞ｭｦ譬｡', en: ' Primary School', zh: '蟆丞ｭｦ', ko: '・壱導﨑呟ｵ・ },
- { jp: '荳ｭ蟄ｦ譬｡', en: ' Middle School', zh: '荳ｭ蟄ｦ', ko: '・啄蕗・・ },
- { jp: '蠅・・', en: ' Temple Precincts', zh: '逾樒､ｾ蠅・・', ko: '・ｽ・ｴ' },
- { jp: '蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ', en: ' Community Learning Center', zh: '遉ｾ蛹ｺ蟄ｦ荵荳ｭ蠢・, ko: '﨑呷慣 ・ｼ奓ｰ' }
+  { jp: 'PrimarySchool', en: ' Primary School', zh: 'Primary School', ko: 'Primary School' },
+  { jp: 'MiddleSchool', en: ' Middle School', zh: 'Middle School', ko: 'Middle School' },
+  { jp: 'TemplePrecincts', en: ' Temple Precincts', zh: 'Temple Precincts', ko: 'Temple Precincts' },
+  { jp: 'LearningCenter', en: ' Community Learning Center', zh: 'Learning Center', ko: 'Learning Center' }
  ];
  for (const rep of replacements) {
  if (destination.endsWith(rep.jp)) {
@@ -3971,9 +3972,9 @@ document.addEventListener('DOMContentLoaded', () => {
  navigator.vibrate([100, 100, 100]);
  }
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- const alertMsg = dict.lowBatteryWarning || " 繝舌ャ繝・Μ繝ｼ谿矩㍼20%莉･荳具ｼ夂判髱｢縺ｮ譏弱ｋ縺輔ｒ荳九￡縲；PS霑ｽ蠕薙ｒ邯ｭ謖√＠縺ｦ縺上□縺輔＞縲・;
+  const alertMsg = dict.lowBatteryWarning || 'Battery level below 20%: Please lower brightness to conserve GPS tracking.';
  triggerDynamicIsland(alertMsg, "warning");
- sendSystemNotification(" TENDEN 繝舌ャ繝・Μ繝ｼ菴惹ｸ・, alertMsg, "battery-alert");
+  sendSystemNotification('TENDEN Low Battery Warning', alertMsg, 'battery-alert');
  } else if (battery.level > 0.20 || battery.charging) {
  hasWarnedLowBattery = false;
  }
@@ -3994,13 +3995,13 @@ document.addEventListener('DOMContentLoaded', () => {
  if (data && data.address) {
  const state = data.address.state || '';
  const prefMap = {
- '蛹玲ｵｷ驕・: '01', '髱呈｣ｮ': '02', '蟯ｩ謇・: '03', '螳ｮ蝓・: '04', '遘狗伐': '05', '螻ｱ蠖｢': '06', '遖丞ｳｶ': '07',
- '闌ｨ蝓・: '08', '譬・惠': '09', '鄒､鬥ｬ': '10', '蝓ｼ邇・: '11', '蜊・痩': '12', '譚ｱ莠ｬ': '13', '逾槫･亥ｷ・: '14',
- '譁ｰ貎・: '15', '蟇悟ｱｱ': '16', '遏ｳ蟾・: '17', '遖丈ｺ・: '18', '螻ｱ譴ｨ': '19', '髟ｷ驥・: '20', '蟯宣・': '21',
- '髱吝ｲ｡': '22', '諢帷衍': '23', '荳蛾㍾': '24', '貊玖ｳ': '25', '莠ｬ驛ｽ': '26', '螟ｧ髦ｪ': '27', '蜈ｵ蠎ｫ': '28',
- '螂郁憶': '29', '蜥梧ｭ悟ｱｱ': '30', '魑･蜿・: '31', '蟲ｶ譬ｹ': '32', '蟯｡螻ｱ': '33', '蠎・ｳｶ': '34', '螻ｱ蜿｣': '35',
- '蠕ｳ蟲ｶ': '36', '鬥吝ｷ・: '37', '諢帛ｪ・: '38', '鬮倡衍': '39', '遖丞ｲ｡': '40', '菴占ｳ': '41', '髟ｷ蟠・: '42',
- '辭頑悽': '43', '螟ｧ蛻・: '44', '螳ｮ蟠・: '45', '鮖ｿ蜈仙ｳｶ': '46', '豐也ｸ・: '47'
+            'Hokkaido': '01', 'Aomori': '02', 'Iwate': '03', 'Miyagi': '04', 'Akita': '05', 'Yamagata': '06', 'Fukushima': '07',
+            'Ibaraki': '08', 'Tochigi': '09', 'Gunma': '10', 'Saitama': '11', 'Chiba': '12', 'Tokyo': '13', 'Kanagawa': '14',
+            'Niigata': '15', 'Toyama': '16', 'Ishikawa': '17', 'Fukui': '18', 'Yamanashi': '19', 'Nagano': '20', 'Gifu': '21',
+            'Shizuoka': '22', 'Aichi': '23', 'Mie': '24', 'Shiga': '25', 'Kyoto': '26', 'Osaka': '27', 'Hyogo': '28',
+            'Nara': '29', 'Wakayama': '30', 'Tottori': '31', 'Shimane': '32', 'Okayama': '33', 'Hiroshima': '34', 'Yamaguchi': '35',
+            'Tokushima': '36', 'Kagawa': '37', 'Ehime': '38', 'Kochi': '39', 'Fukuoka': '40', 'Saga': '41', 'Nagasaki': '42',
+            'Kumamoto': '43', 'Oita': '44', 'Miyazaki': '45', 'Kagoshima': '46', 'Okinawa': '47'
  };
  for (const key in prefMap) {
  if (state.includes(key)) return prefMap[key];
@@ -4219,8 +4220,8 @@ document.addEventListener('DOMContentLoaded', () => {
     coastalMarker = L.marker(endLatLng, { icon: shorelineIcon }).addTo(map);
     
     const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
-    let alertTitle = dict.coastProximityTitle || '譛蟇・ｊ縺ｮ豬ｷ蟯ｸ邱壹→縺ｮ菴咲ｽｮ髢｢菫・;
-    let alertDesc = dict.coastProximityDesc || `迴ｾ蝨ｨ蝨ｰ縺九ｉ譛蟇・ｊ縺ｮ豬ｷ蟯ｸ邱壹∪縺ｧ邏・**${Math.round(coast.distance)}m** ・域ｵｷ謚・ **{elevation}m**・峨〒縺吶・n\n荳・′荳豢･豕｢隴ｦ蝣ｱ縺檎匱莉､縺輔ｌ縺溷ｴ蜷医・縲∵ｵｷ蟯ｸ邱壹→縲千峩莠､縺吶ｋ譁ｹ蜷托ｼ亥・髯ｸ縺ｮ鬮伜床・峨代∈逶ｴ縺｡縺ｫ驕ｿ髮｣繧帝幕蟋九＠縺ｦ縺上□縺輔＞縲Ａ;
+    let alertTitle = dict.coastProximityTitle || 'Coast Proximity Alert';
+    let alertDesc = dict.coastProximityDesc || "Near coastline. If a tsunami warning is active, please move inland and to higher ground immediately.";
     
     const elevationEl = document.getElementById('elevation-m');
     const elevationVal = elevationEl ? elevationEl.innerText : '--';
@@ -4298,11 +4299,11 @@ function startOnboardingDemo() {
  // Safety Warning Multilingual fallback
  if (key === 'demoSimWarning') {
  const warnings = {
- ja: ' 縺薙ｌ縺ｯ險鍋ｷｴ逕ｨ縺ｮ繧ｷ繝溘Η繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ逕ｻ髱｢縺ｧ縺吶ょｮ滄圀縺ｮ轣ｽ螳ｳ縺ｧ縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲・,
+        ja: 'This is a simulation for training purposes. It is not a real disaster.',
  en: ' This is a simulated training demo. NOT an actual disaster.',
- zh: ' 霑呎弍逕ｨ莠手ｮｭ扈・噪讓｡諡滓ｼ皮､ｺ逕ｻ髱｢縲ょｹｶ髱樒悄螳樒∪螳ｳ縲・,
- 'zh-tw': ' 騾呎弍逕ｨ譁ｼ險鍋ｷｴ逧・ｨ｡謫ｬ貍皮､ｺ逡ｫ髱｢縲ゆｸｦ髱樒悄蟇ｦ轣ｽ螳ｳ縲・,
- ko: ' ・ｴ・・捩 弡壱ｨ・ｩ ・罹ｮｬ・溢擽・・・ｰ・ｨ・・笈・､. ・､・・・ｬ・懍擽 ・・漁・壱共.',
+        zh: 'This is a simulation for training purposes. It is not a real disaster.',
+        'zh-tw': 'This is a simulation for training purposes. It is not a real disaster.',
+        ko: 'This is a simulation for training purposes. It is not a real disaster.',
  fr: ' Il s\'agit d\'une simulation d\'entraﾃｮnement. Pas de catastrophe rﾃｩelle.',
  es: ' Esta es una demostraciﾃｳn de simulaciﾃｳn. NO es un desastre real.',
  de: ' Dies ist eine simulierte Trainingsdemo. Kein echtes Katastrophenszenario.',
@@ -4326,26 +4327,26 @@ function startOnboardingDemo() {
  const elStep3Desc = document.getElementById('demo-desc-3');
  const elSimWarning = document.getElementById('demo-sim-warning');
 
- if (elStep0Title) elStep0Title.textContent = getDemoText('demoStep0Title', '豢･豕｢縺九ｉ蜻ｽ繧貞ｮ医ｋ縺溘ａ縺ｫ');
- if (elStep0Sub) elStep0Sub.textContent = getDemoText('demoStep0Sub', '譌･譛ｬ蜈ｨ蝗ｽ縺ｮ豐ｿ蟯ｸ繧ｨ繝ｪ繧｢縺ｧ菴ｿ縺医ｋ驕ｿ髮｣謾ｯ謠ｴ繧｢繝励Μ');
- if (elStep1Title) elStep1Title.textContent = getDemoText('demoStep1Title', ' 蝨ｰ髴・′逋ｺ逕溘＠縺ｾ縺励◆');
- if (elStep1Desc) elStep1Desc.textContent = getDemoText('demoStep1Desc', '豢･豕｢縺ｮ蜊ｱ髯ｺ縺後≠繧翫∪縺吶ゆｻ翫☆縺宣∩髮｣繧帝幕蟋九＠縺ｦ縺上□縺輔＞縲・);
- if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', ' 3縺､縺ｮ驕ｿ髮｣繝ｫ繝ｼ繝医ｒ謠千､ｺ縺励∪縺・);
- if (elStep2Desc) elStep2Desc.textContent = getDemoText('demoStep2Desc', '譛遏ｭ繝ｻ豺ｷ髮大屓驕ｿ繝ｻ諤･蝮ょ屓驕ｿ縺ｮ3繝ｫ繝ｼ繝医ｒ蜷梧凾陦ｨ遉ｺ縲ゅ≠縺ｪ縺溘′驕ｸ縺ｳ縺ｾ縺吶・);
- if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', 'TENDEN縺ｯ縲√≠縺ｪ縺溘↓驕ｸ謚櫁い繧呈ｸ｡縺励∪縺・);
- if (elStep3Desc) elStep3Desc.textContent = getDemoText('demoStep3Desc', '縺昴・蝨溷慍繧堤衍繧峨↑縺・ｦｳ蜈牙ｮ｢繧ゅ∝､門嵜隱櫁ｩｱ閠・ｂ縲∬ｿｷ繧上★騾・￡蜃ｺ縺帙ｋ謾ｯ謠ｴ繧偵・);
- if (elSimWarning) elSimWarning.textContent = getDemoText('demoSimWarning', ' 縺薙ｌ縺ｯ險鍋ｷｴ逕ｨ縺ｮ繧ｷ繝溘Η繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ逕ｻ髱｢縺ｧ縺吶ょｮ滄圀縺ｮ轣ｽ螳ｳ縺ｧ縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲・);
+  if (elStep0Title) elStep0Title.textContent = getDemoText('demoStep0Title', 'To Protect Lives from Tsunamis');
+  if (elStep0Sub) elStep0Sub.textContent = getDemoText('demoStep0Sub', 'Tsunami evacuation assistant app for all coastal areas of Japan');
+  if (elStep1Title) elStep1Title.textContent = getDemoText('demoStep1Title', 'An Earthquake Has Occurred');
+  if (elStep1Desc) elStep1Desc.textContent = getDemoText('demoStep1Desc', 'Tsunami danger detected. Please start evacuating immediately.');
+  if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', 'Presenting 3 evacuation routes');
+  if (elStep2Desc) elStep2Desc.textContent = getDemoText('demoStep2Desc', 'Displays Shortest, Avoid Congestion, and Flat routes simultaneously. You decide.');
+  if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', 'TENDEN gives you choices');
+  if (elStep3Desc) elStep3Desc.textContent = getDemoText('demoStep3Desc', 'Helping tourists and foreign speakers evacuate safely without confusion.');
+  if (elSimWarning) elSimWarning.textContent = getDemoText('demoSimWarning', 'This is a simulation for training purposes. It is not a real disaster.');
 
  // Next/skip buttons
  document.querySelectorAll('[data-i18n="demoBtnSkip"]').forEach(el => {
- el.textContent = getDemoText('demoBtnSkip', '繧ｹ繧ｭ繝・・');
+    el.textContent = getDemoText('demoBtnSkip', 'Skip');
  });
- const useHereSpan = document.querySelector('[data-i18n="demoBtnUseHere"]');
- if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', '莉翫＞繧句ｴ謇縺ｧ菴ｿ縺｣縺ｦ縺ｿ繧・);
- const replaySpan = document.querySelector('[data-i18n="demoBtnReplay"]');
- if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', '繧ゅ≧荳蠎ｦ隕九ｋ');
- const settingsDemoSpan = document.querySelector('[data-i18n="settingsDemoBtn"]');
- if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', ' 繧ｪ繝ｳ繝懊・繝・ぅ繝ｳ繧ｰ繝・Δ繧貞・逕溘☆繧・);
+  if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', 'Try at your current location');
+  if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', 'Try at your current location');
+  if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'Replay Guide');
+  if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'Replay Guide');
+  if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'Replay Onboarding Guide');
+  if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'Replay Onboarding Guide');
  }
 
  // Apply i18n immediately (may use fallbacks), then re-apply when i18n loads
@@ -4619,10 +4620,10 @@ function startOnboardingDemo() {
  ctx.font = 'bold 11px Inter, sans-serif';
  ctx.fillStyle = '#ff3b30';
  ctx.textAlign = 'center';
- ctx.fillText('髴・ｺ・, epicX, epicY - 12);
+  ctx.fillText('Epicenter', epicX, epicY - 12);
  ctx.fillStyle = '#1c1c1e';
  ctx.font = '10px Inter, sans-serif';
- ctx.fillText('骼悟牙ｸ・逕ｱ豈斐Ω豬・, W * 0.5, 18);
+  ctx.fillText('Yuigahama Beach, Kamakura', W * 0.5, 18);
  }
 
  ctx.restore();
