@@ -2268,11 +2268,11 @@ document.addEventListener('DOMContentLoaded', () => {
  // Check if the OSRM snapped last waypoint is inside the inundation zone!
  const isSnappedInside = await checkTsunamiInundation(lastWaypoint[0], lastWaypoint[1], '14');
  
- if (isSnappedInside) {
- console.warn(`[SafeEdge] OSRMスナップ先が浸水域境界付近ですが、事前スキャンで検証済みの安全点のため採用します: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
- }
-
- // Found a perfectly safe snapped destination!
+  if (isSnappedInside) {
+  console.warn(`[SafeEdge] OSRMスナップ先が浸水域内のため、この候補をスキップします: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
+  verificationFailed = true;
+  break;
+  }
  console.log(`[SafeEdge] 安全なスナップ先を確認: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
  return candidateEdge;
  }
@@ -3102,7 +3102,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * Excludes points within 300m of the coastline and 100m of Namerikawa/Sakaigawa rivers.
  */
  function isNearCoastOrWater(lat, lng) {
- if (!window.turf) return false;
+  // (Moved window.turf check below)
  
  // Strictly exclude anything outside Kamakura municipal limits:
  // Exclude if it's east of 139.585, OR if it's in Zushi/Kotsubo (east of 139.563 AND south of 35.308), OR south of 35.295.
@@ -3113,19 +3113,21 @@ document.addEventListener('DOMContentLoaded', () => {
  
  // [CRITICAL] Mathematical Ocean Exclusion:
  // Coastline coordinates from West to East in Kamakura city limits
- const coastPts = [
- { lng: 139.460, lat: 35.310 }, // Far West border
- { lng: 139.470, lat: 35.309 }, // West border
- { lng: 139.485, lat: 35.307 }, // Koshigoe
- { lng: 139.500, lat: 35.304 }, // Shichirigahama
- { lng: 139.515, lat: 35.302 },
- { lng: 139.525, lat: 35.301 }, // Inamuragasaki
- { lng: 139.535, lat: 35.310 }, // Yuigahama West
- { lng: 139.545, lat: 35.310 }, // Yuigahama Center
- { lng: 139.553, lat: 35.308 }, // Namerikawa mouth
- { lng: 139.560, lat: 35.302 }, // Zaimokuza Beach
- { lng: 139.568, lat: 35.298 } // East border (Kotsubo entrance)
- ];
+  const coastPts = [
+  { lng: 139.460, lat: 35.310 }, // Far West border
+  { lng: 139.470, lat: 35.309 }, // West border
+  { lng: 139.485, lat: 35.307 }, // Koshigoe
+  { lng: 139.500, lat: 35.304 }, // Shichirigahama
+  { lng: 139.515, lat: 35.302 },
+  { lng: 139.525, lat: 35.301 }, // Inamuragasaki
+  { lng: 139.535, lat: 35.310 }, // Yuigahama West
+  { lng: 139.545, lat: 35.310 }, // Yuigahama Center
+  { lng: 139.553, lat: 35.308 }, // Namerikawa mouth
+  { lng: 139.560, lat: 35.302 }, // Zaimokuza Beach
+  { lng: 139.568, lat: 35.298 }, // East border (Kotsubo entrance)
+  { lng: 139.575, lat: 35.292 }, // Zushi Marina / Kotsubo
+  { lng: 139.585, lat: 35.290 }  // Zushi Beach / East border
+  ];
 
  // Find the exact coastline latitude at the point's longitude using linear interpolation
  let coastLat = null;
@@ -3145,7 +3147,8 @@ document.addEventListener('DOMContentLoaded', () => {
  return true;
  }
 
- const pt = turf.point([lng, lat]);
+  if (!window.turf) return false;
+   const pt = turf.point([lng, lat]);
  
  // Coastline coordinates from West to East (covers Kamakura entire coast and Kotsubo peninsula)
  const coastLine = turf.lineString([
