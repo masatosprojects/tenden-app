@@ -675,6 +675,61 @@
     </div>
   </div>
 
+  <!-- DEVELOPER DEBUG BADGE & CONTROL DRAWER -->
+  <div id="dev-debug-badge" class="dev-debug-badge hidden">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>DEV</span>
+  </div>
+
+  <div id="dev-debug-drawer" class="dev-debug-drawer hidden">
+    <div class="dev-drawer-header">
+      <h3>🛠️ DEV実機コンソール</h3>
+      <button id="btn-dev-drawer-close" class="close-btn">&times;</button>
+    </div>
+    
+    <div class="dev-drawer-body">
+      <!-- Location Teleporter -->
+      <div class="dev-control-group">
+        <label>📍 座標テレポート（テスト・検証用）</label>
+        <select id="dev-teleport-select" class="dev-select">
+          <option value="none">-- 選択してください --</option>
+          <option value="yuigahama">由比ヶ浜ビーチ (浸水エリア)</option>
+          <option value="kamakura_station">鎌倉駅東口</option>
+          <option value="zushi_beach">逗子海岸 (一般化検証)</option>
+          <option value="real_gps">実機リアルGPS</option>
+        </select>
+      </div>
+
+      <!-- System State -->
+      <div class="dev-control-group">
+        <label>📟 システム情報</label>
+        <div class="dev-state-grid">
+          <div><span>座標:</span> <strong id="dev-state-coords">-</strong></div>
+          <div><span>海抜:</span> <strong id="dev-state-elev">-</strong></div>
+          <div><span>OSRM:</span> <strong id="dev-state-osrm">未検証</strong></div>
+          <div><span>モード:</span> <strong id="dev-state-mode">Normal</strong></div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="dev-control-group">
+        <label>⚡ クイック操作</label>
+        <div style="display:flex; gap:8px; margin-top:5px;">
+          <button id="btn-dev-clear-cache" class="action-btn outline-btn w-100" style="padding:8px 6px; font-size:0.75rem; border-radius:8px;">キャッシュ破棄</button>
+          <button id="btn-dev-sim-alert" class="action-btn primary-btn w-100" style="padding:8px 6px; font-size:0.75rem; border-radius:8px; background:var(--danger); border:none;">津波警報発令</button>
+        </div>
+      </div>
+
+      <!-- Real-time logs -->
+      <div class="dev-control-group" style="flex: 1; display:flex; flex-direction:column; overflow:hidden;">
+        <label>📟 実機コンソール出力 (リアルタイム)</label>
+        <div id="dev-log-container" class="dev-log-container">
+          <div class="log-item info">[DEV] コンソール監視が開始されました。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </div> <!-- /#app-container -->
 
  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

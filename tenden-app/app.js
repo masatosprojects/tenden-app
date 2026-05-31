@@ -5234,5 +5234,167 @@ function startOnboardingDemo() {
     }
   }
 
+  // --- DEVELOPER LIVE PORTAL AND ON-SCREEN SMARTPHONE CONSOLE LOGS ---
+  setupDevDebugDrawer();
+
+  function setupDevDebugDrawer() {
+    const isLocal = window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' || 
+                    window.location.hostname.startsWith('192.168.') || 
+                    window.location.hostname.startsWith('10.') || 
+                    window.location.hostname.endsWith('.local');
+
+    if (!isLocal) return; // Only execute badge and drawer in local development environment
+
+    const badge = document.getElementById('dev-debug-badge');
+    const drawer = document.getElementById('dev-debug-drawer');
+    const btnClose = document.getElementById('btn-dev-drawer-close');
+    const logContainer = document.getElementById('dev-log-container');
+    
+    // 1. Show developer badge
+    if (badge) badge.classList.remove('hidden');
+
+    // 2. Open / Close Drawer
+    if (badge && drawer) {
+      badge.addEventListener('click', () => {
+        drawer.classList.remove('hidden');
+        updateDevStateInspector();
+      });
+    }
+
+    if (btnClose && drawer) {
+      btnClose.addEventListener('click', () => {
+        drawer.classList.add('hidden');
+      });
+    }
+
+    // 3. Live Console Logs Interception
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+
+    function addLogToUI(type, args) {
+      if (!logContainer) return;
+      const msg = Array.from(args).map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
+      const item = document.createElement('div');
+      item.className = `log-item ${type}`;
+      item.innerText = `[${type.toUpperCase()}] ${msg}`;
+      logContainer.appendChild(item);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    console.log = function() {
+      originalLog.apply(console, arguments);
+      addLogToUI('log', arguments);
+    };
+    console.warn = function() {
+      originalWarn.apply(console, arguments);
+      addLogToUI('warn', arguments);
+    };
+    console.error = function() {
+      originalError.apply(console, arguments);
+      addLogToUI('error', arguments);
+    };
+
+    // 4. State Inspector
+    function updateDevStateInspector() {
+      const stateCoords = document.getElementById('dev-state-coords');
+      const stateElev = document.getElementById('dev-state-elev');
+      const stateOsrm = document.getElementById('dev-state-osrm');
+      const stateMode = document.getElementById('dev-state-mode');
+
+      if (stateCoords) stateCoords.innerText = currentLocation ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}` : '-';
+      if (stateElev) {
+        const elevEl = document.getElementById('hud-elev-value');
+        stateElev.innerText = elevEl ? elevEl.innerText : '-';
+      }
+      if (stateOsrm) stateOsrm.innerText = mainRouteLine ? '正常接続 (OK)' : '未検証 / オフライン';
+      if (stateMode) stateMode.innerText = isEmergency ? '津波避難モード' : '通常監視モード';
+    }
+
+    // Update state inspector dynamically on map moves
+    map.on('moveend', updateDevStateInspector);
+
+    // 5. Teleportation
+    const teleportSelect = document.getElementById('dev-teleport-select');
+    if (teleportSelect) {
+      teleportSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === 'none') return;
+        
+        let targetCoords = null;
+        isManualLocation = true;
+
+        if (val === 'yuigahama') {
+          targetCoords = { lat: 35.3101, lng: 139.5472 }; // Inundated Beach Beach
+          console.log("[DEV] Teleporting mock position to Kamakura Yuigahama Beach (35.3101, 139.5472)...");
+        } else if (val === 'kamakura_station') {
+          targetCoords = { lat: 35.3190, lng: 139.5505 }; // Kamakura Station East Exit
+          console.log("[DEV] Teleporting mock position to Kamakura Station East Exit (35.3190, 139.5505)...");
+        } else if (val === 'zushi_beach') {
+          targetCoords = { lat: 35.2970, lng: 139.5732 }; // Zushi Beach (Tsunami testing!)
+          console.log("[DEV] Teleporting mock position to Zushi Beach (35.2970, 139.5732)...");
+        } else if (val === 'real_gps') {
+          isManualLocation = false;
+          console.log("[DEV] Teleporting mock position back to real physical GPS tracker...");
+          navigator.geolocation.getCurrentPosition(pos => {
+            currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            updateMarker(currentLocation);
+            fetchElevation(currentLocation);
+            triggerLocationTsunamiCheck(currentLocation);
+            drawProximityToCoastline(currentLocation);
+          });
+          drawer.classList.add('hidden');
+          return;
+        }
+
+        if (targetCoords) {
+          currentLocation = targetCoords;
+          map.setView([currentLocation.lat, currentLocation.lng], 15);
+          updateMarker(currentLocation);
+          fetchElevation(currentLocation);
+          triggerLocationTsunamiCheck(currentLocation);
+          generalizeFirstTargets(currentLocation);
+          drawProximityToCoastline(currentLocation);
+          updateGPSAccuracyHUD(null);
+          
+          drawer.classList.add('hidden');
+        }
+      });
+    }
+
+    // 6. Action buttons
+    const btnClearCache = document.getElementById('btn-dev-clear-cache');
+    if (btnClearCache) {
+      btnClearCache.addEventListener('click', async () => {
+        console.log("[DEV] Force purging Service Worker caches and active registrations...");
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (let reg of registrations) {
+            await reg.unregister();
+          }
+          const cacheNames = await caches.keys();
+          for (let cache of cacheNames) {
+            await caches.delete(cache);
+          }
+          console.log("[DEV] Caches successfully purged. Reloading page...");
+          window.location.reload(true);
+        } else {
+          window.location.reload(true);
+        }
+      });
+    }
+
+    const btnSimAlert = document.getElementById('btn-dev-sim-alert');
+    if (btnSimAlert) {
+      btnSimAlert.addEventListener('click', () => {
+        console.log("[DEV] Simulated Emergency tsunami warning alert triggered!");
+        drawer.classList.add('hidden');
+        const btnTestAlert = document.getElementById('btn-test-alert');
+        if (btnTestAlert) btnTestAlert.click();
+      });
+    }
+  }
+
 
 });
