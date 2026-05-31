@@ -94,9 +94,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
  function initMap() {
  map = L.map('map', {
- zoomControl: false,
- attributionControl: false
- }).setView(KAMAKURA_CENTER, 14);
+  zoomControl: false,
+  attributionControl: false
+  }).setView(KAMAKURA_CENTER, 14);
+
+  // Try to dynamically center on user's live position on load!
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const userLoc = [position.coords.latitude, position.coords.longitude];
+        map.setView(userLoc, 14);
+        console.log(`[TENDEN] Geolocation centered map at: ${userLoc}`);
+        currentLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+        updateMarker(currentLocation);
+        fetchElevation(currentLocation);
+        triggerLocationTsunamiCheck(currentLocation);
+        generalizeFirstTargets(currentLocation);
+      },
+      () => {
+        console.log('[TENDEN] Geolocation failed or permission denied on load, using default Kamakura center.');
+      },
+      { timeout: 5000 }
+    );
+  }
 
  // OSM Light style for Normal mode
  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -1217,18 +1237,33 @@ document.addEventListener('DOMContentLoaded', () => {
  speakI18n('speechEvacStart');
  triggerDynamicIsland(`${sc.title}: ${scLoc.desc}`, 'warning');
  
- if (isTest) {
- // Keep user's custom location if it is within the Kamakura model area, otherwise fallback to scenario start
- if (!isInModelArea(currentLocation)) {
- isManualLocation = true;
- currentLocation = { lat: scLoc.start.lat, lng: scLoc.start.lng };
- }
- map.setView([currentLocation.lat, currentLocation.lng], 16);
- updateMarker(currentLocation);
- 
- // Generate dynamic routes from the pin location and show the modern bottom-sheet selector
- recalculateRouteFromLocation(currentLocation);
- } else {
+ // Dynamically update banner content based on whether the drill is inside the Kamakura research model area
+  let localizedDesc = scLoc.desc;
+  const isKamakura = isInModelArea(currentLocation);
+  if (!isKamakura) {
+    const lang = getLanguageCode();
+    const generalDescs = {
+      'ja': '直ちに近くの安全な高台（第一目標）へ避難してください。',
+      'en': 'Evacuate immediately to a nearby safe high ground (First Goal).',
+      'zh': '请立即撤离到附近安全的高地（第一目标）。',
+      'ko': '즉시 인근의 안전한 고지대(제1 목표)로 대피하십시오.'
+    };
+    localizedDesc = generalDescs[lang] || generalDescs['en'];
+  }
+  document.getElementById('i18n-evac-desc').innerText = localizedDesc;
+
+  if (isTest) {
+  // If we are outside Kamakura, keep the user's custom location! DO NOT fallback to Kamakura scLoc.start!
+  if (!currentLocation) {
+  isManualLocation = true;
+  currentLocation = { lat: scLoc.start.lat, lng: scLoc.start.lng };
+  }
+  map.setView([currentLocation.lat, currentLocation.lng], 16);
+  updateMarker(currentLocation);
+  
+  // Generate dynamic routes from the pin location and show the modern bottom-sheet selector
+  recalculateRouteFromLocation(currentLocation);
+  } else {
  // Real emergency: calculate routes automatically and default to B
  recalculateRouteFromLocation(currentLocation);
  }
@@ -2852,10 +2887,10 @@ document.addEventListener('DOMContentLoaded', () => {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
 
  if (navigator.onLine) {
- netText.innerText = dict.onlineBadge || '● Online';
+ netText.innerText = dict.onlineBadge || 'Online';
  netBox.className = 'status-badge network-badge';
  } else {
- netText.innerText = dict.offlineBadge || '● Offline (PWA)';
+ netText.innerText = dict.offlineBadge || 'Offline (PWA)';
  netBox.className = 'status-badge network-badge network-offline';
  }
  }
@@ -3112,12 +3147,7 @@ document.addEventListener('DOMContentLoaded', () => {
  function isNearCoastOrWater(lat, lng) {
   // (Moved window.turf check below)
  
- // Strictly exclude anything outside Kamakura municipal limits:
- // Exclude if it's east of 139.585, OR if it's in Zushi/Kotsubo (east of 139.563 AND south of 35.308), OR south of 35.295.
- if (lng > 139.585 || (lng > 139.563 && lat < 35.308) || lat < 35.295) {
- console.log(`[SafeEdge] City Limits Filter: Excluded point outside Kamakura city boundaries or inside Zushi: ${lat}, ${lng}`);
- return true;
- }
+ 
  
  // [CRITICAL] Mathematical Ocean Exclusion:
  // Coastline coordinates from West to East in Kamakura city limits
@@ -3287,6 +3317,53 @@ document.addEventListener('DOMContentLoaded', () => {
   return;
   }
   
+  // Dynamic generalizable riverbank anomaly sandwich check
+  let isSandwiched = false;
+  const OPPOSITE_PAIRS = [
+    [[0, -1], [0, 1]],   // West - East
+    [[-1, 0], [1, 0]],   // North - South
+    [[-1, -1], [1, 1]],  // Northwest - Southeast
+    [[-1, 1], [1, -1]]   // Northeast - Southwest
+  ];
+  const MAX_RIVER_WIDTH_PX = 10;
+  
+  for (const [dir1, dir2] of OPPOSITE_PAIRS) {
+    let hit1 = false;
+    let hit2 = false;
+    
+    for (let d = 1; d <= MAX_RIVER_WIDTH_PX; d++) {
+      const nx = px + dir1[0] * d;
+      const ny = py + dir1[1] * d;
+      if (nx >= 0 && nx < 256 && ny >= 0 && ny < 256) {
+        if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
+          hit1 = true;
+          break;
+        }
+      }
+    }
+    
+    for (let d = 1; d <= MAX_RIVER_WIDTH_PX; d++) {
+      const nx = px + dir2[0] * d;
+      const ny = py + dir2[1] * d;
+      if (nx >= 0 && nx < 256 && ny >= 0 && ny < 256) {
+        if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
+          hit2 = true;
+          break;
+        }
+      }
+    }
+    
+    if (hit1 && hit2) {
+      isSandwiched = true;
+      break;
+    }
+  }
+  
+  if (isSandwiched) {
+    console.log(`[SafeEdge] verifyAndClean: Excluded sandwiched riverbed/riverbank anomaly: ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
+    return;
+  }
+  
   // Check safety buffer R_SAFE (80m)
   const R_SAFE = 8;
   let tooClose = false;
@@ -3355,16 +3432,25 @@ document.addEventListener('DOMContentLoaded', () => {
  
  // Dynamic Bounding Box calculation based on currentLocation to generalize to any location in Japan!
  let bbox = { latMin: 35.27, latMax: 35.37, lngMin: 139.47, lngMax: 139.585 };
- if (currentLocation && currentLocation.lat && currentLocation.lng) {
- // Generate a ~10km bounding box centered at the user's current location
- bbox = {
- latMin: currentLocation.lat - 0.05,
- latMax: currentLocation.lat + 0.05,
- lngMin: currentLocation.lng - 0.06,
- lngMax: currentLocation.lng + 0.06
- };
- console.log(`[SafeEdge] Dynamic Bounding Box generated centered at: ${currentLocation.lat}, ${currentLocation.lng}`);
- }
+  
+  if (currentLocation && currentLocation.lat && currentLocation.lng) {
+  bbox = {
+  latMin: currentLocation.lat - 0.05,
+  latMax: currentLocation.lat + 0.05,
+  lngMin: currentLocation.lng - 0.06,
+  lngMax: currentLocation.lng + 0.06
+  };
+  console.log(`[SafeEdge] Dynamic Bounding Box generated centered at currentLocation: ${currentLocation.lat}, ${currentLocation.lng}`);
+  } else if (map) {
+  const bounds = map.getBounds();
+  bbox = {
+  latMin: bounds.getSouth(),
+  latMax: bounds.getNorth(),
+  lngMin: bounds.getWest(),
+  lngMax: bounds.getEast()
+  };
+  console.log(`[SafeEdge] Dynamic Bounding Box generated from active map view bounds.`);
+  }
  const zoom = 14; // ~10m per pixel — high resolution
  const pow2 = Math.pow(2, zoom);
 
@@ -3420,6 +3506,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // Skip if the point is near the coastline or rivers
  if (isNearCoastOrWater(lat, lng)) continue;
+
+  // [GENERALIZED APPROACH C] Topological Opposite-Ray-Casting River/Estuary Filter
+  // This mathematically detects narrow riverbeds, riverbanks, and dynamic estuary slits
+  // by verifying if a transparent (safe) pixel is sandwiched between inundated (colored) pixels
+  // in any opposite direction pair. Check up to 10 pixels (~100m) in 4 directions.
+  let isSandwiched = false;
+  const OPPOSITE_PAIRS = [
+    [[0, -1], [0, 1]],   // West - East
+    [[-1, 0], [1, 0]],   // North - South
+    [[-1, -1], [1, 1]],  // Northwest - Southeast
+    [[-1, 1], [1, -1]]   // Northeast - Southwest
+  ];
+  const MAX_RIVER_WIDTH_PX = 10;
+  
+  for (const [dir1, dir2] of OPPOSITE_PAIRS) {
+    let hit1 = false;
+    let hit2 = false;
+    
+    // Cast ray in direction 1
+    for (let d = 1; d <= MAX_RIVER_WIDTH_PX; d++) {
+      const nx = px + dir1[0] * d;
+      const ny = py + dir1[1] * d;
+      if (nx >= 0 && nx < 256 && ny >= 0 && ny < 256) {
+        if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
+          hit1 = true;
+          break;
+        }
+      }
+    }
+    
+    // Cast ray in direction 2 (opposite)
+    for (let d = 1; d <= MAX_RIVER_WIDTH_PX; d++) {
+      const nx = px + dir2[0] * d;
+      const ny = py + dir2[1] * d;
+      if (nx >= 0 && nx < 256 && ny >= 0 && ny < 256) {
+        if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
+          hit2 = true;
+          break;
+        }
+      }
+    }
+    
+    if (hit1 && hit2) {
+      isSandwiched = true;
+      break;
+    }
+  }
+  
+  if (isSandwiched) {
+    console.log(`[SafeEdge] Excluded point inside sandwiched riverbed/riverbank anomaly at ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    continue;
+  }
 
   // [CRITICAL] R_SAFE Safety Margin Check (8 pixels ≈ 80m buffer from inundation pixels)
  // This mathematically guarantees that no green plot point lies inside or overlaps with the pink/red hazard zone.
