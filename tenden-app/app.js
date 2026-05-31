@@ -1002,6 +1002,30 @@ document.addEventListener('DOMContentLoaded', () => {
  });
  }
 
+
+ // ── 位置情報許可の前に説明ポップアップを表示 ─────────────────────────────────
+ function showLocationExplanation(callback) {
+   // 一度説明済みなら直接許可ダイアログへ
+   var alreadyExplained = localStorage.getItem('tenden-location-explained') === 'true';
+   if (alreadyExplained) {
+     if (callback) callback();
+     return;
+   }
+   var title = '現在地の使用について';
+   var desc =
+     '<b>TENDENが現在地を使う理由：</b><br><br>' +
+     '① <b>浸水区域の判定</b> — 今いる場所が津波浸水想定区域内かを即座に確認します<br>' +
+     '② <b>避難ルート計算</b> — 最短・混雑回避・バリアフリーの3ルートを自動算出します<br>' +
+     '③ <b>海抜・海岸距離の表示</b> — リアルタイムで標高と海岸線までの距離を表示します<br><br>' +
+     '<b>🔒 プライバシー：</b> 取得した位置情報は端末内のみで処理します。' +
+     '外部サーバーには送信されません。<br><br>' +
+     '次の画面でシステムの位置情報許可ダイアログが表示されます。「許可」を選んでください。';
+   showCustomAlert(title, desc, 'info', function() {
+     try { localStorage.setItem('tenden-location-explained', 'true'); } catch(e) {}
+     if (callback) setTimeout(function() { if (callback) callback(); }, 200);
+   });
+ }
+
  function requestLocation() {
  if ("geolocation" in navigator) {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
@@ -4312,25 +4336,25 @@ function wireOnboardingButtons() {
     var t = document.getElementById('demo-step-' + step);
     if (t) t.classList.add('active');
     document.querySelectorAll('.demo-dot').forEach(function(d, i) { d.classList.toggle('active', i === step); });
-    // canvasアニメーションを起動（window._tendenAnim 経由でスコープ問題を回避）
+    // canvasアニメーションを直接呼び出し（外部スコープの関数）
     if (step === 1) setTimeout(function() {
-      if (window._tendenAnim) window._tendenAnim.map();
+      try { animateMapCanvas(); } catch(e) { console.warn('anim map:', e); }
     }, 200);
     if (step === 2) setTimeout(function() {
-      if (window._tendenAnim) window._tendenAnim.routes();
+      try { animateRoutesCanvas(); } catch(e) { console.warn('anim routes:', e); }
     }, 200);
     if (step === 3) setTimeout(function() {
-      if (window._tendenAnim) window._tendenAnim.flow();
+      try { animateFlowCanvas(); } catch(e) { console.warn('anim flow:', e); }
     }, 200);
   }
   [
     ['btn-demo-next-0', function() { goFB(1); }],
-    ['btn-demo-skip-0', function() { closeFB(); requestLocation(); }],
+    ['btn-demo-skip-0', function() { closeFB(); showLocationExplanation(requestLocation); }],
     ['btn-demo-next-1', function() { goFB(2); }],
-    ['btn-demo-skip-1', function() { closeFB(); requestLocation(); }],
+    ['btn-demo-skip-1', function() { closeFB(); showLocationExplanation(requestLocation); }],
     ['btn-demo-next-2', function() { goFB(3); }],
-    ['btn-demo-skip-2', function() { closeFB(); requestLocation(); }],
-    ['btn-demo-use-here', function() { closeFB(); requestLocation(); }],
+    ['btn-demo-skip-2', function() { closeFB(); showLocationExplanation(requestLocation); }],
+    ['btn-demo-use-here', function() { closeFB(); showLocationExplanation(requestLocation); }],
     ['btn-demo-replay', function() { goFB(0); }],
   ].forEach(function(pair) {
     var el = document.getElementById(pair[0]);
@@ -4342,211 +4366,14 @@ function wireOnboardingButtons() {
   });
 }
 
-function startOnboardingDemo() {
- const overlay = document.getElementById('onboarding-overlay');
- if (!overlay) return;
-
- // Show demo always on first load (localStorage tracks if demo was ever completed)
- // If user has seen it, skip onboarding and immediately request location tracking
- const hasSeen = localStorage.getItem('tenden-demo-seen') === 'true';
- if (hasSeen) {
- overlay.classList.remove('active');
- overlay.classList.add('hidden');
- requestLocation();
- return;
- }
-
- overlay.classList.remove('hidden');
- overlay.classList.add('active');
-
- let currentStep = 0;
- const totalSteps = 4;
-
+ // ─── canvasアニメーション用変数（DOMContentLoaded スコープ）───────────────
  // Canvas animation handles
  let mapAnimFrame = null;
  let routesAnimFrame = null;
  let flowAnimFrame = null;
 
- // Automatic slideshow timer
- let slideshowTimeout = null;
 
- function stopAutoSlideshow() {
- if (slideshowTimeout) {
- clearTimeout(slideshowTimeout);
- slideshowTimeout = null;
- }
- }
-
- function startAutoSlideshow() {
- stopAutoSlideshow();
- goToStep(0, true);
- }
-
- // 笏笏 i18n helper (uses global i18nDict once loaded)
- function getDemoText(key, fallback) {
- try {
- const lang = (localStorage.getItem('tenden-lang') === 'auto' || !localStorage.getItem('tenden-lang'))
- ? (navigator.language || 'ja').split('-')[0]
- : localStorage.getItem('tenden-lang');
- const dict = (typeof i18nDict !== 'undefined' && i18nDict[lang]) || {};
- if (dict[key]) return dict[key];
-
- // Safety Warning Multilingual fallback
-   if (key === 'demoSimWarning') {
-    // 日本語の防災アプリのため、警告は常に日本語を優先
-    const jaText = ' これは訓練用のシミュレーション画面です。実際の災害ではありません。';
-    // i18n.jsonが読み込まれていれば優先使用
-    if (typeof i18nDict !== 'undefined' && i18nDict['ja'] && i18nDict['ja'][key]) {
-      return i18nDict['ja'][key];
-    }
-    return jaText;
-  }
- return fallback;
- } catch (e) { return fallback; }
- }
-
- // 笏笏 Apply i18n to all demo text nodes
- function applyDemoI18n() {
- const elStep0Title = document.getElementById('demo-title-0');
- const elStep0Sub = document.getElementById('demo-sub-0');
- const elStep1Title = document.getElementById('demo-title-1');
- const elStep1Desc = document.getElementById('demo-desc-1');
- const elStep2Title = document.getElementById('demo-title-2');
- const elStep2Desc = document.getElementById('demo-desc-2');
- const elStep3Title = document.getElementById('demo-title-3');
- const elStep3Desc = document.getElementById('demo-desc-3');
- const elSimWarning = document.getElementById('demo-sim-warning');
-
-  if (elStep0Title) elStep0Title.textContent = getDemoText('demoStep0Title', '津波から命を守るために');
-  if (elStep0Sub) elStep0Sub.textContent = getDemoText('demoStep0Sub', '日本全国の沿岸エリアで使える避難支援アプリ');
-  if (elStep1Title) elStep1Title.textContent = getDemoText('demoStep1Title', '地震が発生しました');
-  if (elStep1Desc) elStep1Desc.textContent = getDemoText('demoStep1Desc', '津波の危険があります。今すぐ避難を開始してください。');
-  if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', '3つの避難ルートを提示します');
-  if (elStep2Desc) elStep2Desc.textContent = getDemoText('demoStep2Desc', '最短・混雑回避・急坂回避の3ルートを同時表示。あなたが選びます。');
-  if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', 'TENDENは、あなたに選択肢を渡します');
-  if (elStep3Desc) elStep3Desc.textContent = getDemoText('demoStep3Desc', 'その土地を知らない観光客も、外国語話者も、迷わず逃げ出せる支援を。');
-  if (elSimWarning) elSimWarning.textContent = getDemoText('demoSimWarning', ' これは訓練用のシミュレーション画面です。実際の災害ではありません。');
-
- // Next/skip buttons
- document.querySelectorAll('[data-i18n="demoBtnSkip"]').forEach(el => {
-    el.textContent = getDemoText('demoBtnSkip', 'スキップ');
- });
-  if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', '今いる場所で使ってみる');
-  if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'もう一度見る');
-  if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'オンボーディングデモを起動する');
- }
-
- // Apply i18n immediately (may use fallbacks), then re-apply when i18n loads
- applyDemoI18n();
- // Re-apply after 1s to catch i18n async load
- setTimeout(applyDemoI18n, 1200);
-
- // canvasアニメーション関数を外部（wireOnboardingButtons）から呼べるよう登録
- window._tendenAnim = {
-   map:    function() { try { animateMapCanvas(); }    catch(e) {} },
-   routes: function() { try { animateRoutesCanvas(); } catch(e) {} },
-   flow:   function() { try { animateFlowCanvas(); }   catch(e) {} }
- };
-
- // 笏笏 Step navigation
- function goToStep(step, isAutoFlow = false) {
- // Stop any running animations
- if (mapAnimFrame) { cancelAnimationFrame(mapAnimFrame); mapAnimFrame = null; }
- if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
- if (flowAnimFrame) { cancelAnimationFrame(flowAnimFrame); flowAnimFrame = null; }
-
- // Hide all steps
- document.querySelectorAll('.demo-step').forEach(el => el.classList.remove('active'));
- // Show target step
- const target = document.getElementById(`demo-step-${step}`);
- if (target) {
- target.classList.add('active');
- }
- // Update dots
- document.querySelectorAll('.demo-dot').forEach((dot, i) => {
- dot.classList.toggle('active', i === step);
- });
-
- currentStep = step;
-
- // Trigger canvas animations for steps
- if (step === 1) setTimeout(animateMapCanvas, 200);
- if (step === 2) setTimeout(animateRoutesCanvas, 200);
- if (step === 3) setTimeout(animateFlowCanvas, 200);
-
- // Handle auto slideshow transitions
- stopAutoSlideshow();
- if (isAutoFlow) {
- if (step === 0) {
- slideshowTimeout = setTimeout(() => goToStep(1, true), 3800);
- } else if (step === 1) {
- slideshowTimeout = setTimeout(() => goToStep(2, true), 4800);
- } else if (step === 2) {
- slideshowTimeout = setTimeout(() => goToStep(3, true), 5800);
- }
- }
- }
-
- function closeDemo() {
- stopAutoSlideshow();
- if (mapAnimFrame) { cancelAnimationFrame(mapAnimFrame); mapAnimFrame = null; }
- if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
- if (flowAnimFrame) { cancelAnimationFrame(flowAnimFrame); flowAnimFrame = null; }
- overlay.classList.remove('active');
- setTimeout(() => overlay.classList.add('hidden'), 300);
- localStorage.setItem('tenden-demo-seen', 'true');
- }
-
- // 笏笏 Button wiring
- const btn0Next = document.getElementById('btn-demo-next-0');
- const btn0Skip = document.getElementById('btn-demo-skip-0');
- const btn1Next = document.getElementById('btn-demo-next-1');
- const btn1Skip = document.getElementById('btn-demo-skip-1');
- const btn2Next = document.getElementById('btn-demo-next-2');
- const btn2Skip = document.getElementById('btn-demo-skip-2');
- const btnUse = document.getElementById('btn-demo-use-here');
- const btnReplay = document.getElementById('btn-demo-replay');
-
- if (btn0Next) btn0Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(1); });
- if (btn0Skip) btn0Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); requestLocation(); });
- if (btn1Next) btn1Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(2); });
- if (btn1Skip) btn1Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); requestLocation(); });
- if (btn2Next) btn2Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(3); });
- if (btn2Skip) btn2Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); requestLocation(); });
- if (btnReplay) btnReplay.addEventListener('click', () => { startAutoSlideshow(); });
- if (btnUse) btnUse.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); requestLocation(); });
-
- // Dot clicks
- document.querySelectorAll('.demo-dot').forEach(dot => {
- dot.addEventListener('click', () => {
- stopAutoSlideshow();
- const step = parseInt(dot.dataset.step);
- if (!isNaN(step)) goToStep(step);
- });
- });
-
- // Settings panel replay button
- const btnReplaySettings = document.getElementById('btn-replay-demo');
- if (btnReplaySettings) {
- btnReplaySettings.addEventListener('click', () => {
- // Close settings panel first
- const settingsOverlay = document.getElementById('settings-overlay');
- if (settingsOverlay) {
- settingsOverlay.classList.remove('active');
- setTimeout(() => settingsOverlay.classList.add('hidden'), 300);
- }
- // Show demo again
- setTimeout(() => {
- overlay.classList.remove('hidden');
- setTimeout(() => overlay.classList.add('active'), 10);
- startAutoSlideshow();
- }, 350);
- });
- }
-
- // 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
- // STEP 1: Map Canvas 窶・zoom-in effect + earthquake epicenter
- // 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+ // ─── canvasアニメーション関数（DOMContentLoaded スコープ）───────────────
  function animateMapCanvas() {
  const canvas = document.getElementById('demo-map-canvas');
  if (!canvas) return;
@@ -5232,6 +5059,202 @@ function startOnboardingDemo() {
  }
  flowAnimFrame = requestAnimationFrame(frame);
  }
+
+
+function startOnboardingDemo() {
+ const overlay = document.getElementById('onboarding-overlay');
+ if (!overlay) return;
+
+ // Show demo always on first load (localStorage tracks if demo was ever completed)
+ // If user has seen it, skip onboarding and immediately request location tracking
+ const hasSeen = localStorage.getItem('tenden-demo-seen') === 'true';
+ if (hasSeen) {
+ overlay.classList.remove('active');
+ overlay.classList.add('hidden');
+ requestLocation();
+ return;
+ }
+
+ overlay.classList.remove('hidden');
+ overlay.classList.add('active');
+
+ let currentStep = 0;
+ const totalSteps = 4;
+
+ // Automatic slideshow timer
+ let slideshowTimeout = null;
+
+ function stopAutoSlideshow() {
+ if (slideshowTimeout) {
+ clearTimeout(slideshowTimeout);
+ slideshowTimeout = null;
+ }
+ }
+
+ function startAutoSlideshow() {
+ stopAutoSlideshow();
+ goToStep(0, true);
+ }
+
+ // 笏笏 i18n helper (uses global i18nDict once loaded)
+ function getDemoText(key, fallback) {
+ try {
+ const lang = (localStorage.getItem('tenden-lang') === 'auto' || !localStorage.getItem('tenden-lang'))
+ ? (navigator.language || 'ja').split('-')[0]
+ : localStorage.getItem('tenden-lang');
+ const dict = (typeof i18nDict !== 'undefined' && i18nDict[lang]) || {};
+ if (dict[key]) return dict[key];
+
+ // Safety Warning Multilingual fallback
+   if (key === 'demoSimWarning') {
+    // 日本語の防災アプリのため、警告は常に日本語を優先
+    const jaText = ' これは訓練用のシミュレーション画面です。実際の災害ではありません。';
+    // i18n.jsonが読み込まれていれば優先使用
+    if (typeof i18nDict !== 'undefined' && i18nDict['ja'] && i18nDict['ja'][key]) {
+      return i18nDict['ja'][key];
+    }
+    return jaText;
+  }
+ return fallback;
+ } catch (e) { return fallback; }
+ }
+
+ // 笏笏 Apply i18n to all demo text nodes
+ function applyDemoI18n() {
+ const elStep0Title = document.getElementById('demo-title-0');
+ const elStep0Sub = document.getElementById('demo-sub-0');
+ const elStep1Title = document.getElementById('demo-title-1');
+ const elStep1Desc = document.getElementById('demo-desc-1');
+ const elStep2Title = document.getElementById('demo-title-2');
+ const elStep2Desc = document.getElementById('demo-desc-2');
+ const elStep3Title = document.getElementById('demo-title-3');
+ const elStep3Desc = document.getElementById('demo-desc-3');
+ const elSimWarning = document.getElementById('demo-sim-warning');
+
+  if (elStep0Title) elStep0Title.textContent = getDemoText('demoStep0Title', '津波から命を守るために');
+  if (elStep0Sub) elStep0Sub.textContent = getDemoText('demoStep0Sub', '日本全国の沿岸エリアで使える避難支援アプリ');
+  if (elStep1Title) elStep1Title.textContent = getDemoText('demoStep1Title', '地震が発生しました');
+  if (elStep1Desc) elStep1Desc.textContent = getDemoText('demoStep1Desc', '津波の危険があります。今すぐ避難を開始してください。');
+  if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', '3つの避難ルートを提示します');
+  if (elStep2Desc) elStep2Desc.textContent = getDemoText('demoStep2Desc', '最短・混雑回避・急坂回避の3ルートを同時表示。あなたが選びます。');
+  if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', 'TENDENは、あなたに選択肢を渡します');
+  if (elStep3Desc) elStep3Desc.textContent = getDemoText('demoStep3Desc', 'その土地を知らない観光客も、外国語話者も、迷わず逃げ出せる支援を。');
+  if (elSimWarning) elSimWarning.textContent = getDemoText('demoSimWarning', ' これは訓練用のシミュレーション画面です。実際の災害ではありません。');
+
+ // Next/skip buttons
+ document.querySelectorAll('[data-i18n="demoBtnSkip"]').forEach(el => {
+    el.textContent = getDemoText('demoBtnSkip', 'スキップ');
+ });
+  if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', '今いる場所で使ってみる');
+  if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'もう一度見る');
+  if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'オンボーディングデモを起動する');
+ }
+
+ // Apply i18n immediately (may use fallbacks), then re-apply when i18n loads
+ applyDemoI18n();
+ // Re-apply after 1s to catch i18n async load
+ setTimeout(applyDemoI18n, 1200);
+
+
+ // 笏笏 Step navigation
+ function goToStep(step, isAutoFlow = false) {
+ // Stop any running animations
+ if (mapAnimFrame) { cancelAnimationFrame(mapAnimFrame); mapAnimFrame = null; }
+ if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
+ if (flowAnimFrame) { cancelAnimationFrame(flowAnimFrame); flowAnimFrame = null; }
+
+ // Hide all steps
+ document.querySelectorAll('.demo-step').forEach(el => el.classList.remove('active'));
+ // Show target step
+ const target = document.getElementById(`demo-step-${step}`);
+ if (target) {
+ target.classList.add('active');
+ }
+ // Update dots
+ document.querySelectorAll('.demo-dot').forEach((dot, i) => {
+ dot.classList.toggle('active', i === step);
+ });
+
+ currentStep = step;
+
+ // Trigger canvas animations for steps
+ if (step === 1) setTimeout(animateMapCanvas, 200);
+ if (step === 2) setTimeout(animateRoutesCanvas, 200);
+ if (step === 3) setTimeout(animateFlowCanvas, 200);
+
+ // Handle auto slideshow transitions
+ stopAutoSlideshow();
+ if (isAutoFlow) {
+ if (step === 0) {
+ slideshowTimeout = setTimeout(() => goToStep(1, true), 3800);
+ } else if (step === 1) {
+ slideshowTimeout = setTimeout(() => goToStep(2, true), 4800);
+ } else if (step === 2) {
+ slideshowTimeout = setTimeout(() => goToStep(3, true), 5800);
+ }
+ }
+ }
+
+ function closeDemo() {
+ stopAutoSlideshow();
+ if (mapAnimFrame) { cancelAnimationFrame(mapAnimFrame); mapAnimFrame = null; }
+ if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
+ if (flowAnimFrame) { cancelAnimationFrame(flowAnimFrame); flowAnimFrame = null; }
+ overlay.classList.remove('active');
+ setTimeout(() => overlay.classList.add('hidden'), 300);
+ localStorage.setItem('tenden-demo-seen', 'true');
+ }
+
+ // 笏笏 Button wiring
+ const btn0Next = document.getElementById('btn-demo-next-0');
+ const btn0Skip = document.getElementById('btn-demo-skip-0');
+ const btn1Next = document.getElementById('btn-demo-next-1');
+ const btn1Skip = document.getElementById('btn-demo-skip-1');
+ const btn2Next = document.getElementById('btn-demo-next-2');
+ const btn2Skip = document.getElementById('btn-demo-skip-2');
+ const btnUse = document.getElementById('btn-demo-use-here');
+ const btnReplay = document.getElementById('btn-demo-replay');
+
+ if (btn0Next) btn0Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(1); });
+ if (btn0Skip) btn0Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); showLocationExplanation(requestLocation); });
+ if (btn1Next) btn1Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(2); });
+ if (btn1Skip) btn1Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); showLocationExplanation(requestLocation); });
+ if (btn2Next) btn2Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(3); });
+ if (btn2Skip) btn2Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); showLocationExplanation(requestLocation); });
+ if (btnReplay) btnReplay.addEventListener('click', () => { startAutoSlideshow(); });
+ if (btnUse) btnUse.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); showLocationExplanation(requestLocation); });
+
+ // Dot clicks
+ document.querySelectorAll('.demo-dot').forEach(dot => {
+ dot.addEventListener('click', () => {
+ stopAutoSlideshow();
+ const step = parseInt(dot.dataset.step);
+ if (!isNaN(step)) goToStep(step);
+ });
+ });
+
+ // Settings panel replay button
+ const btnReplaySettings = document.getElementById('btn-replay-demo');
+ if (btnReplaySettings) {
+ btnReplaySettings.addEventListener('click', () => {
+ // Close settings panel first
+ const settingsOverlay = document.getElementById('settings-overlay');
+ if (settingsOverlay) {
+ settingsOverlay.classList.remove('active');
+ setTimeout(() => settingsOverlay.classList.add('hidden'), 300);
+ }
+ // Show demo again
+ setTimeout(() => {
+ overlay.classList.remove('hidden');
+ setTimeout(() => overlay.classList.add('active'), 10);
+ startAutoSlideshow();
+ }, 350);
+ });
+ }
+
+ // 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+ // STEP 1: Map Canvas 窶・zoom-in effect + earthquake epicenter
+ // 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
 
  // Start automatic slideshow
  startAutoSlideshow();
