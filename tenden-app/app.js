@@ -2003,10 +2003,16 @@ document.addEventListener('DOMContentLoaded', () => {
  const targetEdge = await findNearestSafeEdge(loc);
  const bestShelter = findBestShelter(loc); // We keep this to show the best shelter if we want, but our main destination is targetEdge.
  
- if (!targetEdge) {
- console.warn("No safe edge found");
- return;
- }
+   if (!targetEdge) {
+  console.warn('[TENDEN] No safe edge found - using fallback for demo');
+  // デモ・訓練モードでは鎌倉デフォルト安全地点（御成小学校）を使用
+  targetEdge = {
+    id: 'fallback_onari',
+    name: '御成小学校（高台）',
+    lat: 35.3190,
+    lng: 139.5510
+  };
+  }
 
  // We will generate 3 candidate routes (A, B, C)
  let candidates = [];
@@ -4268,42 +4274,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!coast) return;
 
     // 既存の海岸線表示を削除
-    if (coastalProximityLine) map.removeLayer(coastalProximityLine);
+    if (coastalProximityLine) { try { map.removeLayer(coastalProximityLine); } catch(e){} coastalProximityLine = null; }
     if (coastalMarker) {
       if (coastalMarker._distLabel) { try { map.removeLayer(coastalMarker._distLabel); } catch(e){} }
-      map.removeLayer(coastalMarker);
+      try { map.removeLayer(coastalMarker); } catch(e){} coastalMarker = null;
     }
 
     const startLL = [loc.lat, loc.lng];
     const endLL   = [coast.lat, coast.lng];
     const distM   = Math.round(coast.distance);
-    const distText = distM >= 1000
-      ? `海岸線まで ${(distM/1000).toFixed(1)}km`
-      : `海岸線まで ${distM}m`;
 
-    // ── 距離ライン（常時表示・フェードアウトなし）──
+    // 距離テキスト（1000m以上はkm表記）
+    const distText = distM >= 1000
+      ? `現在地から海岸線まで約 ${(distM/1000).toFixed(1)}km`
+      : `現在地から海岸線まで約 ${distM}m`;
+
+    // ── 距離ライン（常時表示）──
     coastalProximityLine = L.polyline([startLL, endLL], {
       color: '#ff2d55',
       dashArray: '8, 6',
       weight: 3,
-      opacity: 0.9,
+      opacity: 0.85,
       className: 'coastal-proximity-line'
     }).addTo(map);
 
-    // ── 中間点に距離ラベル ──
-    const midLat = (startLL[0] + endLL[0]) / 2;
-    const midLng = (startLL[1] + endLL[1]) / 2;
-    const distIcon = L.divIcon({
-      className: '',
-      html: `<div style="background:rgba(255,45,85,0.92);color:#fff;font-size:0.75rem;font-weight:800;padding:5px 11px;border-radius:14px;white-space:nowrap;box-shadow:0 2px 10px rgba(255,45,85,0.4);pointer-events:none;">${distText}</div>`,
-      iconSize: [150, 26],
-      iconAnchor: [75, 13]
-    });
-    const distLabel = L.marker([midLat, midLng], {
-      icon: distIcon, zIndexOffset: 500, interactive: false
-    }).addTo(map);
-
-    // ── 海岸線マーカー（点滅アイコン）──
+    // ── 海岸線端点マーカー（点滅）──
     const shorelineIcon = L.divIcon({
       className: 'shoreline-icon-container',
       html: `<div class="shoreline-pulse"></div>`,
@@ -4311,27 +4306,24 @@ document.addEventListener('DOMContentLoaded', () => {
       iconAnchor: [12, 12]
     });
     coastalMarker = L.marker(endLL, { icon: shorelineIcon, zIndexOffset: 400 }).addTo(map);
-    coastalMarker._distLabel = distLabel;  // クリーンアップ用
 
     // ── 両点が収まるよう自動ズーム ──
     const bounds = L.latLngBounds([startLL, endLL]);
     map.fitBounds(bounds, { padding: [90, 90], maxZoom: 15, animate: true, duration: 1.2 });
 
-    // HUDに距離を表示
-    const box = document.getElementById('tsunami-status-box');
-    if (box && !isEmergency) {
-      const t = document.getElementById('tsunami-status-text');
-      if (t) t.innerText = `${distText} | 判定中...`;
-    }
+    // ── ポップアップで距離を通知 ──
+    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+    const safetyNote = distM < 300
+      ? '\n⚠️ 海岸線に非常に近い位置です。津波警報発令時は直ちに内陸・高台へ避難してください。'
+      : distM < 800
+      ? '\n津波警報発令時は直ちに高台へ避難してください。'
+      : '\n引き続き津波警報に注意し、発令時は速やかに高台へ避難してください。';
 
-    // 近接アラート（500m 以内のみ）
-    if (distM < 500) {
-      const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
-      const alertTitle = dict.coastProximityTitle || '海岸線に接近中';
-      const alertDesc  = dict.coastProximityDesc  ||
-        `現在地は海岸線から約 **${distM}m** の距離にいます。\n津波警報発令時は直ちに高台へ避難してください。`;
-      showCustomAlert(alertTitle, alertDesc, 'warning');
-    }
+    showCustomAlert(
+      '🌊 ' + (dict.coastProximityTitle || '海岸線との距離'),
+      `<b>${distText}</b>${safetyNote.replace(/\n/g, '<br>')}`,
+      distM < 500 ? 'warning' : 'info'
+    );
   }
 
 
@@ -5259,12 +5251,14 @@ function startOnboardingDemo() {
  settingsOverlay.classList.remove('active');
  setTimeout(() => settingsOverlay.classList.add('hidden'), 300);
  }
- // Show demo again
- setTimeout(() => {
- document.getElementById('onboarding-overlay')?.classList.remove('hidden');
- setTimeout(() => document.getElementById('onboarding-overlay')?.classList.add('active'), 10);
- startAutoSlideshow();
- }, 350);
+   // Show demo again: tenden-demo-seen をリセットして startOnboardingDemo を再実行
+  setTimeout(() => {
+    try { localStorage.removeItem('tenden-demo-seen'); } catch(e) {}
+    // バージョンフラグもリセットして確実にデモを表示
+    try { localStorage.removeItem('tenden-pwa-ver'); } catch(e) {}
+    // startOnboardingDemo を再実行（overlay.classList や startAutoSlideshow を内部で処理）
+    startOnboardingDemo();
+  }, 350);
  });
  }
 
