@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tenden-v72';
+const CACHE_NAME = 'tenden-v73';
 const DYNAMIC_CACHE = 'tenden-dynamic-v55';
 
 
@@ -53,7 +53,7 @@ self.addEventListener('activate', event => {
         .filter(key => key !== CACHE_NAME && key !== DYNAMIC_CACHE)
         .map(key => caches.delete(key))
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 

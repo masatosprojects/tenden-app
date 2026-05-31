@@ -513,6 +513,10 @@
  <label data-i18n="dataLabel">データ管理 / システム</label>
  <button id="btn-clear-cache" class="action-btn warning-btn w-100" data-i18n="clearCacheBtn" style="margin-bottom:10px;">オフラインデータを削除</button>
  <button id="btn-dev-reset" class="action-btn outline-btn w-100" data-i18n="systemResetBtn">【警告】システムキャッシュを完全初期化</button>
+ <div style="margin-top:10px; padding:10px; background:rgba(0,0,0,0.1); border-radius:8px; font-size:0.8rem; color:var(--text-muted);">
+   アプリが正常に動作しない場合は以下を試してください:<br>
+   <button id="btn-force-reload" onclick="navigator.serviceWorker&&navigator.serviceWorker.getRegistrations().then(rs=>{rs.forEach(r=>r.unregister());}).then(()=>caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k))))).then(()=>location.reload(true));" style="margin-top:6px;padding:8px 16px;background:#ff3b30;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;width:100%;">🔄 完全リセット＆再起動</button>
+ </div>
  </div>
  </div>
  </div>
