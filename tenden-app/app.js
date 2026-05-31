@@ -1781,8 +1781,7 @@ document.addEventListener('DOMContentLoaded', () => {
   activeSelectedRouteId = routeId;
  
  // Redraw multiple routes with new active selection
- drawMultipleEvacuationRoutes(currentLocation, targetEdge, activeSecondaryRoute, activeRoutesList, activeSelectedRouteId);
- 
+ try { drawMultipleEvacuationRoutes(currentLocation, targetEdge, activeSecondaryRoute, activeRoutesList, activeSelectedRouteId); } catch(e) { console.error("[route draw]", e); }
  // Highlight active card in HUD bottom sheet
  updateRouteSelectorUI(activeSelectedRouteId);
 
@@ -1819,7 +1818,8 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  // HUDを閉じる（地図が見える状態に）
- setTimeout(function() { hideRouteSelectorHUD(); }, 2000);
+ // ルート選択後すぐにHUDを閉じて地図でルートを確認
+ hideRouteSelectorHUD();
  }
 
  function getAutoBestRouteId(candidates) {
@@ -4304,11 +4304,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // 笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武
   async function findNearestCoastline(loc) {
     // 線分上の最近傍点（パラメータt: 0〜1）
+    // nearestPtOnSeg: 線分上の最近傍点
+    // 引数: point=(px=lat,py=lng), segA=(ax=lat,ay=lng), segB=(bx=lat,by=lng)
     function nearestPtOnSeg(px,py,ax,ay,bx,by){
-      var dx=bx-ax,dy=by-ay,len2=dx*dx+dy*dy;
-      if(len2===0) return {lat:ay,lng:ax};
-      var t=Math.max(0,Math.min(1,((px-ay)*dy+(py-ax)*dx)/len2));
-      return {lat:ay+t*dy, lng:ax+t*dx};
+      var dx=bx-ax, dy=by-ay, len2=dx*dx+dy*dy;
+      if(len2===0) return {lat:ax, lng:ay};
+      // 正しい射影公式: t = ((P-A)・(B-A)) / |B-A|²
+      var t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/len2));
+      return {lat:ax+t*dx, lng:ay+t*dy};
     }
     function haversine(la1,lo1,la2,lo2){
       var R=6371000,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
@@ -4363,15 +4366,19 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  async function drawProximityToCoastline(loc, showPopup = true) {
+  async function drawProximityToCoastline(loc, showPopup) {
+    if (showPopup === undefined) showPopup = true;
     const coast = await findNearestCoastline(loc);
-    if (!coast) return;
+    if (!coast) {
+      if (showPopup) showCustomAlert('海岸線データ未取得', '現在地付近の海岸線データを取得できませんでした。オンライン環境で再度お試しください。', 'info');
+      return;
+    }
 
     // 既存の海岸線表示を削除
-    if (coastalProximityLine) { try { map.removeLayer(coastalProximityLine); } catch(e){} coastalProximityLine = null; }
+    if (coastalProximityLine) { try { map.removeLayer(coastalProximityLine); } catch(e){} coastalProximityLine=null; }
     if (coastalMarker) {
       if (coastalMarker._distLabel) { try { map.removeLayer(coastalMarker._distLabel); } catch(e){} }
-      try { map.removeLayer(coastalMarker); } catch(e){} coastalMarker = null;
+      try { map.removeLayer(coastalMarker); } catch(e){} coastalMarker=null;
     }
 
     const startLL = [loc.lat, loc.lng];
@@ -4383,38 +4390,41 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `現在地から海岸線まで約 ${(distM/1000).toFixed(1)}km`
       : `現在地から海岸線まで約 ${distM}m`;
 
-    // ── 距離ライン（常時表示）──
+    // ── 距離ライン（5秒後に自動消去）──
     coastalProximityLine = L.polyline([startLL, endLL], {
-      color: '#ff2d55',
-      dashArray: '8, 6',
-      weight: 3,
-      opacity: 0.85,
-      className: 'coastal-proximity-line'
+      color: '#ff2d55', dashArray: '8, 6', weight: 3, opacity: 0.85
     }).addTo(map);
 
-    // ── 海岸線端点マーカー（点滅）──
+    // ── 海岸線端点マーカー ──
     const shorelineIcon = L.divIcon({
       className: 'shoreline-icon-container',
-      html: `<div class="shoreline-pulse"></div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
+      html: '<div class="shoreline-pulse"></div>',
+      iconSize: [24, 24], iconAnchor: [12, 12]
     });
     coastalMarker = L.marker(endLL, { icon: shorelineIcon, zIndexOffset: 400 }).addTo(map);
 
     // ── 両点が収まるよう自動ズーム ──
     const bounds = L.latLngBounds([startLL, endLL]);
-    map.fitBounds(bounds, { padding: [90, 90], maxZoom: 15, animate: true, duration: 1.2 });
+    map.fitBounds(bounds, { padding: [90, 90], maxZoom: 15, animate: true, duration: 1.0 });
 
-    // ── ポップアップで距離を通知（引数 showPopup で制御）──
-    if (showPopup !== false) {
-      const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+    // ── 5秒後に補助線を自動削除 ──
+    setTimeout(function() {
+      if (coastalProximityLine) { try { map.removeLayer(coastalProximityLine); } catch(e){} coastalProximityLine=null; }
+      if (coastalMarker) {
+        if (coastalMarker._distLabel) { try { map.removeLayer(coastalMarker._distLabel); } catch(e){} }
+        try { map.removeLayer(coastalMarker); } catch(e){} coastalMarker=null;
+      }
+    }, 5000);
+
+    // ── ポップアップで距離を通知 ──
+    if (showPopup) {
       const safetyNote = distM < 300
         ? '<br><br>⚠️ 海岸線に非常に近い位置です。津波警報発令時は直ちに内陸・高台へ避難してください。'
         : distM < 800
         ? '<br><br>津波警報発令時は直ちに高台へ避難してください。'
         : '<br><br>発令時は速やかに高台へ避難してください。';
       showCustomAlert(
-        '🌊 ' + (dict.coastProximityTitle || '現在地と海岸線の距離'),
+        '🌊 現在地と海岸線の距離',
         `<b>${distText}</b>の位置にいます。${safetyNote}`,
         distM < 500 ? 'warning' : 'info'
       );
