@@ -91,19 +91,43 @@ if (!executablePath) {
 
     try {
         console.log("Navigating to http://127.0.0.1:8082 ...");
-        await page.goto('http://127.0.0.1:8082', { waitUntil: 'networkidle2' });
+        await page.goto('http://127.0.0.1:8082', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
         // Skip onboarding demo if active
         await page.evaluate(() => {
-            if (typeof closeDemo === 'function') closeDemo();
+            const skipBtn = document.getElementById('btn-demo-skip-0') || 
+                            document.getElementById('btn-demo-skip-1') || 
+                            document.getElementById('btn-demo-skip-2');
+            if (skipBtn) {
+                skipBtn.click();
+            }
+            // Ensure demo modal and overlays are hidden
+            const demoOverlay = document.getElementById('demo-overlay') || document.querySelector('.demo-overlay');
+            if (demoOverlay) demoOverlay.style.display = 'none';
+            const demoContainer = document.getElementById('demo-container') || document.querySelector('.demo-container') || document.getElementById('intro-modal');
+            if (demoContainer) demoContainer.style.display = 'none';
         });
+
+        // Wait a bit for geolocation to fail in headless mode and show error overlay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // If the geolocation error overlay is present, dismiss it by clicking #btn-error-ok
+        await page.evaluate(() => {
+            const btn = document.getElementById('btn-error-ok');
+            if (btn) {
+                console.log("Geolocation error overlay active, clicking #btn-error-ok to close...");
+                btn.click();
+            }
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
         // Save initial screenshot
         await page.screenshot({ path: path.join(__dirname, 'screenshot_1_loaded.png') });
         console.log("Screenshot 1 saved: Loaded");
 
         // Click the 'テスト発令' button
-        await page.waitForSelector('#btn-test-alert', { timeout: 5000 });
+        await page.waitForSelector('#btn-test-alert', { timeout: 15000 });
         console.log("Clicking Test Alert button...");
         await page.click('#btn-test-alert');
 
@@ -122,8 +146,11 @@ if (!executablePath) {
 
         // Click '#btn-set-pin' to drop pin in crosshair mode
         console.log("Clicking '#btn-set-pin' to lock pin location in crosshair mode...");
-        await page.waitForSelector('#btn-set-pin', { timeout: 5000 });
-        await page.click('#btn-set-pin');
+        await page.waitForSelector('#btn-set-pin', { timeout: 10000 });
+        await page.evaluate(() => {
+            const btn = document.getElementById('btn-set-pin');
+            if (btn) btn.click();
+        });
 
         await new Promise(resolve => setTimeout(resolve, 3000));
         await page.screenshot({ path: path.join(__dirname, 'screenshot_3_route_options.png') });

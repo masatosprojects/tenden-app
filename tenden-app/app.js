@@ -3272,7 +3272,8 @@ document.addEventListener('DOMContentLoaded', () => {
  const GRID = 0.0008; // Deduplication grid cell ~80m
  const edgeMap = new Map(); // gridKey → {lat, lng, id, name}
 
- const R_PROX = 2; // 2 pixels ≈ 20m proximity limit to inundation zone (close to boundary)
+ const R_SAFE = 8;   // 8 pixels ≈ 80m safety margin buffer from inundation zone
+ const R_OUTER = 12; // 12 pixels ≈ 120m proximity search limit to inundation zone
 
  // Gather all tile loading tasks
  const tileTasks = [];
@@ -3300,9 +3301,9 @@ document.addEventListener('DOMContentLoaded', () => {
  const tx = tile.tx;
  const ty = tile.ty;
 
- // Scan for boundary: safe pixel (alpha === 0) close to inundation (R_PROX)
- for (let py = R_PROX; py < 256 - R_PROX; py += STEP) {
- for (let px = R_PROX; px < 256 - R_PROX; px += STEP) {
+ // Scan for boundary: safe pixel (alpha === 0) close to inundation (R_OUTER)
+ for (let py = R_OUTER; py < 256 - R_OUTER; py += STEP) {
+ for (let px = R_OUTER; px < 256 - R_OUTER; px += STEP) {
  const thisAlpha = pixels[(py * 256 + px) * 4 + 3];
  if (thisAlpha > 0) continue; // Must be strictly outside (safe)
 
@@ -3314,11 +3315,11 @@ document.addEventListener('DOMContentLoaded', () => {
  // Skip if the point is near the coastline or rivers
  if (isNearCoastOrWater(lat, lng)) continue;
 
- // [CRITICAL] 1-Pixel Safety Margin Check (~10m buffer from inundation pixels)
+  // [CRITICAL] R_SAFE Safety Margin Check (8 pixels ≈ 80m buffer from inundation pixels)
  // This mathematically guarantees that no green plot point lies inside or overlaps with the pink/red hazard zone.
  let tooCloseToInundation = false;
- for (let dy = -1; dy <= 1; dy++) {
- for (let dx = -1; dx <= 1; dx++) {
+  for (let dy = -R_SAFE; dy <= R_SAFE; dy++) {
+   for (let dx = -R_SAFE; dx <= R_SAFE; dx++) {
  if (pixels[((py + dy) * 256 + (px + dx)) * 4 + 3] > 0) {
  tooCloseToInundation = true;
  break;
@@ -3369,14 +3370,14 @@ document.addEventListener('DOMContentLoaded', () => {
  continue;
  }
 
- // Verify proximity: at least one pixel in outer shell (2 to 3 pixels away) must be inundated (alpha > 0)
+  // Verify proximity: at least one pixel in outer shell (R_SAFE + 1 to R_OUTER pixels away) must be inundated (alpha > 0)
  let hasInsideNeighbor = false;
- const R_OUTER = 3;
- for (let dy = -R_OUTER; dy <= R_OUTER; dy++) {
- for (let dx = -R_OUTER; dx <= R_OUTER; dx++) {
+  // (Reusing global const R_OUTER)
+  for (let dy = -R_OUTER; dy <= R_OUTER; dy++) {
+   for (let dx = -R_OUTER; dx <= R_OUTER; dx++) {
  // Skip the inner 3x3 box we already verified is completely safe
- if (Math.abs(dy) <= 1 && Math.abs(dx) <= 1) continue;
- 
+    // Skip the inner R_SAFE box we already verified is completely safe
+    if (Math.abs(dy) <= R_SAFE && Math.abs(dx) <= R_SAFE) continue;
  const ny = py + dy;
  const nx = px + dx;
  if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
