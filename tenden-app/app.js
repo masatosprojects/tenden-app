@@ -1,4 +1,4 @@
-﻿// app.js
+// app.js
 document.addEventListener('DOMContentLoaded', () => {
  // Basic state
  let isEmergency = false;
@@ -641,28 +641,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   
-  // 1. Show academic introduction popup first!
-  const introTitle = "骼悟牙ｸら罰豈斐Ω豬懊↓縺翫￠繧矩∩髮｣陦悟虚遐皮ｩｶ繝｢繝・Ν縺ｮ縺皮ｴｹ莉・;
-  let portalUrl = "https://masatosprojects.github.io/kamakura-sim/";
-  let introDesc = `譛ｬ繧ｨ繝ｪ繧｢・磯詞蛟牙ｸら罰豈斐Ω豬懷捉霎ｺ・峨・縲・ｫ俶｡逕溘・遐皮ｩｶ閠・〒縺ゅｋ髢狗匱閠・′蟄ｦ陦鍋噪縺ｪ驕ｿ髮｣陦悟虚繧ｷ繝溘Η繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ遐皮ｩｶ繧貞ｮ滓命縺励◆譛蜑咲ｷ壹・蟇ｾ雎｡蝨ｰ蝓溘〒縺吶・br><br>` +
-                  `譛ｬ繧｢繝励Μ縲卦ENDEN縲阪↓縺ｯ縲∫皮ｩｶ縺ｮ謌先棡縺ｧ縺ゅｋ<b>縲碁％霍ｯ豺ｷ髮代・蜍慕噪蛻・ｸ・す繝溘Η繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ邨ｱ險医・/b>縺翫ｈ縺ｳ<b>縲梧凾髢灘､牙喧縺吶ｋ驕ｿ髮｣謇雋闕ｷ繝｢繝・Ν縲・/b>縺後Μ繧｢繝ｫ繧ｿ繧､繝縺ｫ邨仙粋縺輔ｌ縺ｦ縺・∪縺吶る∩髮｣險育判縺ｮ菴懈・縺ｫ縺翫＞縺ｦ縲∫ｧ大ｭｦ逧・皮ｩｶ縺ｫ蝓ｺ縺･縺阪∵ｷｷ髮代ｒ蝗樣∩縺吶ｋ譛驕ｩ縺ｪ縲朱∩髮｣蜈茨ｼ磯ｫ伜床縺ｮ隨ｬ荳逶ｮ讓呻ｼ峨上♀繧医・縲朱∩髮｣邨瑚ｷｯ縲上ｒ邂怜・繝ｻ謠先｡医☆繧倶ｻ慕ｵ・∩縺檎ｨｼ蜒阪＠縺ｦ縺・∪縺吶・br><br>` +
-                  `隧ｳ邏ｰ縺ｪ遐皮ｩｶ謌先棡繧・・繝ｭ繧ｸ繧ｧ繧ｯ繝域ュ蝣ｱ縺ｯ縲∽ｻ･荳九・蜈ｬ蠑冗皮ｩｶ繝昴・繧ｿ繝ｫ繧ｵ繧､繝医ｈ繧翫＃蜿ら・縺・◆縺縺代∪縺吶・br><br>` +
-                  `<a href="${portalUrl}" target="_blank" class="action-btn primary-btn btn-flashy" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: #00bbff; color: #fff; padding: 12px 20px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; gap: 8px; box-shadow: 0 4px 16px rgba(0, 187, 255, 0.35); border: none; margin-top: 10px; width: 100%; box-sizing: border-box; text-align: center;">` +
-                  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>` +
-                  `蜈ｬ蠑冗皮ｩｶ繝昴・繧ｿ繝ｫ繧ｵ繧､繝医ｒ隕九ｋ` +
-                  `</a>`;
-  
-  showCustomAlert(introTitle, introDesc, "info", () => {
-    // 2. Callback shows the "Set Evacuation Starting Pin" alert!
-    showCustomAlert(
-      dict.alertLocationTitle || "驕ｿ髮｣髢句ｧ倶ｽ咲ｽｮ繧呈ｱｺ螳・, 
-      dict.alertLocationDesc || "繝槭ャ繝励ｒ繝峨Λ繝・げ縺励※縲∫判髱｢荳ｭ螟ｮ縺ｮ繧ｿ繝ｼ繧ｲ繝・ヨ・育・貅厄ｼ峨ｒ驕ｿ髮｣髢句ｧ倶ｽ咲ｽｮ縺ｫ蜷医ｏ縺帙※縺九ｉ縲∽ｸ矩Κ縺ｮ繝懊ち繝ｳ繧呈款縺励※縺上□縺輔＞縲・, 
-      "info"
-    );
-  });
-  });
-  });
-
+  // Proceed directly to location request after language/UI init
+  requestLocation();
  // Set Pin button listener for Crosshair mode
  const btnSetPin = document.getElementById('btn-set-pin');
  if (btnSetPin) {
