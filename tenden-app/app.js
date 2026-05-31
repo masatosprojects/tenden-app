@@ -667,8 +667,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const _introDesc =
     '本エリア（鎌倉市由比ヶ浜周辺）は、高校生研究者が学術的な避難行動' +
     'シミュレーション研究を実施した対象地域です。<br><br>' +
-    '本アプリ「TENDEN」には、研究の成果である<b>道路混雑の動的シミュレーション統計</b>と' +
-    '<b>時間変化する避難所負荷モデル</b>がリアルタイムに結合されています。<br><br>' +
+    '本アプリ「TENDEN」には、研究の成果である<b>道路混雑のシミュレーション統計（集計平均）</b>と' +
+    '<b>避難所の混雑予測データ（シミュレーションに基づく平均的な混雑状況）</b>が反映されています。<br><br>' +
     '<a href="' + _portalUrl + '" target="_blank" ' +
     'style="display:inline-flex;align-items:center;text-decoration:none;' +
     'background:#007aff;color:#fff;padding:10px 16px;border-radius:10px;' +
@@ -4266,56 +4266,72 @@ document.addEventListener('DOMContentLoaded', () => {
   async function drawProximityToCoastline(loc) {
     const coast = await findNearestCoastline(loc);
     if (!coast) return;
-    
-    console.log(`[TENDEN] Coastline found at distance ${coast.distance.toFixed(1)}m via ${coast.source}`);
-    
+
+    // 既存の海岸線表示を削除
     if (coastalProximityLine) map.removeLayer(coastalProximityLine);
-    if (coastalMarker) map.removeLayer(coastalMarker);
-    
-    const startLatLng = [loc.lat, loc.lng];
-    const endLatLng = [coast.lat, coast.lng];
-    
-    coastalProximityLine = L.polyline([startLatLng, endLatLng], {
+    if (coastalMarker) {
+      if (coastalMarker._distLabel) { try { map.removeLayer(coastalMarker._distLabel); } catch(e){} }
+      map.removeLayer(coastalMarker);
+    }
+
+    const startLL = [loc.lat, loc.lng];
+    const endLL   = [coast.lat, coast.lng];
+    const distM   = Math.round(coast.distance);
+    const distText = distM >= 1000
+      ? `海岸線まで ${(distM/1000).toFixed(1)}km`
+      : `海岸線まで ${distM}m`;
+
+    // ── 距離ライン（常時表示・フェードアウトなし）──
+    coastalProximityLine = L.polyline([startLL, endLL], {
       color: '#ff2d55',
-      dashArray: '8, 8',
+      dashArray: '8, 6',
       weight: 3,
-      opacity: 0.8,
+      opacity: 0.9,
       className: 'coastal-proximity-line'
     }).addTo(map);
-    
+
+    // ── 中間点に距離ラベル ──
+    const midLat = (startLL[0] + endLL[0]) / 2;
+    const midLng = (startLL[1] + endLL[1]) / 2;
+    const distIcon = L.divIcon({
+      className: '',
+      html: `<div style="background:rgba(255,45,85,0.92);color:#fff;font-size:0.75rem;font-weight:800;padding:5px 11px;border-radius:14px;white-space:nowrap;box-shadow:0 2px 10px rgba(255,45,85,0.4);pointer-events:none;">${distText}</div>`,
+      iconSize: [150, 26],
+      iconAnchor: [75, 13]
+    });
+    const distLabel = L.marker([midLat, midLng], {
+      icon: distIcon, zIndexOffset: 500, interactive: false
+    }).addTo(map);
+
+    // ── 海岸線マーカー（点滅アイコン）──
     const shorelineIcon = L.divIcon({
       className: 'shoreline-icon-container',
-      html: `<div class="shoreline-pulse"></div><div class="shoreline-badge">海岸線まで ${Math.round(coast.distance)}m</div>`,
-      iconSize: [120, 24],
-      iconAnchor: [60, 12]
+      html: `<div class="shoreline-pulse"></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
     });
-    coastalMarker = L.marker(endLatLng, { icon: shorelineIcon }).addTo(map);
-    
-    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
-    let alertTitle = dict.coastProximityTitle || 'Coast Proximity Alert';
-    let alertDesc = dict.coastProximityDesc || "Near coastline. If a tsunami warning is active, please move inland and to higher ground immediately.";
-    
-    const elevationEl = document.getElementById('elevation-m');
-    const elevationVal = elevationEl ? elevationEl.innerText : '--';
-    alertDesc = alertDesc.replace('{elevation}', elevationVal);
-    
-    showCustomAlert(alertTitle, alertDesc, 'info');
-    
-    setTimeout(() => {
-      if (coastalProximityLine) {
-        let op = 0.8;
-        const fadeInterval = setInterval(() => {
-          op -= 0.05;
-          if (op <= 0) {
-            clearInterval(fadeInterval);
-            if (coastalProximityLine) map.removeLayer(coastalProximityLine);
-            if (coastalMarker) map.removeLayer(coastalMarker);
-          } else {
-            if (coastalProximityLine) coastalProximityLine.setStyle({ opacity: op });
-          }
-        }, 50);
-      }
-    }, 15000);
+    coastalMarker = L.marker(endLL, { icon: shorelineIcon, zIndexOffset: 400 }).addTo(map);
+    coastalMarker._distLabel = distLabel;  // クリーンアップ用
+
+    // ── 両点が収まるよう自動ズーム ──
+    const bounds = L.latLngBounds([startLL, endLL]);
+    map.fitBounds(bounds, { padding: [90, 90], maxZoom: 15, animate: true, duration: 1.2 });
+
+    // HUDに距離を表示
+    const box = document.getElementById('tsunami-status-box');
+    if (box && !isEmergency) {
+      const t = document.getElementById('tsunami-status-text');
+      if (t) t.innerText = `${distText} | 判定中...`;
+    }
+
+    // 近接アラート（500m 以内のみ）
+    if (distM < 500) {
+      const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+      const alertTitle = dict.coastProximityTitle || '海岸線に接近中';
+      const alertDesc  = dict.coastProximityDesc  ||
+        `現在地は海岸線から約 **${distM}m** の距離にいます。\n津波警報発令時は直ちに高台へ避難してください。`;
+      showCustomAlert(alertTitle, alertDesc, 'warning');
+    }
   }
 
 
@@ -5245,8 +5261,8 @@ function startOnboardingDemo() {
  }
  // Show demo again
  setTimeout(() => {
- overlay.classList.remove('hidden');
- setTimeout(() => overlay.classList.add('active'), 10);
+ document.getElementById('onboarding-overlay')?.classList.remove('hidden');
+ setTimeout(() => document.getElementById('onboarding-overlay')?.classList.add('active'), 10);
  startAutoSlideshow();
  }, 350);
  });
@@ -5270,12 +5286,23 @@ function startOnboardingDemo() {
     const btnShow = document.getElementById('btn-show-home-guide');
     const btnClose = document.getElementById('btn-home-guide-close');
 
-    if (btnShow && modal) {
+    if (btnShow) {
       btnShow.addEventListener('click', () => {
-        modal.classList.remove('hidden');
-        // Close settings overlay first for cleaner UX
+        // 設定パネルを閉じてからガイドを表示
         const settingsOverlay = document.getElementById('settings-overlay');
-        if (settingsOverlay) settingsOverlay.classList.add('hidden');
+        if (settingsOverlay) {
+          settingsOverlay.classList.remove('active');
+          setTimeout(() => settingsOverlay.classList.add('hidden'), 300);
+        }
+        setTimeout(() => {
+          if (typeof window.tendenShowInstallGuide === 'function') {
+            window.tendenShowInstallGuide();
+          } else {
+            // fallback: モーダルを直接表示
+            const m = document.getElementById('ios-guide-modal');
+            if (m) m.classList.add('active');
+          }
+        }, 350);
       });
     }
 
