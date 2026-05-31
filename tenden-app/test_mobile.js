@@ -133,11 +133,25 @@ if (!executablePath) {
 
         await new Promise(resolve => setTimeout(resolve, 2500)); // Allow map flyTo to finish
         await page.screenshot({ path: path.join(__dirname, 'screenshot_2_test_alert_clicked.png') });
-        console.log("Screenshot 2 saved: Test Alert dialog");
+        console.log("Screenshot 2 saved: Academic Research Intro dialog");
 
-        // Click custom alert OK button
+        // Click custom alert OK button for the Academic Intro popup
         await page.waitForSelector('#btn-alert-ok', { timeout: 5000 });
-        console.log("Clicking custom alert OK button via evaluate...");
+        console.log("Clicking first custom alert OK button (Academic Intro)...");
+        await page.evaluate(() => {
+            const btn = document.getElementById('btn-alert-ok');
+            if (btn) btn.click();
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for second popup to appear
+        
+        // Take an extra screenshot of the starting position alert
+        await page.screenshot({ path: path.join(__dirname, 'screenshot_2b_set_pin_alert.png') });
+        console.log("Screenshot 2b saved: Set Pin alert dialog");
+
+        // Click custom alert OK button for the "避難開始位置を決定" popup
+        await page.waitForSelector('#btn-alert-ok', { timeout: 5000 });
+        console.log("Clicking second custom alert OK button (Set Pin instruction)...");
         await page.evaluate(() => {
             const btn = document.getElementById('btn-alert-ok');
             if (btn) btn.click();
