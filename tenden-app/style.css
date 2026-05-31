@@ -283,10 +283,44 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 
 
 /* Settings / Scenarios */
-.settings-dialog, .scenario-dialog { text-align: left; }
-.dialog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.settings-dialog, .scenario-dialog {
+    text-align: left;
+    /* 画面の85%を最大高さとし、スクロール可能にする */
+    max-height: 85svh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* ヘッダーとフッターを固定するため */
+    padding: 0; /* 内部で管理 */
+}
+/* ヘッダー（タイトル＋閉じるボタン）は常に最上部に固定 */
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 0;
+    background: var(--glass-bg);
+    border-radius: 24px 24px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 .dialog-header h2 { margin: 0; }
-.close-btn { background: none; border: none; font-size: 1.8rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0 4px; }
+/* 設定コンテンツエリアだけスクロール */
+.settings-dialog .settings-scroll-body,
+.settings-dialog > :not(.dialog-header) {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px 24px 24px;
+    flex: 1;
+}
+.close-btn {
+    background: none; border: none; font-size: 1.8rem;
+    color: var(--text-muted); cursor: pointer; line-height: 1;
+    padding: 0 4px; flex-shrink: 0;
+}
 .form-group { margin-bottom: 20px; text-align: left; }
 .form-group label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; }
 .form-control { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.05); color: var(--text-color); font-size: 1rem; }
