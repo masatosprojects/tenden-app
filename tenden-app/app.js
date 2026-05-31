@@ -2322,21 +2322,50 @@ document.addEventListener('DOMContentLoaded', () => {
  routeC = calculateCustomRouteForType(loc, routeCEdge, 'C');
  }
 
- candidates = [routeA, routeB, routeC]; // Removed Route D, only A, B, C as primary choices
+   // null をフィルタして有効なルートだけ残す
+  var rawCandidates = [routeA, routeB, routeC];
+  candidates = rawCandidates.filter(function(c){ return c && c.waypoints && c.waypoints.length > 0; });
 
- // Calculate and attach passing shelters to candidates
- candidates.forEach(c => {
- if (c && c.waypoints && c.waypoints.length > 0) {
- c.passingShelters = findSheltersAlongRoute(c.waypoints);
- }
- });
+  // 有効ルートが0本の場合: フォールバックルートを3本生成
+  if (candidates.length === 0) {
+    console.warn('[TENDEN] All OSRM routes failed, generating fallback routes');
+    var fbEdge = targetEdge || {lat:35.3190, lng:139.5510, name:'御成小学校（高台）'};
+    var speed = typeof getEvacuationSpeed === 'function' ? getEvacuationSpeed() : 1.2;
+    var distFB = L.latLng(loc.lat,loc.lng).distanceTo(L.latLng(fbEdge.lat,fbEdge.lng));
+    var midLat=(loc.lat+fbEdge.lat)/2, midLng=(loc.lng+fbEdge.lng)/2;
+    // 3本のルート（微妙に異なる中間点）
+    var offsets=[[0,0],[0.001,-0.0005],[-0.001,-0.0005]];
+    var labels=['最短ルート','混雑回避ルート','バリアフリールート'];
+    var colors=['#0071e3','#34c759','#5e5ce6'];
+    var ids=['A','B','C'];
+    candidates = ids.map(function(id,idx){
+      var off=offsets[idx];
+      return {
+        id:id, label:labels[idx], color:colors[idx],
+        waypoints:[[loc.lat,loc.lng],[midLat+off[0],midLng+off[1]],[fbEdge.lat,fbEdge.lng]],
+        distance_m:Math.round(distFB*(1+idx*0.05)),
+        estimated_min:Math.max(1,Math.round(distFB*(1+idx*0.05)/(speed*60))),
+        characteristics:(fbEdge.name||'安全な高台')+'へ向かうルートです（推定）',
+        congestion_score:idx===0?'medium':'low', isOSRM:false, isFallback:true
+      };
+    });
+  }
 
- // Draw multiple routes with default selection 'A' and secondary route
- activeSecondaryRoute = secondaryRoute; // Cache for re-use when route is switched
- drawMultipleEvacuationRoutes(loc, targetEdge, secondaryRoute, candidates, activeSelectedRouteId || 'A');
+  // シェルター情報を付加
+  candidates.forEach(function(c){
+    if (c && c.waypoints && c.waypoints.length > 0 && typeof findSheltersAlongRoute === 'function') {
+      try { c.passingShelters = findSheltersAlongRoute(c.waypoints); } catch(e) {}
+    }
+  });
 
- // Dynamically populate bottom sheet HUD cards and show
- showRouteSelectorHUD(candidates);
+  // Draw multiple routes with default selection 'A' and secondary route
+  activeSecondaryRoute = secondaryRoute;
+  try {
+    drawMultipleEvacuationRoutes(loc, targetEdge, secondaryRoute, candidates, activeSelectedRouteId || 'A');
+  } catch(e) { console.error('[TENDEN] drawMultipleEvacuationRoutes error:', e); }
+
+  // Dynamically populate bottom sheet HUD cards and show
+  showRouteSelectorHUD(candidates);
 
  // Update emergency HUD text
   document.getElementById('i18n-evac-desc').innerText = dict.routeStartPrompt || '避難開始位置を設定しました。ルートを選んで避難を開始してください。';
@@ -4230,46 +4259,52 @@ document.addEventListener('DOMContentLoaded', () => {
   // DYNAMIC COASTLINE PROXIMITY VECTOR AND SHORELINE ALIGNMENT
   // 笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武
   async function findNearestCoastline(loc) {
-    // 鎌倉・湘南海岸の代表点（ハードコード）
-    const KAMAKURA_COAST = [
-      {lat:35.3100, lng:139.4680}, {lat:35.3080, lng:139.4780},
-      {lat:35.3065, lng:139.4900}, {lat:35.3060, lng:139.5000},
-      {lat:35.3060, lng:139.5100}, {lat:35.3070, lng:139.5200},
-      {lat:35.3075, lng:139.5300}, {lat:35.3070, lng:139.5350},
-      {lat:35.3065, lng:139.5400}, {lat:35.3058, lng:139.5450},
-      {lat:35.3052, lng:139.5500}, {lat:35.3052, lng:139.5530},
-      {lat:35.3058, lng:139.5550}, {lat:35.3065, lng:139.5580},
-      {lat:35.3075, lng:139.5600}, {lat:35.3090, lng:139.5630},
-      {lat:35.3105, lng:139.5650}, {lat:35.3120, lng:139.5660},
-      {lat:35.3090, lng:139.5680}, {lat:35.3075, lng:139.5700},
-      {lat:35.3070, lng:139.5720}, {lat:35.3070, lng:139.5760},
-      {lat:35.3068, lng:139.5790}, {lat:35.3062, lng:139.5840},
-      {lat:35.3050, lng:139.5880}, {lat:35.3030, lng:139.5900},
-      {lat:35.3000, lng:139.5900}, {lat:35.2970, lng:139.5870},
-      {lat:35.2950, lng:139.5850}, {lat:35.2920, lng:139.5820},
+    // 鎌倉・湘南海岸の詳細座標（腰越～材木座）
+    const COAST_POINTS = [
+      [35.3098,139.4632],[35.3090,139.4680],[35.3078,139.4730],
+      [35.3068,139.4780],[35.3062,139.4830],[35.3060,139.4880],
+      [35.3059,139.4930],[35.3060,139.4980],[35.3062,139.5030],
+      [35.3063,139.5080],[35.3063,139.5130],[35.3063,139.5180],
+      [35.3062,139.5220],[35.3060,139.5260],[35.3058,139.5300],
+      [35.3055,139.5340],[35.3052,139.5380],[35.3050,139.5420],
+      [35.3050,139.5460],[35.3052,139.5500],[35.3054,139.5540],
+      [35.3057,139.5570],[35.3062,139.5600],[35.3068,139.5620],
+      [35.3075,139.5640],[35.3083,139.5660],[35.3091,139.5675],
+      [35.3099,139.5680],[35.3105,139.5670],[35.3108,139.5660],
+      [35.3105,139.5690],[35.3100,139.5720],[35.3090,139.5750],
+      [35.3078,139.5780],[35.3065,139.5800],[35.3052,139.5820],
     ];
 
-    // Haversine 距離計算（libなし）
-    function haversine(lat1, lng1, lat2, lng2) {
-      const R = 6371000;
-      const dLat = (lat2-lat1)*Math.PI/180;
-      const dLng = (lng2-lng1)*Math.PI/180;
-      const a = Math.sin(dLat/2)**2 +
-                Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    // Haversine（メートル）
+    function hav(la1,lo1,la2,lo2){
+      var R=6371000,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
+      var a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;
+      return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
     }
 
-    // 最近傍の海岸点を求める
-    let best = null;
-    let bestDist = Infinity;
-    KAMAKURA_COAST.forEach(pt => {
-      const d = haversine(loc.lat, loc.lng, pt.lat, pt.lng);
-      if (d < bestDist) { bestDist = d; best = pt; }
+    // 線分上の最近傍点を求める（パラメータt: 0〜1）
+    function nearestOnSegment(px,py,ax,ay,bx,by){
+      var dx=bx-ax,dy=by-ay,len2=dx*dx+dy*dy;
+      if(len2===0) return {x:ax,y:ay};
+      var t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/len2));
+      return {x:ax+t*dx, y:ay+t*dy};
+    }
+
+    var bestDist=Infinity, bestPt=null;
+    for(var i=0;i<COAST_POINTS.length-1;i++){
+      var a=COAST_POINTS[i], b=COAST_POINTS[i+1];
+      // 平面近似でセグメント上の最近傍点を求める
+      var np=nearestOnSegment(loc.lat,loc.lng,a[0],a[1],b[0],b[1]);
+      var d=hav(loc.lat,loc.lng,np.x,np.y);
+      if(d<bestDist){ bestDist=d; bestPt={lat:np.x,lng:np.y}; }
+    }
+    // 最後の点も確認
+    COAST_POINTS.forEach(function(p){
+      var d=hav(loc.lat,loc.lng,p[0],p[1]);
+      if(d<bestDist){ bestDist=d; bestPt={lat:p[0],lng:p[1]}; }
     });
 
-    if (best) {
-      return { lat: best.lat, lng: best.lng, distance: bestDist, source: 'Kamakura Local' };
-    }
+    if(bestPt) return {lat:bestPt.lat,lng:bestPt.lng,distance:bestDist,source:'Kamakura Coast'};
     return null;
   }
 
@@ -5256,20 +5291,29 @@ function startOnboardingDemo() {
  settingsOverlay.classList.remove('active');
  setTimeout(() => settingsOverlay.classList.add('hidden'), 300);
  }
-   // Show demo again: overlay を直接開く（スコープ問題を回避）
+   // Show demo again: 確実にoverlay表示（z-indexと他overlayのリセット）
   setTimeout(function() {
     try { localStorage.removeItem('tenden-demo-seen'); } catch(e) {}
+    // 他の全overlayを非表示に
+    document.querySelectorAll('.overlay').forEach(function(el){
+      if(el.id !== 'onboarding-overlay'){
+        el.classList.remove('active');
+        el.classList.add('hidden');
+      }
+    });
     var demoOv = document.getElementById('onboarding-overlay');
-    if (demoOv) {
-      demoOv.classList.remove('hidden');
-      demoOv.classList.add('active');
-      // step0 を表示してアニメーション開始
-      document.querySelectorAll('.demo-step').forEach(function(el){el.classList.remove('active');});
-      var s0 = document.getElementById('demo-step-0');
-      if(s0) s0.classList.add('active');
-      document.querySelectorAll('.demo-dot').forEach(function(d,i){d.classList.toggle('active',i===0);});
-    }
-  }, 350);
+    if (!demoOv) { console.error('[TENDEN] onboarding-overlay not found'); return; }
+    // step0 を表示
+    document.querySelectorAll('.demo-step').forEach(function(el){ el.classList.remove('active'); });
+    var s0 = document.getElementById('demo-step-0');
+    if(s0) s0.classList.add('active');
+    document.querySelectorAll('.demo-dot').forEach(function(d,i){ d.classList.toggle('active',i===0); });
+    // overlay を最前面に表示
+    demoOv.style.zIndex = '99998';
+    demoOv.classList.remove('hidden');
+    demoOv.classList.remove('active');
+    setTimeout(function(){ demoOv.classList.add('active'); }, 50);
+  }, 500);
  });
  }
 
