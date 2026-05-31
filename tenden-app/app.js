@@ -375,7 +375,18 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnErrorOk = document.getElementById('btn-error-ok');
  const btnTestAlert = document.getElementById('btn-test-alert');
  const btnSos = document.getElementById('btn-sos');
- const btnScreenshot = document.getElementById('btn-screenshot');
+ const btnCoastDist = document.getElementById('btn-coastline-dist');
+  if (btnCoastDist) {
+    btnCoastDist.addEventListener('click', () => {
+      if (!currentLocation) {
+        showCustomAlert('現在地が未取得', '「現在地」ボタンで位置情報を取得してから再度お試しください。', 'info');
+        return;
+      }
+      drawProximityToCoastline(currentLocation, true);
+    });
+  }
+
+  const btnScreenshot = document.getElementById('btn-screenshot');
  const btnToggleLayers = document.getElementById('btn-toggle-layers');
  const btnSettings = document.getElementById('btn-settings');
  const btnSettingsClose = document.getElementById('btn-settings-close');
@@ -1072,6 +1083,12 @@ document.addEventListener('DOMContentLoaded', () => {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  triggerDynamicIsland(dict.locationAcquiredLabel || " 現在地を同期しました", "success");
 
+ // 初回のみ海岸線距離をポップアップで表示
+ if (!window._coastlineShownOnce) {
+   window._coastlineShownOnce = true;
+   drawProximityToCoastline(currentLocation, true); // showPopup=true (初回のみ)
+ }
+
  // Track location changes
  navigator.geolocation.watchPosition(pos => {
  updateGPSAccuracyHUD(pos.coords.accuracy);
@@ -1536,6 +1553,8 @@ document.addEventListener('DOMContentLoaded', () => {
  routeLayerGroup.clearLayers();
  activeRoutesList = candidates;
  activeSelectedRouteId = selectedId || 'A';
+ // targetEdge をキャッシュ
+ if (targetEdge) window._cachedTargetEdge = targetEdge;
 
  candidates.forEach(candidate => {
  const isSelected = candidate.id === activeSelectedRouteId;
@@ -1731,9 +1750,10 @@ document.addEventListener('DOMContentLoaded', () => {
  simulationInterval = null;
  }
 
- const targetEdge = await findNearestSafeEdge(currentLocation);
- 
- activeSelectedRouteId = routeId;
+ // キャッシュ済みのターゲットを使う
+  const targetEdge = window._cachedTargetEdge || activeSafeEdge || { id: 'fallback', name: '御成小学校（高台）', lat: 35.3190, lng: 139.5510 };
+
+  activeSelectedRouteId = routeId;
  
  // Redraw multiple routes with new active selection
  drawMultipleEvacuationRoutes(currentLocation, targetEdge, activeSecondaryRoute, activeRoutesList, activeSelectedRouteId);
@@ -4269,7 +4289,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  async function drawProximityToCoastline(loc) {
+  async function drawProximityToCoastline(loc, showPopup = true) {
     const coast = await findNearestCoastline(loc);
     if (!coast) return;
 
@@ -4311,19 +4331,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const bounds = L.latLngBounds([startLL, endLL]);
     map.fitBounds(bounds, { padding: [90, 90], maxZoom: 15, animate: true, duration: 1.2 });
 
-    // ── ポップアップで距離を通知 ──
-    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
-    const safetyNote = distM < 300
-      ? '\n⚠️ 海岸線に非常に近い位置です。津波警報発令時は直ちに内陸・高台へ避難してください。'
-      : distM < 800
-      ? '\n津波警報発令時は直ちに高台へ避難してください。'
-      : '\n引き続き津波警報に注意し、発令時は速やかに高台へ避難してください。';
-
-    showCustomAlert(
-      '🌊 ' + (dict.coastProximityTitle || '海岸線との距離'),
-      `<b>${distText}</b>${safetyNote.replace(/\n/g, '<br>')}`,
-      distM < 500 ? 'warning' : 'info'
-    );
+    // ── ポップアップで距離を通知（引数 showPopup で制御）──
+    if (showPopup !== false) {
+      const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+      const safetyNote = distM < 300
+        ? '<br><br>⚠️ 海岸線に非常に近い位置です。津波警報発令時は直ちに内陸・高台へ避難してください。'
+        : distM < 800
+        ? '<br><br>津波警報発令時は直ちに高台へ避難してください。'
+        : '<br><br>発令時は速やかに高台へ避難してください。';
+      showCustomAlert(
+        '🌊 ' + (dict.coastProximityTitle || '現在地と海岸線の距離'),
+        `<b>${distText}</b>の位置にいます。${safetyNote}`,
+        distM < 500 ? 'warning' : 'info'
+      );
+    }
   }
 
 
