@@ -1577,7 +1577,7 @@ document.addEventListener('DOMContentLoaded', () => {
  }).addTo(routeLayerGroup);
 
  // Set route color property dynamically
- pline.getElement().style.color = color;
+ try { var el=pline.getElement(); if(el) el.style.setProperty("--route-color",color); } catch(e) {}
  } else {
  // Inactive alternatives are rendered as thin semi-transparent dashed lines
  pline = L.polyline(waypoints, {
@@ -1743,6 +1743,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  async function selectEvacuationRoute(routeId) {
  if (!currentLocation) return;
+ console.log('[TENDEN] selectEvacuationRoute called:', routeId);
  
  // Stop current evacuation simulation interval
  if (simulationInterval) {
@@ -1778,10 +1779,10 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  // Restart simulation along new selected path
- simulateEvacuation();
+ try { simulateEvacuation(); } catch(e) {}
 
- // Safe auto-close bottom sheet to return to the interactive map
- hideRouteSelectorHUD();
+ // ルート選択後: 地図を見せてからボトムシートを閉じる（1.5秒後）
+ setTimeout(function() { hideRouteSelectorHUD(); }, 1500);
  }
 
  function getAutoBestRouteId(candidates) {
@@ -1869,6 +1870,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
   } else { candidates = _valid; }
+  // フィルタ後の candidates で activeRoutesList を更新
+  activeRoutesList = candidates;
 
  
  // Temporarily fade out background emergency controls & banners
