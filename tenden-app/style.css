@@ -350,7 +350,22 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 /* Route buttons */
 .route-option-btn {
     text-align:left; padding:16px; border-radius:16px; border:2px solid var(--glass-border);
-    background:rgba(255,255,255,0.4); cursor:pointer; width:100%; transition: all 0.2s;
+    background:rgba(255,255,255,0.4); cursor:pointer; width:100%;
+    transition: transform 0.12s cubic-bezier(0.2,0,0,1), box-shadow 0.12s ease, opacity 0.12s ease, background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+/* タップ/クリック時のプレスアニメーション */
+.route-option-btn:active,
+.route-option-btn.pressed {
+    transform: scale(0.95) !important;
+    opacity: 0.82 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15) !important;
+    transition: transform 0.08s ease, opacity 0.08s ease !important;
+}
+.route-option-btn:hover:not(:active) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 }
 .mode-emergency .route-option-btn { background:rgba(0,0,0,0.2); }
 

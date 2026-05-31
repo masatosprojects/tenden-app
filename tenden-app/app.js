@@ -1739,6 +1739,30 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  }
  });
+
+  // ── 第二ルート（避難所への分岐）を描画 ──
+  if (secondaryRoute && secondaryRoute.waypoints && secondaryRoute.waypoints.length > 0) {
+    try {
+      L.polyline(secondaryRoute.waypoints, {
+        color: '#ff9500',
+        weight: 4,
+        opacity: 0.8,
+        dashArray: '6, 6',
+        className: 'secondary-route-line'
+      }).addTo(routeLayerGroup);
+      // 避難所マーカー
+      var shelterPt = secondaryRoute.waypoints[secondaryRoute.waypoints.length - 1];
+      var shelterName = (secondaryRoute.target && secondaryRoute.target.name) || '避難所';
+      var shelterIcon = L.divIcon({
+        className: '',
+        html: '<div style="background:#ff9500;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 6px rgba(255,149,0,0.5);">🏥 ' + shelterName + '</div>',
+        iconSize: [120, 22],
+        iconAnchor: [60, 11]
+      });
+      L.marker(shelterPt, { icon: shelterIcon, zIndexOffset: 600 }).addTo(routeLayerGroup);
+    } catch(e) {}
+  }
+
  }
 
  async function selectEvacuationRoute(routeId) {
@@ -1781,8 +1805,21 @@ document.addEventListener('DOMContentLoaded', () => {
  // Restart simulation along new selected path
  try { simulateEvacuation(); } catch(e) {}
 
- // ルート選択後: 地図を見せてからボトムシートを閉じる（1.5秒後）
- setTimeout(function() { hideRouteSelectorHUD(); }, 1500);
+ // 選択したルートが地図上に見えるように fitBounds
+ const selRoute = activeRoutesList.find(function(r){ return r && r.id === routeId; });
+ if (selRoute && selRoute.waypoints && selRoute.waypoints.length > 0) {
+   try {
+     var pts = selRoute.waypoints.map(function(wp){ return L.latLng(wp[0], wp[1]); });
+     if (currentLocation) pts.push(L.latLng(currentLocation.lat, currentLocation.lng));
+     var bounds = L.latLngBounds(pts);
+     setTimeout(function(){
+       map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16, animate: true, duration: 0.8 });
+     }, 100);
+   } catch(e) {}
+ }
+
+ // HUDを閉じる（地図が見える状態に）
+ setTimeout(function() { hideRouteSelectorHUD(); }, 2000);
  }
 
  function getAutoBestRouteId(candidates) {
@@ -1958,8 +1995,12 @@ document.addEventListener('DOMContentLoaded', () => {
  `;
  
  btn.addEventListener('click', () => {
- selectEvacuationRoute(c.id);
+   selectEvacuationRoute(c.id);
  });
+ // タップアニメーション（iOS Safari での:active 遅延を回避）
+ btn.addEventListener('touchstart', function(){ btn.classList.add('pressed'); }, {passive:true});
+ btn.addEventListener('touchend', function(){ setTimeout(function(){ btn.classList.remove('pressed'); }, 150); }, {passive:true});
+ btn.addEventListener('touchcancel', function(){ btn.classList.remove('pressed'); }, {passive:true});
  optionsWrapper.appendChild(btn);
  });
  
@@ -4262,52 +4303,63 @@ document.addEventListener('DOMContentLoaded', () => {
   // DYNAMIC COASTLINE PROXIMITY VECTOR AND SHORELINE ALIGNMENT
   // 笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武
   async function findNearestCoastline(loc) {
-    // 鎌倉・湘南海岸の詳細座標（腰越～材木座）
-    const COAST_POINTS = [
-      [35.3098,139.4632],[35.3090,139.4680],[35.3078,139.4730],
-      [35.3068,139.4780],[35.3062,139.4830],[35.3060,139.4880],
-      [35.3059,139.4930],[35.3060,139.4980],[35.3062,139.5030],
-      [35.3063,139.5080],[35.3063,139.5130],[35.3063,139.5180],
-      [35.3062,139.5220],[35.3060,139.5260],[35.3058,139.5300],
-      [35.3055,139.5340],[35.3052,139.5380],[35.3050,139.5420],
-      [35.3050,139.5460],[35.3052,139.5500],[35.3054,139.5540],
-      [35.3057,139.5570],[35.3062,139.5600],[35.3068,139.5620],
-      [35.3075,139.5640],[35.3083,139.5660],[35.3091,139.5675],
-      [35.3099,139.5680],[35.3105,139.5670],[35.3108,139.5660],
-      [35.3105,139.5690],[35.3100,139.5720],[35.3090,139.5750],
-      [35.3078,139.5780],[35.3065,139.5800],[35.3052,139.5820],
-    ];
-
-    // Haversine（メートル）
-    function hav(la1,lo1,la2,lo2){
+    // 線分上の最近傍点（パラメータt: 0〜1）
+    function nearestPtOnSeg(px,py,ax,ay,bx,by){
+      var dx=bx-ax,dy=by-ay,len2=dx*dx+dy*dy;
+      if(len2===0) return {lat:ay,lng:ax};
+      var t=Math.max(0,Math.min(1,((px-ay)*dy+(py-ax)*dx)/len2));
+      return {lat:ay+t*dy, lng:ax+t*dx};
+    }
+    function haversine(la1,lo1,la2,lo2){
       var R=6371000,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
       var a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;
       return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
     }
 
-    // 線分上の最近傍点を求める（パラメータt: 0〜1）
-    function nearestOnSegment(px,py,ax,ay,bx,by){
-      var dx=bx-ax,dy=by-ay,len2=dx*dx+dy*dy;
-      if(len2===0) return {x:ax,y:ay};
-      var t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/len2));
-      return {x:ax+t*dx, y:ay+t*dy};
-    }
+    // ── 方法1: OpenStreetMap Overpass API (日本全国対応) ──
+    try {
+      var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 6000) : null;
+      var radius = 20000; // 20km 以内で検索
+      var q = '[out:json][timeout:5];(way["natural"="coastline"](around:' + radius + ',' + loc.lat + ',' + loc.lng + '););out geom;';
+      var fetchOpts = controller ? { signal: controller.signal } : {};
+      var res = await fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(q), fetchOpts);
+      if (timeoutId) clearTimeout(timeoutId);
+      if (res.ok) {
+        var data = await res.json();
+        if (data && data.elements && data.elements.length > 0) {
+          var bestDist = Infinity, bestLat, bestLng;
+          data.elements.forEach(function(way) {
+            if (!way.geometry || way.geometry.length < 2) return;
+            for (var i = 0; i < way.geometry.length - 1; i++) {
+              var a = way.geometry[i], b = way.geometry[i+1];
+              var np = nearestPtOnSeg(loc.lat, loc.lng, a.lat, a.lon, b.lat, b.lon);
+              var d = haversine(loc.lat, loc.lng, np.lat, np.lng);
+              if (d < bestDist) { bestDist = d; bestLat = np.lat; bestLng = np.lng; }
+            }
+          });
+          if (bestLat !== undefined) {
+            return { lat: bestLat, lng: bestLng, distance: bestDist, source: 'OpenStreetMap Overpass' };
+          }
+        }
+      }
+    } catch(e) { /* API失敗 → フォールバックへ */ }
 
-    var bestDist=Infinity, bestPt=null;
-    for(var i=0;i<COAST_POINTS.length-1;i++){
-      var a=COAST_POINTS[i], b=COAST_POINTS[i+1];
-      // 平面近似でセグメント上の最近傍点を求める
-      var np=nearestOnSegment(loc.lat,loc.lng,a[0],a[1],b[0],b[1]);
-      var d=hav(loc.lat,loc.lng,np.x,np.y);
-      if(d<bestDist){ bestDist=d; bestPt={lat:np.x,lng:np.y}; }
+    // ── 方法2: 鎌倉・湘南ハードコードフォールバック（オフライン時） ──
+    var COAST = [
+      [35.3098,139.4632],[35.3060,139.4880],[35.3060,139.5000],
+      [35.3063,139.5180],[35.3052,139.5380],[35.3052,139.5500],
+      [35.3062,139.5600],[35.3083,139.5660],[35.3108,139.5660],
+      [35.3105,139.5690],[35.3078,139.5780],[35.3065,139.5800],
+    ];
+    var bestD=Infinity, bestP=null;
+    for(var i=0;i<COAST.length-1;i++){
+      var a=COAST[i],b=COAST[i+1];
+      var np=nearestPtOnSeg(loc.lat,loc.lng,a[0],a[1],b[0],b[1]);
+      var d=haversine(loc.lat,loc.lng,np.lat,np.lng);
+      if(d<bestD){bestD=d;bestP=np;}
     }
-    // 最後の点も確認
-    COAST_POINTS.forEach(function(p){
-      var d=hav(loc.lat,loc.lng,p[0],p[1]);
-      if(d<bestDist){ bestDist=d; bestPt={lat:p[0],lng:p[1]}; }
-    });
-
-    if(bestPt) return {lat:bestPt.lat,lng:bestPt.lng,distance:bestDist,source:'Kamakura Coast'};
+    if(bestP) return {lat:bestP.lat,lng:bestP.lng,distance:bestD,source:'Kamakura Local'};
     return null;
   }
 
