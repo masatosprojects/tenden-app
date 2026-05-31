@@ -136,26 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
   attributionControl: false
   }).setView(KAMAKURA_CENTER, 14);
 
-  // Try to dynamically center on user's live position on load!
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const userLoc = [position.coords.latitude, position.coords.longitude];
-        map.setView(userLoc, 14);
-        console.log(`[TENDEN] Geolocation centered map at: ${userLoc}`);
-        currentLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
-        updateMarker(currentLocation);
-        fetchElevation(currentLocation);
-        triggerLocationTsunamiCheck(currentLocation);
-        generalizeFirstTargets(currentLocation);
-  drawProximityToCoastline(currentLocation);
-      },
-      () => {
-        console.log('[TENDEN] Geolocation failed or permission denied on load, using default Kamakura center.');
-      },
-      { timeout: 5000 }
-    );
-  }
+  // 位置情報の許可はオンボーディング完了後に行う
+  // requestLocation() は onboarding の「スキップ」「使ってみる」で呼ばれる
 
  // OSM Light style for Normal mode
  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -2615,7 +2597,7 @@ document.addEventListener('DOMContentLoaded', () => {
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
  btnOk.removeEventListener('click', hideAlert);
- if (callback) setTimeout(callback, 50);
+ if (callback) setTimeout(callback, 400);
  };
  
  btnOk.addEventListener('click', hideAlert);
@@ -4330,15 +4312,15 @@ function wireOnboardingButtons() {
     var t = document.getElementById('demo-step-' + step);
     if (t) t.classList.add('active');
     document.querySelectorAll('.demo-dot').forEach(function(d, i) { d.classList.toggle('active', i === step); });
-    // canvasアニメーションを起動（startOnboardingDemo の goToStep と同じ）
+    // canvasアニメーションを起動（window._tendenAnim 経由でスコープ問題を回避）
     if (step === 1) setTimeout(function() {
-      try { animateMapCanvas(); } catch(e) {}
+      if (window._tendenAnim) window._tendenAnim.map();
     }, 200);
     if (step === 2) setTimeout(function() {
-      try { animateRoutesCanvas(); } catch(e) {}
+      if (window._tendenAnim) window._tendenAnim.routes();
     }, 200);
     if (step === 3) setTimeout(function() {
-      try { animateFlowCanvas(); } catch(e) {}
+      if (window._tendenAnim) window._tendenAnim.flow();
     }, 200);
   }
   [
@@ -4458,6 +4440,13 @@ function startOnboardingDemo() {
  applyDemoI18n();
  // Re-apply after 1s to catch i18n async load
  setTimeout(applyDemoI18n, 1200);
+
+ // canvasアニメーション関数を外部（wireOnboardingButtons）から呼べるよう登録
+ window._tendenAnim = {
+   map:    function() { try { animateMapCanvas(); }    catch(e) {} },
+   routes: function() { try { animateRoutesCanvas(); } catch(e) {} },
+   flow:   function() { try { animateFlowCanvas(); }   catch(e) {} }
+ };
 
  // 笏笏 Step navigation
  function goToStep(step, isAutoFlow = false) {
