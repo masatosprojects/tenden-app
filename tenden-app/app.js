@@ -643,10 +643,10 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // 1. Show academic introduction popup first!
   const introTitle = "鎌倉市由比ヶ浜における避難行動研究モデルのご紹介";
-  let portalUrl = "https://masatosprojects.github.io/tenden/";
-  let introDesc = `本エリア（鎌倉市由比ヶ浜周辺）は、開発者（丸山）が学術的な避難行動シミュレーション研究を実施した最前線の対象地域です。<br><br>` +
+  let portalUrl = "https://masatosprojects.github.io/kamakura-sim/";
+  let introDesc = `本エリア（鎌倉市由比ヶ浜周辺）は、高校生の研究者である開発者が学術的な避難行動シミュレーション研究を実施した最前線の対象地域です。<br><br>` +
                   `本アプリ「TENDEN」には、研究の成果である<b>「道路混雑の動的分布シミュレーション統計」</b>および<b>「時間変化する避難所負荷モデル」</b>がリアルタイムに結合されています。避難計画の作成において、科学的研究に基づき、混雑を回避する最適な『避難先（高台の第一目標）』および『避難経路』を算出・提案する仕組みが稼働しています。<br><br>` +
-                  `詳細な研究成果やプロジェクト情報は、以下の公式ポータルサイトよりご参照いただけます。<br><br>` +
+                  `詳細な研究成果やプロジェクト情報は、以下の公式研究ポータルサイトよりご参照いただけます。<br><br>` +
                   `<a href="${portalUrl}" target="_blank" class="action-btn primary-btn btn-flashy" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: #00bbff; color: #fff; padding: 12px 20px; border-radius: 12px; font-weight: 700; font-size: 0.88rem; gap: 8px; box-shadow: 0 4px 16px rgba(0, 187, 255, 0.35); border: none; margin-top: 10px; width: 100%; box-sizing: border-box; text-align: center;">` +
                   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>` +
                   `公式研究ポータルサイトを見る` +

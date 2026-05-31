@@ -597,8 +597,8 @@ input:checked + .slider:before {
     box-shadow: var(--shadow-sm);
 }
 
-/* Top bar responsiveness optimization to prevent overlapping on tiny viewports */
-@media (max-width: 480px) {
+/* Top bar responsiveness optimization to prevent overlapping on tiny viewports & PC mock container views */
+@media (max-width: 480px), (min-width: 769px) {
     .top-status-bar {
         padding: max(env(safe-area-inset-top, 10px), 10px) 12px 10px 12px;
         display: flex;
