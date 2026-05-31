@@ -631,13 +631,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const crosshair = document.getElementById('crosshair-target');
   if (crosshair) crosshair.classList.remove('hidden');
   
-  const btnSetPin = document.getElementById('btn-set-pin');
-  if (btnSetPin) btnSetPin.classList.remove('hidden');
+  // btn-set-pin を表示（リスナーはすでに下で登録済み）
+  const spBtn = document.getElementById('btn-set-pin');
+  if (spBtn) spBtn.classList.remove('hidden');
   
   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   
-  // Proceed directly to location request after language/UI init
-  requestLocation();
  // Set Pin button listener for Crosshair mode
  const btnSetPin = document.getElementById('btn-set-pin');
  if (btnSetPin) {
