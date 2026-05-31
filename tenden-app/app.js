@@ -2273,6 +2273,14 @@ document.addEventListener('DOMContentLoaded', () => {
   verificationFailed = true;
   break;
   }
+  // Check if the snap distance is too far (indicates ocean or inaccessible area)
+  const snapDistance = L.latLng(candidateEdge.lat, candidateEdge.lng).distanceTo(L.latLng(lastWaypoint[0], lastWaypoint[1]));
+  if (snapDistance > 100) {
+  console.warn(`[SafeEdge] OSRMスナップ先が遠すぎます (${snapDistance.toFixed(1)}m > 100m)。道路がないか海上のためスキップします: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
+  verificationFailed = true;
+  break;
+  }
+  
  console.log(`[SafeEdge] 安全なスナップ先を確認: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
  return candidateEdge;
  }
@@ -3234,12 +3242,81 @@ document.addEventListener('DOMContentLoaded', () => {
  * Dynamically verifies that all safe edges in safeEdgesData are strictly outside the inundation zone.
  * Removes any points that are determined to be inside (alpha > 0) or too close to coast/rivers.
  */
- async function verifyAndCleanSafeEdges() {
- console.log('[SafeEdge] 安全境界点の安全性自動チェックをスキップします（スキャン時の精密ピクセル判定および定義ファイルを信頼します）');
- // 丸め誤差や大量並列HTTPリクエスト制限（HTTP 429など）による有能な鎌倉市内の境界点データの自爆削除を防ぐため、
- // checkTsunamiInundation による二重チェックを廃止します。
- return;
- }
+  async function verifyAndCleanSafeEdges() {
+  if (safeEdgesData.length === 0) return;
+  console.log(`[SafeEdge] 安全境界点 ${safeEdgesData.length} 件の動的バッチ検証（海洋判定および津波浸水R_SAFE安全検証）を開始します...`);
+  
+  const zoom = 14;
+  const prefCode = currentPrefCode || '14';
+  
+  // 1. Group points by tile coordinate (x, y) to load each PNG tile only once (extremely fast & efficient!)
+  const tileGroups = {};
+  safeEdgesData.forEach(edge => {
+  const coords = getTileCoords(edge.lat, edge.lng, zoom);
+  const key = `${coords.x}_${coords.y}`;
+  if (!tileGroups[key]) {
+  tileGroups[key] = { x: coords.x, y: coords.y, edges: [] };
+  }
+  tileGroups[key].edges.push({ edge, coords });
+  });
+  
+  // 2. Load and verify each unique tile in parallel
+  const verifiedEdges = [];
+  const tileKeys = Object.keys(tileGroups);
+  
+  await Promise.all(tileKeys.map(async (key) => {
+  const group = tileGroups[key];
+  const url = `https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_pref_data/${prefCode}/${zoom}/${group.x}/${group.y}.png`;
+  const pixels = await loadTilePixelData(url);
+  
+  group.edges.forEach(({ edge, coords }) => {
+  // A. Strictly verify ocean boundary (using generalizable linear interpolation)
+  if (isNearCoastOrWater(edge.lat, edge.lng)) {
+  console.log(`[SafeEdge] verifyAndClean: 海洋または水系近傍のため除外: ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
+  return;
+  }
+  
+  // B. If tsunami tile is found, strictly verify pixels
+  if (pixels) {
+  const px = coords.px;
+  const py = coords.py;
+  
+  // Check if own pixel is inundated
+  if (pixels[(py * 256 + px) * 4 + 3] > 0) {
+  console.log(`[SafeEdge] verifyAndClean: 浸水域内のため除外: ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
+  return;
+  }
+  
+  // Check safety buffer R_SAFE (80m)
+  const R_SAFE = 8;
+  let tooClose = false;
+  for (let dy = -R_SAFE; dy <= R_SAFE; dy++) {
+  for (let dx = -R_SAFE; dx <= R_SAFE; dx++) {
+  const ny = py + dy;
+  const nx = px + dx;
+  if (ny >= 0 && ny < 256 && nx >= 0 && nx < 256) {
+  if (pixels[(ny * 256 + nx) * 4 + 3] > 0) {
+  tooClose = true;
+  break;
+  }
+  }
+  }
+  if (tooClose) break;
+  }
+  if (tooClose) {
+  console.log(`[SafeEdge] verifyAndClean: 浸水安全バッファ(80m)不足のため除外: ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
+  return;
+  }
+  }
+  
+  // Passed all safety checks!
+  verifiedEdges.push(edge);
+  });
+  }));
+  
+  console.log(`[SafeEdge] 検証完了: ${safeEdgesData.length} 件 → ${verifiedEdges.length} 件を安全点として保持`);
+  safeEdgesData = verifiedEdges;
+  }
 
  /**
  * Scans GSI tsunami raster tiles for ALL inundation-boundary × safe-zone crossing points.
