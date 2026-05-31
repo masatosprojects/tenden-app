@@ -2266,7 +2266,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const lastWaypoint = waypoints[waypoints.length - 1];
  
  // Check if the OSRM snapped last waypoint is inside the inundation zone!
- const isSnappedInside = await checkTsunamiInundation(lastWaypoint[0], lastWaypoint[1], '14');
+ const isSnappedInside = await checkTsunamiInundation(lastWaypoint[0], lastWaypoint[1], currentPrefCode || '14');
  
   if (isSnappedInside) {
   console.warn(`[SafeEdge] OSRMスナップ先が浸水域内のため、この候補をスキップします: ${candidateEdge.name || candidateEdge.id} (スナップ先: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
@@ -3313,9 +3313,35 @@ document.addEventListener('DOMContentLoaded', () => {
   verifiedEdges.push(edge);
   });
   }));
+
+  // Passed all local tile/coastal checks, now do generalizable ocean filter via GSI Elevation API in batches
+  console.log(`[SafeEdge] Local verification passed. Performing generalizable GSI Elevation ocean filter on ${verifiedEdges.length} points...`);
   
-  console.log(`[SafeEdge] 検証完了: ${safeEdgesData.length} 件 → ${verifiedEdges.length} 件を安全点として保持`);
-  safeEdgesData = verifiedEdges;
+  const finalVerifiedEdges = [];
+  const BATCH_SIZE = 15;
+  for (let i = 0; i < verifiedEdges.length; i += BATCH_SIZE) {
+    const chunk = verifiedEdges.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(chunk.map(async (edge) => {
+      try {
+        const url = `https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon=${edge.lng}&lat=${edge.lat}&outtype=JSON`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data && data.elevation === '-----') {
+          console.log(`[SafeEdge] Ocean Detected by GSI Elevation API (Excluded): ${edge.name || edge.id} at ${edge.lat}, ${edge.lng}`);
+          return null;
+        }
+        return edge;
+      } catch (err) {
+        return edge;
+      }
+    }));
+    results.forEach(r => {
+      if (r !== null) finalVerifiedEdges.push(r);
+    });
+  }
+
+  console.log(`[SafeEdge] GSI Ocean filter complete. Verified: ${finalVerifiedEdges.length} / ${verifiedEdges.length}`);
+  safeEdgesData = finalVerifiedEdges;
   }
 
  /**
@@ -3919,8 +3945,10 @@ document.addEventListener('DOMContentLoaded', () => {
  } else {
  safeEdgesData = dynamicEdges;
  }
- console.log(`[Generalization] Dynamic targets scanned successfully: ${safeEdgesData.length} points.`);
- drawAllSafeEdges();
+   console.log(`[Generalization] Dynamic targets scanned successfully: ${safeEdgesData.length} points. Verifying safety...`);
+  await verifyAndCleanSafeEdges();
+  console.log(`[Generalization] Dynamic targets scanned and verified successfully: ${safeEdgesData.length} points remaining.`);
+  drawAllSafeEdges();
  }
  }).catch(e => console.warn('[Generalization] Dynamic raster scan failed:', e));
  }
