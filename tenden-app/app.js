@@ -5170,5 +5170,69 @@ function startOnboardingDemo() {
  console.log('[TENDEN] Onboarding demo started.');
 }
 
+  // --- PWA NATIVE-LIKE POLISHING AND WEB SHARE API INTEGRATION ---
+  setupPWAInstallAndShare();
+
+  function setupPWAInstallAndShare() {
+    let deferredPrompt;
+    const pwaBanner = document.getElementById('pwa-install-banner');
+    const btnPwaInstall = document.getElementById('btn-pwa-install-action');
+    const btnPwaClose = document.getElementById('btn-pwa-install-close');
+    
+    // 1. Android/Chrome beforeinstallprompt Event Listener
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent browser default mini-infobar
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Only show banner if not previously dismissed in this session
+      if (sessionStorage.getItem('tenden-pwa-dismissed') !== 'true' && pwaBanner) {
+        pwaBanner.classList.remove('hidden');
+      }
+    });
+
+    if (btnPwaInstall) {
+      btnPwaInstall.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        pwaBanner.classList.add('hidden');
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`[PWA] Install prompt user choice: ${outcome}`);
+        deferredPrompt = null;
+      });
+    }
+
+    if (btnPwaClose && pwaBanner) {
+      btnPwaClose.addEventListener('click', () => {
+        pwaBanner.classList.add('hidden');
+        sessionStorage.setItem('tenden-pwa-dismissed', 'true');
+      });
+    }
+
+    // 2. iOS Safari Standalone Guide popup
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    const iosInstallModal = document.getElementById('ios-install-modal');
+    const btnIosClose = document.getElementById('btn-ios-install-close');
+
+    if (isIOS && !isStandalone) {
+      // Only show banner if not previously dismissed in this session
+      if (sessionStorage.getItem('tenden-ios-pwa-dismissed') !== 'true' && iosInstallModal) {
+        setTimeout(() => {
+          iosInstallModal.classList.remove('hidden');
+          setTimeout(() => iosInstallModal.classList.add('active'), 50);
+        }, 3500); // Wait 3.5 seconds after load for a beautiful experience
+      }
+    }
+
+    if (btnIosClose && iosInstallModal) {
+      btnIosClose.addEventListener('click', () => {
+        iosInstallModal.classList.remove('active');
+        setTimeout(() => iosInstallModal.classList.add('hidden'), 300);
+        sessionStorage.setItem('tenden-ios-pwa-dismissed', 'true');
+      });
+    }
+  }
+
 
 });

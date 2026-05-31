@@ -4,8 +4,8 @@
     "description": "平時の「減災・備え」と発災時の「避難誘導」をシームレスに繋ぐWebアプリケーション",
     "start_url": "./index.html",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#ffffff",
+    "background_color": "#0d0f12",
+    "theme_color": "#0d0f12",
     "icons": [
         {
             "src": "assets/icons/icon.svg",

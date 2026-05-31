@@ -7,7 +7,11 @@
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
  <link rel="stylesheet" href="style.css">
  <link rel="manifest" href="manifest.json">
- <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#0d0f12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TENDEN">
+  <link rel="apple-touch-icon" href="assets/logo.png">
     <!-- Mobile Runtime Error Debugger -->
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
@@ -628,7 +632,50 @@
  <!-- Capture Container (used for html2canvas to ensure clean rendering) -->
  <div id="capture-container"></div>
 
- </div> <!-- /#app-container -->
+  <!-- Android/Generic PWA Install Banner -->
+  <div id="pwa-install-banner" class="pwa-install-banner hidden">
+    <div class="pwa-banner-content">
+      <img src="assets/logo.png" class="pwa-banner-logo" alt="TENDEN Logo">
+      <div class="pwa-banner-text">
+        <h4 data-i18n="pwaInstallTitle">TENDENをホーム画面に追加</h4>
+        <p data-i18n="pwaInstallDesc">アプリ感覚で素早くルート探索を開始</p>
+      </div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button id="btn-pwa-install-action" class="action-btn primary-btn btn-small" data-i18n="btnPwaInstall">追加</button>
+      <button id="btn-pwa-install-close" class="banner-close-btn">&times;</button>
+    </div>
+  </div>
+
+  <!-- iOS Safari Install Instruction Modal -->
+  <div id="ios-install-modal" class="overlay hidden">
+    <div class="ios-install-sheet glass-panel">
+      <div class="ios-sheet-header">
+        <img src="assets/logo.png" class="ios-install-logo" alt="TENDEN Logo">
+        <h3 data-i18n="iosInstallTitle">TENDEN をインストール</h3>
+        <p data-i18n="iosInstallDesc">ホーム画面に追加して、全画面での快適な避難シミュレーション体験を開始できます。</p>
+      </div>
+      <div class="ios-sheet-steps">
+        <div class="ios-step">
+          <span class="step-num">1</span>
+          <p data-i18n="iosStep1">Safariの画面下部にある<strong>共有ボタン</strong>を押します。</p>
+          <span class="step-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: #007aff;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+          </span>
+        </div>
+        <div class="ios-step">
+          <span class="step-num">2</span>
+          <p data-i18n="iosStep2">メニューをスクロールし、「<strong>ホーム画面に追加</strong>」を選択します。</p>
+          <span class="step-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: #8e8e93;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+          </span>
+        </div>
+      </div>
+      <button id="btn-ios-install-close" class="action-btn secondary-btn w-100" style="margin-top: 15px; border-radius: 12px;" data-i18n="btnGuideClose">閉じる</button>
+    </div>
+  </div>
+
+  </div> <!-- /#app-container -->
 
  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>

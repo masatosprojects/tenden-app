@@ -166,12 +166,19 @@ if (!executablePath) {
             if (btn) btn.click();
         });
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        console.log("Waiting for OSRM route options to populate asynchronously...");
+        try {
+            await page.waitForSelector('#route-options-container button', { timeout: 15000 });
+        } catch (e) {
+            console.log("Warning: OSRM route options container timeout. Fetching took longer than 15s or was offline.");
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Brief margin for leaflet draw
         await page.screenshot({ path: path.join(__dirname, 'screenshot_3_route_options.png') });
         console.log("Screenshot 3 saved: Route options bottom sheet");
 
-        // Verify the labels of the routes in the container
-        const routeLabels = await page.$$eval('#route-options-container button strong', labels => labels.map(l => l.innerText));
+        // Verify the labels of the routes in the container (using div layout)
+        const routeLabels = await page.$$eval('#route-options-container button div', labels => labels.map(l => l.innerText).filter(t => t.length > 0));
         console.log("Route options in container:", routeLabels);
 
         // Click Route C or Route B card in bottom sheet
