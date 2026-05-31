@@ -51,6 +51,17 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('[TENDEN] i18n.json 30-languages dictionary loaded successfully');
  let i18nDict = {};
 
+ // ── 初回デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）──
+ (function resetDemoFlag() {
+   try {
+     var ver = 'v59';
+     if (localStorage.getItem('tenden-pwa-ver') !== ver) {
+       localStorage.removeItem('tenden-demo-seen');
+       localStorage.setItem('tenden-pwa-ver', ver);
+     }
+   } catch(e) {}
+ })();
+
  // Initialize (各関数をtry/catchで保護 — どれかがエラーでもスプラッシュは消える)
  try { initMap(); } catch(e) { console.error('[TENDEN] initMap error:', e); }
  try { initUI(); } catch(e) { console.error('[TENDEN] initUI error:', e); }
@@ -141,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
  routeLayerGroup = L.layerGroup().addTo(map);
  safeEdgesLayerGroup = L.layerGroup();
 
- // Official tsunami inundation tile layer (繝上じ繝ｼ繝峨・繝・・繝昴・繧ｿ繝ｫ繧ｵ繧､繝・ 蝗ｽ蝨溷慍逅・劼)
+ // Official tsunami inundation tile layer (ハザードマップポータルサイト 国土地理院)
  // Source: https://disaportal.gsi.go.jp/
  // Kanagawa pref. code = 14, zoom range 2窶・7
  hazardLayer = L.tileLayer(
@@ -171,12 +182,12 @@ document.addEventListener('DOMContentLoaded', () => {
  const LOAD_COLORS = { low: '#00a63e', medium: '#f5a623', high: '#c0392b' };
   const LOAD_LABELS = { low: 'o Low', medium: '! Medium', high: 'x High' };
  const FALLBACK_SHELTERS = [
- { name: "蠕｡謌仙ｰ丞ｭｦ譬｡", lat: 35.3190, lng: 139.5510, predicted_load: 'low', capacity: 910, typical_occupancy_pct: 4.7 },
+ { name: "御成小学校", lat: 35.3190, lng: 139.5510, predicted_load: 'low', capacity: 910, typical_occupancy_pct: 4.7 },
  { name: "骼悟牙ｸょｽｹ謇", lat: 35.3180, lng: 139.5400, predicted_load: 'low', capacity: 1000, typical_occupancy_pct: 0 },
- { name: "逕倡ｸ・･樊・螳ｮ", lat: 35.3142, lng: 139.5332, predicted_load: 'low', capacity: 500, typical_occupancy_pct: 0 },
- { name: "蜈ｫ蟷｡螳ｮ蠅・・", lat: 35.3252, lng: 139.5562, predicted_load: 'low', capacity: 800, typical_occupancy_pct: 0 },
- { name: "貂・ｳ牙ｰ丞ｭｦ譬｡", lat: 35.3258, lng: 139.5605, predicted_load: 'low', capacity: 600, typical_occupancy_pct: 0 },
- { name: "骼悟臥函豸ｯ蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ", lat: 35.3195, lng: 139.5570, predicted_load: 'low', capacity: 400, typical_occupancy_pct: 0 }
+ { name: "甘縄神明宮", lat: 35.3142, lng: 139.5332, predicted_load: 'low', capacity: 500, typical_occupancy_pct: 0 },
+ { name: "八幡宮境内", lat: 35.3252, lng: 139.5562, predicted_load: 'low', capacity: 800, typical_occupancy_pct: 0 },
+ { name: "長谷小学校", lat: 35.3258, lng: 139.5605, predicted_load: 'low', capacity: 600, typical_occupancy_pct: 0 },
+ { name: "骼悟臥函豸ｯ学習センター", lat: 35.3195, lng: 139.5570, predicted_load: 'low', capacity: 400, typical_occupancy_pct: 0 }
  ];
 
  function addShelterMarkers(shelterList) {
@@ -200,28 +211,28 @@ document.addEventListener('DOMContentLoaded', () => {
  iconAnchor: [12, 12]
  });
  
- // Dynamically translate the prefix '驕ｿ髮｣謇' in names to local equivalents like 'Shelter'
+ // Dynamically translate the prefix '避難所' in names to local equivalents like 'Shelter'
  const shelterWord = dict.shelterWord || 'Shelter';
- let localizedName = s.name.replace('驕ｿ髮｣謇', shelterWord);
+ let localizedName = s.name.replace('避難所', shelterWord);
 
  // Translate other suffixes dynamically
- if (dict.elementarySchool) localizedName = localizedName.replace('蟆丞ｭｦ譬｡', dict.elementarySchool);
- if (dict.juniorHighSchool) localizedName = localizedName.replace('荳ｭ蟄ｦ譬｡', dict.juniorHighSchool);
- if (dict.shrinePrecincts) localizedName = localizedName.replace('蠅・・', dict.shrinePrecincts);
- if (dict.learningCenter) localizedName = localizedName.replace('蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ', dict.learningCenter);
+ if (dict.elementarySchool) localizedName = localizedName.replace('小学校', dict.elementarySchool);
+ if (dict.juniorHighSchool) localizedName = localizedName.replace('中学校', dict.juniorHighSchool);
+ if (dict.shrinePrecincts) localizedName = localizedName.replace('境内', dict.shrinePrecincts);
+ if (dict.learningCenter) localizedName = localizedName.replace('学習センター', dict.learningCenter);
 
  // Format multi-language strings with placeholders
- let capText = dict.shelterCapacity || '蜿主ｮｹ閭ｽ蜉・ {capacity}莠ｺ';
+ let capText = dict.shelterCapacity || '収容能力: {capacity}人';
  capText = capText.replace('{capacity}', s.capacity);
  
  let occNote = '';
  if (s.typical_occupancy_pct > 0) {
- let occText = dict.shelterOccupancy || '蜈ｸ蝙句茜逕ｨ邇・ {occupancy}%';
+ let occText = dict.shelterOccupancy || '典型利用率: {occupancy}%';
  occText = occText.replace('{occupancy}', s.typical_occupancy_pct);
  occNote = `<br><span style="color:${color};font-size:0.85em">${label} (${occText})</span>`;
  }
  
- const disclaimerText = dict.shelterDisclaimer || '窶ｻ繧ｷ繝溘Η繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ邨ｱ險医↓蝓ｺ縺･縺丈ｺ域ｸｬ縲ゅΜ繧｢繝ｫ繧ｿ繧､繝繝・・繧ｿ縺ｧ縺ｯ縺ゅｊ縺ｾ縺帙ｓ';
+  const disclaimerText = dict.shelterDisclaimer || '※シミュレーション統計に基づく予測。リアルタイムデータではありません';
  const disclaimer = `<br><em style="font-size:0.78em;opacity:0.7">${disclaimerText}</em>`;
  
  L.marker([s.lat, s.lng], { icon })
@@ -646,10 +657,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // btn-set-pin を表示（リスナーはすでに下で登録済み）
   const spBtn = document.getElementById('btn-set-pin');
   if (spBtn) spBtn.classList.remove('hidden');
-  
+
+  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+
+  // ── 学術紹介ポップアップ（クリーンな日本語・ポータルリンク付き）──
+  const portalUrl = 'https://masatosprojects.github.io/kamakura-sim/';
+  const introTitle = '鎌倉市由比ヶ浜における避難行動シミュレーションについて';
+  const introDesc =
+    '本エリア（鎌倉市由比ヶ浜周辺）は、高校生研究者である開発者が学術的な' +
+    '避難行動シミュレーション研究を実施した対象地域です。<br><br>' +
+    '本アプリ「TENDEN」には、研究の成果である<b>道路混雑の動的シミュレーション統計</b>および' +
+    '<b>時間変化する避難所負荷モデル</b>がリアルタイムに結合されています。<br><br>' +
+    '<a href="' + portalUrl + '" target="_blank" ' +
+    'style="display:inline-flex;align-items:center;text-decoration:none;' +
+    'background:#007aff;color:#fff;padding:10px 16px;border-radius:10px;' +
+    'font-weight:700;font-size:0.88rem;gap:8px;margin-top:10px;">' +
+    '公式研究ポータルを見る →</a>';
+
+  showCustomAlert(introTitle, introDesc, 'info', () => {
+    // ─ 避難開始位置の設定ポップアップ ─
+    showCustomAlert(
+      dict.alertLocationTitle || '避難開始位置を設定してください',
+      dict.alertLocationDesc  || 'マップをドラッグして画面中央のターゲット（＋印）を避難開始位置に合わせてから、下部のボタンをタップしてください。',
+      'info'
+    );
+  });
+
   }); // Close map.once!
   }); // Close btnTestAlert!
-  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   
  // Set Pin button listener for Crosshair mode
  const btnSetPin = document.getElementById('btn-set-pin');
@@ -738,7 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const lang = getLanguageCode();
  if (navigator.share && currentLocation) {
   const shareTitle = dict.alertSosTitle || 'SOS Safety Status (Current Location)';
- const shareTextDefault = lang === 'ja' ? '迴ｾ蝨ｨ縲∝ｮ牙・縺ｪ鬮伜床縺ｸ驕ｿ髮｣荳ｭ縺ｧ縺吶・n迴ｾ蝨ｨ蝨ｰ: ' : 'I am currently evacuating to safe high ground.\nMy location: ';
+  const shareTextDefault = lang === 'ja' ? '現在、安全な高台へ避難中です。\n現在地: ' : 'I am currently evacuating to safe high ground.\nMy location: ';
  const shareText = (dict.shareText || shareTextDefault) + `https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`;
  navigator.share({
  title: shareTitle,
@@ -969,7 +1004,7 @@ document.addEventListener('DOMContentLoaded', () => {
  function requestLocation() {
  if ("geolocation" in navigator) {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- triggerDynamicIsland(dict.fetchingLocationLabel || " 迴ｾ蝨ｨ蝨ｰ繧呈､懷・荳ｭ...", "info");
+ triggerDynamicIsland(dict.fetchingLocationLabel || " 現在地を取得中...", "info");
 
  const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
  navigator.geolocation.getCurrentPosition(
@@ -1010,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', () => {
  generalizeFirstTargets(currentLocation);
  
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- triggerDynamicIsland(dict.locationAcquiredLabel || " 迴ｾ蝨ｨ蝨ｰ繧貞酔譛溘＠縺ｾ縺励◆", "success");
+ triggerDynamicIsland(dict.locationAcquiredLabel || " 現在地を同期しました", "success");
 
  // Track location changes
  navigator.geolocation.watchPosition(pos => {
@@ -1131,8 +1166,8 @@ document.addEventListener('DOMContentLoaded', () => {
  height: "10m",
  locations: {
  'a': {
- name: "蝨ｰ轤ｹA: 逕ｱ豈斐Ω豬懈ｵｷ蟯ｸ (譛蜊ｱ髯ｺ蝨ｰ蟶ｯ/豬ｷ謚・.4m)",
- desc: "髱偵＞繝ｫ繝ｼ繝医↓豐ｿ縺｣縺ｦ逶ｴ縺｡縺ｫ鬮伜床・亥ｾ｡謌仙ｰ丞ｭｦ譬｡・峨∈驕ｿ髮｣縺励※縺上□縺輔＞",
+ name: "地点A: 由比ヶ浜海岸 (最危険地帯/海抜0.4m)",
+ desc: "青いルートに沿って直ちに高台（御成小学校）へ避難してください",
  start: { lat: 35.3111, lng: 139.5467 }, // Yuigahama Beach
  goal: { lat: 35.3190, lng: 139.5510 }, // Onari Elementary
  goal2: { lat: 35.3180, lng: 139.5400 }, // Kamakura City Hall
@@ -1148,8 +1183,8 @@ document.addEventListener('DOMContentLoaded', () => {
  ]
  },
  'b': {
- name: "蝨ｰ轤ｹB: 蜥檎伐蝪夐ｧ・ｻ倩ｿ・(蜀・匣荳ｭ髢灘慍蟶ｯ/豬ｷ謚・.8m)",
- desc: "髱偵＞繝ｫ繝ｼ繝医↓豐ｿ縺｣縺ｦ譛蟇・ｊ縺ｮ鬮伜床・磯詞蛟牙ｸょｽｹ謇・峨∈驕ｿ髮｣縺励※縺上□縺輔＞",
+ name: "地点B: 和田塚駅周辺 (市街中間地帯/海抜0.8m)",
+ desc: "青いルートに沿って最寄りの高台（鎌倉市役所）へ避難してください",
  start: { lat: 35.3135, lng: 139.5448 }, // Wadazuka Station
  goal: { lat: 35.3180, lng: 139.5400 }, // Kamakura City Hall
  goal2: { lat: 35.3190, lng: 139.5510 }, // Onari Elementary
@@ -1172,8 +1207,8 @@ document.addEventListener('DOMContentLoaded', () => {
  height: "3m",
  locations: {
  'a': {
- name: "蝨ｰ轤ｹA: 荳・㈹繝ｶ豬懈ｵｷ蟯ｸ (譛蜊ｱ髯ｺ蝨ｰ蟶ｯ/豬ｷ謚・.1m)",
- desc: "髱偵＞驕ｿ髮｣繝ｫ繝ｼ繝医↓豐ｿ縺｣縺ｦ鬮伜床・磯詞蛟峨・繝ｪ繝ｳ繧ｹ繝帙ユ繝ｫ譁ｹ髱｢・峨∈驕ｿ髮｣縺励※縺上□縺輔＞",
+ name: "地点A: 七里ヶ浜海岸 (最危険地帯/海抜0.1m)",
+ desc: "青い避難ルートに沿って高台（鎌倉プリンスホテル方面）へ避難してください",
  start: { lat: 35.3050, lng: 139.5100 }, // Shichirigahama Beach Parking
  goal: { lat: 35.3102, lng: 139.5173 }, // Kamakura Prince Hotel high ground
  goal2: { lat: 35.3085, lng: 139.5100 }, // Sub high ground
@@ -1189,8 +1224,8 @@ document.addEventListener('DOMContentLoaded', () => {
  ]
  },
  'b': {
- name: "蝨ｰ轤ｹB: 荳・㈹繝ｶ豬憺ｧ・燕 (豎溘ヮ髮ｻ豐ｿ邱・豬ｷ謚・.0m)",
- desc: "髱偵＞驕ｿ髮｣繝ｫ繝ｼ繝医↓豐ｿ縺｣縺ｦ譛蟇・ｊ縺ｮ鬮伜床・井ｸ・㈹繧ｬ豬懈擲鬮伜床蜈ｬ蝨抵ｼ峨∈驕ｿ髮｣縺励※縺上□縺輔＞",
+ name: "地点B: 七里ヶ浜駅前 (江ノ電沿線/海抜3.0m)",
+ desc: "青い避難ルートに沿って最寄りの高台（七里ガ浜東高台公園）へ避難してください",
  start: { lat: 35.3065, lng: 139.5165 }, // Shichirigahama Station
  goal: { lat: 35.3125, lng: 139.5135 }, // Shichirigahama Higashi Park
  goal2: { lat: 35.3102, lng: 139.5173 }, // Kamakura Prince Hotel
@@ -1219,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', () => {
  document.body.classList.add('emergency-mode');
  }
 
- // 繧ｹ繝槭・迚ｹ蛹匁ｩ溯・縺ｮ蛻晄悄蛹・
+ // スマホ特化機能の初期化
  requestWakeLock();
  requestNotificationPermission();
  requestOrientationPermission();
@@ -1238,7 +1273,7 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('i18n-evac-desc').innerText = scLoc.desc;
  
  const detailsEl = document.getElementById('disaster-details');
- const timeLabel = sc.isLandslide ? "蛻ｰ驕比ｺ域ｸｬ:" : "莠域Φ蛻ｰ驕疲凾髢・";
+ const timeLabel = sc.isLandslide ? "到達予測:" : "予想到達時間";
  const heightLabel = sc.isLandslide ? "莠域Φ豬ｸ豌ｴ豺ｱ:" : "莠域Φ鬮・";
  detailsEl.innerHTML = `<span>${timeLabel}</span> <strong>${sc.time}</strong> | <span>${heightLabel}</span> <strong>${sc.height}</strong>`;
  
@@ -1339,7 +1374,7 @@ document.addEventListener('DOMContentLoaded', () => {
  isPinLocked = false; // Reset lock on full reset
  }
 
- // 笏笏 繝ｫ繝ｼ繝磯∈謚槭Δ繝ｼ繝繝ｫ 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+ // ── ルート選択モーダル ──────────────────────────────────────────
  function showRouteSelectionModal(scenarioId, locationId, scLoc) {
  const routeKey = `${scenarioId}_${locationId}`;
  const candidates = routeData[routeKey] || [];
@@ -1359,8 +1394,8 @@ document.addEventListener('DOMContentLoaded', () => {
  style="text-align:left; padding:16px; margin-bottom:10px; border-radius:14px; border:2px solid ${route.color}40;
  background:${route.color}15; cursor:pointer; transition:all 0.2s; width:100%; display:flex; flex-direction:column; gap:8px;">
  <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
- <strong style="color:${route.color}; font-size:1.15rem; letter-spacing:0.05em;">繝ｫ繝ｼ繝・${route.id}</strong>
- <span style="font-size:0.8rem; font-weight:600; opacity:0.8; color:var(--hud-text);">驕ｸ謚・/span>
+ <strong style="color:${route.color}; font-size:1.15rem; letter-spacing:0.05em;">ルート${route.id}</strong>
+ <span style="font-size:0.8rem; font-weight:600; opacity:0.8; color:var(--hud-text);">選択</span>
  </div>
  <div style="display:flex; justify-content:space-between; width:100%; font-size:0.8rem; color:var(--hud-text); opacity:0.9;">
  <span> ${route.distance_m}m (邏・{route.estimated_min}蛻・</span>
@@ -1376,10 +1411,10 @@ document.addEventListener('DOMContentLoaded', () => {
  <button class="route-option-btn" data-route-id="fallback"
  style="text-align:center; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);
  background:rgba(255,255,255,0.05); cursor:pointer; font-size:0.95rem; font-weight:600; width:100%; margin-top:6px; color:var(--hud-text);">
- 隕丞ｮ壹・繝ｫ繝ｼ繝医ｒ菴ｿ逕ｨ縺吶ｋ
+ 推奨のルートを使用する
  </button>
  <div style="margin-top:16px; text-align:center; font-size:0.75rem; opacity:0.6; color:var(--hud-text); line-height:1.4;">
- 窶ｻ縺薙・繝ｫ繝ｼ繝医・縺ゅ￥縺ｾ縺ｧ蜿り・ュ蝣ｱ縺ｧ縺吶・br>螳滄圀縺ｮ驕ｿ髮｣譎ゅ・迴ｾ蝣ｴ縺ｮ迥ｶ豕・ｼ亥貞｣翫ｄ豬ｸ豌ｴ縺ｪ縺ｩ・峨ｒ蜆ｪ蜈医＠縺ｦ縺上□縺輔＞縲・
+ ※このルートはあくまで参考情報です。<br>実際の避難時は現場の状況（倒壊や浸水など）を優先してください。
  </div>
  `);
 
@@ -1552,15 +1587,15 @@ document.addEventListener('DOMContentLoaded', () => {
  // No extra label needed 窶・the pin color already communicates congestion status.
 
 
- // ---- PRIMARY GOAL MARKER (隨ｬ荳逶ｮ讓・ 螳牙・鬮伜床) ----
+ // ---- PRIMARY GOAL MARKER (第一目標: 安全高台) ----
  if (targetEdge) {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   const primaryGoalLabel = dict.primaryGoal || 'First Goal';
  let edgeName = targetEdge.name;
- if (dict.elementarySchool) edgeName = edgeName.replace('蟆丞ｭｦ譬｡', dict.elementarySchool);
- if (dict.juniorHighSchool) edgeName = edgeName.replace('荳ｭ蟄ｦ譬｡', dict.juniorHighSchool);
- if (dict.shrinePrecincts) edgeName = edgeName.replace('蠅・・', dict.shrinePrecincts);
- if (dict.learningCenter) edgeName = edgeName.replace('蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ', dict.learningCenter);
+ if (dict.elementarySchool) edgeName = edgeName.replace('小学校', dict.elementarySchool);
+ if (dict.juniorHighSchool) edgeName = edgeName.replace('中学校', dict.juniorHighSchool);
+ if (dict.shrinePrecincts) edgeName = edgeName.replace('境内', dict.shrinePrecincts);
+ if (dict.learningCenter) edgeName = edgeName.replace('学習センター', dict.learningCenter);
 
  const goalIcon = L.divIcon({
  className: '',
@@ -1578,7 +1613,7 @@ document.addEventListener('DOMContentLoaded', () => {
  L.marker([targetEdge.lat, targetEdge.lng], { icon: goalIcon, zIndexOffset: 1000 }).addTo(routeLayerGroup);
  }
 
- // ---- SECONDARY ROUTE (隨ｬ莠檎岼讓・ 驕ｿ髮｣謇縺ｸ縺ｮ蛻・ｲ千ｴ邱・ ----
+ // ---- SECONDARY ROUTE (第二目標: 避難所への分岐ルート) ----
  if (secondaryRoute && secondaryRoute.waypoints && secondaryRoute.waypoints.length > 0) {
  // Find the true branching point:
  // Walk backward from the shelter towards the start location along the secondary route,
@@ -1632,15 +1667,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // Secondary goal marker
  const lastPt = secondaryRoute.waypoints[secondaryRoute.waypoints.length - 1];
- const shelterName = secondaryRoute.target ? secondaryRoute.target.name : '驕ｿ髮｣謇';
+ const shelterName = secondaryRoute.target ? secondaryRoute.target.name : '避難所';
   const secondaryGoalLabel = dict.secondaryGoal || 'Second Goal';
  
  let localizedShelterName = shelterName;
- if (dict.shelterWord) localizedShelterName = localizedShelterName.replace('驕ｿ髮｣謇', dict.shelterWord);
- if (dict.elementarySchool) localizedShelterName = localizedShelterName.replace('蟆丞ｭｦ譬｡', dict.elementarySchool);
- if (dict.juniorHighSchool) localizedShelterName = localizedShelterName.replace('荳ｭ蟄ｦ譬｡', dict.juniorHighSchool);
- if (dict.shrinePrecincts) localizedShelterName = localizedShelterName.replace('蠅・・', dict.shrinePrecincts);
- if (dict.learningCenter) localizedShelterName = localizedShelterName.replace('蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ', dict.learningCenter);
+ if (dict.shelterWord) localizedShelterName = localizedShelterName.replace('避難所', dict.shelterWord);
+ if (dict.elementarySchool) localizedShelterName = localizedShelterName.replace('小学校', dict.elementarySchool);
+ if (dict.juniorHighSchool) localizedShelterName = localizedShelterName.replace('中学校', dict.juniorHighSchool);
+ if (dict.shrinePrecincts) localizedShelterName = localizedShelterName.replace('境内', dict.shrinePrecincts);
+ if (dict.learningCenter) localizedShelterName = localizedShelterName.replace('学習センター', dict.learningCenter);
 
  const shelterIcon = L.divIcon({
  className: '',
@@ -1767,8 +1802,8 @@ document.addEventListener('DOMContentLoaded', () => {
  const autoBtn = document.createElement('button');
  autoBtn.className = 'route-option-btn auto-best-btn';
  autoBtn.innerHTML = `
- <div style="font-size:1.1rem; font-weight:800; color:var(--primary); margin-bottom:2px;">譛驕ｩ繝ｫ繝ｼ繝医ｒ閾ｪ蜍戊ｨ育ｮ・/div>
- <div style="font-size:0.75rem; color:var(--text-light);">隍・粋逧・↓閠・・縺励∵怙驕ｩ縺ｪ邨瑚ｷｯ繧定・蜍輔〒驕ｸ縺ｳ縺ｾ縺・/div>
+ <div style="font-size:1.1rem; font-weight:800; color:var(--primary); margin-bottom:2px;">最適ルートを自動計算</div>
+ <div style="font-size:0.75rem; color:var(--text-light);">総合的に判断し、最適な経路を自動で選びます</div>
  `;
  autoBtn.style.border = '2px solid var(--primary)';
  autoBtn.style.background = 'linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(52, 199, 89, 0.1) 100%)';
@@ -2021,12 +2056,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  let localizedTargetEdgeName = targetEdge.name;
- if (dict.elementarySchool) localizedTargetEdgeName = localizedTargetEdgeName.replace('蟆丞ｭｦ譬｡', dict.elementarySchool);
- if (dict.juniorHighSchool) localizedTargetEdgeName = localizedTargetEdgeName.replace('荳ｭ蟄ｦ譬｡', dict.juniorHighSchool);
- if (dict.shrinePrecincts) localizedTargetEdgeName = localizedTargetEdgeName.replace('蠅・・', dict.shrinePrecincts);
- if (dict.learningCenter) localizedTargetEdgeName = localizedTargetEdgeName.replace('蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ', dict.learningCenter);
+ if (dict.elementarySchool) localizedTargetEdgeName = localizedTargetEdgeName.replace('小学校', dict.elementarySchool);
+ if (dict.juniorHighSchool) localizedTargetEdgeName = localizedTargetEdgeName.replace('中学校', dict.juniorHighSchool);
+ if (dict.shrinePrecincts) localizedTargetEdgeName = localizedTargetEdgeName.replace('境内', dict.shrinePrecincts);
+ if (dict.learningCenter) localizedTargetEdgeName = localizedTargetEdgeName.replace('学習センター', dict.learningCenter);
 
- // BUILD ROUTE A (譛遏ｭ繝ｫ繝ｼ繝・-> Pure nearest safe edge)
+ // BUILD ROUTE A (最短ルート -> Pure nearest safe edge)
  if (onlineNearestWaypoints) {
  routeA = {
  id: 'A',
@@ -2046,7 +2081,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // Try to fetch OSRM Route with Detour for Route B (Congestion Avoidance)
  let detourResult = await fetchOSRMRouteWithDetour(loc, targetEdge);
 
- // BUILD ROUTE B (驕楢ｷｯ豺ｷ髮大屓驕ｿ繝ｫ繝ｼ繝・- uses detour if available)
+ // BUILD ROUTE B (道路混雑回避ルート - uses detour if available)
  if (detourResult) {
  routeB = {
  id: 'B',
@@ -2077,7 +2112,7 @@ document.addEventListener('DOMContentLoaded', () => {
  routeB = calculateCustomRouteForType(loc, targetEdge, 'B');
  }
 
- // BUILD SECONDARY ROUTE (隨ｬ莠檎岼讓・ 驕ｿ髮｣謇縺ｸ縺ｮ蛻・ｲ舌Ν繝ｼ繝・
+ // BUILD SECONDARY ROUTE (第二目標: 避難所への分岐ルート)
  let secondaryRoute = null;
  if (onlineBestWaypoints) {
  secondaryRoute = {
@@ -2094,7 +2129,7 @@ document.addEventListener('DOMContentLoaded', () => {
  };
  }
 
- // BUILD ROUTE C (繝舌Μ繧｢繝輔Μ繝ｼ繝ｻ蜍ｾ驟榊屓驕ｿ繝ｫ繝ｼ繝・窶・Real slope-based calculation)
+ // BUILD ROUTE C (バリアフリー・勾配回避ルート - Real slope-based calculation)
  // Try to find a flatter safe edge alternative by querying elevations along Route A
  let routeCEdge = targetEdge; // Default to same target as A
  let routeCWaypoints = onlineNearestWaypoints;
@@ -2166,14 +2201,14 @@ document.addEventListener('DOMContentLoaded', () => {
  console.warn('[RouteC] Elevation-based slope calculation failed:', e);
  }
 
- const slopeText = dict.routeSlopeText || '繝ｻ譛螟ｧ蜍ｾ驟・{slope}%';
+  const slopeText = dict.routeSlopeText || '・最大勾配: {slope}%';
  const slopeLabel = routeCMaxSlope !== null ? slopeText.replace('{slope}', routeCMaxSlope.toFixed(1)) : '';
  
  let routeCEdgeName = routeCEdge.name;
- if (dict.elementarySchool) routeCEdgeName = routeCEdgeName.replace('蟆丞ｭｦ譬｡', dict.elementarySchool);
- if (dict.juniorHighSchool) routeCEdgeName = routeCEdgeName.replace('荳ｭ蟄ｦ譬｡', dict.juniorHighSchool);
- if (dict.shrinePrecincts) routeCEdgeName = routeCEdgeName.replace('蠅・・', dict.shrinePrecincts);
- if (dict.learningCenter) routeCEdgeName = routeCEdgeName.replace('蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ', dict.learningCenter);
+ if (dict.elementarySchool) routeCEdgeName = routeCEdgeName.replace('小学校', dict.elementarySchool);
+ if (dict.juniorHighSchool) routeCEdgeName = routeCEdgeName.replace('中学校', dict.juniorHighSchool);
+ if (dict.shrinePrecincts) routeCEdgeName = routeCEdgeName.replace('境内', dict.shrinePrecincts);
+ if (dict.learningCenter) routeCEdgeName = routeCEdgeName.replace('学習センター', dict.learningCenter);
 
  let flatNote = '';
  if (routeCEdge.id !== targetEdge.id) {
@@ -2284,7 +2319,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const candidatesList = await findNearestSafeEdgeCandidates(loc);
  if (candidatesList.length === 0) return null;
 
- console.log(`[SafeEdge] 螳牙・蠅・阜蛟呵｣懈焚: ${candidatesList.length}轤ｹ縲０SRM繧ｹ繝翫ャ繝怜ｮ牙・繝√ぉ繝・け繧帝幕蟋九＠縺ｾ縺・..`);
+ console.log();
 
  // Loop through candidates list to find the first one that has a safe OSRM snapped destination!
  for (let i = 0; i < Math.min(candidatesList.length, 6); i++) {
@@ -2313,19 +2348,19 @@ document.addEventListener('DOMContentLoaded', () => {
  const isSnappedInside = await checkTsunamiInundation(lastWaypoint[0], lastWaypoint[1], currentPrefCode || '14');
  
   if (isSnappedInside) {
-  console.warn(`[SafeEdge] OSRM繧ｹ繝翫ャ繝怜・縺梧ｵｸ豌ｴ蝓溷・縺ｮ縺溘ａ縲√％縺ｮ蛟呵｣懊ｒ繧ｹ繧ｭ繝・・縺励∪縺・ ${candidateEdge.name || candidateEdge.id} (繧ｹ繝翫ャ繝怜・: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
+  console.warn();
   verificationFailed = true;
   break;
   }
   // Check if the snap distance is too far (indicates ocean or inaccessible area)
   const snapDistance = L.latLng(candidateEdge.lat, candidateEdge.lng).distanceTo(L.latLng(lastWaypoint[0], lastWaypoint[1]));
   if (snapDistance > 100) {
-  console.warn(`[SafeEdge] OSRM繧ｹ繝翫ャ繝怜・縺碁□縺吶℃縺ｾ縺・(${snapDistance.toFixed(1)}m > 100m)縲る％霍ｯ縺後↑縺・°豬ｷ荳翫・縺溘ａ繧ｹ繧ｭ繝・・縺励∪縺・ ${candidateEdge.name || candidateEdge.id} (繧ｹ繝翫ャ繝怜・: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
+  console.warn();
   verificationFailed = true;
   break;
   }
   
- console.log(`[SafeEdge] 螳牙・縺ｪ繧ｹ繝翫ャ繝怜・繧堤｢ｺ隱・ ${candidateEdge.name || candidateEdge.id} (繧ｹ繝翫ャ繝怜・: ${lastWaypoint[0]}, ${lastWaypoint[1]})`);
+ console.log();
  return candidateEdge;
  }
  } catch (e) {
@@ -2339,7 +2374,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // Fallback: If all candidates failed OSRM safety checks or API was offline, return the first candidate
  const fallbackEdge = candidatesList[0];
- console.warn(`[SafeEdge] 縺吶∋縺ｦ縺ｮ蛟呵｣懊・繧ｹ繝翫ャ繝怜・縺悟ｮ牙・蝓溷､悶∪縺溘・讀懆ｨｼ繧ｨ繝ｩ繝ｼ縺ｮ縺溘ａ縲∵怙蟇・ｊ繧堤ｷ頑･謗｡逕ｨ縺励∪縺・ ${fallbackEdge.name || fallbackEdge.id}`);
+ console.warn(`[SafeEdge] すべての候補のスナップ点が安全域外または検証エラーのため、最寄りを緊急採用します: ${fallbackEdge.name || fallbackEdge.id}`);
  return fallbackEdge;
  }
 
@@ -2453,11 +2488,11 @@ document.addEventListener('DOMContentLoaded', () => {
  
  const shelterName = shelter.name;
  let localizedShelterName = shelterName;
- if (dict.shelterWord) localizedShelterName = localizedShelterName.replace('驕ｿ髮｣謇', dict.shelterWord);
- if (dict.elementarySchool) localizedShelterName = localizedShelterName.replace('蟆丞ｭｦ譬｡', dict.elementarySchool);
- if (dict.juniorHighSchool) localizedShelterName = localizedShelterName.replace('荳ｭ蟄ｦ譬｡', dict.juniorHighSchool);
- if (dict.shrinePrecincts) localizedShelterName = localizedShelterName.replace('蠅・・', dict.shrinePrecincts);
- if (dict.learningCenter) localizedShelterName = localizedShelterName.replace('蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ', dict.learningCenter);
+ if (dict.shelterWord) localizedShelterName = localizedShelterName.replace('避難所', dict.shelterWord);
+ if (dict.elementarySchool) localizedShelterName = localizedShelterName.replace('小学校', dict.elementarySchool);
+ if (dict.juniorHighSchool) localizedShelterName = localizedShelterName.replace('中学校', dict.juniorHighSchool);
+ if (dict.shrinePrecincts) localizedShelterName = localizedShelterName.replace('境内', dict.shrinePrecincts);
+ if (dict.learningCenter) localizedShelterName = localizedShelterName.replace('学習センター', dict.learningCenter);
 
  if (type === 'A') {
   label = dict.routeShortestLabel || 'Shortest Route';
@@ -2470,10 +2505,10 @@ document.addEventListener('DOMContentLoaded', () => {
   characteristics = (dict.routeBarrierDesc2 || 'Accessible and relatively flat route heading to {target}').replace('{target}', localizedShelterName);
  }
  
- if (dict.elementarySchool) characteristics = characteristics.replace('蟆丞ｭｦ譬｡', dict.elementarySchool);
- if (dict.juniorHighSchool) characteristics = characteristics.replace('荳ｭ蟄ｦ譬｡', dict.juniorHighSchool);
- if (dict.shrinePrecincts) characteristics = characteristics.replace('蠅・・', dict.shrinePrecincts);
- if (dict.learningCenter) characteristics = characteristics.replace('蟄ｦ鄙偵そ繝ｳ繧ｿ繝ｼ', dict.learningCenter);
+ if (dict.elementarySchool) characteristics = characteristics.replace('小学校', dict.elementarySchool);
+ if (dict.juniorHighSchool) characteristics = characteristics.replace('中学校', dict.juniorHighSchool);
+ if (dict.shrinePrecincts) characteristics = characteristics.replace('境内', dict.shrinePrecincts);
+ if (dict.learningCenter) characteristics = characteristics.replace('学習センター', dict.learningCenter);
 
  const customDistance = Math.round(minWaypointDist + bestRoute.distance_m * (1 - bestSplitIndex / bestRoute.waypoints.length));
  return {
@@ -2675,8 +2710,8 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  // 笏笏 P2P蝨ｰ髴・ュ蝣ｱ WebSocket謗･邯・笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
- // 菴ｿ逕ｨAPI: wss://api.p2pquake.net/v2/ws・・2P蝨ｰ髴・ュ蝣ｱ繝阪ャ繝医Ρ繝ｼ繧ｯ・・
- // code 551 = 豢･豕｢諠・ｱ, code 556 = 豢･豕｢隴ｦ蝣ｱ
+ // 使用API: wss://api.p2pquake.net/v2/ws (P2P地震情報ネットワーク)
+ // code 551 = 地震情報, code 556 = 地震速報
  function connectP2PQuake() {
  let ws;
  let reconnectTimer = null;
@@ -2703,14 +2738,14 @@ document.addEventListener('DOMContentLoaded', () => {
  return;
  }
 
- // code 551 = 豌苓ｱ｡蠎∫匱陦ｨ縲梧ｴ･豕｢諠・ｱ縲・ code 556 = 邱頑･蝨ｰ髴・溷ｱ・井ｺ亥ｱ・・
+ // code 551 = 震源発生情報「地震情報」, code 556 = 緊急地震速報（本震）
  if (data.code === 551 || data.code === 556) {
- // 豢･豕｢隴ｦ蝣ｱ繧ｯ繝ｩ繧ｹ繧堤｢ｺ隱・
+ // 地震速報クラスを確認
  const forecasts = data?.tsunami?.comments?.forecast?.text ?? '';
  const isTsunamiWarning =
- forecasts.includes('螟ｧ豢･豕｢隴ｦ蝣ｱ') ||
- forecasts.includes('豢･豕｢隴ｦ蝣ｱ') ||
- data.code === 551; // 豢･豕｢諠・ｱ縺悟ｱ翫＞縺滓凾轤ｹ縺ｧ邱頑･繝｢繝ｼ繝臥匱蜍・
+ forecasts.includes('大地震速報') ||
+ forecasts.includes('地震速報') ||
+  data.code === 551; // 地震情報が来た時点で緊急モード発動
 
  if (isTsunamiWarning) {
  setP2PStatus('alert');
@@ -2740,7 +2775,7 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  function scheduleReconnect() {
- if (reconnectTimer) return; // 莠碁㍾莠育ｴ・ｒ髦ｲ縺・
+ if (reconnectTimer) return; // 多重接続を防ぐ
  reconnectTimer = setTimeout(() => {
  reconnectTimer = null;
  connect();
@@ -2766,7 +2801,7 @@ document.addEventListener('DOMContentLoaded', () => {
  setInterval(tick, 1000);
  }
 
- // P2P謗･邯夂憾諷九ｒHUD縺ｫ蜿肴丐縺吶ｋ
+ // P2P接続状態をHUDに反映する
  function setP2PStatus(state) {
  const dot = document.getElementById('p2p-dot');
  const label = document.getElementById('p2p-label');
@@ -2781,7 +2816,7 @@ document.addEventListener('DOMContentLoaded', () => {
   alert: dict.p2pAlert || 'Tsunami Warning Active!',
   disconnected: dict.p2pDisconnected || 'P2P Offline'
  };
- label.textContent = labels[state] || '蠕・ｩ滉ｸｭ';
+ label.textContent = labels[state] || '接続中';
  if (bar) {
  bar.classList.toggle('p2p-alert-active', state === 'alert');
  }
@@ -3040,19 +3075,19 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  // ==========================================================================
- // Tsunami National Hazard Map & Location Inundation Detection (蜈ｨ蝗ｽ蛹ｺ蟇ｾ蠢懶ｼ・樟蝨ｨ蝨ｰ豬ｸ豌ｴ諠ｳ螳壼玄蝓溷・螟門愛螳・
+ // Tsunami National Hazard Map & Location Inundation Detection (全国対応、現在地浸水情報確認安全点特定)
  // ==========================================================================
- let currentPrefCode = '14'; // 蛻晄悄蛟､縺ｯ逾槫･亥ｷ晉恁 (JIS: 14)
+ let currentPrefCode = '14'; // 初期値は神奈川県 (JIS: 14)
 
  /**
- * 邱ｯ蠎ｦ邨悟ｺｦ縺九ｉ驛ｽ驕灘ｺ懃恁繧ｳ繝ｼ繝峨ｒ迚ｹ螳壹＠縲√ワ繧ｶ繝ｼ繝峨・繝・・繧ｿ繧､繝ｫ繧貞虚逧・↓蛻・ｊ譖ｿ縺医ｋ
+  * 緯度経度から都道府県コードを特定し、ハザードマップタイルを動的に切り替える
  * @param {number} lat 邱ｯ蠎ｦ
  * @param {number} lng 邨悟ｺｦ
- * @returns {Promise<string>} 驛ｽ驕灘ｺ懃恁繧ｳ繝ｼ繝・(2譯・
+  * @returns {Promise<string>} 都道府県コード (2桁)
  */
  async function updateTsunamiPrefecturalTile(lat, lng) {
  try {
- // 蝗ｽ蝨溷慍逅・劼縺ｮ霆ｽ驥城・ず繧ｪ繧ｳ繝ｼ繝・ぅ繝ｳ繧ｰAPI繧貞茜逕ｨ
+  // 国土地理院の逆ジオコーディングAPIを使用
  const url = `https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat=${lat}&lon=${lng}`;
  const res = await fetch(url);
  if (!res.ok) throw new Error('Reverse geocoding failed');
@@ -3060,7 +3095,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const data = await res.json();
  if (data && data.results && data.results.muniCd) {
  const muniCd = data.results.muniCd;
- // muniCd縺ｮ蜈磯ｭ2譯√′驛ｽ驕灘ｺ懃恁繧ｳ繝ｼ繝・
+  // muniCdの先頭2桁が都道府県コード
  const prefCode = String(Math.floor(parseInt(muniCd) / 1000)).padStart(2, '0');
  
  if (prefCode !== currentPrefCode) {
@@ -3068,7 +3103,7 @@ document.addEventListener('DOMContentLoaded', () => {
  console.log(`[Tsunami Hazard] Switching hazard map prefecture tile to: ${prefCode}`);
  
  if (hazardLayer) {
- // 繧ｿ繧､繝ｫURL繧貞虚逧・↓譖ｴ譁ｰ
+ // タイルURLを動的に更新
  hazardLayer.setUrl(`https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_pref_data/${prefCode}/{z}/{x}/{y}.png`);
  }
  }
@@ -3081,7 +3116,7 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  /**
- * 邱ｯ蠎ｦ邨悟ｺｦ縺九ｉ繧ｺ繝ｼ繝繝ｬ繝吶Ν14縺ｫ縺翫￠繧宜YZ繧ｿ繧､繝ｫ蠎ｧ讓吶→繧ｿ繧､繝ｫ蜀・ヴ繧ｯ繧ｻ繝ｫ蠎ｧ讓吶ｒ邂怜・縺吶ｋ
+  * 緯度経度からズームレベル14におけるXYZタイル座標とタイル内ピクセル座標を算出する
  */
  function getTileCoords(lat, lng, zoom = 14) {
  const latRad = lat * Math.PI / 180;
@@ -3281,8 +3316,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * Removes any points that are determined to be inside (alpha > 0) or too close to coast/rivers.
  */
   async function verifyAndCleanSafeEdges() {
-  if (safeEdgesData.length === 0) return;
-  console.log(`[SafeEdge] 螳牙・蠅・阜轤ｹ ${safeEdgesData.length} 莉ｶ縺ｮ蜍慕噪繝舌ャ繝∵､懆ｨｼ・域ｵｷ豢句愛螳壹♀繧医・豢･豕｢豬ｸ豌ｴR_SAFE螳牙・讀懆ｨｼ・峨ｒ髢句ｧ九＠縺ｾ縺・..`);
+  console.log();
   
   const zoom = 14;
   const prefCode = currentPrefCode || '14';
@@ -3310,7 +3344,7 @@ document.addEventListener('DOMContentLoaded', () => {
   group.edges.forEach(({ edge, coords }) => {
   // A. Strictly verify ocean boundary (using generalizable linear interpolation)
   if (isNearCoastOrWater(edge.lat, edge.lng)) {
-  console.log(`[SafeEdge] verifyAndClean: 豬ｷ豢九∪縺溘・豌ｴ邉ｻ霑大ｍ縺ｮ縺溘ａ髯､螟・ ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
+  console.log(`[SafeEdge] verifyAndClean: 遠すぎまたは陸地外のため除外:  ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
   return;
   }
   
@@ -3321,7 +3355,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Check if own pixel is inundated
   if (pixels[(py * 256 + px) * 4 + 3] > 0) {
-  console.log(`[SafeEdge] verifyAndClean: 豬ｸ豌ｴ蝓溷・縺ｮ縺溘ａ髯､螟・ ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
+  console.log(`[SafeEdge] verifyAndClean: 浸水域内のため除外:  ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
   return;
   }
   
@@ -3389,7 +3423,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (tooClose) break;
   }
   if (tooClose) {
-  console.log(`[SafeEdge] verifyAndClean: 豬ｸ豌ｴ螳牙・繝舌ャ繝輔ぃ(80m)荳崎ｶｳ縺ｮ縺溘ａ髯､螟・ ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
+  console.log(`[SafeEdge] verifyAndClean: 浸水安全バッファ(80m)未満のため除外:  ${edge.name || edge.id} (${edge.lat}, ${edge.lng})`);
   return;
   }
   }
@@ -3436,7 +3470,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {string} prefCode - Prefecture code, e.g. '14' for Kanagawa
  */
  async function computeSafeEdgesFromRasterScan(prefCode = '14') {
- console.log('[SafeEdge] 豢･豕｢豬ｸ豌ｴ蛹ｺ蝓溘・蠅・阜繧ｹ繧ｭ繝｣繝ｳ繧帝幕蟋九＠縺ｾ縺・..');
+ console.log('[SafeEdge] 地震浸水安全点の再スキャンを開始します..');
  
  // Dynamic Bounding Box calculation based on currentLocation to generalize to any location in Japan!
  let bbox = { latMin: 35.27, latMax: 35.37, lngMin: 139.47, lngMax: 139.585 };
@@ -3483,8 +3517,7 @@ document.addEventListener('DOMContentLoaded', () => {
  tileTasks.push({ tx, ty, url });
  }
  }
-
- console.log(`[SafeEdge] 繧ｹ繧ｭ繝｣繝ｳ蟇ｾ雎｡繧ｿ繧､繝ｫ謨ｰ: ${tileTasks.length}譫壹・繝ｭ繝ｼ繝峨ｒ髢句ｧ・..`);
+  console.log();
 
  // Load all tiles in parallel (dramatically faster)
  const loadedTiles = await Promise.all(tileTasks.map(async (task) => {
@@ -3646,7 +3679,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (!edgeMap.has(gk)) {
  edgeMap.set(gk, {
  id: `scan_${edgeMap.size}`,
- name: '螳牙・蠅・阜轤ｹ',
+ name: '安全境界点',
  lat: Math.round(lat * 100000) / 100000,
  lng: Math.round(lng * 100000) / 100000
  });
@@ -3655,19 +3688,18 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  }
 
- const edges = Array.from(edgeMap.values());
- console.log(`[SafeEdge] 繧ｹ繧ｭ繝｣繝ｳ螳御ｺ・ ${tilesScanned}/${tileTasks.length}繧ｿ繧､繝ｫ蜃ｦ逅・竊・${edges.length}莉ｶ of 螳牙・蠅・阜轤ｹ`);
+  console.log();
  return edges;
  }
 
  /**
- * 謖・ｮ壹＆繧後◆菴咲ｽｮ縺梧ｴ･豕｢豬ｸ豌ｴ諠ｳ螳壼玄蝓溷・縺ｫ縺ゅｋ縺九ｒPNG繧ｿ繧､繝ｫ縺ｮ繝斐け繧ｻ繝ｫ騾城℃蠎ｦ繧堤畑縺・※鬮倡ｲｾ蠎ｦ縺ｫ蛻､螳壹☆繧・
+  * 指定された位置が津波浸水想定区域内にあるかをPNGタイルのピクセル透過度を用いて高精度に判定する
 
- * @param {number} lat 邱ｯ蠎ｦ
- * @param {number} lng 邨悟ｺｦ
- * @param {string} prefCode 驛ｽ驕灘ｺ懃恁繧ｳ繝ｼ繝・
- * @returns {Promise<boolean>} 豬ｸ豌ｴ諠ｳ螳壼玄蝓溷・縺ｪ繧液rue縲∝玄蝓溷､悶↑繧映alse
- */
+  * @param {number} lat 緯度
+  * @param {number} lng 経度
+  * @param {string} prefCode 都道府県コード
+  * @returns {Promise<boolean>} 浸水想定区域内ならtrue、区域外ならfalse
+  */
  function checkTsunamiInundation(lat, lng, prefCode) {
  return new Promise((resolve) => {
  const zoom = 14;
@@ -3686,9 +3718,8 @@ document.addEventListener('DOMContentLoaded', () => {
  ctx.drawImage(img, 0, 0);
  
  const pixel = ctx.getImageData(coords.px, coords.py, 1, 1).data;
- const alpha = pixel[3]; // 騾乗・蠎ｦ (0縲・55)
- 
- // 繧｢繝ｫ繝輔ぃ蛟､縺・繧医ｊ螟ｧ縺阪＞・郁牡縺御ｻ倥＞縺ｦ縺・ｋ・牙ｴ蜷医∵ｵｸ豌ｴ諠ｳ螳壼玄蝓溷・縺ｨ蛻､螳・
+ const alpha = pixel[3]; // 透明度 (0-255)
+  // アルファ値が十分大きい（色が付いている）場合、浸水想定区域内と判定
  const isInundated = alpha > 0;
  console.log(`[Tsunami Hazard] Location check: alpha=${alpha}, isInundated=${isInundated}`);
  resolve(isInundated);
@@ -3697,29 +3728,25 @@ document.addEventListener('DOMContentLoaded', () => {
  resolve(false);
  }
  };
- 
- img.onerror = function() {
- // 逕ｻ蜒上′縺ｪ縺・ｼ医ち繧､繝ｫ縺悟ｭ伜惠縺励↑縺・∝・髯ｸ縺ｪ縺ｩ・牙ｴ蜷医・豬ｸ豌ｴ諠ｳ螳壼玄蝓溷､悶→縺ｿ縺ｪ縺・
- resolve(false);
- };
- 
+
+ // 画像がない（タイルが存在しない、海上など）場合は浸水想定区域外とみなす
+ img.onerror = () => resolve(false);
+
  img.src = tileUrl;
  });
  }
 
  /**
- * 蛻､螳夂ｵ先棡繧辿UD荳企Κ繝舌・・・sunami-status-box・峨↓鄒弱＠縺・げ繝ｩ繧ｹ繝｢繝ｫ繝輔ぅ繧ｺ繝繝舌ャ繧ｸ縺ｨ縺励※蜿肴丐縺吶ｋ
- * @param {boolean} isInundated 豬ｸ豌ｴ諠ｳ螳壼玄蝓溷・縺九←縺・°
- */
+  * 判定結果をHUD上部バー（tsunami-status-box）に美しいグラスモルフィズムバッジとして反映する
+  * @param {boolean} isInundated 浸水想定区域内かどうか
  function updateTsunamiStatusUI(isInundated) {
  const box = document.getElementById('tsunami-status-box');
  const textSpan = document.getElementById('tsunami-status-text');
  if (!box || !textSpan) return;
  
  box.classList.remove('hidden');
- box.className = 'dash-info-card'; // 繧ｯ繝ｩ繧ｹ縺ｮ蛻晄悄蛹・
- 
- // 逕ｻ髱｢蟷・′繧ｹ繝槭・縺九←縺・°・医Ξ繧ｹ繝昴Φ繧ｷ繝悶↑陦ｨ險倥・蠕ｮ隱ｿ謨ｴ・・
+ box.className = 'dash-info-card'; // クラスの初期化
+  // 画面幅がスマホかどうか（レスポンシブな表示の後調整）
  const isMobile = window.innerWidth <= 600;
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  
@@ -3753,19 +3780,17 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  /**
- * 迴ｾ蝨ｨ蝨ｰ縺ｾ縺溘・迚ｹ螳壼ｺｧ讓吶↓蝓ｺ縺･縺上√ワ繧ｶ繝ｼ繝峨ち繧､繝ｫ譖ｴ譁ｰ縺翫ｈ縺ｳ豬ｸ豌ｴ諠ｳ螳壼愛螳壹・邱丞粋螳溯｡碁未謨ｰ
- * @param {Object} loc 邱ｯ蠎ｦ邨悟ｺｦ繧ｪ繝悶ず繧ｧ繧ｯ繝・{lat, lng}
+ * @param {Object} loc 緯度経度オブジェクト {lat, lng}
  */
  async function triggerLocationTsunamiCheck(loc) {
  if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return;
  
- // 1. 縺ｾ縺夐・ず繧ｪ繧ｳ繝ｼ繝・ぅ繝ｳ繧ｰ縺ｧ驛ｽ驕灘ｺ懃恁繧ｳ繝ｼ繝峨ｒ迚ｹ螳壹＠縲√ち繧､繝ｫURL繧貞・繧頑崛縺・
  const prefCode = await updateTsunamiPrefecturalTile(loc.lat, loc.lng);
  
- // 2. 縺昴・驛ｽ驕灘ｺ懃恁繧ｳ繝ｼ繝峨・繧ｿ繧､繝ｫ繧堤畑縺・※縲∫樟蝨ｨ蝨ｰ縺梧ｵｸ豌ｴ諠ｳ螳壼玄蝓溷・縺九ｒ繝斐け繧ｻ繝ｫ蛻､螳・
+ // 2. その都道府県コードのタイルを用いて、現在地が浸水情報確認点かをピクセル判定
  const isInundated = await checkTsunamiInundation(loc.lat, loc.lng, prefCode);
  
- // 3. UI縺ｫ邨先棡繧貞渚譏
+ // 3. UIに結果を反映
  updateTsunamiStatusUI(isInundated);
  }
 
@@ -3792,7 +3817,6 @@ document.addEventListener('DOMContentLoaded', () => {
  routeLabel = fallbackNames[activeSelectedRouteId] || fallbackNames['A'];
  }
  
- const destination = activeSecondaryRoute && activeSecondaryRoute.shelter ? activeSecondaryRoute.shelter.name : '謖・ｮ夐∩髮｣謇';
  
  let localizedDest = destination;
  const currentLang = getLanguageCode();
@@ -3817,7 +3841,6 @@ document.addEventListener('DOMContentLoaded', () => {
  
  let shareText = '';
  if (currentLang === 'ja') {
- shareText = `縲慎ENDEN繝槭う驕ｿ髮｣險育判縲曾n螟ｧ豢･豕｢逋ｺ逕滓凾縲∫ｧ√・隨ｬ荳逶ｮ讓呻ｼ域ｵｸ豌ｴ螳牙・蠅・阜・峨ｒ邨檎罰縺励∵欠螳夐∩髮｣謇縲・{localizedDest}縲阪∈驕ｿ髮｣縺励∪縺吶・n繝ｻ驕ｿ髮｣繝ｫ繝ｼ繝・ ${routeLabel}\n繝ｻ驕ｿ髮｣譎る俣: 邏・${duration_min} 蛻・(豁ｩ陦碁溷ｺｦ險ｭ螳・ ${speed} km/h)\n繝阪ャ繝医′蛻・妙縺輔ｌ縺ｦ繧ゅが繝輔Λ繧､繝ｳ縺ｧ蜍輔￥貂帷⊃PWA繧｢繝励Μ縲卦ENDEN縲阪〒縲√≠縺ｪ縺溘ｂ驕ｿ髮｣繝ｫ繝ｼ繝医ｒ莉翫☆縺千｢ｺ隱阪＠縺ｾ縺励ｇ縺・ｼ―n繧｢繝励Μ繝ｪ繝ｳ繧ｯ: https://masatosprojects.github.io/tenden-app/`;
  } else {
  shareText = `[TENDEN Personal Evacuation Plan]\nIn the event of a tsunami, I will evacuate to the designated shelter "${localizedDest}" via the 1st safe boundary.\n- Evacuation Route: ${routeLabel}\n- Estimated Time: approx. ${duration_min} min (Speed: ${speed} km/h)\nCheck your own evacuation route now using the offline-first PWA app "TENDEN"!\nApp Link: https://masatosprojects.github.io/tenden-app/`;
  }
@@ -3890,7 +3913,6 @@ document.addEventListener('DOMContentLoaded', () => {
  if (permission === 'granted') {
  console.log('[Notification] Notification permission granted!');
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- triggerDynamicIsland(dict.notificationGranted || "騾夂衍險ｱ蜿ｯ縺梧怏蜉ｹ縺ｫ縺ｪ繧翫∪縺励◆", "success");
  }
  }
  }
@@ -4225,7 +4247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const shorelineIcon = L.divIcon({
       className: 'shoreline-icon-container',
-      html: `<div class="shoreline-pulse"></div><div class="shoreline-badge">豬ｷ蟯ｸ邱壹∪縺ｧ ${Math.round(coast.distance)}m</div>`,
+      html: `<div class="shoreline-pulse"></div><div class="shoreline-badge">海岸線まで ${Math.round(coast.distance)}m</div>`,
       iconSize: [120, 24],
       iconAnchor: [60, 12]
     });
@@ -4551,7 +4573,7 @@ function startOnboardingDemo() {
  ctx.closePath();
  ctx.fill();
 
- // Central avenue (闍･螳ｮ螟ｧ霍ｯ)
+ // Central avenue (若宮大路)
  ctx.beginPath();
  ctx.moveTo(0.50 * W, 0.60 * H);
  ctx.lineTo(0.51 * W, 0.45 * H);
@@ -4566,7 +4588,7 @@ function startOnboardingDemo() {
  ctx.lineWidth = 1.5;
  ctx.stroke();
 
- // Draw Sand/Beach (Yuigahama 遐よｵ・
+ // Draw Sand/Beach (Yuigahama 海岸)
  ctx.beginPath();
  coast.forEach((p, i) => {
  if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
@@ -4593,7 +4615,7 @@ function startOnboardingDemo() {
  ctx.fillStyle = '#657d65';
  ctx.font = 'bold 8px "Helvetica Neue", Arial, sans-serif';
  ctx.textAlign = 'left';
- ctx.fillText('讌ｵ讌ｽ蟇ｺ繝ｻHase譁ｹ髱｢', 0.02 * W, 0.3 * H);
+ ctx.fillText('長谷・Hase方面', 0.02 * W, 0.3 * H);
  ctx.textAlign = 'right';
  ctx.fillText('蜷崎ｶ雁・騾壽婿髱｢', 0.98 * W, 0.3 * H);
  
@@ -4601,7 +4623,7 @@ function startOnboardingDemo() {
  ctx.save();
  ctx.translate(0.57 * W, 0.38 * H);
  ctx.rotate(Math.PI / 2.1);
- ctx.fillText('闍･螳ｮ螟ｧ霍ｯ', 0, 0);
+ ctx.fillText('若宮大路', 0, 0);
  ctx.restore();
 
  ctx.restore();
@@ -4729,7 +4751,6 @@ function startOnboardingDemo() {
  ctx.stroke();
 
  // Draw major roads in Kamakura (Wakamiya Oji, etc. as faint gray basemaps)
- // Central road (闍･螳ｮ螟ｧ霍ｯ)
  ctx.beginPath();
  ctx.moveTo(0.20 * W, 0.82 * H);
  ctx.lineTo(0.22 * W, 0.72 * H);
@@ -4774,7 +4795,7 @@ function startOnboardingDemo() {
  ctx.lineWidth = 5;
  ctx.stroke();
 
- // Draw Sand/Beach (Yuigahama 遐よｵ・
+ // Draw Sand/Beach (Yuigahama 海岸)
  ctx.beginPath();
  coast.forEach((p, i) => {
  if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
@@ -4823,17 +4844,17 @@ function startOnboardingDemo() {
  ctx.textAlign = 'left';
  ctx.fillText('貅先ｰ丞ｱｱ譁ｹ髱｢', 0.02 * W, 0.4 * H);
  ctx.textAlign = 'right';
- ctx.fillText('陦｣蠑ｵ螻ｱ譁ｹ髱｢', 0.98 * W, 0.4 * H);
+ ctx.fillText('北鎌倉方面', 0.98 * W, 0.4 * H);
 
  ctx.fillStyle = '#8f7a63';
  ctx.textAlign = 'center';
- ctx.fillText('逕ｱ豈斐Ω豬懈ｵｷ蟯ｸ', 0.5 * W, 0.81 * H);
+ ctx.fillText('由比ヶ浜海岸', 0.5 * W, 0.81 * H);
  
  ctx.fillStyle = '#6c757d';
  ctx.save();
  ctx.translate(0.33 * W, 0.58 * H);
  ctx.rotate(-Math.PI / 4.5);
- ctx.fillText('闍･螳ｮ螟ｧ霍ｯ', 0, 0);
+ ctx.fillText('若宮大路', 0, 0);
  ctx.restore();
  }
 
@@ -4973,7 +4994,6 @@ function startOnboardingDemo() {
  ctx.stroke();
 
  // Draw major roads in Kamakura (Wakamiya Oji, etc. as faint gray basemaps)
- // Central road (闍･螳ｮ螟ｧ霍ｯ)
  ctx.beginPath();
  ctx.moveTo(0.20 * W, 0.82 * H);
  ctx.lineTo(0.22 * W, 0.72 * H);
@@ -5018,7 +5038,7 @@ function startOnboardingDemo() {
  ctx.lineWidth = 5;
  ctx.stroke();
 
- // Draw Sand/Beach (Yuigahama 遐よｵ・
+ // Draw Sand/Beach (Yuigahama 海岸)
  ctx.beginPath();
  coast.forEach((p, i) => {
  if (i === 0) ctx.moveTo(p[0]*W, p[1]*H);
@@ -5067,17 +5087,17 @@ function startOnboardingDemo() {
  ctx.textAlign = 'left';
  ctx.fillText('貅先ｰ丞ｱｱ譁ｹ髱｢', 0.02 * W, 0.4 * H);
  ctx.textAlign = 'right';
- ctx.fillText('陦｣蠑ｵ螻ｱ譁ｹ髱｢', 0.98 * W, 0.4 * H);
+ ctx.fillText('北鎌倉方面', 0.98 * W, 0.4 * H);
 
  ctx.fillStyle = '#8f7a63';
  ctx.textAlign = 'center';
- ctx.fillText('逕ｱ豈斐Ω豬懈ｵｷ蟯ｸ', 0.5 * W, 0.81 * H);
+ ctx.fillText('由比ヶ浜海岸', 0.5 * W, 0.81 * H);
  
  ctx.fillStyle = '#6c757d';
  ctx.save();
  ctx.translate(0.33 * W, 0.58 * H);
  ctx.rotate(-Math.PI / 4.5);
- ctx.fillText('闍･螳ｮ螟ｧ霍ｯ', 0, 0);
+ ctx.fillText('若宮大路', 0, 0);
  ctx.restore();
  }
 
