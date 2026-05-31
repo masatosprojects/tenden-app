@@ -67,7 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
  try { initUI(); } catch(e) { console.error('[TENDEN] initUI error:', e); }
  try { startClock(); } catch(e) {}
  try { connectP2PQuake(); } catch(e) {}
- try { startOnboardingDemo(); } catch(e) { console.error('[TENDEN] onboarding error:', e); }
+ // startOnboardingDemo は重要 — エラーを隠さず実行しフォールバック付き
+ try {
+   startOnboardingDemo();
+ } catch(e) {
+   console.error('[TENDEN] startOnboardingDemo error:', e);
+   try { requestLocation(); } catch(e3) {}
+ }
+ // ボタンリスナーを確実に配線（startOnboardingDemo内でエラーが起きても動く）
+ try { wireOnboardingButtons(); } catch(e) { console.warn('[TENDEN] wireOnboardingButtons error:', e); }
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
@@ -4280,6 +4288,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 15000);
   }
 
+
+// ── オンボーディングボタンの直接配線（startOnboardingDemo外でも確実に動く）──
+// startOnboardingDemo内でエラーが発生してもボタンを機能させるフォールバック。
+function wireOnboardingButtons() {
+  var overlay = document.getElementById('onboarding-overlay');
+  function closeDemoFallback() {
+    if (overlay) { overlay.classList.remove('active'); setTimeout(function(){ overlay.classList.add('hidden'); }, 300); }
+    try { localStorage.setItem('tenden-demo-seen', 'true'); } catch(e) {}
+  }
+  function goFallback(step) {
+    document.querySelectorAll('.demo-step').forEach(function(el){ el.classList.remove('active'); });
+    var t = document.getElementById('demo-step-' + step);
+    if (t) t.classList.add('active');
+    document.querySelectorAll('.demo-dot').forEach(function(d, i){ d.classList.toggle('active', i === step); });
+  }
+  [['btn-demo-next-0', function(){ goFallback(1); }],
+   ['btn-demo-skip-0', function(){ closeDemoFallback(); requestLocation(); }],
+   ['btn-demo-next-1', function(){ goFallback(2); }],
+   ['btn-demo-skip-1', function(){ closeDemoFallback(); requestLocation(); }],
+   ['btn-demo-next-2', function(){ goFallback(3); }],
+   ['btn-demo-skip-2', function(){ closeDemoFallback(); requestLocation(); }],
+   ['btn-demo-use-here', function(){ closeDemoFallback(); requestLocation(); }],
+   ['btn-demo-replay', function(){ goFallback(0); }],
+  ].forEach(function(pair) {
+    var el = document.getElementById(pair[0]);
+    if (el) {
+      // cloneNode でゾンビリスナーを完全除去してから新規追加
+      var fresh = el.cloneNode(true);
+      el.parentNode.replaceChild(fresh, el);
+      fresh.addEventListener('click', pair[1]);
+      fresh.addEventListener('touchend', function(e){ e.preventDefault(); pair[1](); });
+    }
+  });
+}
 
 function startOnboardingDemo() {
  const overlay = document.getElementById('onboarding-overlay');
