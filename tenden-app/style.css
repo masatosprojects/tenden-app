@@ -608,6 +608,9 @@ input:checked + .slider:before {
         border-bottom: 1px solid var(--glass-border);
         box-shadow: 0 4px 16px rgba(0,0,0,0.06);
     }
+    .map-action-fabs {
+        top: 140px; /* Push down to clear 2-row stacked top HUD status bar! */
+    }
     .status-left, .status-right {
         display: flex;
         align-items: center;
@@ -1169,4 +1172,59 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     #dynamic-island {
         width: calc(100% - 32px) !important;
     }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   COASTAL PROXIMITY LINE NEON VECTOR & SHORELINE RIPPLE STYLES
+   ══════════════════════════════════════════════════════════════════ */
+.coastal-proximity-line {
+    animation: strokePulse 2s infinite linear;
+    filter: drop-shadow(0 0 8px #ff2d55);
+}
+@keyframes strokePulse {
+    0% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -16; }
+}
+
+.shoreline-icon-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.shoreline-pulse {
+    width: 12px;
+    height: 12px;
+    background-color: #ff2d55;
+    border-radius: 50%;
+    position: absolute;
+    box-shadow: 0 0 8px #ff2d55;
+}
+.shoreline-pulse::after {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 2px solid #ff2d55;
+    border-radius: 50%;
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    animation: shorelineRipple 1.5s infinite ease-out;
+}
+@keyframes shorelineRipple {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(2.0); opacity: 0; }
+}
+.shoreline-badge {
+    position: absolute;
+    bottom: 18px;
+    background: rgba(255, 45, 85, 0.9);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
 }

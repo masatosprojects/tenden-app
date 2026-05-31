@@ -2,6 +2,8 @@
 document.addEventListener('DOMContentLoaded', () => {
  // Basic state
  let isEmergency = false;
+  let coastalProximityLine = null;
+  let coastalMarker = null;
  let map, userMarker, routeLayerGroup, hazardLayer, reliefLayer, sheltersLayerGroup, congestionLayer, safeEdgesLayerGroup;
  let congestionGeojsonData = null;
  let currentLocation = null; // {lat, lng}
@@ -110,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchElevation(currentLocation);
         triggerLocationTsunamiCheck(currentLocation);
         generalizeFirstTargets(currentLocation);
+  drawProximityToCoastline(currentLocation);
       },
       () => {
         console.log('[TENDEN] Geolocation failed or permission denied on load, using default Kamakura center.');
@@ -2562,7 +2565,7 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  function checkRouteDeviation(loc) {
- if (!mainRouteLine) return;
+  if (!mainRouteLine || isManualLocation) return;
  
  const isAlertEnabled = localStorage.getItem('tenden-deviation-alert') !== 'false';
  if (!isAlertEnabled) {
@@ -4094,6 +4097,163 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════════════════════════════
 // ONBOARDING DEMO — Cinematic 4-step scenario animation
 // ══════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════
+  // DYNAMIC COASTLINE PROXIMITY VECTOR AND SHORELINE ALIGNMENT
+  // ══════════════════════════════════════════════════════════════════
+  async function findNearestCoastline(loc) {
+    if (window.turf) {
+      const pt = turf.point([loc.lng, loc.lat]);
+      const coastLine = turf.lineString([
+        [139.460, 35.310], [139.470, 35.309], [139.485, 35.307],
+        [139.500, 35.304], [139.515, 35.302], [139.525, 35.301],
+        [139.535, 35.310], [139.545, 35.310], [139.553, 35.308],
+        [139.560, 35.302], [139.568, 35.298], [139.565, 35.292],
+        [139.563, 35.285], [139.562, 35.275]
+      ]);
+      const dist = turf.pointToLineDistance(pt, coastLine, {units: 'meters'});
+      if (dist < 5000) {
+        const nearest = turf.nearestPointOnLine(coastLine, pt);
+        return {
+          lat: nearest.geometry.coordinates[1],
+          lng: nearest.geometry.coordinates[0],
+          distance: dist,
+          source: 'Kamakura Local Database'
+        };
+      }
+    }
+
+    // Fallback A: OpenStreetMap Overpass API (Generalizable globally)
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const overpassUrl = `https://overpass-api.de/api/interpreter?data=[out:json];node(around:6000)["natural"="coastline"];out;`;
+      const res = await fetch(overpassUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      const data = await res.json();
+      
+      if (data && data.elements && data.elements.length > 0) {
+        let nearestNode = null;
+        let minD = Infinity;
+        data.elements.forEach(node => {
+          const d = L.latLng(loc.lat, loc.lng).distanceTo(L.latLng(node.lat, node.lon));
+          if (d < minD) {
+            minD = d;
+            nearestNode = node;
+          }
+        });
+        if (nearestNode) {
+          return {
+            lat: nearestNode.lat,
+            lng: nearestNode.lon,
+            distance: minD,
+            source: 'OpenStreetMap Overpass API'
+          };
+        }
+      }
+    } catch (e) {
+      // ignore and try raycasting fallback
+    }
+
+    // Fallback B: Dynamic GSI Raycasting elevation transition check (Japan-wide)
+    try {
+      const dirs = [
+        [0, -1], [0.5, -0.866], [0.866, -0.5], [1, 0], [0.866, 0.5], [0.5, 0.866],
+        [0, 1], [-0.5, 0.866], [-0.866, 0.5], [-1, 0], [-0.866, -0.5], [-0.5, -0.866]
+      ];
+      const distances = [200, 500, 1000, 1800, 2600];
+      const results = await Promise.all(dirs.map(async ([dx, dy]) => {
+        for (const d of distances) {
+          const dLat = (dy * d) / 111320;
+          const dLng = (dx * d) / (40075000 * Math.cos(loc.lat * Math.PI / 180) / 360);
+          const testLat = loc.lat + dLat;
+          const testLng = loc.lng + dLng;
+          try {
+            const elUrl = `https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon=${testLng}&lat=${testLat}&outtype=JSON`;
+            const elRes = await fetch(elUrl);
+            const elData = await elRes.json();
+            if (elData && elData.elevation === '-----') {
+              return { lat: testLat, lng: testLng, distance: d };
+            }
+          } catch (err) {}
+        }
+        return null;
+      }));
+      let nearestResult = null;
+      let minD = Infinity;
+      results.forEach(r => {
+        if (r && r.distance < minD) {
+          minD = r.distance;
+          nearestResult = r;
+        }
+      });
+      if (nearestResult) {
+        return {
+          lat: nearestResult.lat,
+          lng: nearestResult.lng,
+          distance: minD,
+          source: 'GSI Raycasting'
+        };
+      }
+    } catch (err) {}
+    return null;
+  }
+
+  async function drawProximityToCoastline(loc) {
+    const coast = await findNearestCoastline(loc);
+    if (!coast) return;
+    
+    console.log(`[TENDEN] Coastline found at distance ${coast.distance.toFixed(1)}m via ${coast.source}`);
+    
+    if (coastalProximityLine) map.removeLayer(coastalProximityLine);
+    if (coastalMarker) map.removeLayer(coastalMarker);
+    
+    const startLatLng = [loc.lat, loc.lng];
+    const endLatLng = [coast.lat, coast.lng];
+    
+    coastalProximityLine = L.polyline([startLatLng, endLatLng], {
+      color: '#ff2d55',
+      dashArray: '8, 8',
+      weight: 3,
+      opacity: 0.8,
+      className: 'coastal-proximity-line'
+    }).addTo(map);
+    
+    const shorelineIcon = L.divIcon({
+      className: 'shoreline-icon-container',
+      html: `<div class="shoreline-pulse"></div><div class="shoreline-badge">海岸線まで ${Math.round(coast.distance)}m</div>`,
+      iconSize: [120, 24],
+      iconAnchor: [60, 12]
+    });
+    coastalMarker = L.marker(endLatLng, { icon: shorelineIcon }).addTo(map);
+    
+    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+    let alertTitle = dict.coastProximityTitle || '最寄りの海岸線との位置関係';
+    let alertDesc = dict.coastProximityDesc || `現在地から最寄りの海岸線まで約 **${Math.round(coast.distance)}m** （海抜: **{elevation}m**）です。\n\n万が一津波警報が発令された場合は、海岸線と【直交する方向（内陸の高台）】へ直ちに避難を開始してください。`;
+    
+    const elevationEl = document.getElementById('elevation-m');
+    const elevationVal = elevationEl ? elevationEl.innerText : '--';
+    alertDesc = alertDesc.replace('{elevation}', elevationVal);
+    
+    showCustomAlert(alertTitle, alertDesc, 'info');
+    
+    setTimeout(() => {
+      if (coastalProximityLine) {
+        let op = 0.8;
+        const fadeInterval = setInterval(() => {
+          op -= 0.05;
+          if (op <= 0) {
+            clearInterval(fadeInterval);
+            if (coastalProximityLine) map.removeLayer(coastalProximityLine);
+            if (coastalMarker) map.removeLayer(coastalMarker);
+          } else {
+            if (coastalProximityLine) coastalProximityLine.setStyle({ opacity: op });
+          }
+        }, 50);
+      }
+    }, 15000);
+  }
+
+
 function startOnboardingDemo() {
  const overlay = document.getElementById('onboarding-overlay');
  if (!overlay) return;
