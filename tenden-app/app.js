@@ -80,14 +80,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
- // Register Service Worker
- if ('serviceWorker' in navigator) {
- window.addEventListener('load', () => {
- navigator.serviceWorker.register('sw.js').catch(err => {
- console.log('SW registration failed: ', err);
- });
- });
- }
+  // Register Service Worker (DISABLED FOR DEV CACHE BYPASS)
+  /*
+   if ('serviceWorker' in navigator) {
+   window.addEventListener('load', () => {
+   navigator.serviceWorker.register('sw.js').catch(err => {
+   console.log('SW registration failed: ', err);
+   });
+   });
+   }
+  */
+  // Force unregister existing Service Workers to clear caching issues immediately
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (let r of registrations) {
+        r.unregister().then(() => {
+          console.log('[TENDEN] Active Service Worker successfully unregistered to bypass cache.');
+        });
+      }
+    });
+  }
 
  function initMap() {
  map = L.map('map', {
