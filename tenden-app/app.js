@@ -4330,6 +4330,16 @@ function wireOnboardingButtons() {
     var t = document.getElementById('demo-step-' + step);
     if (t) t.classList.add('active');
     document.querySelectorAll('.demo-dot').forEach(function(d, i) { d.classList.toggle('active', i === step); });
+    // canvasアニメーションを起動（startOnboardingDemo の goToStep と同じ）
+    if (step === 1) setTimeout(function() {
+      try { animateMapCanvas(); } catch(e) {}
+    }, 200);
+    if (step === 2) setTimeout(function() {
+      try { animateRoutesCanvas(); } catch(e) {}
+    }, 200);
+    if (step === 3) setTimeout(function() {
+      try { animateFlowCanvas(); } catch(e) {}
+    }, 200);
   }
   [
     ['btn-demo-next-0', function() { goFB(1); }],
@@ -4400,20 +4410,15 @@ function startOnboardingDemo() {
  if (dict[key]) return dict[key];
 
  // Safety Warning Multilingual fallback
- if (key === 'demoSimWarning') {
- const warnings = {
-        ja: 'This is a simulation for training purposes. It is not a real disaster.',
- en: ' This is a simulated training demo. NOT an actual disaster.',
-        zh: 'This is a simulation for training purposes. It is not a real disaster.',
-        'zh-tw': 'This is a simulation for training purposes. It is not a real disaster.',
-        ko: 'This is a simulation for training purposes. It is not a real disaster.',
- fr: ' Il s\'agit d\'une simulation d\'entraﾃｮnement. Pas de catastrophe rﾃｩelle.',
- es: ' Esta es una demostraciﾃｳn de simulaciﾃｳn. NO es un desastre real.',
- de: ' Dies ist eine simulierte Trainingsdemo. Kein echtes Katastrophenszenario.',
- it: ' Questa ﾃｨ una demo di simulazione di addestramento. NON ﾃｨ un vero disastro.'
- };
- return warnings[lang] || warnings['ja'];
- }
+   if (key === 'demoSimWarning') {
+    // 日本語の防災アプリのため、警告は常に日本語を優先
+    const jaText = ' これは訓練用のシミュレーション画面です。実際の災害ではありません。';
+    // i18n.jsonが読み込まれていれば優先使用
+    if (typeof i18nDict !== 'undefined' && i18nDict['ja'] && i18nDict['ja'][key]) {
+      return i18nDict['ja'][key];
+    }
+    return jaText;
+  }
  return fallback;
  } catch (e) { return fallback; }
  }
