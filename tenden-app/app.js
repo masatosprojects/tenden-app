@@ -1188,6 +1188,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
  document.getElementById('btn-report-choice-close')?.addEventListener('click', closeReportChoice);
 
+ // 凡例の×ボタン — レイヤーごとOFF
+ document.getElementById('btn-report-legend-close')?.addEventListener('click', () => {
+   toggleCommunityReportsLayer(false);
+   const layerToggle = document.getElementById('toggle-community-reports');
+   if (layerToggle) layerToggle.checked = false;
+   const fab = document.getElementById('btn-toggle-reports-fab');
+   if (fab) { fab.classList.remove('fab-active'); fab.setAttribute('aria-pressed', 'false'); }
+ });
+
  // 「みんなのレポートを見る」
  document.getElementById('btn-view-reports-choice')?.addEventListener('click', () => {
    closeReportChoice();
@@ -1780,10 +1789,7 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('i18n-evac-title').innerText = sc.title;
  document.getElementById('i18n-evac-desc').innerText = scLoc.desc;
  
- const detailsEl = document.getElementById('disaster-details');
- const timeLabel = sc.isLandslide ? "到達予測:" : "予想到達時間";
- const heightLabel = sc.isLandslide ? "土砂到達予測:" : "予想津波高さ:";
- detailsEl.innerHTML = `<span>${timeLabel}</span> <strong>${sc.time}</strong> | <span>${heightLabel}</span> <strong>${sc.height}</strong>`;
+ // disaster-details は HTML 固定文（「鎌倉には最短で8〜14分」）をそのまま使用
 
  // Switch the status orb to "alert" rhythm and morph the top-bar elevation slot into a time-to-arrival slot
  applyAppState(true);

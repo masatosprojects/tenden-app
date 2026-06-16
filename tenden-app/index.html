@@ -230,7 +230,10 @@
 
  <!-- Community Reports Legend (shown only when report layer is ON) -->
  <div id="report-legend" class="report-legend hidden">
-   <div class="report-legend-title">みんなのレポート</div>
+   <div class="report-legend-header">
+     <div class="report-legend-title">みんなのレポート</div>
+     <button id="btn-report-legend-close" class="report-legend-close" aria-label="閉じる">&times;</button>
+   </div>
    <div class="report-legend-item"><span class="report-legend-dot" style="background:#ff3b30"></span>危険</div>
    <div class="report-legend-item"><span class="report-legend-dot" style="background:#ff9f0a"></span>看板必要</div>
    <div class="report-legend-item"><span class="report-legend-dot" style="background:#5e5ce6"></span>混雑</div>
@@ -366,9 +369,8 @@
  <div class="emergency-header" id="banner-toggle" style="cursor: pointer; align-items: flex-start; padding-bottom: 8px;">
  <div style="flex: 1;">
  <div class="eh-title"> <span id="i18n-evac-title" data-i18n="evacTitle">避難指示発令中</span></div>
- <div style="font-size: 0.9rem; color: var(--warning); margin-top: 4px;" id="disaster-details">
- <span data-i18n="estTime">予想到達時間:</span> <strong>15:30</strong> |
- <span data-i18n="estHeight">予想高:</span> <strong>10m</strong>
+ <div style="font-size: 0.85rem; color: var(--warning); margin-top: 4px;" id="disaster-details">
+ 鎌倉には最短で<strong>8〜14分</strong>で津波が来ます。直ちに高台へ避難してください。
  </div>
  </div>
  <svg id="banner-chevron" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>

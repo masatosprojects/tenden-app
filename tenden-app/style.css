@@ -103,13 +103,22 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     box-shadow: 0 2px 12px rgba(0,0,0,0.15);
     min-width: 120px;
 }
+.report-legend-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 7px;
+}
 .report-legend-title {
     font-size: 0.75rem;
     font-weight: 700;
     color: #333;
-    margin-bottom: 7px;
     letter-spacing: 0.02em;
 }
+.report-legend-close {
+    background: none; border: none; cursor: pointer;
+    font-size: 1rem; line-height: 1; color: #666;
+    padding: 0 0 0 8px; opacity: 0.7;
+}
+.report-legend-close:active { opacity: 1; }
 .report-legend-item {
     display: flex;
     align-items: center;
