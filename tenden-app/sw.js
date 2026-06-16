@@ -2,8 +2,8 @@
 // ユーザーが設定でONにした場合のみ登録されます（デフォルト: 未登録）
 // ONにすると地図・データをキャッシュしネット不要で動作しますが、アプリの自動更新が届かなくなります。
 
-const CACHE_NAME = 'tenden-v87';
-const DYNAMIC_CACHE = 'tenden-dynamic-v63';
+const CACHE_NAME = 'tenden-v88';
+const DYNAMIC_CACHE = 'tenden-dynamic-v64';
 
 const urlsToCache = [
   './',
