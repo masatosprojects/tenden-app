@@ -121,7 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  async function submitCommunityReport(category, comment) {
-   if (!firestoreDB) return 'no_db';
+   if (!firestoreDB) {
+     initFirebase();
+     if (!firestoreDB) return 'no_db';
+   }
    const loc = reportPendingLocation || currentLocation;
    if (!loc) return 'no_location';
    const now = Date.now();
@@ -140,8 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
      selectedReportCategory = null;
      return 'ok';
    } catch (e) {
-     console.error('[Firebase] report submit failed:', e);
-     return 'error';
+     console.error('[Firebase] report submit failed:', e.code, e.message);
+     return e.code === 'permission-denied' ? 'permission_denied' : 'error';
    }
  }
 
@@ -817,8 +820,12 @@ document.addEventListener('DOMContentLoaded', () => {
      showCustomAlert('送信制限', '連続投稿を防ぐため1分間に1件のみ送信できます。', 'warning');
    } else if (result === 'no_location') {
      showCustomAlert('位置情報なし', '現在地を取得してから再試行してください。', 'warning');
+   } else if (result === 'no_db') {
+     showCustomAlert('初期化エラー', 'データベースへの接続に失敗しました。ページを再読み込みしてください。', 'error');
+   } else if (result === 'permission_denied') {
+     showCustomAlert('送信拒否', 'セキュリティルールにより送信が拒否されました。開発者に連絡してください。', 'error');
    } else {
-     showCustomAlert('送信失敗', '通信エラーが発生しました。オンライン状態を確認してください。', 'error');
+     showCustomAlert('送信失敗', 'サーバーへの送信に失敗しました。しばらく経ってから再試行してください。', 'error');
    }
  });
 
