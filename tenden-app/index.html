@@ -328,20 +328,6 @@
    </div>
  </div>
 
- <!-- Startup announcement popup -->
- <div id="startup-notice" class="startup-notice hidden">
-   <div class="sn-card">
-     <div class="sn-header">
-       <span class="sn-icon">📣</span>
-       <div>
-         <div class="sn-title">開発者からのお知らせ</div>
-         <div class="sn-sub">現在有効なお知らせがあります</div>
-       </div>
-     </div>
-     <div class="sn-body" id="sn-body"></div>
-     <button class="sn-close-btn" id="btn-startup-notice-close">確認しました</button>
-   </div>
- </div>
 
  <!-- Hidden legacy trigger buttons (existing JS handlers bind to these IDs) -->
  <div aria-hidden="true" style="display:none">
@@ -1184,6 +1170,24 @@
   </div>
 
   </div> <!-- /#app-container -->
+
+ <!-- Startup announcement popup — #app-containerの外に配置（iOS Safari overflow:hidden内のposition:fixed タッチバグ回避） -->
+ <div id="startup-notice" class="startup-notice hidden">
+   <div class="sn-card">
+     <div class="sn-header">
+       <span class="sn-icon">📣</span>
+       <div>
+         <div class="sn-title">開発者からのお知らせ</div>
+         <div class="sn-sub">現在有効なお知らせがあります</div>
+       </div>
+     </div>
+     <div class="sn-body" id="sn-body"></div>
+     <button class="sn-close-btn" id="btn-startup-notice-close"
+       onclick="document.getElementById('startup-notice').classList.add('hidden'); sessionStorage.setItem('sn-dismissed','1');">
+       確認しました
+     </button>
+   </div>
+ </div>
 
  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>

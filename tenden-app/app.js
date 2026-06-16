@@ -135,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  function showStartupNoticeIfNeeded() {
    if (_startupNoticeDismissed) return;
+   if (sessionStorage.getItem('sn-dismissed') === '1') return;
    const active = DEV_ANNOUNCEMENTS.filter(a => a.status === 'active');
    if (!active.length) return;
    const body = document.getElementById('sn-body');
