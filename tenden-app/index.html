@@ -178,17 +178,10 @@
  </div>
  </div>
 
- <!-- Right Side Floating Action Buttons (FABs) -->
+ <!-- Right Side FABs — GPS + メニュー の2個のみ -->
  <div class="map-action-fabs">
  <div class="fab-container">
- <button id="btn-toggle-layers" class="fab-btn" aria-label="レイヤー切替">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
- </button>
- <span class="fab-label" data-i18n="fabLayers">レイヤー</span>
- </div>
- <div class="fab-container">
  <button id="btn-gps-location" class="fab-btn" aria-label="現在地(GPS)へ">
- <!-- Precision sniper crosshair target icon -->
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
  <circle cx="12" cy="12" r="10" stroke-dasharray="3,3"></circle>
  <circle cx="12" cy="12" r="5"></circle>
@@ -200,49 +193,85 @@
  <span class="fab-label" data-i18n="fabGps">現在地</span>
  </div>
  <div class="fab-container">
- <button id="btn-fab-more" class="fab-btn" aria-label="その他のメニュー">
- <svg class="fab-more-icon" viewBox="0 0 24 24" fill="currentColor" stroke="none">
- <circle cx="5" cy="12" r="2"></circle>
- <circle cx="12" cy="12" r="2"></circle>
- <circle cx="19" cy="12" r="2"></circle>
+ <button id="btn-open-side-panel" class="fab-btn" aria-label="メニュー">
+ <svg viewBox="0 0 22 22" fill="currentColor" stroke="none" width="20" height="20">
+ <rect x="1" y="1" width="8.5" height="8.5" rx="2"/>
+ <rect x="12.5" y="1" width="8.5" height="8.5" rx="2"/>
+ <rect x="1" y="12.5" width="8.5" height="8.5" rx="2"/>
+ <rect x="12.5" y="12.5" width="8.5" height="8.5" rx="2"/>
  </svg>
  </button>
- <span class="fab-label" data-i18n="fabMore">その他</span>
- </div>
- <div class="fab-more-list" id="fab-more-list">
- <div class="fab-container" style="--stagger-index:0;">
- <button id="btn-focus-model" class="fab-btn" aria-label="モデル地区へ">
- <!-- Map warp/jump location teleport icon -->
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
- <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
- <circle cx="12" cy="10" r="3"></circle>
- <path d="M19 19L14.5 14.5M19 19h-4M19 19v-4" stroke-width="2.5"></path>
- </svg>
- </button>
- <span class="fab-label" data-i18n="fabModel">モデル地区</span>
- </div>
- <div class="fab-container" style="--stagger-index:1;">
- <button id="btn-settings" class="fab-btn" aria-label="設定">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
- </button>
- <span class="fab-label" data-i18n="fabSettings">設定</span>
- </div>
- <div class="fab-container" style="--stagger-index:2;">
- <button id="btn-screenshot" class="fab-btn" aria-label="保存">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
- </button>
- <span class="fab-label" data-i18n="fabScreenshot">保存</span>
- </div>
- <!-- 海岸線距離測定ボタン -->
- <div class="fab-container" style="--stagger-index:3;" id="fab-coastline-container">
- <button id="btn-coastline-dist" class="fab-btn" aria-label="海岸線距離" style="color:#ff2d55;">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-   <path d="M3 12h18M3 6l3 6-3 6M21 6l-3 6 3 6"/>
- </svg>
- </button>
- <span class="fab-label" style="color:#ff2d55;">海岸まで</span>
+ <span class="fab-label">メニュー</span>
  </div>
  </div>
+
+ <!-- Side Panel Backdrop -->
+ <div id="side-panel-backdrop" class="side-panel-backdrop hidden"></div>
+
+ <!-- Side Panel -->
+ <div id="side-panel" class="side-panel hidden">
+ <div class="side-panel-header">
+   <div>
+     <div class="sp-header-title">TENDEN</div>
+     <div class="sp-header-sub">機能メニュー</div>
+   </div>
+   <button id="btn-side-panel-close" class="sp-close-btn">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+   </button>
+ </div>
+ <div class="side-panel-grid">
+   <button class="sp-card" data-trigger="btn-toggle-layers">
+     <div class="sp-card-icon" style="background:linear-gradient(135deg,#007aff 0%,#5e5ce6 100%)">
+       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+     </div>
+     <span class="sp-card-label">レイヤー設定</span>
+   </button>
+   <button class="sp-card" data-trigger="btn-focus-model">
+     <div class="sp-card-icon" style="background:linear-gradient(135deg,#5e5ce6 0%,#bf5af2 100%)">
+       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+     </div>
+     <span class="sp-card-label">モデル地区</span>
+   </button>
+   <button class="sp-card" data-trigger="btn-settings">
+     <div class="sp-card-icon" style="background:linear-gradient(135deg,#48484a 0%,#636366 100%)">
+       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+     </div>
+     <span class="sp-card-label">設定</span>
+   </button>
+   <button class="sp-card" data-trigger="btn-screenshot">
+     <div class="sp-card-icon" style="background:linear-gradient(135deg,#32ade6 0%,#30b0c7 100%)">
+       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+     </div>
+     <span class="sp-card-label">地図を保存</span>
+   </button>
+   <button class="sp-card" data-trigger="btn-coastline-dist">
+     <div class="sp-card-icon" style="background:linear-gradient(135deg,#ff375f 0%,#ff3b30 100%)">
+       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><path d="M3 12h18M3 6l3 6-3 6M21 6l-3 6 3 6"/></svg>
+     </div>
+     <span class="sp-card-label">海岸まで</span>
+   </button>
+   <button class="sp-card" id="sp-report-card">
+     <div class="sp-card-icon" style="background:linear-gradient(135deg,#ff9f0a 0%,#ff6b00 100%)">
+       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="M12 8v4M12 16h.01"/></svg>
+     </div>
+     <span class="sp-card-label">危険レポート</span>
+   </button>
+   <button class="sp-card sp-card-full" id="sp-share-card">
+     <div class="sp-card-icon" style="background:linear-gradient(135deg,#34c759 0%,#248a3d 100%)">
+       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.91 9.92 2 2 0 0 1 6.88 7.72h.06a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 14a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 20.92z"/></svg>
+     </div>
+     <span class="sp-card-label">友達に安全情報を送る</span>
+   </button>
+ </div>
+ </div>
+
+ <!-- Hidden legacy trigger buttons (existing JS handlers bind to these IDs) -->
+ <div aria-hidden="true" style="display:none">
+   <button id="btn-toggle-layers"></button>
+   <button id="btn-focus-model"></button>
+   <button id="btn-settings"></button>
+   <button id="btn-screenshot"></button>
+   <button id="btn-coastline-dist"></button>
  </div>
 
  <!-- Bottom Sheet -->

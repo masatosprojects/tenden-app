@@ -1047,16 +1047,65 @@ document.addEventListener('DOMContentLoaded', () => {
  });
  }
 
- // "More" FAB: springs open the secondary action list (model area / settings / screenshot / coastline distance)
- const btnFabMore = document.getElementById('btn-fab-more');
- const fabMoreList = document.getElementById('fab-more-list');
- if (btnFabMore && fabMoreList) {
- btnFabMore.addEventListener('click', () => {
- const expanded = fabMoreList.classList.toggle('expanded');
- btnFabMore.classList.toggle('expanded', expanded);
- triggerHapticTick();
- });
+ // ── サイドパネル ────────────────────────────────────────────────────────
+ function openSidePanel() {
+   const backdrop = document.getElementById('side-panel-backdrop');
+   const panel = document.getElementById('side-panel');
+   if (!backdrop || !panel) return;
+   backdrop.classList.remove('hidden');
+   panel.classList.remove('hidden');
+   requestAnimationFrame(() => {
+     backdrop.classList.add('open');
+     panel.classList.add('open');
+   });
+   triggerHapticTick();
  }
+ function closeSidePanel() {
+   const backdrop = document.getElementById('side-panel-backdrop');
+   const panel = document.getElementById('side-panel');
+   if (!backdrop || !panel) return;
+   backdrop.classList.remove('open');
+   panel.classList.remove('open');
+   setTimeout(() => {
+     backdrop.classList.add('hidden');
+     panel.classList.add('hidden');
+   }, 420);
+ }
+ document.getElementById('btn-open-side-panel')?.addEventListener('click', openSidePanel);
+ document.getElementById('btn-side-panel-close')?.addEventListener('click', closeSidePanel);
+ document.getElementById('side-panel-backdrop')?.addEventListener('click', closeSidePanel);
+
+ // カード → 対応ボタンをトリガー
+ document.querySelectorAll('.sp-card[data-trigger]').forEach(card => {
+   card.addEventListener('click', () => {
+     closeSidePanel();
+     const target = document.getElementById(card.dataset.trigger);
+     if (target) setTimeout(() => target.click(), 220);
+   });
+ });
+
+ // レポートカード（サイドパネル内）
+ document.getElementById('sp-report-card')?.addEventListener('click', () => {
+   closeSidePanel();
+   setTimeout(() => document.getElementById('btn-report')?.click(), 220);
+ });
+
+ // 友達に安全情報を送る
+ document.getElementById('sp-share-card')?.addEventListener('click', () => {
+   closeSidePanel();
+   const loc = currentLocation;
+   const elev = document.getElementById('elevation-m')?.textContent || '?';
+   const text = loc
+     ? `このエリアに行く前にTENDENで安全確認を！\n📍 海抜 ${elev}m\n最寄り避難所への経路をチェックできます。\nhttps://masatosprojects.github.io/tenden-app/`
+     : `TENDENで避難ルートを事前確認しておこう！\nhttps://masatosprojects.github.io/tenden-app/`;
+   if (navigator.share) {
+     navigator.share({ title: 'TENDEN 防災アプリ', text }).catch(() => {});
+   } else {
+     navigator.clipboard?.writeText(text).then(() => {
+       triggerDynamicIsland('メッセージをコピーしました', 'copied');
+     });
+   }
+ });
 
  function closeModelAreaOverlay() {
  const overlay = document.getElementById('model-area-overlay');
