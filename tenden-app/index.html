@@ -169,6 +169,15 @@
  </svg>
  </div>
 
+ <!-- Report Location Mode Bar (shown when selecting report spot) -->
+ <div id="report-confirm-bar" class="hidden report-confirm-bar">
+ <div class="rcb-instruction">📍 報告したい場所を地図の中央に合わせてください</div>
+ <div class="rcb-actions">
+   <button id="btn-report-location-cancel" class="rcb-cancel-btn">キャンセル</button>
+   <button id="btn-report-location-confirm" class="rcb-confirm-btn">この場所を報告する →</button>
+ </div>
+ </div>
+
  <!-- Right Side Floating Action Buttons (FABs) -->
  <div class="map-action-fabs">
  <div class="fab-container">
@@ -233,16 +242,6 @@
  </button>
  <span class="fab-label" style="color:#ff2d55;">海岸まで</span>
  </div>
- <!-- コミュニティレポートボタン -->
- <div class="fab-container" style="--stagger-index:4;">
- <button id="btn-report" class="fab-btn" aria-label="危険レポート" style="color:#ff9f0a;">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-   <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-   <path d="M12 8v4M12 16h.01"/>
- </svg>
- </button>
- <span class="fab-label" style="color:#ff9f0a;">レポート</span>
- </div>
  </div>
  </div>
 
@@ -260,6 +259,17 @@
  <button class="action-btn primary-btn btn-large hidden" id="btn-set-pin" data-i18n="setPinBtn">
  ここにピンを打つ (避難開始)
  </button>
+ <!-- Community Report Card -->
+ <div class="community-report-card" id="community-report-card">
+ <div class="crc-left">
+   <span class="crc-icon">🗺️</span>
+   <div class="crc-text">
+     <div class="crc-title">気になる場所を報告する</div>
+     <div class="crc-sub">みんなの減災への参加に役立てられます</div>
+   </div>
+ </div>
+ <button id="btn-report" class="crc-action-btn">報告する</button>
+ </div>
  </div>
 
  <!-- Emergency Mode Banner (Takes over bottom sheet during evac) -->
@@ -714,14 +724,24 @@
  </div> <!-- settings-dialog -->
  </div> <!-- settings-overlay -->
 
+ <!-- Community Report Intro Overlay (first time only) -->
+ <div id="report-intro-overlay" class="overlay hidden">
+ <div class="dialog glass-panel report-intro-dialog">
+   <div class="report-intro-emoji">🗺️</div>
+   <h2 class="report-intro-title">あなたも減災の取り組みに<br>参加できます</h2>
+   <p class="report-intro-desc">「ここが危険」「標識が必要」「混雑している」など、気になる場所を報告するだけで、周辺の人の避難判断に役立てられます。あなたの1つの報告が、誰かの命を救うかもしれません。</p>
+   <button id="btn-report-intro-ok" class="action-btn primary-btn btn-large w-100">参加する</button>
+   <button id="btn-report-intro-skip" class="action-btn outline-btn w-100" style="margin-top:8px;">後で</button>
+ </div>
+ </div>
+
  <!-- Community Report Modal -->
  <div id="report-overlay" class="overlay hidden">
  <div class="dialog glass-panel report-dialog">
  <div class="dialog-header">
- <h2>このエリアを報告</h2>
- <button id="btn-report-close" class="close-btn">&times;</button>
+   <h2>何を報告しますか？</h2>
+   <button id="btn-report-close" class="close-btn">&times;</button>
  </div>
- <p class="dialog-subtitle" style="margin-bottom:16px;">現在地周辺の気になる場所を報告できます。みんなのレポートが防災に役立てられます。</p>
  <div class="report-categories">
  <button class="report-cat-btn" data-cat="danger">
    <span class="report-cat-icon">⚠️</span>
@@ -744,6 +764,8 @@
    <span>その他気になること</span>
  </button>
  </div>
+ <textarea id="report-comment" class="report-comment-textarea" placeholder="詳しい状況をメモ（任意・140字以内）" maxlength="140"></textarea>
+ <button id="btn-report-submit" class="action-btn primary-btn btn-large w-100 report-submit-btn" disabled>カテゴリを選んでください</button>
  <p class="report-privacy-note">📍 位置情報は約100m単位に丸めて匿名で送信されます</p>
  </div>
  </div>

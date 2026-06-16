@@ -104,6 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
  let firestoreDB = null;
  let communityReportLayer = null;
  let communityReportsVisible = false;
+ let isReportLocationMode = false;
+ let reportPendingLocation = null;
+ let selectedReportCategory = null;
 
  function initFirebase() {
    try {
@@ -117,20 +120,24 @@ document.addEventListener('DOMContentLoaded', () => {
    return Math.round(val * 1000) / 1000; // ~100m anonymization
  }
 
- async function submitCommunityReport(category) {
+ async function submitCommunityReport(category, comment) {
    if (!firestoreDB) return 'no_db';
-   if (!currentLocation) return 'no_location';
+   const loc = reportPendingLocation || currentLocation;
+   if (!loc) return 'no_location';
    const now = Date.now();
    const last = parseInt(localStorage.getItem('tenden-last-report') || '0');
    if (now - last < 60000) return 'rate_limited';
    try {
      await firestoreDB.collection('reports').add({
-       gridLat: toReportGrid(currentLocation.lat),
-       gridLng: toReportGrid(currentLocation.lng),
+       gridLat: toReportGrid(loc.lat),
+       gridLng: toReportGrid(loc.lng),
        category: category,
+       comment: (comment || '').trim().substring(0, 140),
        ts: firebase.firestore.FieldValue.serverTimestamp()
      });
      localStorage.setItem('tenden-last-report', String(now));
+     reportPendingLocation = null;
+     selectedReportCategory = null;
      return 'ok';
    } catch (e) {
      console.error('[Firebase] report submit failed:', e);
@@ -728,47 +735,98 @@ document.addEventListener('DOMContentLoaded', () => {
  });
 
  // ── コミュニティレポート ────────────────────────────────────────────────
- const btnReport = document.getElementById('btn-report');
- if (btnReport) {
-   btnReport.addEventListener('click', () => {
-     document.getElementById('fab-more-list')?.classList.remove('expanded');
-     if (!currentLocation) {
-       showCustomAlert('位置情報が必要です', '現在地を取得してからレポートを送信してください。', 'warning');
-       return;
-     }
-     const overlay = document.getElementById('report-overlay');
-     if (overlay) { overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.add('active'), 10); }
-   });
+ function openReportLocationMode() {
+   isReportLocationMode = true;
+   document.getElementById('crosshair-target')?.classList.remove('hidden');
+   document.getElementById('report-confirm-bar')?.classList.remove('hidden');
+   document.getElementById('main-bottom-sheet')?.classList.add('hidden');
  }
- document.getElementById('btn-report-close')?.addEventListener('click', () => {
+ function closeReportLocationMode() {
+   isReportLocationMode = false;
+   document.getElementById('crosshair-target')?.classList.add('hidden');
+   document.getElementById('report-confirm-bar')?.classList.add('hidden');
+   document.getElementById('main-bottom-sheet')?.classList.remove('hidden');
+ }
+ function openReportModal() {
+   selectedReportCategory = null;
+   document.querySelectorAll('.report-cat-btn').forEach(b => b.classList.remove('selected'));
+   const submitBtn = document.getElementById('btn-report-submit');
+   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'カテゴリを選んでください'; }
+   const ta = document.getElementById('report-comment');
+   if (ta) ta.value = '';
+   const overlay = document.getElementById('report-overlay');
+   if (overlay) { overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.add('active'), 10); }
+ }
+ function closeReportModal() {
    const overlay = document.getElementById('report-overlay');
    if (overlay) { overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
+ }
+
+ // Report button — show intro (first time) or go straight to location mode
+ document.getElementById('btn-report')?.addEventListener('click', () => {
+   if (!localStorage.getItem('tenden-report-intro-seen')) {
+     const intro = document.getElementById('report-intro-overlay');
+     if (intro) { intro.classList.remove('hidden'); setTimeout(() => intro.classList.add('active'), 10); }
+   } else {
+     openReportLocationMode();
+   }
  });
+
+ // Intro overlay actions
+ document.getElementById('btn-report-intro-ok')?.addEventListener('click', () => {
+   localStorage.setItem('tenden-report-intro-seen', '1');
+   const intro = document.getElementById('report-intro-overlay');
+   if (intro) { intro.classList.remove('active'); setTimeout(() => intro.classList.add('hidden'), 300); }
+   openReportLocationMode();
+ });
+ document.getElementById('btn-report-intro-skip')?.addEventListener('click', () => {
+   const intro = document.getElementById('report-intro-overlay');
+   if (intro) { intro.classList.remove('active'); setTimeout(() => intro.classList.add('hidden'), 300); }
+ });
+
+ // Location confirm bar
+ document.getElementById('btn-report-location-confirm')?.addEventListener('click', () => {
+   reportPendingLocation = { lat: map.getCenter().lat, lng: map.getCenter().lng };
+   closeReportLocationMode();
+   openReportModal();
+ });
+ document.getElementById('btn-report-location-cancel')?.addEventListener('click', closeReportLocationMode);
+
+ // Category selection (radio-style)
  document.querySelectorAll('.report-cat-btn').forEach(btn => {
-   btn.addEventListener('click', async () => {
-     const category = btn.dataset.cat;
-     const origHTML = btn.innerHTML;
-     btn.disabled = true;
-     btn.innerHTML = '<span style="opacity:0.6">送信中…</span>';
-     const result = await submitCommunityReport(category);
-     // close modal
-     const overlay = document.getElementById('report-overlay');
-     if (overlay) { overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
-     // restore buttons
-     document.querySelectorAll('.report-cat-btn').forEach(b => { b.disabled = false; });
-     btn.innerHTML = origHTML;
-     if (result === 'ok') {
-       triggerDynamicIsland('レポートを送信しました ✓', 'success');
-       if (communityReportsVisible) loadCommunityReports();
-     } else if (result === 'rate_limited') {
-       showCustomAlert('送信制限', '連続投稿を防ぐため1分間に1件のみ送信できます。', 'warning');
-     } else if (result === 'no_location') {
-       showCustomAlert('位置情報なし', '現在地を取得してから再試行してください。', 'warning');
-     } else {
-       showCustomAlert('送信失敗', '通信エラーが発生しました。オンライン状態を確認してください。', 'error');
-     }
+   btn.addEventListener('click', () => {
+     document.querySelectorAll('.report-cat-btn').forEach(b => b.classList.remove('selected'));
+     btn.classList.add('selected');
+     selectedReportCategory = btn.dataset.cat;
+     const submitBtn = document.getElementById('btn-report-submit');
+     if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '送信する'; }
    });
  });
+
+ // Report close
+ document.getElementById('btn-report-close')?.addEventListener('click', closeReportModal);
+
+ // Submit
+ document.getElementById('btn-report-submit')?.addEventListener('click', async () => {
+   if (!selectedReportCategory) return;
+   const comment = document.getElementById('report-comment')?.value || '';
+   const submitBtn = document.getElementById('btn-report-submit');
+   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '送信中…'; }
+   const result = await submitCommunityReport(selectedReportCategory, comment);
+   closeReportModal();
+   if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '送信する'; }
+   if (result === 'ok') {
+     triggerDynamicIsland('レポートを送信しました ✓', 'success');
+     if (communityReportsVisible) loadCommunityReports();
+   } else if (result === 'rate_limited') {
+     showCustomAlert('送信制限', '連続投稿を防ぐため1分間に1件のみ送信できます。', 'warning');
+   } else if (result === 'no_location') {
+     showCustomAlert('位置情報なし', '現在地を取得してから再試行してください。', 'warning');
+   } else {
+     showCustomAlert('送信失敗', '通信エラーが発生しました。オンライン状態を確認してください。', 'error');
+   }
+ });
+
  document.getElementById('toggle-community-reports')?.addEventListener('change', function() {
    toggleCommunityReportsLayer(this.checked);
  });
