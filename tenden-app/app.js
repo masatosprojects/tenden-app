@@ -91,6 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  };
  const KAMAKURA_CENTER = REGIONS.kamakura.center; // 後方互換エイリアス
+ const KAMAKURA_DEMO_PIN = [35.3069, 139.5518]; // 由比ヶ浜海岸（デモ開始ピン）
+ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地区全域
 
  // ── Developer Announcements ───────────────────────────────────────────────
  // status: 'active' = 現在有効  |  'resolved' = 対応済み・過去のもの
@@ -911,12 +913,12 @@ document.addEventListener('DOMContentLoaded', () => {
      simulationInterval = null;
    }
 
-   // Fly to Kamakura, then immediately start emergency mode at model center
-   map.flyTo(KAMAKURA_CENTER, 15, { duration: 1.5, easeLinearity: 0.25 });
+   // モデル地区全域を表示してから緊急モード開始
+   map.flyToBounds(KAMAKURA_BOUNDS, { duration: 1.8, padding: [40, 40] });
 
    map.once('moveend', () => {
      isManualLocation = true;
-     currentLocation = { lat: KAMAKURA_CENTER[0], lng: KAMAKURA_CENTER[1] };
+     currentLocation = { lat: KAMAKURA_DEMO_PIN[0], lng: KAMAKURA_DEMO_PIN[1] };
      updateMarker(currentLocation);
      fetchElevation(currentLocation);
      triggerEmergencyMode(true, 1, 'a');
@@ -1101,6 +1103,27 @@ document.addEventListener('DOMContentLoaded', () => {
  });
  }
 
+ // FAB: 鎌倉モデル地区を全域表示
+ const btnFlyModel = document.getElementById('btn-fly-model');
+ if (btnFlyModel) {
+   btnFlyModel.addEventListener('click', () => {
+     map.flyToBounds(KAMAKURA_BOUNDS, { duration: 1.8, padding: [40, 40] });
+   });
+ }
+
+ // FAB: みんなのレポート表示トグル
+ const btnToggleReportsFab = document.getElementById('btn-toggle-reports-fab');
+ if (btnToggleReportsFab) {
+   btnToggleReportsFab.addEventListener('click', () => {
+     const isOn = !communityReportsVisible;
+     const layerToggle = document.getElementById('toggle-community-reports');
+     if (layerToggle) layerToggle.checked = isOn;
+     toggleCommunityReportsLayer(isOn);
+     btnToggleReportsFab.classList.toggle('fab-active', isOn);
+     btnToggleReportsFab.setAttribute('aria-pressed', String(isOn));
+   });
+ }
+
  const btnFocusModel = document.getElementById('btn-focus-model');
  if (btnFocusModel) {
  btnFocusModel.addEventListener('click', () => {
@@ -1217,14 +1240,11 @@ document.addEventListener('DOMContentLoaded', () => {
  btnModelAreaConfirm.addEventListener('click', () => {
  closeModelAreaOverlay();
 
- // Switch to the model area (Yuigahama) and lock out GPS updates until the user returns
+ // モデル地区全域を表示してピンを由比ヶ浜に設定
  isManualLocation = true;
- currentLocation = { lat: KAMAKURA_CENTER[0], lng: KAMAKURA_CENTER[1] };
+ currentLocation = { lat: KAMAKURA_DEMO_PIN[0], lng: KAMAKURA_DEMO_PIN[1] };
 
- map.flyTo(KAMAKURA_CENTER, 15, {
- duration: 1.5,
- easeLinearity: 0.25
- });
+ map.flyToBounds(KAMAKURA_BOUNDS, { duration: 1.8, padding: [40, 40] });
 
  updateMarker(currentLocation);
  fetchElevation(currentLocation);
