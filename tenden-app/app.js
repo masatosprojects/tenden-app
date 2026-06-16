@@ -131,7 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
      </div>`).join('');
  }
 
+ let _startupNoticeDismissed = false;
+
  function showStartupNoticeIfNeeded() {
+   if (_startupNoticeDismissed) return;
    const active = DEV_ANNOUNCEMENTS.filter(a => a.status === 'active');
    if (!active.length) return;
    const body = document.getElementById('sn-body');
@@ -1383,6 +1386,7 @@ document.addEventListener('DOMContentLoaded', () => {
    if (e.target === this) closeAnnouncementsOverlay();
  });
  document.getElementById('btn-startup-notice-close')?.addEventListener('click', () => {
+   _startupNoticeDismissed = true;
    const n = document.getElementById('startup-notice');
    if (n) n.classList.add('hidden');
  });
