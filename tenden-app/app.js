@@ -914,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
    }
 
    // モデル地区全域を表示してから緊急モード開始
-   map.flyToBounds(KAMAKURA_BOUNDS, { duration: 1.8, padding: [40, 40] });
+   map.flyTo([35.308, 139.551], 13, { duration: 1.8, easeLinearity: 0.25 });
 
    map.once('moveend', () => {
      isManualLocation = true;
@@ -1107,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnFlyModel = document.getElementById('btn-fly-model');
  if (btnFlyModel) {
    btnFlyModel.addEventListener('click', () => {
-     map.flyToBounds(KAMAKURA_BOUNDS, { duration: 1.8, padding: [40, 40] });
+     map.flyTo([35.308, 139.551], 13, { duration: 1.8, easeLinearity: 0.25 });
    });
  }
 
@@ -1115,6 +1115,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnToggleReportsFab = document.getElementById('btn-toggle-reports-fab');
  if (btnToggleReportsFab) {
    btnToggleReportsFab.addEventListener('click', () => {
+     if (!firestoreDB) initFirebase();
      const isOn = !communityReportsVisible;
      const layerToggle = document.getElementById('toggle-community-reports');
      if (layerToggle) layerToggle.checked = isOn;
@@ -1244,7 +1245,7 @@ document.addEventListener('DOMContentLoaded', () => {
  isManualLocation = true;
  currentLocation = { lat: KAMAKURA_DEMO_PIN[0], lng: KAMAKURA_DEMO_PIN[1] };
 
- map.flyToBounds(KAMAKURA_BOUNDS, { duration: 1.8, padding: [40, 40] });
+ map.flyTo([35.308, 139.551], 13, { duration: 1.8, easeLinearity: 0.25 });
 
  updateMarker(currentLocation);
  fetchElevation(currentLocation);
@@ -1498,7 +1499,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // 初回のみ海岸線距離をポップアップで表示
  if (!window._coastlineShownOnce) {
    window._coastlineShownOnce = true;
-   drawProximityToCoastline(currentLocation, true); // showPopup=true (初回のみ)
+   updateCoastDistBar(currentLocation);
  }
 
  // Track location changes
@@ -1512,6 +1513,7 @@ document.addEventListener('DOMContentLoaded', () => {
  updateMarker(currentLocation);
  triggerLocationTsunamiCheck(currentLocation);
  generalizeFirstTargets(currentLocation);
+ updateCoastDistBar(currentLocation);
  }
  
  if (isEmergency && !simulationInterval) {
@@ -4880,6 +4882,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if(bestP && bestD < 30000) return {lat:bestP.lat,lng:bestP.lng,distance:bestD,source:'Kamakura Local'};
     return null;
+  }
+
+  // 海岸距離をステータスバーに常時表示（スロットル: 120秒 or 200m移動）
+  let _coastLastLoc = null, _coastLastMs = 0;
+  async function updateCoastDistBar(loc) {
+    if (!loc) return;
+    const now = Date.now();
+    if (_coastLastLoc && now - _coastLastMs < 120000) {
+      try {
+        const moved = turf.distance(turf.point([loc.lng, loc.lat]), turf.point([_coastLastLoc.lng, _coastLastLoc.lat]), { units: 'meters' });
+        if (moved < 200) return;
+      } catch(e) {}
+    }
+    _coastLastLoc = { lat: loc.lat, lng: loc.lng };
+    _coastLastMs = now;
+    const coast = await findNearestCoastline(loc);
+    if (!coast) return;
+    const d = Math.round(coast.distance);
+    const txt = d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`;
+    const badge = document.getElementById('coast-dist-badge');
+    const val = document.getElementById('coast-dist-value');
+    if (val) val.textContent = txt;
+    if (badge) badge.classList.remove('hidden');
   }
 
   async function drawProximityToCoastline(loc, showPopup) {
