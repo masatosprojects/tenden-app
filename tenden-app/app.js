@@ -1182,8 +1182,9 @@ document.addEventListener('DOMContentLoaded', () => {
      const eqList = eqRes.ok ? await eqRes.json() : [];
      const tsList = tsRes.ok ? await tsRes.json() : [];
 
-     // 津波警報バナー
-     const activeTsunami = tsList.find(t => !t.cancelled);
+     // 津波警報バナー — 最新エントリのみで判定（古い「発令」イベントを誤表示しないため）
+     const latestTs = tsList[0];
+     const activeTsunami = (latestTs && !latestTs.cancelled) ? latestTs : null;
      if (activeTsunami && activeTsunami.areas?.length) {
        alertEl.classList.remove('hidden');
        const gradeOrder = { MajorWarning: 3, Warning: 2, Watch: 1 };
