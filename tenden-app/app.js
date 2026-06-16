@@ -1204,9 +1204,12 @@ document.addEventListener('DOMContentLoaded', () => {
    const _statusEl = document.getElementById('pwa-toggle-status');
    const _bottomNotice = document.getElementById('pwa-bottom-notice');
    if (_statusEl) _statusEl.textContent = _pwaOn ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
-   if (_bottomNotice) _bottomNotice.textContent = _pwaOn
-     ? '📶 オフラインモード：ON — 地図・データをキャッシュ済み。ネット不要で動作します。'
-     : '📡 オフラインモード：OFF — 常に最新データで動作中。⚙️ 設定から「オフライン緊急モード」をONにすると、電波なしでも使えます。';
+   if (_bottomNotice) {
+     _bottomNotice.textContent = _pwaOn
+       ? '📶 オフラインモード：ON — ネット不要で動作します。'
+       : '📡 オフラインモード：OFF — ⚙️設定からONにすると電波なしでも使えます。';
+     setTimeout(() => _bottomNotice.classList.add('dismissed'), 4000);
+   }
    pwaOfflineToggle.addEventListener('change', () => {
      const enabling = pwaOfflineToggle.checked;
      localStorage.setItem('tenden-pwa-enabled', enabling ? '1' : '0');
