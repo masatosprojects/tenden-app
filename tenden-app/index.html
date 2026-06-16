@@ -109,6 +109,7 @@
  <!-- Top Status Bar (Full width rectangular) -->
  <div class="top-status-bar glass-panel">
  <div class="status-left">
+ <span id="status-orb" aria-hidden="true"></span>
  <!-- Keep IDs for JS compatibility -->
  <div id="p2p-status-bar" style="display: none;">
  <span id="p2p-dot" class="p2p-dot p2p-connecting"></span>
@@ -128,14 +129,27 @@
  <span class="gps-dot"></span>
  <strong><span id="gps-accuracy">GPS: --</span></strong>
  </div>
- <div class="status-badge elev-badge">
+ <div class="status-badge elev-badge" id="elev-badge-slot">
+ <span id="elev-display" class="slot-content">
  <span id="i18n-elevation-label" data-i18n="elevationLabel" class="status-icon">海抜:</span>
  <strong><span id="elevation-m">--</span>m</strong>
+ </span>
+ <span id="eta-display" class="slot-content hidden">
+ <span data-i18n="etaLabel" class="status-icon">到達まで:</span>
+ <strong><span id="eta-value">--</span></strong>
+ </span>
  </div>
  <div class="status-time">
  <span id="current-time">--:--</span>
  </div>
  </div>
+ </div>
+
+ <!-- Model Area Demo Badge (Hidden by default) -->
+ <div id="model-area-badge" class="model-area-badge glass-panel hidden">
+ <span class="status-icon">📍</span>
+ <strong data-i18n="modelAreaBadgeText">デモ表示中（鎌倉モデル地区）</strong>
+ <button id="btn-return-location" class="badge-action-btn" data-i18n="modelAreaReturnBtn">現在地に戻る</button>
  </div>
 
  <!-- Crosshair for Pin Drop (Hidden by default) -->
@@ -172,6 +186,17 @@
  <span class="fab-label" data-i18n="fabGps">現在地</span>
  </div>
  <div class="fab-container">
+ <button id="btn-fab-more" class="fab-btn" aria-label="その他のメニュー">
+ <svg class="fab-more-icon" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+ <circle cx="5" cy="12" r="2"></circle>
+ <circle cx="12" cy="12" r="2"></circle>
+ <circle cx="19" cy="12" r="2"></circle>
+ </svg>
+ </button>
+ <span class="fab-label" data-i18n="fabMore">その他</span>
+ </div>
+ <div class="fab-more-list" id="fab-more-list">
+ <div class="fab-container" style="--stagger-index:0;">
  <button id="btn-focus-model" class="fab-btn" aria-label="モデル地区へ">
  <!-- Map warp/jump location teleport icon -->
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -182,26 +207,27 @@
  </button>
  <span class="fab-label" data-i18n="fabModel">モデル地区</span>
  </div>
- <div class="fab-container">
+ <div class="fab-container" style="--stagger-index:1;">
  <button id="btn-settings" class="fab-btn" aria-label="設定">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
  </button>
  <span class="fab-label" data-i18n="fabSettings">設定</span>
  </div>
- <div class="fab-container">
+ <div class="fab-container" style="--stagger-index:2;">
  <button id="btn-screenshot" class="fab-btn" aria-label="保存">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
  </button>
  <span class="fab-label" data-i18n="fabScreenshot">保存</span>
  </div>
  <!-- 海岸線距離測定ボタン -->
- <div class="fab-container">
+ <div class="fab-container" style="--stagger-index:3;" id="fab-coastline-container">
  <button id="btn-coastline-dist" class="fab-btn" aria-label="海岸線距離" style="color:#ff2d55;">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
    <path d="M3 12h18M3 6l3 6-3 6M21 6l-3 6 3 6"/>
  </svg>
  </button>
  <span class="fab-label" style="color:#ff2d55;">海岸まで</span>
+ </div>
  </div>
  </div>
 
@@ -228,26 +254,39 @@
  <div style="flex: 1;">
  <div class="eh-title"> <span id="i18n-evac-title" data-i18n="evacTitle">避難指示発令中</span></div>
  <div style="font-size: 0.9rem; color: var(--warning); margin-top: 4px;" id="disaster-details">
- <span data-i18n="estTime">予想到達時間:</span> <strong>15:30</strong> | 
+ <span data-i18n="estTime">予想到達時間:</span> <strong>15:30</strong> |
  <span data-i18n="estHeight">予想高:</span> <strong>10m</strong>
  </div>
  </div>
  <svg id="banner-chevron" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
  </div>
- 
+
+ <!-- EXPANDED PART (Hidden by default) -->
+ <div id="banner-content-expanded" class="emergency-body" style="display: none; margin-top: 10px;">
+ <p id="i18n-evac-desc" data-i18n="evacDesc" class="evac-instruction" style="font-size:0.95rem;">青いルートに沿って高台へ避難してください</p>
+ </div>
+
+ <!-- Primary CTA: always visible while evacuating -->
+ <button id="btn-evac-primary" class="action-btn primary-btn btn-large evac-primary-btn mt-10">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+ <span data-i18n="evacPrimaryBtn">避難ルートに従って進む</span>
+ </button>
+
+ <!-- Secondary actions, tucked into a "more" menu -->
+ <button id="btn-panel-more-toggle" class="panel-more-toggle mt-10" aria-expanded="false">
+ <span data-i18n="panelMoreBtn">その他の操作</span>
+ <svg class="panel-more-chevron" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+ </button>
+ <div class="panel-more-menu" id="panel-more-menu">
  <div class="action-grid mt-10" id="essential-buttons">
  <button id="btn-change-route" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 2.13-5.88L2 9"></path></svg> <span data-i18n="changeRouteBtn">ルート変更</span></button>
  <button id="btn-unlock-pin" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <span data-i18n="unlockPinBtn">ピン解除</span></button>
- <button id="btn-reset-alert" class="action-btn outline-btn" data-i18n="resetAlert">訓練終了</button>
  </div>
-
- <!-- EXPANDED PART (Hidden by default) -->
- <div id="banner-content-expanded" class="emergency-body" style="display: none; margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px;">
- <p id="i18n-evac-desc" data-i18n="evacDesc" class="evac-instruction" style="font-size:0.95rem;">青いルートに沿って高台へ避難してください</p>
- <div class="action-grid mt-15">
+ <div class="action-grid mt-10">
  <button id="btn-share" class="action-btn secondary-btn" data-i18n="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg> 安否共有</button>
  <button id="btn-sos" class="action-btn sos-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> SOS</button>
  </div>
+ <button id="btn-reset-alert" class="text-link-btn" data-i18n="resetAlert">訓練終了</button>
  </div>
  </div>
  </div>
@@ -609,6 +648,21 @@
  <p class="dialog-subtitle" data-i18n="locationDesc">避難を開始するシミュレーション現在地（避難開始位置）を選択してください。</p>
  <div id="location-options-container" class="scenario-list">
  <!-- JavaScript will populate location buttons here -->
+ </div>
+ </div>
+ </div>
+
+ <!-- Model Area Demo Confirmation Dialog -->
+ <div id="model-area-overlay" class="overlay hidden">
+ <div class="dialog glass-panel scenario-dialog">
+ <div class="dialog-header">
+ <h2 data-i18n="modelAreaDialogTitle">モデル地区を表示しますか？</h2>
+ <button id="btn-model-area-close" class="close-btn">&times;</button>
+ </div>
+ <p class="dialog-subtitle" data-i18n="modelAreaDialogDesc">現在地から鎌倉のモデル地区（由比ヶ浜周辺）に表示を切り替え、アプリの機能を体験できます。実際の現在地情報は「現在地に戻る」を押すまで一時的に切り替わります。</p>
+ <div style="display:flex; flex-direction:column; gap:10px;">
+ <button id="btn-model-area-confirm" class="action-btn primary-btn w-100" data-i18n="modelAreaConfirmBtn">モデル地区を表示する</button>
+ <button id="btn-model-area-cancel" class="action-btn outline-btn w-100" data-i18n="modelAreaCancelBtn">キャンセル</button>
  </div>
  </div>
  </div>

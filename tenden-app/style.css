@@ -13,6 +13,8 @@
     --shadow-lg: 0 16px 40px rgba(0,0,0,0.2);
     --hud-text: var(--text-color);
     --bg-color: #ffffff;
+    --orb-pulse-duration: 4s;
+    --orb-color: var(--success);
 }
 
 .mode-emergency {
@@ -84,6 +86,55 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 .status-icon { font-size: 0.85rem; font-weight: 600; opacity: 0.8; }
 .elev-badge { background: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: 8px; }
 .mode-emergency .elev-badge { background: rgba(255,255,255,0.1); }
+.slot-content { display: flex; align-items: center; gap: 6px; }
+
+/* Ambient breathing status orb */
+#status-orb {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--orb-color);
+    box-shadow: 0 0 8px var(--orb-color);
+    animation: orbBreathe var(--orb-pulse-duration) ease-in-out infinite;
+    flex-shrink: 0;
+}
+@keyframes orbBreathe {
+    0%, 100% { transform: scale(0.85); opacity: 0.7; }
+    50% { transform: scale(1.15); opacity: 1; }
+}
+
+.model-area-badge {
+    position: absolute;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 950;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 159, 10, 0.92);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+}
+.model-area-badge.hidden { display: none; }
+.badge-action-btn {
+    border: none;
+    background: #fff;
+    color: var(--warning);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    margin-left: 2px;
+    white-space: nowrap;
+}
+.badge-action-btn:active { opacity: 0.8; }
 .status-time { font-size: 1.05rem; font-weight: 700; margin-left: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
 
 /* P2P Status */
@@ -166,6 +217,55 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     transform: scale(0.95);
 }
 
+/* "More" FAB menu — progressive disclosure with spring expand */
+.fab-more-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    pointer-events: none;
+}
+.fab-more-list.expanded {
+    max-height: 320px;
+    opacity: 1;
+    pointer-events: auto;
+}
+.fab-more-list .fab-container {
+    opacity: 0;
+    transform: translateY(12px) scale(0.8);
+    transition: opacity 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.25), transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+    transition-delay: 0s;
+}
+.fab-more-list.expanded .fab-container {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition-delay: calc(var(--stagger-index, 0) * 0.06s);
+}
+#btn-fab-more .fab-more-icon {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+}
+#btn-fab-more.expanded .fab-more-icon {
+    transform: rotate(90deg);
+}
+
+/* Emergency-mode highlight for the coastline-distance FAB inside the "more" menu */
+#fab-coastline-container.fab-highlight .fab-btn {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
+    box-shadow: 0 0 12px rgba(255,59,48,0.5);
+}
+#fab-coastline-container.fab-highlight .fab-label {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
+    opacity: 1;
+}
+
 
 /* Bottom Sheet */
 .bottom-sheet {
@@ -175,10 +275,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     padding: 12px 20px calc(env(safe-area-inset-bottom, 20px) + 20px);
     z-index: 1000;
     box-shadow: var(--shadow-lg);
-    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), max-height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     border-bottom: none;
-    max-height: 85vh;
+    max-height: 50vh;
     overflow-y: auto;
+}
+.bottom-sheet.panel-expanded {
+    max-height: 85vh;
 }
 
 .passing-shelter-container {
@@ -232,6 +335,66 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .action-grid .sos-btn { grid-column: span 2; padding: 14px; font-size: 1.1rem; }
 .action-grid .secondary-btn { padding: 12px; }
+
+/* Primary evacuation CTA — gentle organic pulse, distinct from the orange "start drill" flashy button */
+.evac-primary-btn {
+    background: linear-gradient(135deg, var(--primary), #34c759);
+    box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+    animation: evacPulse 2.4s ease-in-out infinite;
+}
+@keyframes evacPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3); }
+    50% { transform: scale(1.015); box-shadow: 0 6px 20px rgba(52, 199, 89, 0.35); }
+}
+
+/* "More" panel toggle — subtle entry point to secondary evacuation actions */
+.panel-more-toggle {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    opacity: 0.65;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.panel-more-toggle:active { opacity: 1; }
+.panel-more-toggle[aria-expanded="true"] .panel-more-chevron {
+    transform: rotate(180deg);
+}
+
+/* Secondary action menu — rubbery spring expand */
+.panel-more-menu {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+.panel-more-menu.expanded {
+    max-height: 320px;
+    opacity: 1;
+}
+
+/* Subtle text-link styling for the "end drill" action */
+.text-link-btn {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    opacity: 0.55;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: underline;
+    padding: 10px;
+    margin-top: 4px;
+    cursor: pointer;
+}
+.text-link-btn:active { opacity: 0.9; }
 
 /* Overlays (Dialogs) */
 .overlay {
@@ -659,6 +822,9 @@ input:checked + .slider:before {
     }
     .map-action-fabs {
         top: 140px; /* Push down to clear 2-row stacked top HUD status bar! */
+    }
+    .model-area-badge {
+        top: 104px; /* Push down to clear 2-row stacked top HUD status bar */
     }
     .status-left, .status-right {
         display: flex;
@@ -1247,35 +1413,6 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     100% { stroke-dashoffset: -16; }
 }
 
-.shoreline-icon-container {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.shoreline-pulse {
-    width: 12px;
-    height: 12px;
-    background-color: #ff2d55;
-    border-radius: 50%;
-    position: absolute;
-    box-shadow: 0 0 8px #ff2d55;
-}
-.shoreline-pulse::after {
-    content: '';
-    width: 24px;
-    height: 24px;
-    border: 2px solid #ff2d55;
-    border-radius: 50%;
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    animation: shorelineRipple 1.5s infinite ease-out;
-}
-@keyframes shorelineRipple {
-    0% { transform: scale(0.5); opacity: 1; }
-    100% { transform: scale(2.0); opacity: 0; }
-}
 .shoreline-badge {
     position: absolute;
     bottom: 18px;

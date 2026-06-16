@@ -33,10 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // Basic state
  let isEmergency = false;
-  let coastalProximityLine = null;
-  let coastalMarker = null;
  let map, userMarker, routeLayerGroup, hazardLayer, reliefLayer, sheltersLayerGroup, congestionLayer, safeEdgesLayerGroup;
  let congestionGeojsonData = null;
+ let congestionTimeseriesData = null; // 60秒バケットの時系列密度（緊急モード時に遅延ロード）
+ let emergencyStartTimeMs = null; // 緊急モード開始時刻（時系列バケット算出の基準）
  let currentLocation = null; // {lat, lng}
  let isManualLocation = false;
  // Emergency route tracking state
@@ -73,8 +73,24 @@ document.addEventListener('DOMContentLoaded', () => {
  let lastHeading = 0;
  let lastScanCenter = null;
  
- // Kamakura default location (Yuigahama)
- const KAMAKURA_CENTER = [35.3192, 139.5504];
+ // 地域設定（将来の複数地域対応のための抽象化）
+ // 新しい地域を追加する際は REGIONS にエントリを追加し、assets/regions.json を同期させる。
+ // 現在は kamakura のみ定義。既存コードは KAMAKURA_CENTER エイリアス経由で変更なく動作する。
+ const REGIONS = {
+   kamakura: {
+     center: [35.3192, 139.5504],
+     bbox: { latMin: 35.28, latMax: 35.34, lngMin: 139.48, lngMax: 139.58 },
+     prefCode: '14',
+     assets: {
+       shelters: 'assets/shelters.json',
+       routes: 'assets/routes.json',
+       safeEdges: 'assets/safe_edges.json',
+       congestionEdges: 'assets/congestion_edges.json',
+       congestionTimeseries: 'assets/congestion_timeseries_baseline.json'
+     }
+   }
+ };
+ const KAMAKURA_CENTER = REGIONS.kamakura.center; // 後方互換エイリアス
 
     console.log('[TENDEN] i18n.json 30-languages dictionary loaded successfully');
  let i18nDict = {};
@@ -292,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
  });
 
  // Load congestion heatmap from simulation data
- fetch('assets/congestion.geojson')
+ fetch('assets/congestion_edges.json')
  .then(res => res.json())
  .then(data => {
  congestionGeojsonData = data; // Store globally for Turf.js calculations
@@ -307,9 +323,9 @@ document.addEventListener('DOMContentLoaded', () => {
  if (chkToggle && chkToggle.checked) {
  congestionLayer.addTo(map);
  }
-  console.log('[TENDEN] congestion.geojson loaded', data.features.length);
+  console.log('[TENDEN] congestion_edges.json loaded', data.features.length);
  })
-  .catch(e => console.log('[TENDEN] congestion.geojson not found', e));
+  .catch(e => console.log('[TENDEN] congestion_edges.json not found', e));
 
  // Initialize Device Orientation for Compass
  if (window.DeviceOrientationEvent) {
@@ -875,18 +891,64 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnFocusModel = document.getElementById('btn-focus-model');
  if (btnFocusModel) {
  btnFocusModel.addEventListener('click', () => {
- const targetLat = KAMAKURA_CENTER[0];
- const targetLng = KAMAKURA_CENTER[1];
- currentLocation = { lat: targetLat, lng: targetLng };
- 
- // Smooth fly animation to the model area (Yuigahama)
+ const overlay = document.getElementById('model-area-overlay');
+ overlay.classList.remove('hidden');
+ setTimeout(() => overlay.classList.add('active'), 10);
+ });
+ }
+
+ // "More" FAB: springs open the secondary action list (model area / settings / screenshot / coastline distance)
+ const btnFabMore = document.getElementById('btn-fab-more');
+ const fabMoreList = document.getElementById('fab-more-list');
+ if (btnFabMore && fabMoreList) {
+ btnFabMore.addEventListener('click', () => {
+ const expanded = fabMoreList.classList.toggle('expanded');
+ btnFabMore.classList.toggle('expanded', expanded);
+ triggerHapticTick();
+ });
+ }
+
+ function closeModelAreaOverlay() {
+ const overlay = document.getElementById('model-area-overlay');
+ overlay.classList.remove('active');
+ setTimeout(() => overlay.classList.add('hidden'), 300);
+ }
+
+ const btnModelAreaClose = document.getElementById('btn-model-area-close');
+ if (btnModelAreaClose) btnModelAreaClose.addEventListener('click', closeModelAreaOverlay);
+
+ const btnModelAreaCancel = document.getElementById('btn-model-area-cancel');
+ if (btnModelAreaCancel) btnModelAreaCancel.addEventListener('click', closeModelAreaOverlay);
+
+ const btnModelAreaConfirm = document.getElementById('btn-model-area-confirm');
+ if (btnModelAreaConfirm) {
+ btnModelAreaConfirm.addEventListener('click', () => {
+ closeModelAreaOverlay();
+
+ // Switch to the model area (Yuigahama) and lock out GPS updates until the user returns
+ isManualLocation = true;
+ currentLocation = { lat: KAMAKURA_CENTER[0], lng: KAMAKURA_CENTER[1] };
+
  map.flyTo(KAMAKURA_CENTER, 15, {
  duration: 1.5,
  easeLinearity: 0.25
  });
- 
+
  updateMarker(currentLocation);
  fetchElevation(currentLocation);
+
+ const badge = document.getElementById('model-area-badge');
+ if (badge) badge.classList.remove('hidden');
+ });
+ }
+
+ const btnReturnLocation = document.getElementById('btn-return-location');
+ if (btnReturnLocation) {
+ btnReturnLocation.addEventListener('click', () => {
+ isManualLocation = false;
+ const badge = document.getElementById('model-area-badge');
+ if (badge) badge.classList.add('hidden');
+ requestLocation();
  });
  }
 
@@ -986,19 +1048,30 @@ document.addEventListener('DOMContentLoaded', () => {
  });
  }
 
- // Banner collapsible toggle
- const bannerToggle = document.getElementById('banner-toggle');
- const bannerContent = document.getElementById('banner-content-body');
- const bannerChevron = document.getElementById('banner-chevron');
- if (bannerToggle && bannerContent && bannerChevron) {
- bannerToggle.addEventListener('click', () => {
- if (bannerContent.style.display === 'none') {
- bannerContent.style.display = 'block';
- bannerChevron.style.transform = 'rotate(0deg)';
- } else {
- bannerContent.style.display = 'none';
- bannerChevron.style.transform = 'rotate(180deg)';
+ // Evacuation panel: primary CTA focuses the map on the active route
+ const btnEvacPrimary = document.getElementById('btn-evac-primary');
+ if (btnEvacPrimary) {
+ btnEvacPrimary.addEventListener('click', () => {
+ if (mainRouteLine) {
+ map.fitBounds(mainRouteLine.getBounds(), {
+ paddingTopLeft: [20, 80],
+ paddingBottomRight: [20, 150],
+ animate: true,
+ duration: 0.8
+ });
  }
+ triggerHapticTick();
+ });
+ }
+
+ // Evacuation panel: "その他の操作" springs open the secondary action menu
+ const btnPanelMoreToggle = document.getElementById('btn-panel-more-toggle');
+ const panelMoreMenu = document.getElementById('panel-more-menu');
+ if (btnPanelMoreToggle && panelMoreMenu) {
+ btnPanelMoreToggle.addEventListener('click', () => {
+ const expanded = panelMoreMenu.classList.toggle('expanded');
+ btnPanelMoreToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+ triggerHapticTick();
  });
  }
 
@@ -1286,12 +1359,40 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  };
 
+ // Reflects isEmergency on the persistent UI shell (status orb + top-bar slot)
+ // without swapping layouts: same elements, different content/rhythm.
+ function applyAppState(isEmergency) {
+ document.documentElement.style.setProperty('--orb-color', isEmergency ? 'var(--danger)' : 'var(--success)');
+ document.documentElement.style.setProperty('--orb-pulse-duration', isEmergency ? '1.5s' : '4s');
+
+ const elevDisplay = document.getElementById('elev-display');
+ const etaDisplay = document.getElementById('eta-display');
+ if (elevDisplay && etaDisplay) {
+ elevDisplay.classList.toggle('hidden', isEmergency);
+ etaDisplay.classList.toggle('hidden', !isEmergency);
+ }
+
+ // Emergency mode: highlight the coastline-distance FAB inside the "more" menu
+ const fabCoastline = document.getElementById('fab-coastline-container');
+ if (fabCoastline) {
+ fabCoastline.classList.toggle('fab-highlight', isEmergency);
+ }
+
+ // Let the bottom sheet rubber-stretch to make room for the evacuation panel
+ const bottomSheet = document.getElementById('main-bottom-sheet');
+ if (bottomSheet) {
+ bottomSheet.classList.toggle('panel-expanded', isEmergency);
+ }
+ }
+
  function triggerEmergencyMode(isTest = false, scenarioId = 1, locationId = 'a') {
  isEmergency = true;
  isWaitingForPinDrop = false;
  isEvacuationCompleted = false; // Reset completed status
  activeScenarioId = scenarioId;
  activeLocationId = locationId;
+ emergencyStartTimeMs = Date.now();
+ loadCongestionTimeseries(); // 緊急モード中のみ時系列混雑データを遅延ロード
  if (!isTest) {
  document.body.classList.add('emergency-mode');
  }
@@ -1318,6 +1419,11 @@ document.addEventListener('DOMContentLoaded', () => {
  const timeLabel = sc.isLandslide ? "到達予測:" : "予想到達時間";
  const heightLabel = sc.isLandslide ? "土砂到達予測:" : "予想津波高さ:";
  detailsEl.innerHTML = `<span>${timeLabel}</span> <strong>${sc.time}</strong> | <span>${heightLabel}</span> <strong>${sc.height}</strong>`;
+
+ // Switch the status orb to "alert" rhythm and morph the top-bar elevation slot into a time-to-arrival slot
+ applyAppState(true);
+ const etaMatch = sc.time.match(/^(\d+分)/);
+ document.getElementById('eta-value').textContent = etaMatch ? etaMatch[1] : sc.time;
  
  // Trigger speech synthesis evac start instruction
  speakI18n('speechEvacStart');
@@ -1362,7 +1468,11 @@ document.addEventListener('DOMContentLoaded', () => {
  function resetEmergencyMode() {
  isEmergency = false;
  isEvacuationCompleted = false;
+ emergencyStartTimeMs = null;
  releaseWakeLock();
+
+ // Restore the status orb's calm rhythm and the elevation slot
+ applyAppState(false);
 
  // Close route selection modal if open
  const routeOverlay = document.getElementById('route-overlay');
@@ -1392,6 +1502,12 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('evacuation-banner').classList.add('hidden');
  document.getElementById('banner-content-expanded').style.display = 'none';
  document.getElementById('banner-chevron').style.transform = 'rotate(0deg)';
+
+ // Collapse the secondary action menu for the next evacuation
+ const panelMoreMenu = document.getElementById('panel-more-menu');
+ const btnPanelMoreToggle = document.getElementById('btn-panel-more-toggle');
+ if (panelMoreMenu) panelMoreMenu.classList.remove('expanded');
+ if (btnPanelMoreToggle) btnPanelMoreToggle.setAttribute('aria-expanded', 'false');
 
  // Reset visual style of banner in case deviation error triggered it
  const banner = document.getElementById('evacuation-banner');
@@ -2014,6 +2130,50 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  }
 
+ // --- TIME-SERIES CONGESTION (Phase 1: Baseline) ---
+ let congestionTimeseriesLoading = null;
+
+ // 緊急モード中のみ遅延フェッチする時系列混雑データ（60秒バケット x 25）
+ function loadCongestionTimeseries() {
+ if (congestionTimeseriesData) return Promise.resolve(congestionTimeseriesData);
+ if (congestionTimeseriesLoading) return congestionTimeseriesLoading;
+ congestionTimeseriesLoading = fetch('assets/congestion_timeseries_baseline.json')
+ .then(res => res.json())
+ .then(data => {
+ congestionTimeseriesData = data;
+ console.log('[TENDEN] congestion_timeseries_baseline.json loaded', Object.keys(data.edges || {}).length, 'edges');
+ return data;
+ })
+ .catch(e => {
+ console.log('[TENDEN] congestion_timeseries_baseline.json not found', e);
+ return null;
+ });
+ return congestionTimeseriesLoading;
+ }
+
+ // 緊急モード開始からの経過時間に基づき、現在の60秒バケットのインデックスを返す
+ function getCurrentCongestionBucket() {
+ if (!emergencyStartTimeMs || !congestionTimeseriesData) return 0;
+ const elapsedSec = (Date.now() - emergencyStartTimeMs) / 1000;
+ const bucket = Math.floor(elapsedSec / congestionTimeseriesData.bucket_seconds);
+ return Math.max(0, Math.min(congestionTimeseriesData.num_buckets - 1, bucket));
+ }
+
+ // 指定エッジ・バケットの density_per_sqm を返す。データなしの場合は null
+ function getEdgeDensity(edgeId, bucketIdx) {
+ if (!congestionTimeseriesData) return null;
+ const series = congestionTimeseriesData.edges[edgeId];
+ if (!series) return null;
+ return (series[bucketIdx] || 0) / 10;
+ }
+
+ // density_per_sqm -> 混雑レベル（gen_congestion_geojson.py と同じ閾値）
+ function densityToLevel(density) {
+ if (density >= 2.0) return 'high';
+ if (density >= 0.5) return 'medium';
+ return 'low';
+ }
+
  // --- DYNAMIC DETOUR ROUTING (Turf.js) ---
  async function fetchOSRMRouteWithDetour(startLoc, endLoc) {
  if (!window.turf || !congestionGeojsonData) return null;
@@ -2031,10 +2191,16 @@ document.addEventListener('DOMContentLoaded', () => {
  const directRouteCoords = directData.routes[0].geometry.coordinates; // [lng, lat]
  const directLine = turf.lineString(directRouteCoords);
  
- // 2. Filter congestion polygons for high/medium
- const dangerousFeatures = congestionGeojsonData.features.filter(f => 
- f.properties && (f.properties.level === 'high' || f.properties.level === 'medium')
- );
+ // 2. Filter congestion edges for high/medium.
+ // 緊急モード開始からの経過時間バケットの動的密度が分かる場合はそれを優先し、
+ // データ未ロード・該当エッジ無しの場合は静的レベル(level)にフォールバックする。
+ const currentBucket = getCurrentCongestionBucket();
+ const dangerousFeatures = congestionGeojsonData.features.filter(f => {
+ if (!f.properties) return false;
+ const density = congestionTimeseriesData ? getEdgeDensity(f.properties.id, currentBucket) : null;
+ const level = density !== null ? densityToLevel(density) : f.properties.level;
+ return level === 'high' || level === 'medium';
+ });
  
  if (dangerousFeatures.length === 0) return null; // No need for detour
  
@@ -2722,8 +2888,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
  function isInModelArea(loc) {
  if (!loc) return false;
- // Kamakura model area bounding box: Yuigahama, Shichirigahama, Zaimokuza
- return (loc.lat >= 35.28 && loc.lat <= 35.34 && loc.lng >= 139.48 && loc.lng <= 139.58);
+ const bb = REGIONS.kamakura.bbox;
+ return (loc.lat >= bb.latMin && loc.lat <= bb.latMax && loc.lng >= bb.lngMin && loc.lng <= bb.lngMax);
  }
 
  function showCustomAlert(title, message, iconType = 'info', callback = null) {
@@ -4319,36 +4485,47 @@ document.addEventListener('DOMContentLoaded', () => {
       return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
     }
 
-    // ── 方法1: OpenStreetMap Overpass API (日本全国対応) ──
-    try {
-      var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 6000) : null;
-      var radius = 20000; // 20km 以内で検索
-      var q = '[out:json][timeout:5];(way["natural"="coastline"](around:' + radius + ',' + loc.lat + ',' + loc.lng + '););out geom;';
-      var fetchOpts = controller ? { signal: controller.signal } : {};
-      var res = await fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(q), fetchOpts);
-      if (timeoutId) clearTimeout(timeoutId);
-      if (res.ok) {
+    // 指定半径内のOpenStreetMap海岸線データから最近傍点を探す
+    async function queryOverpassCoastline(radius, timeoutMs) {
+      try {
+        var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, timeoutMs) : null;
+        var q = '[out:json][timeout:' + Math.ceil(timeoutMs/1000) + '];(way["natural"="coastline"](around:' + radius + ',' + loc.lat + ',' + loc.lng + '););out geom;';
+        var fetchOpts = controller ? { signal: controller.signal } : {};
+        var res = await fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(q), fetchOpts);
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!res.ok) return null;
         var data = await res.json();
-        if (data && data.elements && data.elements.length > 0) {
-          var bestDist = Infinity, bestLat, bestLng;
-          data.elements.forEach(function(way) {
-            if (!way.geometry || way.geometry.length < 2) return;
-            for (var i = 0; i < way.geometry.length - 1; i++) {
-              var a = way.geometry[i], b = way.geometry[i+1];
-              var np = nearestPtOnSeg(loc.lat, loc.lng, a.lat, a.lon, b.lat, b.lon);
-              var d = haversine(loc.lat, loc.lng, np.lat, np.lng);
-              if (d < bestDist) { bestDist = d; bestLat = np.lat; bestLng = np.lng; }
-            }
-          });
-          if (bestLat !== undefined) {
-            return { lat: bestLat, lng: bestLng, distance: bestDist, source: 'OpenStreetMap Overpass' };
+        if (!data || !data.elements || data.elements.length === 0) return null;
+        var bestDist = Infinity, bestLat, bestLng;
+        data.elements.forEach(function(way) {
+          if (!way.geometry || way.geometry.length < 2) return;
+          for (var i = 0; i < way.geometry.length - 1; i++) {
+            var a = way.geometry[i], b = way.geometry[i+1];
+            var np = nearestPtOnSeg(loc.lat, loc.lng, a.lat, a.lon, b.lat, b.lon);
+            var d = haversine(loc.lat, loc.lng, np.lat, np.lng);
+            if (d < bestDist) { bestDist = d; bestLat = np.lat; bestLng = np.lng; }
           }
-        }
+        });
+        if (bestLat === undefined) return null;
+        return { lat: bestLat, lng: bestLng, distance: bestDist, source: 'OpenStreetMap Overpass' };
+      } catch(e) {
+        return null; // API失敗 → 次の半径 or フォールバックへ
       }
-    } catch(e) { /* API失敗 → フォールバックへ */ }
+    }
 
-    // ── 方法2: 鎌倉・湘南ハードコードフォールバック（オフライン時） ──
+    // ── 方法1: OpenStreetMap Overpass API (日本全国対応) ──
+    // 現在地から近い順に検索半径を広げ、真に最も近い海岸線データが
+    // 取得範囲外で見つからない事態（内陸部で20km圏内に海岸線が無い等）を避ける。
+    for (const radius of [20000, 60000, 120000]) {
+      const found = await queryOverpassCoastline(radius, radius <= 20000 ? 6000 : 12000);
+      if (found) return found;
+    }
+
+    // ── 方法2: 鎌倉・湘南ハードコードフォールバック（オフライン時のみ） ──
+    // Overpassが完全に利用不可（オフライン等）の場合のみ使用。
+    // 現在地が鎌倉から遠い場合にこのローカル座標を「最も近い海岸線」として
+    // 誤って提示しないよう、算出距離が現実的な範囲を超える場合はnullを返す。
     var COAST = [
       [35.3098,139.4632],[35.3060,139.4880],[35.3060,139.5000],
       [35.3063,139.5180],[35.3052,139.5380],[35.3052,139.5500],
@@ -4362,7 +4539,7 @@ document.addEventListener('DOMContentLoaded', () => {
       var d=haversine(loc.lat,loc.lng,np.lat,np.lng);
       if(d<bestD){bestD=d;bestP=np;}
     }
-    if(bestP) return {lat:bestP.lat,lng:bestP.lng,distance:bestD,source:'Kamakura Local'};
+    if(bestP && bestD < 30000) return {lat:bestP.lat,lng:bestP.lng,distance:bestD,source:'Kamakura Local'};
     return null;
   }
 
@@ -4374,49 +4551,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 既存の海岸線表示を削除
-    if (coastalProximityLine) { try { map.removeLayer(coastalProximityLine); } catch(e){} coastalProximityLine=null; }
-    if (coastalMarker) {
-      if (coastalMarker._distLabel) { try { map.removeLayer(coastalMarker._distLabel); } catch(e){} }
-      try { map.removeLayer(coastalMarker); } catch(e){} coastalMarker=null;
-    }
-
-    const startLL = [loc.lat, loc.lng];
-    const endLL   = [coast.lat, coast.lng];
-    const distM   = Math.round(coast.distance);
+    const distM = Math.round(coast.distance);
 
     // 距離テキスト（1000m以上はkm表記）
     const distText = distM >= 1000
-      ? `現在地から海岸線まで約 ${(distM/1000).toFixed(1)}km`
-      : `現在地から海岸線まで約 ${distM}m`;
+      ? `現在地から最も近い海岸線まで約 ${(distM/1000).toFixed(1)}km`
+      : `現在地から最も近い海岸線まで約 ${distM}m`;
 
-    // ── 距離ライン（5秒後に自動消去）──
-    coastalProximityLine = L.polyline([startLL, endLL], {
-      color: '#ff2d55', dashArray: '8, 6', weight: 3, opacity: 0.85
-    }).addTo(map);
-
-    // ── 海岸線端点マーカー ──
-    const shorelineIcon = L.divIcon({
-      className: 'shoreline-icon-container',
-      html: '<div class="shoreline-pulse"></div>',
-      iconSize: [24, 24], iconAnchor: [12, 12]
-    });
-    coastalMarker = L.marker(endLL, { icon: shorelineIcon, zIndexOffset: 400 }).addTo(map);
-
-    // ── 両点が収まるよう自動ズーム ──
-    const bounds = L.latLngBounds([startLL, endLL]);
-    map.fitBounds(bounds, { padding: [90, 90], maxZoom: 15, animate: true, duration: 1.0 });
-
-    // ── 5秒後に補助線を自動削除 ──
-    setTimeout(function() {
-      if (coastalProximityLine) { try { map.removeLayer(coastalProximityLine); } catch(e){} coastalProximityLine=null; }
-      if (coastalMarker) {
-        if (coastalMarker._distLabel) { try { map.removeLayer(coastalMarker._distLabel); } catch(e){} }
-        try { map.removeLayer(coastalMarker); } catch(e){} coastalMarker=null;
-      }
-    }, 5000);
-
-    // ── ポップアップで距離を通知 ──
+    // ── ポップアップのみで距離を通知（地図表示・線・マーカーは変更しない）──
     if (showPopup) {
       const safetyNote = distM < 300
         ? '<br><br>⚠️ 海岸線に非常に近い位置です。津波警報発令時は直ちに内陸・高台へ避難してください。'
@@ -4429,6 +4571,8 @@ document.addEventListener('DOMContentLoaded', () => {
         distM < 500 ? 'warning' : 'info'
       );
     }
+
+    return coast;
   }
 
 

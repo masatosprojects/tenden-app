@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tenden-v78';
+const CACHE_NAME = 'tenden-v79';
 const DYNAMIC_CACHE = 'tenden-dynamic-v55';
 
 
@@ -9,7 +9,8 @@ const urlsToCache = [
   './style.css',
   './app.js',
   './manifest.json',
-  './assets/congestion.geojson',
+  './assets/congestion_edges.json',
+  './assets/congestion_timeseries_baseline.json',
   './assets/shelters.json',
   './assets/routes.json',
   './assets/safe_edges.json',
