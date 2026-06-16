@@ -92,6 +92,74 @@ document.addEventListener('DOMContentLoaded', () => {
  };
  const KAMAKURA_CENTER = REGIONS.kamakura.center; // 後方互換エイリアス
 
+ // ── Developer Announcements ───────────────────────────────────────────────
+ // status: 'active' = 現在有効  |  'resolved' = 対応済み・過去のもの
+ const DEV_ANNOUNCEMENTS = [
+   {
+     id: 'pwa-opt-in',
+     date: '2026-06-16',
+     status: 'active',
+     category: 'お知らせ',
+     title: 'オフライン緊急モードを手動で有効化できます',
+     body: '⚙️設定から「オフライン緊急モード」をONにすると、電波のない緊急時でもTENDENが動作します。ONにするとアプリの自動更新が止まる点にご注意ください。',
+   },
+   {
+     id: 'community-reports',
+     date: '2026-06-16',
+     status: 'active',
+     category: '新機能',
+     title: 'コミュニティ危険レポート機能を追加しました',
+     body: 'サイドパネル（右端ボタン）の「危険レポート」から、危険な場所・倒木・混雑などを匿名で報告できます。みなさんの報告が地域の減災に役立ちます。',
+   },
+ ];
+
+ function renderAnnouncementsList() {
+   const list = document.getElementById('dev-ann-list');
+   if (!list) return;
+   const LABEL = { active: '対応中', resolved: '解決済み' };
+   list.innerHTML = DEV_ANNOUNCEMENTS.map(a => `
+     <div class="ann-item ${a.status}">
+       <div class="ann-item-head">
+         <span class="ann-badge ${a.status}">${LABEL[a.status] || a.status}</span>
+         <span class="ann-cat">${a.category}</span>
+         <span class="ann-date">${a.date}</span>
+       </div>
+       <div class="ann-title">${a.title}</div>
+       <div class="ann-body">${a.body}</div>
+     </div>`).join('');
+ }
+
+ function showStartupNoticeIfNeeded() {
+   const active = DEV_ANNOUNCEMENTS.filter(a => a.status === 'active');
+   if (!active.length) return;
+   const body = document.getElementById('sn-body');
+   if (body) {
+     body.innerHTML = active.map(a => `
+       <div class="sn-item">
+         <div class="sn-item-cat">${a.category}</div>
+         <div class="sn-item-title">${a.title}</div>
+         <div class="sn-item-body">${a.body}</div>
+       </div>`).join('');
+   }
+   const notice = document.getElementById('startup-notice');
+   if (notice) notice.classList.remove('hidden');
+ }
+
+ function openAnnouncementsOverlay() {
+   renderAnnouncementsList();
+   const ov = document.getElementById('dev-ann-overlay');
+   if (!ov) return;
+   ov.classList.remove('hidden');
+   requestAnimationFrame(() => ov.classList.add('active'));
+ }
+
+ function closeAnnouncementsOverlay() {
+   const ov = document.getElementById('dev-ann-overlay');
+   if (!ov) return;
+   ov.classList.remove('active');
+   setTimeout(() => ov.classList.add('hidden'), 260);
+ }
+
  // ── Firebase Community Reports ────────────────────────────────────────────
  const FIREBASE_CONFIG = {
    apiKey: "AIzaSyBqKe0mVDGqMZFV2PFP9WE55xeyo7MGa1o",
@@ -1102,6 +1170,31 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  });
 
+ // 開発者からの連絡
+ document.getElementById('sp-announcements-card')?.addEventListener('click', () => {
+   closeSidePanel();
+   setTimeout(openAnnouncementsOverlay, 260);
+ });
+ document.getElementById('btn-ann-close')?.addEventListener('click', closeAnnouncementsOverlay);
+ document.getElementById('dev-ann-overlay')?.addEventListener('click', function(e) {
+   if (e.target === this) closeAnnouncementsOverlay();
+ });
+ document.getElementById('btn-startup-notice-close')?.addEventListener('click', () => {
+   const n = document.getElementById('startup-notice');
+   if (n) n.classList.add('hidden');
+ });
+
+ // サイドパネルバッジ更新
+ const activeCount = DEV_ANNOUNCEMENTS.filter(a => a.status === 'active').length;
+ const annBadge = document.getElementById('sp-ann-badge');
+ if (annBadge && activeCount > 0) {
+   annBadge.textContent = `${activeCount}件の新しいお知らせ`;
+   annBadge.classList.remove('hidden');
+ }
+
+ // 起動時ポップアップ（スプラッシュ後に表示）
+ setTimeout(showStartupNoticeIfNeeded, 2200);
+
  function closeModelAreaOverlay() {
  const overlay = document.getElementById('model-area-overlay');
  overlay.classList.remove('active');
@@ -1203,18 +1296,6 @@ document.addEventListener('DOMContentLoaded', () => {
  takeScreenshot();
  });
 
- // PWAフローティングトースト表示（起動時3秒後に消える）
- function showPwaToast(msg) {
-   const t = document.getElementById('pwa-toast');
-   if (!t) return;
-   t.textContent = msg;
-   t.classList.remove('hidden', 'dismissing');
-   setTimeout(() => {
-     t.classList.add('dismissing');
-     t.addEventListener('animationend', () => t.classList.add('hidden'), { once: true });
-   }, 3500);
- }
-
  // PWAオフラインモードトグル
  const pwaOfflineToggle = document.getElementById('pwa-offline-toggle');
  if (pwaOfflineToggle) {
@@ -1222,7 +1303,6 @@ document.addEventListener('DOMContentLoaded', () => {
    pwaOfflineToggle.checked = _pwaOn;
    const _statusEl = document.getElementById('pwa-toggle-status');
    if (_statusEl) _statusEl.textContent = _pwaOn ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
-   setTimeout(() => showPwaToast(_pwaOn ? '📶 オフラインモード ON' : '📡 オフラインモード OFF — ⚙️設定でONにすると電波なしでも使えます'), 1200);
    pwaOfflineToggle.addEventListener('change', () => {
      const enabling = pwaOfflineToggle.checked;
      localStorage.setItem('tenden-pwa-enabled', enabling ? '1' : '0');

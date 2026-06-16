@@ -103,9 +103,6 @@
  <!-- UI Overlay Layer (Mobile First & Google Maps Style) -->
  <div id="ui-layer" class="mode-normal">
  
- <!-- PWA floating toast (auto-dismiss) -->
- <div id="pwa-toast" class="pwa-toast hidden" role="status" aria-live="polite"></div>
-
  <!-- Apple-style Dynamic Island Notification HUD -->
  <div id="dynamic-island" class="dynamic-island-collapsed hidden">
  <div class="island-content">
@@ -265,7 +262,42 @@
      </div>
      <span class="sp-card-label">友達に安全情報を送る</span>
    </button>
+   <button class="sp-card sp-card-full" id="sp-announcements-card">
+     <div class="sp-card-icon" style="background:linear-gradient(135deg,#5e5ce6 0%,#007aff 100%)">
+       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+     </div>
+     <div style="display:flex;flex-direction:column;align-items:flex-start;">
+       <span class="sp-card-label">開発者からの連絡</span>
+       <span id="sp-ann-badge" class="sp-ann-badge hidden"></span>
+     </div>
+   </button>
  </div>
+ </div>
+
+ <!-- Developer Announcements Overlay -->
+ <div id="dev-ann-overlay" class="dev-ann-overlay hidden">
+   <div class="dev-ann-sheet">
+     <div class="dev-ann-header">
+       <span class="dev-ann-title">開発者からの連絡</span>
+       <button class="dev-ann-close" id="btn-ann-close">✕</button>
+     </div>
+     <div class="dev-ann-list" id="dev-ann-list"></div>
+   </div>
+ </div>
+
+ <!-- Startup announcement popup -->
+ <div id="startup-notice" class="startup-notice hidden">
+   <div class="sn-card">
+     <div class="sn-header">
+       <span class="sn-icon">📣</span>
+       <div>
+         <div class="sn-title">開発者からのお知らせ</div>
+         <div class="sn-sub">現在有効なお知らせがあります</div>
+       </div>
+     </div>
+     <div class="sn-body" id="sn-body"></div>
+     <button class="sn-close-btn" id="btn-startup-notice-close">確認しました</button>
+   </div>
  </div>
 
  <!-- Hidden legacy trigger buttons (existing JS handlers bind to these IDs) -->
