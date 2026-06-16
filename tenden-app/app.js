@@ -707,6 +707,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   }); // Close map.once!
   }); // Close btnTestAlert!
+
+ // ── 緊急モードプレビューボタン（発災時はこうなる） ──────────────
+ const btnPreviewEmergency = document.getElementById('btn-preview-emergency');
+ if (btnPreviewEmergency) {
+   btnPreviewEmergency.addEventListener('click', () => {
+     if (!currentLocation) {
+       isManualLocation = true;
+       currentLocation = { lat: KAMAKURA_CENTER[0], lng: KAMAKURA_CENTER[1] };
+       updateMarker(currentLocation);
+       fetchElevation(currentLocation);
+     }
+     triggerEmergencyMode(true, 1, 'a');
+   });
+ }
+
   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   
  // Set Pin button listener for Crosshair mode
@@ -4597,16 +4612,6 @@ function wireOnboardingButtons() {
     var t = document.getElementById('demo-step-' + step);
     if (t) t.classList.add('active');
     document.querySelectorAll('.demo-dot').forEach(function(d, i) { d.classList.toggle('active', i === step); });
-    // canvasアニメーションを直接呼び出し（外部スコープの関数）
-    if (step === 1) setTimeout(function() {
-      try { animateMapCanvas(); } catch(e) { console.warn('anim map:', e); }
-    }, 200);
-    if (step === 2) setTimeout(function() {
-      try { animateRoutesCanvas(); } catch(e) { console.warn('anim routes:', e); }
-    }, 200);
-    if (step === 3) setTimeout(function() {
-      try { animateFlowCanvas(); } catch(e) { console.warn('anim flow:', e); }
-    }, 200);
   }
   [
     ['btn-demo-next-0', function() { goFB(1); }],
@@ -5438,10 +5443,7 @@ function startOnboardingDemo() {
 
  currentStep = step;
 
- // Trigger canvas animations for steps
- if (step === 1) setTimeout(animateMapCanvas, 200);
- if (step === 2) setTimeout(animateRoutesCanvas, 200);
- if (step === 3) setTimeout(animateFlowCanvas, 200);
+ // Canvas animations removed — visuals are now CSS/SVG driven
 
  // Handle auto slideshow transitions
  stopAutoSlideshow();

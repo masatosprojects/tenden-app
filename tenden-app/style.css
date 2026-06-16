@@ -327,6 +327,28 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     100% { transform: scale(1.02); box-shadow: 0 8px 25px rgba(255, 59, 48, 0.6); }
 }
 
+/* Emergency Preview Button — ghost style, not a full CTA */
+.btn-emergency-preview {
+    width: 100%;
+    margin-top: 8px;
+    background: rgba(255,59,48,0.07);
+    color: var(--danger);
+    border: 1.5px solid rgba(255,59,48,0.22);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 13px 16px;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.15s;
+}
+.btn-emergency-preview:active {
+    transform: scale(0.97);
+    background: rgba(255,59,48,0.14);
+}
+
 /* Emergency Mode Content */
 .emergency-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding-bottom: 12px; }
 .eh-title { font-size: 1.2rem; font-weight: 700; color: var(--warning); }
@@ -1094,6 +1116,16 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Spring step reveal — replaces demoFadeIn for .active */
+@keyframes demoStepReveal {
+    0%   { opacity:0; transform:translateY(18px) scale(0.97); }
+    60%  { opacity:1; }
+    100% { opacity:1; transform:translateY(0) scale(1.0); }
+}
+.demo-step.active {
+    animation: demoStepReveal 0.45s cubic-bezier(0.16,1,0.3,1) both;
+}
+
 /* Step 0: Hero */
 .demo-logo-wrap {
     display: flex;
@@ -1183,15 +1215,158 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     line-height: 1.55;
 }
 
-/* Canvas */
-.demo-canvas {
+/* Canvas (kept for backward compat — no longer rendered) */
+.demo-canvas { display: none; }
+
+/* ── Step 0: SVG flowing wave ── */
+.demo-wave-wrap {
     width: 100%;
-    max-width: 100%;
-    height: auto;
+    height: 32px;
+    margin: -2px 0 2px;
+    overflow: hidden;
+}
+.demo-hero-wave { width: 100%; height: 100%; display: block; }
+@keyframes waveFlow { to { stroke-dashoffset: -680; } }
+.wave-path { stroke-dasharray: 680; }
+.wave-path-1 { animation: waveFlow 4.5s linear infinite; }
+.wave-path-2 { animation: waveFlow 6.0s linear infinite reverse; }
+
+/* ── Step 1: Earthquake ripple ── */
+.demo-quake-visual {
+    width: 100%;
+    height: 150px;
+    background: linear-gradient(160deg, #fff5f5 0%, #fff0ee 100%);
+    border: 1px solid rgba(255,59,48,0.12);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    overflow: hidden;
+}
+.quake-epicenter {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.quake-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255,59,48,0.5);
+    width: 20px;
+    height: 20px;
+    animation: quakeRipple 2.4s ease-out infinite;
+}
+.quake-ring-1 { animation-delay: 0s; }
+.quake-ring-2 { animation-delay: 0.5s; }
+.quake-ring-3 { animation-delay: 1.0s; }
+@keyframes quakeRipple {
+    0%   { transform: scale(0.5); opacity: 0.9; }
+    80%  { opacity: 0; }
+    100% { transform: scale(3.5); opacity: 0; }
+}
+.quake-core {
+    width: 14px;
+    height: 14px;
+    background: #ff3b30;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(255,59,48,0.2);
+    animation: quakeCoreShake 0.09s ease-in-out infinite alternate;
+    z-index: 1;
+}
+@keyframes quakeCoreShake {
+    0%   { transform: translate(0,0); }
+    100% { transform: translate(1.5px,-1px); }
+}
+.quake-eta-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,59,48,0.07);
+    border: 1px solid rgba(255,59,48,0.18);
+    padding: 7px 16px;
+    border-radius: 99px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #cc2222;
+}
+
+/* ── Step 2: SVG route draw animation ── */
+.demo-routes-visual {
+    width: 100%;
     border-radius: 14px;
     background: #f5f5f7;
     border: 1px solid rgba(0,0,0,0.06);
-    display: block;
+    overflow: hidden;
+}
+.demo-routes-svg { width: 100%; height: auto; display: block; }
+.demo-route-svg-path {
+    stroke-dasharray: 320;
+    stroke-dashoffset: 320;
+}
+#demo-step-2.active .demo-route-svg-path {
+    animation: routeDraw 1.0s cubic-bezier(0.16,1,0.3,1) var(--route-delay,0s) both;
+}
+@keyframes routeDraw {
+    from { stroke-dashoffset: 320; }
+    to   { stroke-dashoffset: 0; }
+}
+
+/* ── Step 3: Multilingual badge floaters ── */
+.demo-flow-visual {
+    width: 100%;
+    height: 140px;
+    border-radius: 14px;
+    background: linear-gradient(160deg, #f0f4ff 0%, #f5f5f7 100%);
+    border: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+.flow-badge-track { position: absolute; inset: 0; pointer-events: none; }
+.flow-badge {
+    position: absolute;
+    padding: 5px 11px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    background: var(--fb-color, #007aff);
+    opacity: 0;
+    white-space: nowrap;
+    animation: flowBadgeFloat 3.8s ease-in-out var(--fb-delay,0s) infinite;
+}
+@keyframes flowBadgeFloat {
+    0%   { opacity:0; transform:translateY(7px) scale(0.88); }
+    18%  { opacity:1; transform:translateY(0) scale(1.0); }
+    75%  { opacity:1; transform:translateY(-4px) scale(1.0); }
+    100% { opacity:0; transform:translateY(-9px) scale(0.93); }
+}
+.flow-center-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    z-index: 1;
+}
+.flow-route-count {
+    font-size: 52px;
+    font-weight: 700;
+    color: #007aff;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+.flow-route-sub {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1c1c1e;
+    opacity: 0.6;
 }
 
 /* Route legend */
