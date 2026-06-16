@@ -555,9 +555,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (btnGuideClose) btnGuideClose.addEventListener('click', closeGuideFunc);
-  if (btnGuideCloseBottom) btnGuideCloseBottom.addEventListener('click', closeGuideFunc);
-
   // ── AI Learning Model Guide Overlay ───────────────────────────────────
   const aiGuideOverlay = document.getElementById('ai-guide-overlay');
   const openAiGuide = () => {
@@ -5947,6 +5944,9 @@ function startOnboardingDemo() {
  document.querySelectorAll('[data-i18n="demoBtnSkip"]').forEach(el => {
     el.textContent = getDemoText('demoBtnSkip', 'スキップ');
  });
+  const useHereSpan = document.querySelector('[data-i18n="demoBtnUseHere"]');
+  const replaySpan = document.querySelector('[data-i18n="demoBtnReplay"]');
+  const settingsDemoSpan = document.querySelector('[data-i18n="settingsDemoBtn"]');
   if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', '今いる場所で使ってみる');
   if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'もう一度見る');
   if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'オンボーディングデモを起動する');
