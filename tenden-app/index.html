@@ -288,6 +288,11 @@
  <button class="action-btn primary-btn btn-large hidden" id="btn-set-pin" data-i18n="setPinBtn">
  ここにピンを打つ (避難開始)
  </button>
+ <!-- Development notice: PWA disabled -->
+ <div class="pwa-dev-notice">
+   📡 現在オフライン機能は開発のため一時停止中 — インターネット接続が必要です。現段階では平時の避難ルート確認・防災準備にご利用ください。
+ </div>
+
  <!-- Community Report Card -->
  <div class="community-report-card" id="community-report-card">
  <div class="crc-left">
@@ -688,13 +693,12 @@
  </label>
  </div>
 
- <!-- SW Cache Disable Toggle (Developer) -->
- <div class="form-group flex-group">
- <label>PWAキャッシュを無効化（開発者用）</label>
- <label class="switch-container">
- <input type="checkbox" id="toggle-sw-disable">
- <span class="slider"></span>
- </label>
+ <!-- PWA development status notice -->
+ <div class="form-group">
+ <div class="dev-notice-settings">
+   <strong>⚠️ PWA機能：現在停止中（開発中）</strong><br>
+   オフラインキャッシュは無効です。インターネット接続が必要です。アプリ完成後に再有効化されます。
+ </div>
  </div>
 
  <!-- Data Management & Safe Initializer reset button -->
