@@ -2275,7 +2275,7 @@ document.addEventListener('DOMContentLoaded', () => {
  html: `
  <div style="display:flex; flex-direction:column; align-items:center;">
  <div style="background:#0071e3; color:white; font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:10px; box-shadow:0 3px 8px rgba(0,113,227,0.5); white-space:nowrap; margin-bottom:4px;">
- ${primaryGoalLabel}・・${localizedTargetEdgeName || edgeName || ""}
+ ${primaryGoalLabel}・・${edgeName || ""}
  </div>
  <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #0071e3;"></div>
  </div>
