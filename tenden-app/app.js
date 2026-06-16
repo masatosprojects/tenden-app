@@ -1119,17 +1119,12 @@ document.addEventListener('DOMContentLoaded', () => {
    });
  }
 
- // FAB: みんなのレポート表示トグル
+ // FAB: みんなのレポート → 選択画面を開く
  const btnToggleReportsFab = document.getElementById('btn-toggle-reports-fab');
  if (btnToggleReportsFab) {
    btnToggleReportsFab.addEventListener('click', () => {
-     if (!firestoreDB) initFirebase();
-     const isOn = !communityReportsVisible;
-     const layerToggle = document.getElementById('toggle-community-reports');
-     if (layerToggle) layerToggle.checked = isOn;
-     toggleCommunityReportsLayer(isOn);
-     btnToggleReportsFab.classList.toggle('fab-active', isOn);
-     btnToggleReportsFab.setAttribute('aria-pressed', String(isOn));
+     const overlay = document.getElementById('report-choice-overlay');
+     if (overlay) { overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.add('active'), 10); }
    });
  }
 
