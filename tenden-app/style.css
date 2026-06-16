@@ -230,7 +230,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     pointer-events: none;
 }
 .fab-more-list.expanded {
-    max-height: 320px;
+    max-height: 400px;
     opacity: 1;
     pointer-events: auto;
 }
@@ -327,6 +327,40 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     100% { transform: scale(1.02); box-shadow: 0 8px 25px rgba(255, 59, 48, 0.6); }
 }
 
+
+/* ── Community Report Modal ── */
+.report-dialog { max-width: 360px; width: 92%; }
+.report-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 14px;
+}
+.report-cat-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(0,0,0,0.04);
+    border: 1.5px solid rgba(0,0,0,0.08);
+    border-radius: 14px;
+    font-size: 0.97rem;
+    font-weight: 600;
+    color: var(--text-color);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, transform 0.12s;
+}
+.report-cat-btn:active { background: rgba(0,122,255,0.1); transform: scale(0.97); }
+.report-cat-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.report-cat-icon { font-size: 1.3rem; }
+.report-privacy-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 6px 0 2px;
+}
 
 /* Emergency Mode Content */
 .emergency-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding-bottom: 12px; }

@@ -92,10 +92,95 @@ document.addEventListener('DOMContentLoaded', () => {
  };
  const KAMAKURA_CENTER = REGIONS.kamakura.center; // 後方互換エイリアス
 
+ // ── Firebase Community Reports ────────────────────────────────────────────
+ const FIREBASE_CONFIG = {
+   apiKey: "AIzaSyBqKe0mVDGqMZFV2PFP9WE55xeyo7MGa1o",
+   authDomain: "tenden-reports-2690e.firebaseapp.com",
+   projectId: "tenden-reports-2690e",
+   storageBucket: "tenden-reports-2690e.firebasestorage.app",
+   messagingSenderId: "864707138820",
+   appId: "1:864707138820:web:2976f53b15c7be23b46c51"
+ };
+ let firestoreDB = null;
+ let communityReportLayer = null;
+ let communityReportsVisible = false;
+
+ function initFirebase() {
+   try {
+     if (typeof firebase === 'undefined') return;
+     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+     firestoreDB = firebase.firestore();
+   } catch (e) { console.warn('[Firebase] init failed:', e); }
+ }
+
+ function toReportGrid(val) {
+   return Math.round(val * 1000) / 1000; // ~100m anonymization
+ }
+
+ async function submitCommunityReport(category) {
+   if (!firestoreDB) return 'no_db';
+   if (!currentLocation) return 'no_location';
+   const now = Date.now();
+   const last = parseInt(localStorage.getItem('tenden-last-report') || '0');
+   if (now - last < 60000) return 'rate_limited';
+   try {
+     await firestoreDB.collection('reports').add({
+       gridLat: toReportGrid(currentLocation.lat),
+       gridLng: toReportGrid(currentLocation.lng),
+       category: category,
+       ts: firebase.firestore.FieldValue.serverTimestamp()
+     });
+     localStorage.setItem('tenden-last-report', String(now));
+     return 'ok';
+   } catch (e) {
+     console.error('[Firebase] report submit failed:', e);
+     return 'error';
+   }
+ }
+
+ async function loadCommunityReports() {
+   if (!firestoreDB) return;
+   if (!communityReportLayer) {
+     communityReportLayer = L.layerGroup().addTo(map);
+   } else {
+     communityReportLayer.clearLayers();
+   }
+   const COLORS  = { danger:'#ff3b30', sign_needed:'#ff9f0a', crowded:'#5e5ce6', shelter_info:'#34c759', other:'#636366' };
+   const LABELS  = { danger:'⚠️ 危険', sign_needed:'🪧 看板必要', crowded:'👥 混雑', shelter_info:'🏠 避難所情報', other:'📝 その他' };
+   try {
+     const snap = await firestoreDB.collection('reports').orderBy('ts','desc').limit(300).get();
+     const grid = {};
+     snap.forEach(doc => {
+       const d = doc.data();
+       const k = `${d.gridLat}_${d.gridLng}_${d.category}`;
+       grid[k] = (grid[k] || 0) + 1;
+     });
+     Object.entries(grid).forEach(([key, count]) => {
+       const parts = key.split('_');
+       const lat = parseFloat(parts[0]);
+       const lng = parseFloat(parts[1]);
+       const cat = parts[2];
+       L.circleMarker([lat, lng], {
+         radius: Math.min(7 + count * 2, 20),
+         fillColor: COLORS[cat] || '#636366',
+         color: 'white', weight: 2,
+         fillOpacity: 0.75, opacity: 1
+       }).bindPopup(`<b>${LABELS[cat] || cat}</b><br>報告数: ${count}件`).addTo(communityReportLayer);
+     });
+   } catch (e) { console.error('[Firebase] load reports failed:', e); }
+ }
+
+ function toggleCommunityReportsLayer(visible) {
+   communityReportsVisible = visible;
+   if (visible) { loadCommunityReports(); }
+   else if (communityReportLayer) { communityReportLayer.clearLayers(); }
+ }
+
     console.log('[TENDEN] i18n.json 30-languages dictionary loaded successfully');
  let i18nDict = {};
 
  // Initialize (各関数をtry/catchで保護 — どれかがエラーでもスプラッシュは消える)
+ try { initFirebase(); } catch(e) { console.warn('[TENDEN] Firebase init error:', e); }
  try { initMap(); } catch(e) { console.error('[TENDEN] initMap error:', e); }
  try { initUI(); } catch(e) { console.error('[TENDEN] initUI error:', e); }
  try { startClock(); } catch(e) {}
@@ -640,6 +725,52 @@ document.addEventListener('DOMContentLoaded', () => {
  fetchElevation(currentLocation);
  }
  });
+ });
+
+ // ── コミュニティレポート ────────────────────────────────────────────────
+ const btnReport = document.getElementById('btn-report');
+ if (btnReport) {
+   btnReport.addEventListener('click', () => {
+     document.getElementById('fab-more-list')?.classList.remove('expanded');
+     if (!currentLocation) {
+       showCustomAlert('位置情報が必要です', '現在地を取得してからレポートを送信してください。', 'warning');
+       return;
+     }
+     const overlay = document.getElementById('report-overlay');
+     if (overlay) { overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.add('active'), 10); }
+   });
+ }
+ document.getElementById('btn-report-close')?.addEventListener('click', () => {
+   const overlay = document.getElementById('report-overlay');
+   if (overlay) { overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
+ });
+ document.querySelectorAll('.report-cat-btn').forEach(btn => {
+   btn.addEventListener('click', async () => {
+     const category = btn.dataset.cat;
+     const origHTML = btn.innerHTML;
+     btn.disabled = true;
+     btn.innerHTML = '<span style="opacity:0.6">送信中…</span>';
+     const result = await submitCommunityReport(category);
+     // close modal
+     const overlay = document.getElementById('report-overlay');
+     if (overlay) { overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
+     // restore buttons
+     document.querySelectorAll('.report-cat-btn').forEach(b => { b.disabled = false; });
+     btn.innerHTML = origHTML;
+     if (result === 'ok') {
+       triggerDynamicIsland('レポートを送信しました ✓', 'success');
+       if (communityReportsVisible) loadCommunityReports();
+     } else if (result === 'rate_limited') {
+       showCustomAlert('送信制限', '連続投稿を防ぐため1分間に1件のみ送信できます。', 'warning');
+     } else if (result === 'no_location') {
+       showCustomAlert('位置情報なし', '現在地を取得してから再試行してください。', 'warning');
+     } else {
+       showCustomAlert('送信失敗', '通信エラーが発生しました。オンライン状態を確認してください。', 'error');
+     }
+   });
+ });
+ document.getElementById('toggle-community-reports')?.addEventListener('change', function() {
+   toggleCommunityReportsLayer(this.checked);
  });
 
  btnTestAlert.addEventListener('click', () => {

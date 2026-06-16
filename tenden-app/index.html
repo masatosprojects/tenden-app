@@ -233,6 +233,16 @@
  </button>
  <span class="fab-label" style="color:#ff2d55;">海岸まで</span>
  </div>
+ <!-- コミュニティレポートボタン -->
+ <div class="fab-container" style="--stagger-index:4;">
+ <button id="btn-report" class="fab-btn" aria-label="危険レポート" style="color:#ff9f0a;">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+   <path d="M12 8v4M12 16h.01"/>
+ </svg>
+ </button>
+ <span class="fab-label" style="color:#ff9f0a;">レポート</span>
+ </div>
  </div>
  </div>
 
@@ -694,10 +704,49 @@
  <input type="checkbox" id="toggle-safe-edges" class="toggle-switch">
  </div>
 
+ <div class="toggle-group" style="border-top:1px solid var(--glass-border);margin-top:4px;padding-top:12px;">
+ <label>🗺️ みんなのレポート</label>
+ <input type="checkbox" id="toggle-community-reports" class="toggle-switch">
+ </div>
+
  </div>
  </div> <!-- settings-scroll-body -->
  </div> <!-- settings-dialog -->
  </div> <!-- settings-overlay -->
+
+ <!-- Community Report Modal -->
+ <div id="report-overlay" class="overlay hidden">
+ <div class="dialog glass-panel report-dialog">
+ <div class="dialog-header">
+ <h2>このエリアを報告</h2>
+ <button id="btn-report-close" class="close-btn">&times;</button>
+ </div>
+ <p class="dialog-subtitle" style="margin-bottom:16px;">現在地周辺の気になる場所を報告できます。みんなのレポートが防災に役立てられます。</p>
+ <div class="report-categories">
+ <button class="report-cat-btn" data-cat="danger">
+   <span class="report-cat-icon">⚠️</span>
+   <span>危険な場所・経路</span>
+ </button>
+ <button class="report-cat-btn" data-cat="sign_needed">
+   <span class="report-cat-icon">🪧</span>
+   <span>案内板・標識が必要</span>
+ </button>
+ <button class="report-cat-btn" data-cat="crowded">
+   <span class="report-cat-icon">👥</span>
+   <span>混雑している・渋滞</span>
+ </button>
+ <button class="report-cat-btn" data-cat="shelter_info">
+   <span class="report-cat-icon">🏠</span>
+   <span>避難所の状況</span>
+ </button>
+ <button class="report-cat-btn" data-cat="other">
+   <span class="report-cat-icon">📝</span>
+   <span>その他気になること</span>
+ </button>
+ </div>
+ <p class="report-privacy-note">📍 位置情報は約100m単位に丸めて匿名で送信されます</p>
+ </div>
+ </div>
 
  <!-- Custom Alert Overlay -->
  <div id="alert-overlay" class="overlay hidden">
@@ -894,6 +943,9 @@
  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+ <!-- Firebase SDK (compat v10 — CDN, no bundler needed) -->
+ <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
  <script src="app.js"></script>
 
 <!-- ======================================================
