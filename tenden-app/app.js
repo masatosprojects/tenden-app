@@ -225,35 +225,43 @@ document.addEventListener('DOMContentLoaded', () => {
    } else {
      communityReportLayer.clearLayers();
    }
-   const COLORS  = { danger:'#ff3b30', sign_needed:'#ff9f0a', crowded:'#5e5ce6', shelter_info:'#34c759', other:'#636366' };
-   const LABELS  = { danger:'⚠️ 危険', sign_needed:'🪧 看板必要', crowded:'👥 混雑', shelter_info:'🏠 避難所情報', other:'📝 その他' };
+   const COLORS = { danger:'#ff3b30', sign_needed:'#ff9f0a', crowded:'#5e5ce6', shelter_info:'#34c759', other:'#636366' };
+   const LABELS = { danger:'危険', sign_needed:'看板必要', crowded:'混雑', shelter_info:'避難所情報', other:'その他' };
    try {
      const snap = await firestoreDB.collection('reports').orderBy('ts','desc').limit(300).get();
      const grid = {};
      snap.forEach(doc => {
        const d = doc.data();
        const k = `${d.gridLat}_${d.gridLng}_${d.category}`;
-       grid[k] = (grid[k] || 0) + 1;
+       if (!grid[k]) grid[k] = { lat: d.gridLat, lng: d.gridLng, cat: d.category, comments: [] };
+       if (d.comment && d.comment.trim()) grid[k].comments.push(d.comment.trim());
      });
-     Object.entries(grid).forEach(([key, count]) => {
-       const parts = key.split('_');
-       const lat = parseFloat(parts[0]);
-       const lng = parseFloat(parts[1]);
-       const cat = parts[2];
+     Object.values(grid).forEach(entry => {
+       const { lat, lng, cat, comments } = entry;
+       const count = comments.length || 1;
+       const commentHtml = comments.length
+         ? '<hr style="margin:6px 0;opacity:0.3">' + comments.map(c => `<div style="margin:3px 0;font-size:0.88em">・${c}</div>`).join('')
+         : '';
        L.circleMarker([lat, lng], {
          radius: Math.min(7 + count * 2, 20),
          fillColor: COLORS[cat] || '#636366',
          color: 'white', weight: 2,
-         fillOpacity: 0.75, opacity: 1
-       }).bindPopup(`<b>${LABELS[cat] || cat}</b><br>報告数: ${count}件`).addTo(communityReportLayer);
+         fillOpacity: 0.82, opacity: 1
+       }).bindPopup(`<div style="min-width:140px"><b>${LABELS[cat] || cat}</b><br><span style="font-size:0.82em;opacity:0.7">報告数: ${count}件</span>${commentHtml}</div>`).addTo(communityReportLayer);
      });
    } catch (e) { console.error('[Firebase] load reports failed:', e); }
  }
 
  function toggleCommunityReportsLayer(visible) {
    communityReportsVisible = visible;
-   if (visible) { loadCommunityReports(); }
-   else if (communityReportLayer) { communityReportLayer.clearLayers(); }
+   const legend = document.getElementById('report-legend');
+   if (visible) {
+     loadCommunityReports();
+     if (legend) legend.classList.remove('hidden');
+   } else {
+     if (communityReportLayer) communityReportLayer.clearLayers();
+     if (legend) legend.classList.add('hidden');
+   }
  }
 
     console.log('[TENDEN] i18n.json 30-languages dictionary loaded successfully');
@@ -4898,13 +4906,11 @@ document.addEventListener('DOMContentLoaded', () => {
     _coastLastLoc = { lat: loc.lat, lng: loc.lng };
     _coastLastMs = now;
     const coast = await findNearestCoastline(loc);
-    if (!coast) return;
-    const d = Math.round(coast.distance);
-    const txt = d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`;
-    const badge = document.getElementById('coast-dist-badge');
     const val = document.getElementById('coast-dist-value');
-    if (val) val.textContent = txt;
-    if (badge) badge.classList.remove('hidden');
+    if (!val) return;
+    if (!coast) { val.textContent = '--'; return; }
+    const d = Math.round(coast.distance);
+    val.textContent = d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`;
   }
 
   async function drawProximityToCoastline(loc, showPopup) {

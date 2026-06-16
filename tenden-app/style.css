@@ -88,6 +88,44 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 .mode-emergency .elev-badge { background: rgba(255,255,255,0.1); }
 .coast-dist-badge { background: rgba(0,122,255,0.08); padding: 4px 10px; border-radius: 8px; color: var(--accent, #007aff); }
 .mode-emergency .coast-dist-badge { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* Community Reports Legend */
+.report-legend {
+    position: fixed;
+    bottom: 160px;
+    left: 14px;
+    z-index: 900;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 12px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    min-width: 120px;
+}
+.report-legend-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 7px;
+    letter-spacing: 0.02em;
+}
+.report-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+    color: #333;
+    margin-bottom: 4px;
+}
+.report-legend-item:last-child { margin-bottom: 0; }
+.report-legend-dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(255,255,255,0.9);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
 .slot-content { display: flex; align-items: center; gap: 6px; }
 
 /* Ambient breathing status orb */
