@@ -655,72 +655,26 @@ document.addEventListener('DOMContentLoaded', () => {
  });
 
  btnTestAlert.addEventListener('click', () => {
- document.getElementById('btn-test-alert').classList.add('hidden');
- 
- // Clear any old route layers & active simulations
- if (routeLayerGroup) routeLayerGroup.clearLayers();
- if (simulationInterval) {
- clearInterval(simulationInterval);
- simulationInterval = null;
- }
- 
- // Fly to Kamakura first
- map.flyTo(KAMAKURA_CENTER, 15, {
- duration: 1.5,
- easeLinearity: 0.25
- });
- 
- map.once('moveend', () => {
-  isWaitingForPinDrop = true;
-  
-  const crosshair = document.getElementById('crosshair-target');
-  if (crosshair) crosshair.classList.remove('hidden');
-  
-  // btn-set-pin を表示（リスナーはすでに下で登録済み）
-  const spBtn = document.getElementById('btn-set-pin');
-  if (spBtn) spBtn.classList.remove('hidden');
+   document.getElementById('btn-test-alert').classList.add('hidden');
 
-  // i18n 辞書を取得
-  const dict_popup = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   // Clear any old route layers & active simulations
+   if (routeLayerGroup) routeLayerGroup.clearLayers();
+   if (simulationInterval) {
+     clearInterval(simulationInterval);
+     simulationInterval = null;
+   }
 
-  // ── 学術紹介ポップアップ ──────────────────────────────────────
-  const _portalUrl = 'https://masatosprojects.github.io/kamakura-sim/';
-  const _introTitle = '鎌倉市由比ヶ浜における避難行動シミュレーションについて';
-  const _introDesc =
-    '本エリア（鎌倉市由比ヶ浜周辺）は、高校生研究者が学術的な避難行動' +
-    'シミュレーション研究を実施した対象地域です。<br><br>' +
-    '本アプリ「TENDEN」には、研究の成果である<b>道路混雑のシミュレーション統計（集計平均）</b>と' +
-    '<b>避難所の混雑予測データ（シミュレーションに基づく平均的な混雑状況）</b>が反映されています。<br><br>' +
-    '<a href="' + _portalUrl + '" target="_blank" ' +
-    'style="display:inline-flex;align-items:center;text-decoration:none;' +
-    'background:#007aff;color:#fff;padding:10px 16px;border-radius:10px;' +
-    'font-weight:700;font-size:0.88rem;margin-top:10px;">' +
-    '公式研究ポータルを見る →</a>';
+   // Fly to Kamakura, then immediately start emergency mode at model center
+   map.flyTo(KAMAKURA_CENTER, 15, { duration: 1.5, easeLinearity: 0.25 });
 
-  showCustomAlert(_introTitle, _introDesc, 'info', function() {
-    showCustomAlert(
-      dict_popup.alertLocationTitle || '避難開始位置を設定してください',
-      dict_popup.alertLocationDesc  || 'マップをドラッグして画面中央のターゲット（＋印）を避難開始位置に合わせてから、下部のボタンをタップしてください。',
-      'info'
-    );
-  });
-
-  }); // Close map.once!
-  }); // Close btnTestAlert!
-
- // ── 緊急モードプレビューボタン（発災時はこうなる） ──────────────
- const btnPreviewEmergency = document.getElementById('btn-preview-emergency');
- if (btnPreviewEmergency) {
-   btnPreviewEmergency.addEventListener('click', () => {
-     if (!currentLocation) {
-       isManualLocation = true;
-       currentLocation = { lat: KAMAKURA_CENTER[0], lng: KAMAKURA_CENTER[1] };
-       updateMarker(currentLocation);
-       fetchElevation(currentLocation);
-     }
+   map.once('moveend', () => {
+     isManualLocation = true;
+     currentLocation = { lat: KAMAKURA_CENTER[0], lng: KAMAKURA_CENTER[1] };
+     updateMarker(currentLocation);
+     fetchElevation(currentLocation);
      triggerEmergencyMode(true, 1, 'a');
    });
- }
+ }); // Close btnTestAlert!
 
   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   
