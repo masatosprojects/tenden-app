@@ -1147,9 +1147,15 @@ document.addEventListener('DOMContentLoaded', () => {
    });
  });
 
- // レポートカード（サイドパネル内）
+ // レポートカード（サイドパネル内）— レイヤーも自動ON
  document.getElementById('sp-report-card')?.addEventListener('click', () => {
    closeSidePanel();
+   // みんなのレポートレイヤーを自動表示
+   const layerToggle = document.getElementById('toggle-community-reports');
+   if (layerToggle && !layerToggle.checked) {
+     layerToggle.checked = true;
+     toggleCommunityReportsLayer(true);
+   }
    setTimeout(() => document.getElementById('btn-report')?.click(), 220);
  });
 
