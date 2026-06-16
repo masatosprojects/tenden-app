@@ -103,6 +103,9 @@
  <!-- UI Overlay Layer (Mobile First & Google Maps Style) -->
  <div id="ui-layer" class="mode-normal">
  
+ <!-- PWA floating toast (auto-dismiss) -->
+ <div id="pwa-toast" class="pwa-toast hidden" role="status" aria-live="polite"></div>
+
  <!-- Apple-style Dynamic Island Notification HUD -->
  <div id="dynamic-island" class="dynamic-island-collapsed hidden">
  <div class="island-content">
@@ -288,22 +291,8 @@
  <button class="action-btn primary-btn btn-large hidden" id="btn-set-pin" data-i18n="setPinBtn">
  ここにピンを打つ (避難開始)
  </button>
- <!-- PWA opt-in notice -->
- <div class="pwa-dev-notice" id="pwa-bottom-notice">
-   📡 オフラインモード：OFF — 常に最新データで動作中。⚙️ 設定から「オフライン緊急モード」をONにすると、電波なしでも使えます。
- </div>
-
- <!-- Community Report Card -->
- <div class="community-report-card" id="community-report-card">
- <div class="crc-left">
-   <span class="crc-icon">🗺️</span>
-   <div class="crc-text">
-     <div class="crc-title">気になる場所を報告する</div>
-     <div class="crc-sub">みんなの減災への参加に役立てられます</div>
-   </div>
- </div>
- <button id="btn-report" class="crc-action-btn">報告する</button>
- </div>
+ <!-- hidden btn-report trigger (used by sp-report-card) -->
+ <button id="btn-report" class="hidden" aria-hidden="true"></button>
  </div>
 
  <!-- Emergency Mode Banner (Takes over bottom sheet during evac) -->

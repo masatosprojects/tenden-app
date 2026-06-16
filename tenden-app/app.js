@@ -1203,29 +1203,31 @@ document.addEventListener('DOMContentLoaded', () => {
  takeScreenshot();
  });
 
+ // PWAフローティングトースト表示（起動時3秒後に消える）
+ function showPwaToast(msg) {
+   const t = document.getElementById('pwa-toast');
+   if (!t) return;
+   t.textContent = msg;
+   t.classList.remove('hidden', 'dismissing');
+   setTimeout(() => {
+     t.classList.add('dismissing');
+     t.addEventListener('animationend', () => t.classList.add('hidden'), { once: true });
+   }, 3500);
+ }
+
  // PWAオフラインモードトグル
  const pwaOfflineToggle = document.getElementById('pwa-offline-toggle');
  if (pwaOfflineToggle) {
    const _pwaOn = localStorage.getItem('tenden-pwa-enabled') === '1';
    pwaOfflineToggle.checked = _pwaOn;
    const _statusEl = document.getElementById('pwa-toggle-status');
-   const _bottomNotice = document.getElementById('pwa-bottom-notice');
    if (_statusEl) _statusEl.textContent = _pwaOn ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
-   if (_bottomNotice) {
-     _bottomNotice.textContent = _pwaOn
-       ? '📶 オフラインモード：ON — ネット不要で動作します。'
-       : '📡 オフラインモード：OFF — ⚙️設定からONにすると電波なしでも使えます。';
-     setTimeout(() => _bottomNotice.classList.add('dismissed'), 4000);
-   }
+   setTimeout(() => showPwaToast(_pwaOn ? '📶 オフラインモード ON' : '📡 オフラインモード OFF — ⚙️設定でONにすると電波なしでも使えます'), 1200);
    pwaOfflineToggle.addEventListener('change', () => {
      const enabling = pwaOfflineToggle.checked;
      localStorage.setItem('tenden-pwa-enabled', enabling ? '1' : '0');
      const statusEl = document.getElementById('pwa-toggle-status');
-     const bottomNotice = document.getElementById('pwa-bottom-notice');
      if (statusEl) statusEl.textContent = enabling ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
-     if (bottomNotice) bottomNotice.textContent = enabling
-       ? '📶 オフラインモード：ON — 地図・データをキャッシュ済み。ネット不要で動作します。'
-       : '📡 オフラインモード：OFF — 常に最新データで動作中。⚙️ 設定からONにすると電波なしでも使えます。';
      if (enabling) {
        if (confirm('オフライン緊急モードを有効にします。\n\n地図とデータをキャッシュし、ネット接続なしでも動作します。\nただしアプリの更新が自動で届かなくなります。\n\n有効にしますか？')) {
          location.reload();
