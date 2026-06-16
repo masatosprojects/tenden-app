@@ -1263,6 +1263,10 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('btn-side-panel-close')?.addEventListener('click', closeSidePanel);
  document.getElementById('side-panel-backdrop')?.addEventListener('click', closeSidePanel);
  document.getElementById('sp-eq-refresh')?.addEventListener('click', loadQuakeTsunamiPanel);
+ document.getElementById('sp-quake-card')?.addEventListener('click', () => {
+   loadQuakeTsunamiPanel();
+   document.querySelector('.sp-eq-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+ });
 
  // カード → 対応ボタンをトリガー
  document.querySelectorAll('.sp-card[data-trigger]').forEach(card => {
