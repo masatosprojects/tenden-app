@@ -4885,33 +4885,37 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // ── 方法1: OpenStreetMap Overpass API (日本全国対応) ──
-    // 現在地から近い順に検索半径を広げ、真に最も近い海岸線データが
-    // 取得範囲外で見つからない事態（内陸部で20km圏内に海岸線が無い等）を避ける。
-    for (const radius of [20000, 60000, 120000]) {
-      const found = await queryOverpassCoastline(radius, radius <= 20000 ? 6000 : 12000);
-      if (found) return found;
-    }
-
-    // ── 方法2: 鎌倉・湘南ハードコードフォールバック（オフライン時のみ） ──
-    // Overpassが完全に利用不可（オフライン等）の場合のみ使用。
-    // 現在地が鎌倉から遠い場合にこのローカル座標を「最も近い海岸線」として
-    // 誤って提示しないよう、算出距離が現実的な範囲を超える場合はnullを返す。
+    // 鎌倉・湘南エリア境界（詳細海岸線座標）
     var COAST = [
       [35.3098,139.4632],[35.3060,139.4880],[35.3060,139.5000],
       [35.3063,139.5180],[35.3052,139.5380],[35.3052,139.5500],
       [35.3062,139.5600],[35.3083,139.5660],[35.3108,139.5660],
       [35.3105,139.5690],[35.3078,139.5780],[35.3065,139.5800],
     ];
-    var bestD=Infinity, bestP=null;
-    for(var i=0;i<COAST.length-1;i++){
-      var a=COAST[i],b=COAST[i+1];
-      var np=nearestPtOnSeg(loc.lat,loc.lng,a[0],a[1],b[0],b[1]);
-      var d=haversine(loc.lat,loc.lng,np.lat,np.lng);
-      if(d<bestD){bestD=d;bestP=np;}
+    function localCoastResult() {
+      var bestD=Infinity, bestP=null;
+      for(var i=0;i<COAST.length-1;i++){
+        var a=COAST[i],b=COAST[i+1];
+        var np=nearestPtOnSeg(loc.lat,loc.lng,a[0],a[1],b[0],b[1]);
+        var d=haversine(loc.lat,loc.lng,np.lat,np.lng);
+        if(d<bestD){bestD=d;bestP=np;}
+      }
+      return (bestP && bestD < 35000) ? {lat:bestP.lat,lng:bestP.lng,distance:bestD,source:'Kamakura Local'} : null;
     }
-    if(bestP && bestD < 30000) return {lat:bestP.lat,lng:bestP.lng,distance:bestD,source:'Kamakura Local'};
-    return null;
+
+    // ── 方法1: 鎌倉エリア内なら即座にローカルデータを使用（応答 < 1ms）──
+    const inKamakuraArea = loc.lat >= 35.26 && loc.lat <= 35.42 && loc.lng >= 139.43 && loc.lng <= 139.62;
+    if (inKamakuraArea) {
+      const local = localCoastResult();
+      if (local) return local;
+    }
+
+    // ── 方法2: エリア外はOverpass API（タイムアウト短縮: 5秒1回のみ）──
+    const found = await queryOverpassCoastline(30000, 5000);
+    if (found) return found;
+
+    // ── 方法3: フォールバック（ローカル座標・鎌倉エリア外でも試みる）──
+    return localCoastResult();
   }
 
   // 海岸距離をステータスバーに常時表示（スロットル: 120秒 or 200m移動）
