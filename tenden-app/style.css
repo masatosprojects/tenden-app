@@ -840,6 +840,21 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     text-align: center;
 }
 .dialog-icon { margin-bottom: 16px; }
+/* Friendly circular icon badge — reads as guidance, not failure */
+.dialog-icon-badge {
+    width: 68px; height: 68px;
+    margin: 4px auto 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary);
+    background: radial-gradient(circle at 50% 38%, rgba(0,122,255,0.18), rgba(0,122,255,0.08));
+    box-shadow: 0 0 0 6px rgba(0,122,255,0.06), inset 0 1px 1px rgba(255,255,255,0.4);
+    animation: dialogIconPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes dialogIconPop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
 .dialog h2 { font-size: 1.3rem; margin-bottom: 12px; }
 .dialog p { font-size: 0.95rem; opacity: 0.8; margin-bottom: 24px; line-height: 1.5; }
 
@@ -1301,6 +1316,118 @@ input:checked + .slider:before {
 }
 
 /* ==========================================================================
+   STATUS BAR CLARITY REFRESH
+   The top bar's job, in priority order: (1) am I in the flood zone?
+   (2) how high am I / how far from the coast? (3) device status.
+   ========================================================================== */
+
+/* ── Tier 1 · Inundation verdict — the hero safety signal ────────────────── */
+/* JS swaps this box's class to .dash-info-card + .tsunami-status-safe/danger
+   once a verdict is known (it starts as a plain .status-badge "判定中…"). */
+#tsunami-status-box.dash-info-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px 5px 11px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+/* Once a verdict shows, the "浸水予測:" prefix is redundant with "浸水想定 外/内" */
+#tsunami-status-box.dash-info-card .status-icon { display: none !important; }
+#tsunami-status-box.dash-info-card strong { font-weight: 700; letter-spacing: 0.01em; }
+
+/* Leading verdict glyph, tinted by the pill's text colour via mask alpha */
+#tsunami-status-box.dash-info-card::before {
+    content: '';
+    width: 15px; height: 15px;
+    flex-shrink: 0;
+    background: currentColor;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center; mask-position: center;
+    -webkit-mask-size: contain; mask-size: contain;
+}
+
+/* SAFE — calm, reassuring green with a check */
+#tsunami-status-box.tsunami-status-safe {
+    background: linear-gradient(135deg, rgba(52,199,89,0.15), rgba(48,209,88,0.24)) !important;
+    border-color: rgba(52,199,89,0.40) !important;
+    color: #1f8f3b !important;
+    box-shadow: 0 1px 3px rgba(52,199,89,0.18) !important;
+    animation: none !important;
+}
+#tsunami-status-box.tsunami-status-safe::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M20%206L9%2017l-5-5'%20fill='none'%20stroke='black'%20stroke-width='2.6'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M20%206L9%2017l-5-5'%20fill='none'%20stroke='black'%20stroke-width='2.6'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* DANGER — keep the existing red gradient/pulse, just round it and add a triangle */
+#tsunami-status-box.tsunami-status-danger {
+    border-radius: 999px !important;
+    padding: 5px 13px 5px 11px !important;
+}
+#tsunami-status-box.tsunami-status-danger::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M12%203l10%2017H2z'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linejoin='round'/%3E%3Cpath%20d='M12%209v5'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'/%3E%3Cpath%20d='M12%2017.4v.2'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'/%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M12%203l10%2017H2z'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linejoin='round'/%3E%3Cpath%20d='M12%209v5'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'/%3E%3Cpath%20d='M12%2017.4v.2'%20stroke='black'%20stroke-width='2.3'%20stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.mode-emergency #tsunami-status-box.tsunami-status-safe { color: #5be584 !important; }
+
+/* ── Tier 2 + 3 · Metric chips and device status (mobile / mock frame) ───── */
+@media (max-width: 480px), (min-width: 769px) {
+    .top-status-bar { gap: 7px; }
+    .status-left { padding-bottom: 7px; }
+
+    /* Elevation + coast distance are the two glanceable safety numbers */
+    .elev-badge, .coast-dist-badge {
+        padding: 4px 11px !important;
+        border-radius: 10px !important;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .elev-badge { background: rgba(0,0,0,0.045) !important; }
+    .coast-dist-badge {
+        background: rgba(0,122,255,0.08) !important;
+        border-color: rgba(0,122,255,0.14) !important;
+        color: var(--primary);
+    }
+    .elev-badge .status-icon,
+    .coast-dist-badge .status-icon {
+        opacity: 0.55;
+        font-weight: 600;
+        font-size: 0.72rem;
+    }
+    .elev-badge strong, .coast-dist-badge strong {
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* GPS is diagnostic, not a safety metric — keep it light and quiet */
+    .gps-badge {
+        padding: 4px 9px !important;
+        background: rgba(0,0,0,0.035) !important;
+        border-radius: 10px !important;
+        opacity: 0.92;
+    }
+    .gps-badge strong { font-weight: 600; font-size: 0.78rem; }
+
+    .network-badge {
+        padding: 4px 9px !important;
+        border-radius: 10px !important;
+    }
+    .network-badge strong { font-weight: 600; }
+
+    .mode-emergency .elev-badge,
+    .mode-emergency .coast-dist-badge,
+    .mode-emergency .gps-badge {
+        background: rgba(255,255,255,0.08) !important;
+        border-color: rgba(255,255,255,0.10);
+    }
+}
+
+/* ==========================================================================
    5螟ｧ繝励Ξ繝溘い繝繝ｻ繝・じ繧､繝ｳ繝ｻ繧ｷ繧ｹ繝・Β繝ｻ繧｢繝・・繝・・繝・
    ========================================================================== */
 
@@ -1449,6 +1576,24 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     pointer-events: auto !important;
     -webkit-user-select: none;
     touch-action: manipulation;
+    /* Immersive branded backdrop so the live app chrome recedes during onboarding */
+    background: linear-gradient(165deg, #0a0a1a 0%, #001133 55%, #00284d 100%) !important;
+}
+/* Soft aurora glow above the card for depth */
+#onboarding-overlay.overlay.active::before {
+    content: '';
+    position: absolute;
+    top: 8%; left: 50%;
+    width: 320px; height: 320px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(0,122,255,0.28) 0%, rgba(94,92,230,0.12) 45%, transparent 70%);
+    filter: blur(8px);
+    pointer-events: none;
+    animation: onboardAuroraDrift 7s ease-in-out infinite alternate;
+}
+@keyframes onboardAuroraDrift {
+    0%   { transform: translateX(-50%) translateY(0) scale(1); opacity: 0.85; }
+    100% { transform: translateX(-50%) translateY(18px) scale(1.12); opacity: 1; }
 }
 /* ボタン・インタラクティブ要素のタップを確実に通す */
 #onboarding-overlay.overlay.active button,
@@ -1537,12 +1682,19 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .demo-logo-wrap {
     display: flex;
     justify-content: center;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
 }
 .demo-logo-gif {
-    width: 72px;
-    height: 72px;
-    object-fit: contain;
+    width: 76px;
+    height: 76px;
+    object-fit: cover;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,40,90,0.28), 0 0 0 1px rgba(255,255,255,0.06) inset;
+    animation: demoLogoFloat 3.5s ease-in-out infinite alternate;
+}
+@keyframes demoLogoFloat {
+    0%   { transform: translateY(0); box-shadow: 0 8px 24px rgba(0,40,90,0.28); }
+    100% { transform: translateY(-5px); box-shadow: 0 14px 30px rgba(0,40,90,0.34); }
 }
 .demo-hero-title {
     font-size: clamp(20px, 5vw, 26px);
