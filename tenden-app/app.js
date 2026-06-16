@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var ver = 'v62';
+     var ver = 'v63';
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
        localStorage.setItem('tenden-pwa-ver', ver);
@@ -1192,8 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
    annBadge.classList.remove('hidden');
  }
 
- // 起動時ポップアップ（スプラッシュ後に表示）
- setTimeout(showStartupNoticeIfNeeded, 2200);
+ // 起動時ポップアップはオンボーディング完了後 or すでに見た場合は即時（後述）
 
  function closeModelAreaOverlay() {
  const overlay = document.getElementById('model-area-overlay');
@@ -4901,6 +4900,7 @@ function wireOnboardingButtons() {
       setTimeout(function() { ov.classList.add('hidden'); }, 300);
     }
     try { localStorage.setItem('tenden-demo-seen', 'true'); } catch(e) {}
+    setTimeout(function() { try { showStartupNoticeIfNeeded(); } catch(e) {} }, 600);
   }
   function goFB(step) {
     document.querySelectorAll('.demo-step').forEach(function(el) { el.classList.remove('active'); });
@@ -5633,6 +5633,7 @@ function startOnboardingDemo() {
  overlay.classList.remove('active');
  overlay.classList.add('hidden');
  requestLocation();
+ setTimeout(showStartupNoticeIfNeeded, 800);
  return;
  }
 
@@ -5761,6 +5762,7 @@ function startOnboardingDemo() {
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
  localStorage.setItem('tenden-demo-seen', 'true');
+ setTimeout(showStartupNoticeIfNeeded, 600);
  }
 
  // 笏笏 Button wiring
