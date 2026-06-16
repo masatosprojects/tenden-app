@@ -308,6 +308,24 @@
      </div>
    </button>
  </div>
+
+ <!-- Earthquake & Tsunami Info Panel -->
+ <div class="sp-eq-section">
+   <div class="sp-section-header">
+     <div class="sp-section-title">
+       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13" stroke-linecap="round"><path d="M2 12h2M20 12h2M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/><circle cx="12" cy="12" r="4"/></svg>
+       地震・津波情報
+     </div>
+     <button id="sp-eq-refresh" class="sp-eq-refresh-btn" aria-label="更新">
+       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+     </button>
+   </div>
+   <span id="sp-eq-updated" class="sp-eq-updated">--</span>
+   <div id="sp-tsunami-alert-panel" class="sp-tsunami-alert-panel hidden"></div>
+   <div id="sp-eq-list" class="sp-eq-list">
+     <div class="sp-eq-placeholder">サイドバーを開くと読み込みます</div>
+   </div>
+ </div>
  </div>
 
  <!-- Developer Announcements Overlay -->

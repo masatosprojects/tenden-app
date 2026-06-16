@@ -1138,6 +1138,8 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  // ── サイドパネル ────────────────────────────────────────────────────────
+ let _eqPollTimer = null;
+
  function openSidePanel() {
    const backdrop = document.getElementById('side-panel-backdrop');
    const panel = document.getElementById('side-panel');
@@ -1149,6 +1151,8 @@ document.addEventListener('DOMContentLoaded', () => {
      panel.classList.add('open');
    });
    triggerHapticTick();
+   loadQuakeTsunamiPanel();
+   if (!_eqPollTimer) _eqPollTimer = setInterval(loadQuakeTsunamiPanel, 120000);
  }
  function closeSidePanel() {
    const backdrop = document.getElementById('side-panel-backdrop');
@@ -1160,10 +1164,104 @@ document.addEventListener('DOMContentLoaded', () => {
      backdrop.classList.add('hidden');
      panel.classList.add('hidden');
    }, 420);
+   if (_eqPollTimer) { clearInterval(_eqPollTimer); _eqPollTimer = null; }
+ }
+
+ // ── 地震・津波情報パネル ─────────────────────────────────────────────────
+ async function loadQuakeTsunamiPanel() {
+   const listEl = document.getElementById('sp-eq-list');
+   const alertEl = document.getElementById('sp-tsunami-alert-panel');
+   const updEl = document.getElementById('sp-eq-updated');
+   if (!listEl || !alertEl) return;
+   listEl.innerHTML = '<div class="sp-eq-placeholder">読み込み中…</div>';
+   try {
+     const [eqRes, tsRes] = await Promise.all([
+       fetch('https://api.p2pquake.net/v2/history?codes=551&limit=5', { signal: AbortSignal.timeout(8000) }),
+       fetch('https://api.p2pquake.net/v2/history?codes=552&limit=3', { signal: AbortSignal.timeout(8000) })
+     ]);
+     const eqList = eqRes.ok ? await eqRes.json() : [];
+     const tsList = tsRes.ok ? await tsRes.json() : [];
+
+     // 津波警報バナー
+     const activeTsunami = tsList.find(t => !t.cancelled);
+     if (activeTsunami && activeTsunami.areas?.length) {
+       alertEl.classList.remove('hidden');
+       const gradeOrder = { MajorWarning: 3, Warning: 2, Watch: 1 };
+       const maxGrade = activeTsunami.areas.reduce((best, a) =>
+         (gradeOrder[a.grade] || 0) > (gradeOrder[best] || 0) ? a.grade : best, 'Watch');
+       const gradeLabel = { MajorWarning: '大津波警報', Warning: '津波警報', Watch: '津波注意報' };
+       const gradeColor = { MajorWarning: '#ff3b30', Warning: '#ff9f0a', Watch: '#ffcc00' };
+       const areas = activeTsunami.areas.map(a => a.name).join('・');
+       alertEl.innerHTML = `
+         <div class="sp-tsunami-grade" style="color:${gradeColor[maxGrade]||'#ff9f0a'}">
+           ⚠ ${gradeLabel[maxGrade]||'津波情報'} 発令中
+         </div>
+         <div class="sp-tsunami-areas">${areas}</div>`;
+     } else {
+       alertEl.classList.add('hidden');
+       alertEl.innerHTML = '';
+     }
+
+     // 地震リスト
+     if (!eqList.length) {
+       listEl.innerHTML = '<div class="sp-eq-placeholder">データなし</div>';
+     } else {
+       listEl.innerHTML = eqList.map(eq => {
+         const e = eq.earthquake || {};
+         const h = e.hypocenter || {};
+         const mag = h.magnitude != null ? h.magnitude : '?';
+         const place = h.name || '震源不明';
+         const depth = h.depth != null && h.depth >= 0 ? `深さ ${h.depth}km` : '';
+         const scaleLabel = _eqScaleToLabel(e.maxScale);
+         const tsunamiInfo = _eqTsunamiLabel(e.domesticTsunami);
+         const timeStr = _eqRelativeTime(eq.time || e.time);
+         const magColor = mag >= 6 ? '#ff3b30' : mag >= 5 ? '#ff9f0a' : mag >= 3 ? '#ffd60a' : '#8e8e93';
+         const borderColor = e.domesticTsunami === 'Warning' ? '#ff3b30'
+           : e.domesticTsunami === 'Watch' ? '#ff9f0a'
+           : e.domesticTsunami === 'NonEffective' ? '#ffd60a'
+           : 'rgba(255,255,255,0.12)';
+         const tsBadge = tsunamiInfo
+           ? `<span class="sp-eq-ts-badge" style="background:${borderColor};color:${e.domesticTsunami === 'None' ? '#fff' : '#000'}">${tsunamiInfo}</span>` : '';
+         return `<div class="sp-eq-item" style="border-left-color:${borderColor}">
+           <div class="sp-eq-row1">
+             <span class="sp-eq-mag" style="color:${magColor}">M${mag}</span>
+             <span class="sp-eq-place">${place}</span>
+           </div>
+           <div class="sp-eq-row2">
+             <span class="sp-eq-meta">${[depth, scaleLabel ? `震度 ${scaleLabel}` : ''].filter(Boolean).join('　')}</span>
+             ${tsBadge}
+           </div>
+           <div class="sp-eq-time">${timeStr}</div>
+         </div>`;
+       }).join('');
+     }
+     if (updEl) updEl.textContent = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' }) + ' 更新';
+   } catch (err) {
+     listEl.innerHTML = '<div class="sp-eq-placeholder">取得失敗（オフライン？）</div>';
+     console.warn('[QuakePanel]', err);
+   }
+ }
+
+ function _eqScaleToLabel(s) {
+   return { 10:'1', 20:'2', 30:'3', 40:'4', 45:'5弱', 50:'5強', 55:'6弱', 60:'6強', 70:'7' }[s] || (s === -1 ? '不明' : '');
+ }
+ function _eqTsunamiLabel(t) {
+   return { None:'', Unknown:'調査中', Checking:'調査中', NonEffective:'海面変動あり', Watch:'注意報', Warning:'警報発令' }[t] || '';
+ }
+ function _eqRelativeTime(str) {
+   if (!str) return '';
+   const d = new Date(str.replace(/\//g, '-').replace(' ', 'T') + '+09:00');
+   const diff = Math.floor((Date.now() - d.getTime()) / 60000);
+   if (isNaN(diff) || diff < 0) return str.slice(5, 16);
+   if (diff < 1) return 'たった今';
+   if (diff < 60) return `${diff}分前`;
+   if (diff < 1440) return `${Math.floor(diff / 60)}時間前`;
+   return `${Math.floor(diff / 1440)}日前`;
  }
  document.getElementById('btn-open-side-panel')?.addEventListener('click', openSidePanel);
  document.getElementById('btn-side-panel-close')?.addEventListener('click', closeSidePanel);
  document.getElementById('side-panel-backdrop')?.addEventListener('click', closeSidePanel);
+ document.getElementById('sp-eq-refresh')?.addEventListener('click', loadQuakeTsunamiPanel);
 
  // カード → 対応ボタンをトリガー
  document.querySelectorAll('.sp-card[data-trigger]').forEach(card => {
@@ -3438,27 +3536,39 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  // code 551 = 豌苓ｱ｡蠎∫匱陦ｨ縲梧ｴ･豕｢諠・ｱ縲・ code 556 = 邱頑･蝨ｰ髴・溷ｱ・井ｺ亥ｱ・・
- if (data.code === 551 || data.code === 556) {
- // 豢･豕｢隴ｦ蝣ｱ繧ｯ繝ｩ繧ｹ繧堤｢ｺ隱・
- const forecasts = data?.tsunami?.comments?.forecast?.text ?? '';
- const isTsunamiWarning =
- forecasts.includes('大地震速報') ||
- forecasts.includes('地震速報') ||
- data.code === 551; // 地震情報が来た時点で緊急モード発動
+ if (data.code === 551 || data.code === 552 || data.code === 556) {
+   // サイドパネルが開いていればリストを即時更新
+   const panel = document.getElementById('side-panel');
+   if (panel && panel.classList.contains('open')) loadQuakeTsunamiPanel();
 
- if (isTsunamiWarning) {
- setP2PStatus('alert');
- }
- if (isTsunamiWarning && !isEmergency) {
-  console.warn('[P2P] Tsunami warning received -> Triggering auto-evacuation check...');
- const p2pAuto = localStorage.getItem('tenden-p2p-auto') !== 'false';
- if (p2pAuto) {
- triggerEmergencyMode(false, 1, 'a');
- if ('vibrate' in navigator) {
- navigator.vibrate([300, 100, 300, 100, 300]);
- }
- }
- }
+   if (data.code === 552) {
+     // 津波警報 (code 552)
+     if (!data.cancelled) {
+       setP2PStatus('alert');
+       const p2pAuto = localStorage.getItem('tenden-p2p-auto') !== 'false';
+       if (p2pAuto && !isEmergency) {
+         triggerEmergencyMode(false, 1, 'a');
+         if ('vibrate' in navigator) navigator.vibrate([300, 100, 300, 100, 300]);
+       }
+     }
+   }
+
+   if (data.code === 551 || data.code === 556) {
+     const forecasts = data?.tsunami?.comments?.forecast?.text ?? '';
+     const isTsunamiWarning =
+       forecasts.includes('大地震速報') ||
+       forecasts.includes('地震速報') ||
+       data.code === 551;
+     if (isTsunamiWarning) setP2PStatus('alert');
+     if (isTsunamiWarning && !isEmergency) {
+       console.warn('[P2P] Tsunami warning received -> Triggering auto-evacuation check...');
+       const p2pAuto = localStorage.getItem('tenden-p2p-auto') !== 'false';
+       if (p2pAuto) {
+         triggerEmergencyMode(false, 1, 'a');
+         if ('vibrate' in navigator) navigator.vibrate([300, 100, 300, 100, 300]);
+       }
+     }
+   }
  }
  };
 

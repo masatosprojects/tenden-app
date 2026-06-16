@@ -1971,5 +1971,134 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     border: 1px solid rgba(255,255,255,0.2);
 }
 
+/* ── 地震・津波情報パネル ─────────────────────────────── */
+.sp-eq-section {
+    padding: 14px 14px 10px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin-top: 4px;
+}
+.sp-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+.sp-section-title {
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: var(--text-secondary, #8e8e93);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.sp-eq-refresh-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary, #636366);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s;
+}
+.sp-eq-refresh-btn:active { color: var(--accent, #007aff); }
+.sp-eq-updated {
+    font-size: 0.67rem;
+    color: var(--text-tertiary, #636366);
+    display: block;
+    margin-bottom: 8px;
+}
+/* 津波警報バナー */
+.sp-tsunami-alert-panel {
+    background: rgba(255,59,48,0.1);
+    border: 1.5px solid rgba(255,59,48,0.4);
+    border-radius: 10px;
+    padding: 9px 11px;
+    margin-bottom: 8px;
+    animation: tsAlertPulse 2s ease-in-out infinite;
+}
+@keyframes tsAlertPulse {
+    0%, 100% { border-color: rgba(255,59,48,0.4); }
+    50%       { border-color: rgba(255,59,48,0.85); }
+}
+.sp-tsunami-grade {
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+.sp-tsunami-areas {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #8e8e93);
+    line-height: 1.5;
+}
+/* 地震リスト */
+.sp-eq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+.sp-eq-placeholder {
+    font-size: 0.76rem;
+    color: var(--text-tertiary, #636366);
+    padding: 10px 0;
+    text-align: center;
+}
+.sp-eq-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-left: 3px solid #3a3a3c;
+    border-radius: 9px;
+    padding: 8px 10px 7px;
+}
+.sp-eq-row1 {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    margin-bottom: 3px;
+}
+.sp-eq-mag {
+    font-size: 0.9rem;
+    font-weight: 700;
+    min-width: 38px;
+    letter-spacing: -0.02em;
+}
+.sp-eq-place {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-primary, #fff);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sp-eq-row2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 2px;
+}
+.sp-eq-meta {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #8e8e93);
+}
+.sp-eq-ts-badge {
+    font-size: 0.63rem;
+    font-weight: 700;
+    color: #000;
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.sp-eq-time {
+    font-size: 0.67rem;
+    color: var(--text-tertiary, #636366);
+}
 
 .log-item.error { color: #ff3b30; background: rgba(255,59,48,0.1); }
