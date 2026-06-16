@@ -125,25 +125,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-  // Register Service Worker (DISABLED FOR DEV CACHE BYPASS)
-  /*
-   if ('serviceWorker' in navigator) {
-   window.addEventListener('load', () => {
-   navigator.serviceWorker.register('sw.js').catch(err => {
-   console.log('SW registration failed: ', err);
-   });
-   });
-   }
-  */
-  // Force unregister existing Service Workers to clear caching issues immediately
+  // Service Worker: disabled when localStorage 'tenden-sw-disabled' !== '0' (default=disabled)
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (let r of registrations) {
-        r.unregister().then(() => {
-          console.log('[TENDEN] Active Service Worker successfully unregistered to bypass cache.');
+    const swDisabled = localStorage.getItem('tenden-sw-disabled') !== '0';
+    if (swDisabled) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let r of registrations) r.unregister();
+      });
+    } else {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => {
+          console.log('[SW] registration failed: ', err);
         });
-      }
-    });
+      });
+    }
   }
 
  function initMap() {
@@ -875,6 +870,15 @@ document.addEventListener('DOMContentLoaded', () => {
  if (safeEdgesLayerGroup) map.removeLayer(safeEdgesLayerGroup);
  }
  });
+ }
+
+ const swDisableToggle = document.getElementById('toggle-sw-disable');
+ if (swDisableToggle) {
+   swDisableToggle.checked = localStorage.getItem('tenden-sw-disabled') !== '0';
+   swDisableToggle.addEventListener('change', () => {
+     localStorage.setItem('tenden-sw-disabled', swDisableToggle.checked ? '1' : '0');
+     window.location.reload();
+   });
  }
 
  const btnGpsLocation = document.getElementById('btn-gps-location');
