@@ -288,9 +288,9 @@
  <button class="action-btn primary-btn btn-large hidden" id="btn-set-pin" data-i18n="setPinBtn">
  ここにピンを打つ (避難開始)
  </button>
- <!-- Development notice: PWA disabled -->
- <div class="pwa-dev-notice">
-   📡 現在オフライン機能は開発のため一時停止中 — インターネット接続が必要です。現段階では平時の避難ルート確認・防災準備にご利用ください。
+ <!-- PWA opt-in notice -->
+ <div class="pwa-dev-notice" id="pwa-bottom-notice">
+   📡 オフラインモード：OFF — 常に最新データで動作中。⚙️ 設定から「オフライン緊急モード」をONにすると、電波なしでも使えます。
  </div>
 
  <!-- Community Report Card -->
@@ -693,12 +693,19 @@
  </label>
  </div>
 
- <!-- PWA development status notice -->
+ <!-- PWA offline mode toggle -->
  <div class="form-group">
- <div class="dev-notice-settings">
-   <strong>⚠️ PWA機能：現在停止中（開発中）</strong><br>
-   オフラインキャッシュは無効です。インターネット接続が必要です。アプリ完成後に再有効化されます。
- </div>
+   <label style="margin-bottom:8px; display:block;">オフライン緊急モード（PWA）</label>
+   <div class="pwa-toggle-row">
+     <div class="pwa-toggle-info">
+       <div id="pwa-toggle-status" class="pwa-toggle-status">オフラインモード：OFF（自動更新あり）</div>
+       <div class="pwa-toggle-desc">ONにすると地図・データをキャッシュし、ネット不要で動作します。ただしアプリの更新が自動で届かなくなります。</div>
+     </div>
+     <label class="switch-container" style="flex-shrink:0; margin-left:12px;">
+       <input type="checkbox" id="pwa-offline-toggle">
+       <span class="slider round"></span>
+     </label>
+   </div>
  </div>
 
  <!-- Data Management & Safe Initializer reset button -->

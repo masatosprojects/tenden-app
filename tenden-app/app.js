@@ -217,10 +217,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-  // ⚠️ PWA一時停止中（開発中）— SWを常時解除、キャッシュは sw.js 側でクリア
+  // PWAオフラインモード — ユーザーが設定でONにした場合のみSWを登録
+  const _pwaEnabled = localStorage.getItem('tenden-pwa-enabled') === '1';
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-    navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+    if (_pwaEnabled) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    } else {
+      navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
   }
 
  function initMap() {
@@ -1190,6 +1195,41 @@ document.addEventListener('DOMContentLoaded', () => {
  btnScreenshot.addEventListener('click', () => {
  takeScreenshot();
  });
+
+ // PWAオフラインモードトグル
+ const pwaOfflineToggle = document.getElementById('pwa-offline-toggle');
+ if (pwaOfflineToggle) {
+   const _pwaOn = localStorage.getItem('tenden-pwa-enabled') === '1';
+   pwaOfflineToggle.checked = _pwaOn;
+   const _statusEl = document.getElementById('pwa-toggle-status');
+   const _bottomNotice = document.getElementById('pwa-bottom-notice');
+   if (_statusEl) _statusEl.textContent = _pwaOn ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
+   if (_bottomNotice) _bottomNotice.textContent = _pwaOn
+     ? '📶 オフラインモード：ON — 地図・データをキャッシュ済み。ネット不要で動作します。'
+     : '📡 オフラインモード：OFF — 常に最新データで動作中。⚙️ 設定から「オフライン緊急モード」をONにすると、電波なしでも使えます。';
+   pwaOfflineToggle.addEventListener('change', () => {
+     const enabling = pwaOfflineToggle.checked;
+     localStorage.setItem('tenden-pwa-enabled', enabling ? '1' : '0');
+     const statusEl = document.getElementById('pwa-toggle-status');
+     const bottomNotice = document.getElementById('pwa-bottom-notice');
+     if (statusEl) statusEl.textContent = enabling ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
+     if (bottomNotice) bottomNotice.textContent = enabling
+       ? '📶 オフラインモード：ON — 地図・データをキャッシュ済み。ネット不要で動作します。'
+       : '📡 オフラインモード：OFF — 常に最新データで動作中。⚙️ 設定からONにすると電波なしでも使えます。';
+     if (enabling) {
+       if (confirm('オフライン緊急モードを有効にします。\n\n地図とデータをキャッシュし、ネット接続なしでも動作します。\nただしアプリの更新が自動で届かなくなります。\n\n有効にしますか？')) {
+         location.reload();
+       } else {
+         pwaOfflineToggle.checked = false;
+         localStorage.setItem('tenden-pwa-enabled', '0');
+         if (statusEl) statusEl.textContent = 'オフラインモード：OFF（自動更新あり）';
+       }
+     } else {
+       navigator.serviceWorker && navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+       caches.keys && caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+     }
+   });
+ }
 
  const btnDevReset = document.getElementById('btn-dev-reset');
  if (btnDevReset) {
