@@ -440,17 +440,20 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 .sos-btn { background: var(--danger); color: white; }
 .outline-btn { background: transparent; color: var(--text-color); border: 1px solid var(--glass-border); padding: 12px; }
 
-/* Flashy Test Button */
+/* Primary "practice evacuation" CTA — inviting, not alarming.
+   Calm breathing glow (no scale jolt) reads as "tap me", warm coral gradient
+   feels approachable rather than like a live alert. */
 .btn-flashy {
-    background: linear-gradient(135deg, #ff9f0a, #ff3b30);
-    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
-    animation: pulse-flashy 2s infinite alternate;
+    background: linear-gradient(135deg, #ff9f0a 0%, #ff6a3d 100%);
+    box-shadow: 0 6px 18px rgba(255, 94, 58, 0.32);
+    animation: pulse-flashy 2.8s ease-in-out infinite;
     color: white;
 }
 @keyframes pulse-flashy {
-    0% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3); }
-    100% { transform: scale(1.02); box-shadow: 0 8px 25px rgba(255, 59, 48, 0.6); }
+    0%, 100% { box-shadow: 0 6px 18px rgba(255, 94, 58, 0.30); }
+    50%      { box-shadow: 0 9px 28px rgba(255, 94, 58, 0.54); }
 }
+.btn-flashy:active { transform: scale(0.97); }
 
 
 /* ── PWA Floating Toast ── */
@@ -1322,6 +1325,24 @@ input:checked + .slider:before {
    ========================================================================== */
 
 /* ── Tier 1 · Inundation verdict — the hero safety signal ────────────────── */
+/* Pre-verdict "判定中…" state: a calm neutral pill with a breathing dot so the
+   first-load moment looks intentional rather than like truncated plain text. */
+#tsunami-status-box.status-badge {
+    background: rgba(0,0,0,0.05);
+    padding: 5px 12px 5px 10px;
+    border-radius: 999px;
+    gap: 6px;
+}
+#tsunami-status-box.status-badge::before {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+    animation: orbBreathe 1.3s ease-in-out infinite;
+}
+.mode-emergency #tsunami-status-box.status-badge { background: rgba(255,255,255,0.10); }
+
 /* JS swaps this box's class to .dash-info-card + .tsunami-status-safe/danger
    once a verdict is known (it starts as a plain .status-badge "判定中…"). */
 #tsunami-status-box.dash-info-card {
