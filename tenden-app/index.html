@@ -124,6 +124,9 @@
  <span class="status-icon">浸水予測:</span>
  <strong id="tsunami-status-text">判定中...</strong>
  </div>
+ <div class="status-time">
+ <span id="current-time">--:--</span>
+ </div>
  <div class="status-badge network-badge" id="network-status">
  <span class="network-dot"></span>
  <strong id="network-text">Online</strong>
@@ -147,9 +150,6 @@
  <div class="status-badge coast-dist-badge" id="coast-dist-badge">
    <span class="status-icon">海岸距離:</span>
    <strong><span id="coast-dist-value">--</span></strong>
- </div>
- <div class="status-time">
- <span id="current-time">--:--</span>
  </div>
  </div>
  </div>
@@ -817,6 +817,34 @@
  </div> <!-- settings-scroll-body -->
  </div> <!-- settings-dialog -->
  </div> <!-- settings-overlay -->
+
+ <!-- みんなのレポート 選択画面 -->
+ <div id="report-choice-overlay" class="overlay hidden">
+   <div class="dialog glass-panel report-choice-dialog">
+     <div class="dialog-header">
+       <h2>みんなのレポート</h2>
+       <button id="btn-report-choice-close" class="close-btn">&times;</button>
+     </div>
+     <button id="btn-view-reports-choice" class="report-choice-btn">
+       <div class="report-choice-icon" style="background:linear-gradient(135deg,#5e5ce6,#007aff)">
+         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="22" height="22"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+       </div>
+       <div class="report-choice-text">
+         <div class="report-choice-title">みんなのレポートを見る</div>
+         <div class="report-choice-desc">周辺の危険・混雑情報を地図で確認</div>
+       </div>
+     </button>
+     <button id="btn-submit-report-choice" class="report-choice-btn">
+       <div class="report-choice-icon" style="background:linear-gradient(135deg,#ff9f0a,#ff6b00)">
+         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="22" height="22"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="M12 8v4M12 16h.01"/></svg>
+       </div>
+       <div class="report-choice-text">
+         <div class="report-choice-title">危険な場所を報告する</div>
+         <div class="report-choice-desc">倒木・混雑・危険箇所などを匿名で報告</div>
+       </div>
+     </button>
+   </div>
+ </div>
 
  <!-- Community Report Intro Overlay (first time only) -->
  <div id="report-intro-overlay" class="overlay hidden">

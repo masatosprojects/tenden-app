@@ -175,7 +175,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     white-space: nowrap;
 }
 .badge-action-btn:active { opacity: 0.8; }
-.status-time { font-size: 1.05rem; font-weight: 700; margin-left: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
+.status-time { font-size: 1.05rem; font-weight: 700; margin: 0 6px; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
 
 /* P2P Status */
 .p2p-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
@@ -663,6 +663,24 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     transition: transform 0.12s;
 }
 .rcb-confirm-btn:active { transform: scale(0.97); }
+
+/* ── みんなのレポート 選択画面 ── */
+.report-choice-dialog { max-width: 340px; width: 92%; }
+.report-choice-btn {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; padding: 14px 16px; margin-bottom: 10px;
+    background: rgba(0,0,0,0.04); border: 1.5px solid rgba(0,0,0,0.08);
+    border-radius: 16px; cursor: pointer; text-align: left;
+    transition: background 0.15s, transform 0.12s;
+}
+.report-choice-btn:last-of-type { margin-bottom: 0; }
+.report-choice-btn:active { transform: scale(0.97); background: rgba(0,0,0,0.08); }
+.report-choice-icon {
+    width: 46px; height: 46px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.report-choice-title { font-size: 0.97rem; font-weight: 700; color: var(--text-primary, #111); }
+.report-choice-desc { font-size: 0.8rem; color: var(--text-secondary, #666); margin-top: 2px; }
 
 /* ── Community Report Intro Overlay ── */
 .report-intro-dialog { max-width: 340px; width: 92%; text-align: center; }
@@ -1269,7 +1287,7 @@ input:checked + .slider:before {
     .status-time {
         font-size: 0.9rem;
         font-weight: 700;
-        margin-left: auto; /* Pin time to the far right */
+        margin: 0 4px;
     }
 }
 

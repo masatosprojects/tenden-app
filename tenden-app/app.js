@@ -1179,16 +1179,37 @@ document.addEventListener('DOMContentLoaded', () => {
    });
  });
 
- // レポートカード（サイドパネル内）— レイヤーも自動ON
+ // レポートカード（サイドパネル内）— 選択画面を表示
  document.getElementById('sp-report-card')?.addEventListener('click', () => {
    closeSidePanel();
-   // みんなのレポートレイヤーを自動表示
+   const overlay = document.getElementById('report-choice-overlay');
+   if (overlay) { overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.add('active'), 10); }
+ });
+
+ function closeReportChoice() {
+   const overlay = document.getElementById('report-choice-overlay');
+   if (overlay) { overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
+ }
+
+ document.getElementById('btn-report-choice-close')?.addEventListener('click', closeReportChoice);
+
+ // 「みんなのレポートを見る」
+ document.getElementById('btn-view-reports-choice')?.addEventListener('click', () => {
+   closeReportChoice();
+   if (!firestoreDB) initFirebase();
    const layerToggle = document.getElementById('toggle-community-reports');
    if (layerToggle && !layerToggle.checked) {
      layerToggle.checked = true;
      toggleCommunityReportsLayer(true);
    }
-   setTimeout(() => document.getElementById('btn-report')?.click(), 220);
+   const fab = document.getElementById('btn-toggle-reports-fab');
+   if (fab) { fab.classList.add('fab-active'); fab.setAttribute('aria-pressed', 'true'); }
+ });
+
+ // 「危険な場所を報告する」
+ document.getElementById('btn-submit-report-choice')?.addEventListener('click', () => {
+   closeReportChoice();
+   setTimeout(() => document.getElementById('btn-report')?.click(), 320);
  });
 
  // 友達に安全情報を送る
