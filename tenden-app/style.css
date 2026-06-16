@@ -276,10 +276,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
     opacity: 0;
-    pointer-events: none;
     transition: opacity 0.3s ease;
 }
-.side-panel-backdrop.open { opacity: 1; pointer-events: auto; }
+.side-panel-backdrop.open { opacity: 1; }
 
 .side-panel {
     position: fixed;
