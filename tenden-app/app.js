@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
  let isEmergency = false;
  let map, userMarker, routeLayerGroup, hazardLayer, reliefLayer, sheltersLayerGroup, congestionLayer, safeEdgesLayerGroup;
  let congestionGeojsonData = null;
+ let aiPolicyData = null;          // 学習済みRLモデルの方策ベクトル場（緊急モード時に遅延ロード）
+ let aiPolicyLoading = null;       // ロード中Promise（多重フェッチ防止）
  let congestionTimeseriesData = null; // 60秒バケットの時系列密度（緊急モード時に遅延ロード）
  let emergencyStartTimeMs = null; // 緊急モード開始時刻（時系列バケット算出の基準）
  let currentLocation = null; // {lat, lng}
@@ -1909,6 +1911,7 @@ document.addEventListener('DOMContentLoaded', () => {
  activeLocationId = locationId;
  emergencyStartTimeMs = Date.now();
  loadCongestionTimeseries(); // 緊急モード中のみ時系列混雑データを遅延ロード
+ loadAiPolicy();             // AIモデル推奨ルート用の方策データを先読み
  if (!isTest) {
  document.body.classList.add('emergency-mode');
  }
@@ -2404,8 +2407,11 @@ document.addEventListener('DOMContentLoaded', () => {
  simulationInterval = null;
  }
 
- // キャッシュ済みのターゲットを使う
-  const targetEdge = window._cachedTargetEdge || activeSafeEdge || { id: 'fallback', name: '御成小学校（高台）', lat: 35.3190, lng: 139.5510 };
+ // キャッシュ済みのターゲットを使う（AIルートは自身の到達高台をゴールにする）
+  const _selForTarget = (activeRoutesList || []).find(r => r && r.id === routeId);
+  const targetEdge = (_selForTarget && _selForTarget.goal)
+    ? { id: 'ai-goal', name: _selForTarget.goal.name, lat: _selForTarget.goal.lat, lng: _selForTarget.goal.lng }
+    : (window._cachedTargetEdge || activeSafeEdge || { id: 'fallback', name: '御成小学校（高台）', lat: 35.3190, lng: 139.5510 });
 
   activeSelectedRouteId = routeId;
  
@@ -2520,9 +2526,116 @@ document.addEventListener('DOMContentLoaded', () => {
    };
  }
 
+ // ─────────────────────────────────────────────────────────────────────
+ // AIモデル推奨ルート（学習済み強化学習モデルの方策ベクトル場を辿る）
+ //   assets/ai_evac_policy.json: 鎌倉モデル地区の全ノードについて、学習済み
+ //   Q学習モデル（線形関数近似・7次元特徴量・生存率74%）が選ぶ「次の一手」を
+ //   事前計算したもの。ユーザー現在地→最近傍ノード→next[]を安全ノードまで辿る
+ //   ことで、モデルが提案する避難経路を再構築する。
+ // ─────────────────────────────────────────────────────────────────────
+ function loadAiPolicy() {
+   if (aiPolicyData) return Promise.resolve(aiPolicyData);
+   if (aiPolicyLoading) return aiPolicyLoading;
+   aiPolicyLoading = fetch('assets/ai_evac_policy.json')
+     .then(res => res.json())
+     .then(data => {
+       aiPolicyData = data;
+       console.log('[TENDEN] ai_evac_policy.json loaded:', data.count, 'nodes, survival', data.model_info && data.model_info.final_survival_rate);
+       return data;
+     })
+     .catch(e => { console.warn('[TENDEN] ai_evac_policy load failed', e); aiPolicyLoading = null; return null; });
+   return aiPolicyLoading;
+ }
+
+ function _nearestPolicyNode(lat, lng, d) {
+   let best = -1, bestD = Infinity;
+   const La = d.lat, Lo = d.lon, N = d.count;
+   for (let i = 0; i < N; i++) {
+     const dla = La[i] - lat, dlo = Lo[i] - lng;
+     const dd = dla * dla + dlo * dlo;
+     if (dd < bestD) { bestD = dd; best = i; }
+   }
+   return { idx: best, dist2: bestD };
+ }
+
+ // 学習済みモデルの方策に従って現在地から高台までの経路を構築して返す。
+ // 返り値は他のルート候補と同じ形式のオブジェクト（id:'AI'）。失敗時 null。
+ function computeAiRoute(loc) {
+   const d = aiPolicyData;
+   if (!d || !loc) return null;
+   const near = _nearestPolicyNode(loc.lat, loc.lng, d);
+   let cur = near.idx;
+   if (cur < 0) return null;
+   // 最近傍ノードが遠すぎる（モデル地区外）場合は提案しない（約1.2km超）
+   if (near.dist2 > 0.00012) return null;
+   // 既に安全な高台にいる場合
+   if (d.safe[cur]) return { id: 'AI', alreadySafe: true };
+
+   const wps = [[loc.lat, loc.lng]];
+   const seen = new Set();
+   let guard = 0, endIdx = cur;
+   while (cur !== -1 && cur !== undefined && !seen.has(cur) && guard < 3000) {
+     seen.add(cur);
+     wps.push([d.lat[cur], d.lon[cur]]);
+     endIdx = cur;
+     if (d.safe[cur]) break;
+     cur = d.next[cur];
+     guard++;
+   }
+   // 安全ノードに到達できなかった（到達不能ノード等）→ 提案しない
+   if (!(endIdx >= 0 && d.safe[endIdx])) return null;
+   if (wps.length < 2) return null;
+
+   let dist = 0;
+   for (let i = 1; i < wps.length; i++) {
+     dist += L.latLng(wps[i - 1][0], wps[i - 1][1]).distanceTo(L.latLng(wps[i][0], wps[i][1]));
+   }
+   const speed = (typeof getEvacuationSpeed === 'function') ? getEvacuationSpeed() : 1.2;
+   const est = Math.max(1, Math.round(dist / (speed * 60)));
+   const goalElev = d.elev[endIdx];
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   const survival = d.model_info && d.model_info.final_survival_rate
+     ? Math.round(d.model_info.final_survival_rate * 100) : 74;
+   return {
+     id: 'AI',
+     label: dict.routeAiLabel || 'AIモデル推奨ルート',
+     color: '#ff6b00',
+     waypoints: wps,
+     distance_m: Math.round(dist),
+     estimated_min: est,
+     characteristics: (dict.routeAiDesc || '強化学習モデル（生存率{rate}%）が高台への最適経路を提案')
+       .replace('{rate}', survival),
+     congestion_score: 'ai',
+     isAI: true,
+     survival: survival,
+     goal: { lat: d.lat[endIdx], lng: d.lon[endIdx], elev: goalElev,
+             name: (dict.routeAiGoal || 'AI推奨の高台（海抜{elev}m）').replace('{elev}', Math.round(goalElev)) }
+   };
+ }
+
  function showRouteSelectorHUD(candidates) {
  const container = document.getElementById('route-options-container');
  if (!container) return;
+ // 学習済みAIモデルの推奨ルートを最優先候補として先頭に差し込む
+ try {
+   if (aiPolicyData && currentLocation) {
+     const already = (candidates || []).some(c => c && c.id === 'AI');
+     if (!already) {
+       const aiRoute = computeAiRoute(currentLocation);
+       if (aiRoute && !aiRoute.alreadySafe && aiRoute.waypoints) {
+         candidates = [aiRoute, ...(candidates || [])];
+       }
+     }
+   } else if (!aiPolicyData) {
+     // まだ未ロードなら読み込み、完了後にオーバーレイが開いていれば再描画
+     loadAiPolicy().then(d => {
+       const ov = document.getElementById('route-overlay');
+       if (d && ov && ov.classList.contains('active') && currentLocation) {
+         showRouteSelectorHUD(activeRoutesList || []);
+       }
+     });
+   }
+ } catch (e) { console.warn('[TENDEN] AI route inject failed', e); }
   // nullルートをフィルタ
   var _valid = (candidates||[]).filter(function(c){return c&&c.waypoints&&c.waypoints.length>0;});
   if (_valid.length === 0) {
@@ -2579,7 +2692,35 @@ document.addEventListener('DOMContentLoaded', () => {
  candidates.forEach(c => {
  const isSelected = c.id === activeSelectedRouteId;
  const targetColor = c.color || '#00bbff';
- 
+
+ // ── AIモデル推奨ルート: 専用のヒーローカード ──
+ if (c.isAI) {
+   const aiBtn = document.createElement('button');
+   aiBtn.className = `route-option-btn ai-route-btn ${isSelected ? 'active' : ''}`;
+   aiBtn.setAttribute('data-route-id', 'AI');
+   aiBtn.setAttribute('data-color', targetColor);
+   aiBtn.innerHTML = `
+     <div class="ai-route-glow"></div>
+     <div style="position:relative; z-index:1; display:flex; align-items:center; gap:12px;">
+       <div class="ai-route-icon">
+         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4M8 2h8"/><circle cx="8.5" cy="14" r="1.4" fill="#fff" stroke="none"/><circle cx="15.5" cy="14" r="1.4" fill="#fff" stroke="none"/></svg>
+       </div>
+       <div style="text-align:left;">
+         <div style="font-size:1rem; font-weight:800; color:#fff; line-height:1.2;">${c.label}</div>
+         <div style="font-size:0.72rem; color:rgba(255,255,255,0.88); margin-top:2px;">${c.characteristics}</div>
+       </div>
+     </div>
+     <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
+       <span class="ai-route-badge">${(dict.routeAiBadge || 'AI推奨')}</span>
+       <div style="font-size:0.85rem; font-weight:800; color:#fff;">${c.estimated_min}${(dict.minutesSuffix || '分')}</div>
+     </div>`;
+   aiBtn.addEventListener('click', () => { selectEvacuationRoute('AI'); });
+   aiBtn.addEventListener('touchstart', function(){ aiBtn.classList.add('pressed'); }, {passive:true});
+   aiBtn.addEventListener('touchend', function(){ setTimeout(function(){ aiBtn.classList.remove('pressed'); }, 150); }, {passive:true});
+   optionsWrapper.appendChild(aiBtn);
+   return;
+ }
+
  let tagText = '';
   if (c.id === 'B') tagText = dict.routeAvoid || 'Avoid Congestion';
   else if (c.id === 'A') tagText = dict.routeShortest || 'Shortest Distance';

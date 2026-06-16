@@ -147,7 +147,11 @@
   "etaLabel": "到達まで:",
   "fabMore": "その他",
   "evacPrimaryBtn": "避難ルートに従って進む",
-  "panelMoreBtn": "その他の操作"
+  "panelMoreBtn": "その他の操作",
+  "routeAiLabel": "AIモデル推奨ルート",
+  "routeAiDesc": "強化学習モデル（生存率{rate}%）が高台への最適経路を提案",
+  "routeAiBadge": "AI推奨",
+  "routeAiGoal": "AI推奨の高台（海抜{elev}m）"
  },
  "en": {
   "onboardingTitle": "We will guide you to the nearest<br>safe location.",
@@ -297,7 +301,11 @@
   "etaLabel": "ETA:",
   "fabMore": "More",
   "evacPrimaryBtn": "Follow evacuation route",
-  "panelMoreBtn": "More actions"
+  "panelMoreBtn": "More actions",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "zh": {
   "onboardingTitle": "我们将引导您前往最近的<br>安全地点。",
@@ -441,7 +449,11 @@
   "etaLabel": "预计到达:",
   "fabMore": "更多",
   "evacPrimaryBtn": "沿避难路线前进",
-  "panelMoreBtn": "更多操作"
+  "panelMoreBtn": "更多操作",
+  "routeAiLabel": "AI模型推荐路线",
+  "routeAiDesc": "强化学习模型（生存率{rate}%）推荐前往高地的最优路径",
+  "routeAiBadge": "AI推荐",
+  "routeAiGoal": "AI推荐的高地（海拔{elev}m）"
  },
  "zh-tw": {
   "onboardingTitle": "我們將引導您前往最近的<br>安全地點。",
@@ -585,7 +597,11 @@
   "etaLabel": "預計到達:",
   "fabMore": "更多",
   "evacPrimaryBtn": "沿避難路線前進",
-  "panelMoreBtn": "更多操作"
+  "panelMoreBtn": "更多操作",
+  "routeAiLabel": "AI模型推薦路線",
+  "routeAiDesc": "強化學習模型（生存率{rate}%）推薦前往高地的最佳路徑",
+  "routeAiBadge": "AI推薦",
+  "routeAiGoal": "AI推薦的高地（海拔{elev}m）"
  },
  "ko": {
   "onboardingTitle": "가장 가까운 안전한 장소로<br>안내해 드립니다.",
@@ -729,7 +745,11 @@
   "etaLabel": "도착까지:",
   "fabMore": "더보기",
   "evacPrimaryBtn": "대피 경로를 따라가기",
-  "panelMoreBtn": "추가 작업"
+  "panelMoreBtn": "추가 작업",
+  "routeAiLabel": "AI 모델 추천 경로",
+  "routeAiDesc": "강화학습 모델(생존율 {rate}%)이 고지대로의 최적 경로를 제안",
+  "routeAiBadge": "AI 추천",
+  "routeAiGoal": "AI 추천 고지대(해발 {elev}m)"
  },
  "fr": {
   "onboardingTitle": "Nous vous guiderons vers le lieu<br>sûr le plus proche.",
@@ -873,7 +893,11 @@
   "etaLabel": "Arrivée dans :",
   "fabMore": "Plus",
   "evacPrimaryBtn": "Suivre l'itinéraire d'évacuation",
-  "panelMoreBtn": "Autres actions"
+  "panelMoreBtn": "Autres actions",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "es": {
   "onboardingTitle": "Le guiaremos al lugar seguro<br>más cercano.",
@@ -1017,7 +1041,11 @@
   "etaLabel": "Llegada en:",
   "fabMore": "Más",
   "evacPrimaryBtn": "Seguir la ruta de evacuación",
-  "panelMoreBtn": "Más acciones"
+  "panelMoreBtn": "Más acciones",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "de": {
   "onboardingTitle": "Wir führen Sie zum nächsten<br>sicheren Ort.",
@@ -1161,7 +1189,11 @@
   "etaLabel": "Ankunft in:",
   "fabMore": "Mehr",
   "evacPrimaryBtn": "Fluchtroute folgen",
-  "panelMoreBtn": "Weitere Aktionen"
+  "panelMoreBtn": "Weitere Aktionen",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "it": {
   "onboardingTitle": "Ti guideremo verso il luogo<br>sicuro più vicino.",
@@ -1305,7 +1337,11 @@
   "etaLabel": "Arrivo in:",
   "fabMore": "Altro",
   "evacPrimaryBtn": "Segui il percorso di evacuazione",
-  "panelMoreBtn": "Altre azioni"
+  "panelMoreBtn": "Altre azioni",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "pt": {
   "onboardingTitle": "Iremos guiar você até o local<br>seguro mais próximo.",
@@ -1449,7 +1485,11 @@
   "etaLabel": "Chegada em:",
   "fabMore": "Mais",
   "evacPrimaryBtn": "Seguir a rota de evacuação",
-  "panelMoreBtn": "Mais ações"
+  "panelMoreBtn": "Mais ações",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "ru": {
   "onboardingTitle": "Мы направим вас к ближайшему<br>безопасному месту.",
@@ -1593,7 +1633,11 @@
   "etaLabel": "Прибытие через:",
   "fabMore": "Ещё",
   "evacPrimaryBtn": "Следуйте маршруту эвакуации",
-  "panelMoreBtn": "Другие действия"
+  "panelMoreBtn": "Другие действия",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "vi": {
   "onboardingTitle": "Chúng tôi sẽ dẫn bạn đến nơi<br>an toàn gần nhất.",
@@ -1737,7 +1781,11 @@
   "etaLabel": "Còn:",
   "fabMore": "Thêm",
   "evacPrimaryBtn": "Theo lộ trình sơ tán",
-  "panelMoreBtn": "Hành động khác"
+  "panelMoreBtn": "Hành động khác",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "th": {
   "onboardingTitle": "เราจะนำทางคุณไปยังสถานที่<br>ที่ปลอดภัยที่สุดใกล้ตัวคุณ",
@@ -1881,7 +1929,11 @@
   "etaLabel": "ถึงใน:",
   "fabMore": "เพิ่มเติม",
   "evacPrimaryBtn": "ปฏิบัติตามเส้นทางอพยพ",
-  "panelMoreBtn": "การดำเนินการอื่นๆ"
+  "panelMoreBtn": "การดำเนินการอื่นๆ",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "id": {
   "onboardingTitle": "Kami akan memandu Anda ke tempat<br>aman terdekat.",
@@ -2025,7 +2077,11 @@
   "etaLabel": "Tiba dalam:",
   "fabMore": "Lainnya",
   "evacPrimaryBtn": "Ikuti rute evakuasi",
-  "panelMoreBtn": "Tindakan lainnya"
+  "panelMoreBtn": "Tindakan lainnya",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "tl": {
   "onboardingTitle": "Gagabayan ka namin sa pinakamalapit<br>na ligtas na lokasyon.",
@@ -2169,7 +2225,11 @@
   "etaLabel": "Darating sa:",
   "fabMore": "Higit pa",
   "evacPrimaryBtn": "Sundan ang ruta ng paglikas",
-  "panelMoreBtn": "Iba pang aksyon"
+  "panelMoreBtn": "Iba pang aksyon",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "ms": {
   "onboardingTitle": "Kami akan memandu anda ke lokasi<br>selamat yang terdekat.",
@@ -2313,7 +2373,11 @@
   "etaLabel": "Tiba dalam:",
   "fabMore": "Lagi",
   "evacPrimaryBtn": "Ikut laluan pemindahan",
-  "panelMoreBtn": "Tindakan lain"
+  "panelMoreBtn": "Tindakan lain",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "hi": {
   "onboardingTitle": "हम आपको निकटतम सुरक्षित स्थान<br>तक मार्गदर्शन करेंगे।",
@@ -2457,7 +2521,11 @@
   "etaLabel": "पहुंचने में:",
   "fabMore": "और",
   "evacPrimaryBtn": "निकासी मार्ग का पालन करें",
-  "panelMoreBtn": "अन्य कार्य"
+  "panelMoreBtn": "अन्य कार्य",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "bn": {
   "onboardingTitle": "আমরা আপনাকে নিকটতম নিরাপদ স্থানে<br>গাইড করব।",
@@ -2601,7 +2669,11 @@
   "etaLabel": "পৌঁছাতে:",
   "fabMore": "আরও",
   "evacPrimaryBtn": "উদ্ধার পথ অনুসরণ করুন",
-  "panelMoreBtn": "অন্যান্য কার্য"
+  "panelMoreBtn": "অন্যান্য কার্য",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "ar": {
   "onboardingTitle": "سنوجهك إلى أقرب<br>مكان آمن.",
@@ -2745,7 +2817,11 @@
   "etaLabel": "الوصول خلال:",
   "fabMore": "أكثر",
   "evacPrimaryBtn": "اتبع مسار الإخلاء",
-  "panelMoreBtn": "إجراءات أخرى"
+  "panelMoreBtn": "إجراءات أخرى",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "fa": {
   "onboardingTitle": "ما شما را به نزدیک‌ترین<br>مکان امن هدایت می‌کنیم.",
@@ -2889,7 +2965,11 @@
   "etaLabel": "زمان رسیدن:",
   "fabMore": "بیشتر",
   "evacPrimaryBtn": "مسیر تخلیه را دنبال کنید",
-  "panelMoreBtn": "اقدامات بیشتر"
+  "panelMoreBtn": "اقدامات بیشتر",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "tr": {
   "onboardingTitle": "Sizi en yakın güvenli yere<br>yönlendireceğiz.",
@@ -3033,7 +3113,11 @@
   "etaLabel": "Varış:",
   "fabMore": "Daha fazla",
   "evacPrimaryBtn": "Tahliye rotasını takip et",
-  "panelMoreBtn": "Diğer işlemler"
+  "panelMoreBtn": "Diğer işlemler",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "nl": {
   "onboardingTitle": "Wij leiden u naar de dichtstbijzijnde<br>veilige locatie.",
@@ -3177,7 +3261,11 @@
   "etaLabel": "Aankomst in:",
   "fabMore": "Meer",
   "evacPrimaryBtn": "Volg de evacuatieroute",
-  "panelMoreBtn": "Meer acties"
+  "panelMoreBtn": "Meer acties",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "sv": {
   "onboardingTitle": "Vi leder dig till närmaste<br>säkra plats.",
@@ -3321,7 +3409,11 @@
   "etaLabel": "Anländer om:",
   "fabMore": "Mer",
   "evacPrimaryBtn": "Följ utrymningsvägen",
-  "panelMoreBtn": "Fler åtgärder"
+  "panelMoreBtn": "Fler åtgärder",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "no": {
   "onboardingTitle": "Vi vil lede deg til nærmeste<br>sikre sted.",
@@ -3465,7 +3557,11 @@
   "etaLabel": "Ankommer om:",
   "fabMore": "Mer",
   "evacPrimaryBtn": "Følg evakueringsruten",
-  "panelMoreBtn": "Flere handlinger"
+  "panelMoreBtn": "Flere handlinger",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "fi": {
   "onboardingTitle": "Ohjaamme sinut lähimpään<br>turvalliseen paikkaan.",
@@ -3609,7 +3705,11 @@
   "etaLabel": "Saapuu:",
   "fabMore": "Lisää",
   "evacPrimaryBtn": "Seuraa evakuointireittiä",
-  "panelMoreBtn": "Lisätoiminnot"
+  "panelMoreBtn": "Lisätoiminnot",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "da": {
   "onboardingTitle": "Vi leder dig til det nærmeste<br>sikre sted.",
@@ -3753,7 +3853,11 @@
   "etaLabel": "Ankommer om:",
   "fabMore": "Mere",
   "evacPrimaryBtn": "Følg evakueringsruten",
-  "panelMoreBtn": "Flere handlinger"
+  "panelMoreBtn": "Flere handlinger",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "pl": {
   "onboardingTitle": "Poprowadzimy Cię do najbliższego<br>bezpiecznego miejsca.",
@@ -3897,7 +4001,11 @@
   "etaLabel": "Przybycie za:",
   "fabMore": "Więcej",
   "evacPrimaryBtn": "Postępuj zgodnie z trasą ewakuacji",
-  "panelMoreBtn": "Więcej działań"
+  "panelMoreBtn": "Więcej działań",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "uk": {
   "onboardingTitle": "Ми направимо вас до найближчого<br>безпечного місця.",
@@ -4041,7 +4149,11 @@
   "etaLabel": "Прибуття через:",
   "fabMore": "Більше",
   "evacPrimaryBtn": "Прямуйте маршрутом евакуації",
-  "panelMoreBtn": "Інші дії"
+  "panelMoreBtn": "Інші дії",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "el": {
   "onboardingTitle": "Θα σας οδηγήσουμε στο πλησιέστερο<br>ασφαλές σημείο.",
@@ -4185,7 +4297,11 @@
   "etaLabel": "Άφιξη σε:",
   "fabMore": "Περισσότερα",
   "evacPrimaryBtn": "Ακολουθήστε τη διαδρομή εκκένωσης",
-  "panelMoreBtn": "Περισσότερες ενέργειες"
+  "panelMoreBtn": "Περισσότερες ενέργειες",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  },
  "he": {
   "onboardingTitle": "נוביל אותך למקום המבטחים<br>הקרוב ביותר.",
@@ -4329,6 +4445,10 @@
   "etaLabel": "הגעה בעוד:",
   "fabMore": "עוד",
   "evacPrimaryBtn": "עקוב אחר נתיב הפינוי",
-  "panelMoreBtn": "פעולות נוספות"
+  "panelMoreBtn": "פעולות נוספות",
+  "routeAiLabel": "AI Model Route",
+  "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
+  "routeAiBadge": "AI",
+  "routeAiGoal": "AI-recommended high ground ({elev}m)"
  }
 }
