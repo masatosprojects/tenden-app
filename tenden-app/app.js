@@ -551,6 +551,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (btnGuideClose) btnGuideClose.addEventListener('click', closeGuideFunc);
+  if (btnGuideCloseBottom) btnGuideCloseBottom.addEventListener('click', closeGuideFunc);
+
+  // ── AI Learning Model Guide Overlay ───────────────────────────────────
+  const aiGuideOverlay = document.getElementById('ai-guide-overlay');
+  const openAiGuide = () => {
+    if (aiGuideOverlay) {
+      aiGuideOverlay.classList.remove('hidden');
+      setTimeout(() => aiGuideOverlay.classList.add('active'), 10);
+    }
+  };
+  const closeAiGuide = () => {
+    if (aiGuideOverlay) {
+      aiGuideOverlay.classList.remove('active');
+      setTimeout(() => aiGuideOverlay.classList.add('hidden'), 300);
+    }
+  };
+  document.getElementById('btn-open-ai-guide')?.addEventListener('click', openAiGuide);
+  document.getElementById('btn-ai-guide-close')?.addEventListener('click', closeAiGuide);
+  document.getElementById('btn-ai-guide-close-bottom')?.addEventListener('click', closeAiGuide);
+  document.getElementById('sp-ai-card')?.addEventListener('click', () => {
+    const sp = document.getElementById('side-panel');
+    if (sp) { sp.classList.remove('active'); setTimeout(() => sp.classList.add('hidden'), 300); }
+    openAiGuide();
+  });
+
   const btnScreenshot = document.getElementById('btn-screenshot');
  const btnToggleLayers = document.getElementById('btn-toggle-layers');
  const btnSettings = document.getElementById('btn-settings');
@@ -1138,21 +1164,14 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  // ── サイドパネル ────────────────────────────────────────────────────────
- let _eqPollTimer = null;
-
  function openSidePanel() {
    const backdrop = document.getElementById('side-panel-backdrop');
    const panel = document.getElementById('side-panel');
    if (!backdrop || !panel) return;
    backdrop.classList.remove('hidden');
    panel.classList.remove('hidden');
-   requestAnimationFrame(() => {
-     backdrop.classList.add('open');
-     panel.classList.add('open');
-   });
+   requestAnimationFrame(() => { backdrop.classList.add('open'); panel.classList.add('open'); });
    triggerHapticTick();
-   loadQuakeTsunamiPanel();
-   if (!_eqPollTimer) _eqPollTimer = setInterval(loadQuakeTsunamiPanel, 120000);
  }
  function closeSidePanel() {
    const backdrop = document.getElementById('side-panel-backdrop');
@@ -1160,29 +1179,45 @@ document.addEventListener('DOMContentLoaded', () => {
    if (!backdrop || !panel) return;
    backdrop.classList.remove('open');
    panel.classList.remove('open');
-   setTimeout(() => {
-     backdrop.classList.add('hidden');
-     panel.classList.add('hidden');
-   }, 420);
+   setTimeout(() => { backdrop.classList.add('hidden'); panel.classList.add('hidden'); }, 420);
+ }
+
+ // ── 地震・津波情報オーバーレイ ───────────────────────────────────────────
+ let _eqPollTimer = null;
+
+ function openQuakeOverlay() {
+   closeSidePanel();
+   const ov = document.getElementById('quake-overlay');
+   if (!ov) return;
+   ov.classList.remove('hidden');
+   requestAnimationFrame(() => ov.classList.add('active'));
+   loadQuakeTsunamiPanel();
+   if (!_eqPollTimer) _eqPollTimer = setInterval(loadQuakeTsunamiPanel, 120000);
+   triggerHapticTick();
+ }
+ function closeQuakeOverlay() {
+   const ov = document.getElementById('quake-overlay');
+   if (!ov) return;
+   ov.classList.remove('active');
+   setTimeout(() => ov.classList.add('hidden'), 380);
    if (_eqPollTimer) { clearInterval(_eqPollTimer); _eqPollTimer = null; }
  }
 
- // ── 地震・津波情報パネル ─────────────────────────────────────────────────
  async function loadQuakeTsunamiPanel() {
-   const listEl = document.getElementById('sp-eq-list');
-   const alertEl = document.getElementById('sp-tsunami-alert-panel');
-   const updEl = document.getElementById('sp-eq-updated');
+   const listEl  = document.getElementById('quake-eq-list');
+   const alertEl = document.getElementById('quake-tsunami-alert');
+   const updEl   = document.getElementById('quake-updated');
    if (!listEl || !alertEl) return;
    listEl.innerHTML = '<div class="sp-eq-placeholder">読み込み中…</div>';
    try {
      const [eqRes, tsRes] = await Promise.all([
-       fetch('https://api.p2pquake.net/v2/history?codes=551&limit=5', { signal: AbortSignal.timeout(8000) }),
-       fetch('https://api.p2pquake.net/v2/history?codes=552&limit=3', { signal: AbortSignal.timeout(8000) })
+       fetch('https://api.p2pquake.net/v2/history?codes=551&limit=10', { signal: AbortSignal.timeout(8000) }),
+       fetch('https://api.p2pquake.net/v2/history?codes=552&limit=3',  { signal: AbortSignal.timeout(8000) })
      ]);
      const eqList = eqRes.ok ? await eqRes.json() : [];
      const tsList = tsRes.ok ? await tsRes.json() : [];
 
-     // 津波警報バナー — 最新エントリのみで判定（古い「発令」イベントを誤表示しないため）
+     // 津波警報バナー（最新エントリのみで判定）
      const latestTs = tsList[0];
      const activeTsunami = (latestTs && !latestTs.cancelled) ? latestTs : null;
      if (activeTsunami && activeTsunami.areas?.length) {
@@ -1217,12 +1252,12 @@ document.addEventListener('DOMContentLoaded', () => {
          const tsunamiInfo = _eqTsunamiLabel(e.domesticTsunami);
          const timeStr = _eqRelativeTime(eq.time || e.time);
          const magColor = mag >= 6 ? '#ff3b30' : mag >= 5 ? '#ff9f0a' : mag >= 3 ? '#ffd60a' : '#8e8e93';
-         const borderColor = e.domesticTsunami === 'Warning' ? '#ff3b30'
-           : e.domesticTsunami === 'Watch' ? '#ff9f0a'
-           : e.domesticTsunami === 'NonEffective' ? '#ffd60a'
-           : 'rgba(255,255,255,0.12)';
+         const borderColor = e.domesticTsunami === 'Warning'     ? '#ff3b30'
+                           : e.domesticTsunami === 'Watch'       ? '#ff9f0a'
+                           : e.domesticTsunami === 'NonEffective'? '#ffd60a'
+                           : 'rgba(255,255,255,0.12)';
          const tsBadge = tsunamiInfo
-           ? `<span class="sp-eq-ts-badge" style="background:${borderColor};color:${e.domesticTsunami === 'None' ? '#fff' : '#000'}">${tsunamiInfo}</span>` : '';
+           ? `<span class="sp-eq-ts-badge" style="background:${borderColor};color:#000">${tsunamiInfo}</span>` : '';
          return `<div class="sp-eq-item" style="border-left-color:${borderColor}">
            <div class="sp-eq-row1">
              <span class="sp-eq-mag" style="color:${magColor}">M${mag}</span>
@@ -1259,13 +1294,15 @@ document.addEventListener('DOMContentLoaded', () => {
    if (diff < 1440) return `${Math.floor(diff / 60)}時間前`;
    return `${Math.floor(diff / 1440)}日前`;
  }
+
  document.getElementById('btn-open-side-panel')?.addEventListener('click', openSidePanel);
  document.getElementById('btn-side-panel-close')?.addEventListener('click', closeSidePanel);
  document.getElementById('side-panel-backdrop')?.addEventListener('click', closeSidePanel);
- document.getElementById('sp-eq-refresh')?.addEventListener('click', loadQuakeTsunamiPanel);
- document.getElementById('sp-quake-card')?.addEventListener('click', () => {
-   loadQuakeTsunamiPanel();
-   document.querySelector('.sp-eq-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+ document.getElementById('sp-quake-card')?.addEventListener('click', openQuakeOverlay);
+ document.getElementById('btn-quake-close')?.addEventListener('click', closeQuakeOverlay);
+ document.getElementById('btn-quake-refresh')?.addEventListener('click', loadQuakeTsunamiPanel);
+ document.getElementById('quake-overlay')?.addEventListener('click', e => {
+   if (e.target === document.getElementById('quake-overlay')) closeQuakeOverlay();
  });
 
  // カード → 対応ボタンをトリガー
@@ -3542,9 +3579,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // code 551 = 豌苓ｱ｡蠎∫匱陦ｨ縲梧ｴ･豕｢諠・ｱ縲・ code 556 = 邱頑･蝨ｰ髴・溷ｱ・井ｺ亥ｱ・・
  if (data.code === 551 || data.code === 552 || data.code === 556) {
-   // サイドパネルが開いていればリストを即時更新
-   const panel = document.getElementById('side-panel');
-   if (panel && panel.classList.contains('open')) loadQuakeTsunamiPanel();
+   // 地震・津波オーバーレイが開いていれば即時更新
+   const qov = document.getElementById('quake-overlay');
+   if (qov && qov.classList.contains('active')) loadQuakeTsunamiPanel();
 
    if (data.code === 552) {
      // 津波警報 (code 552)

@@ -292,6 +292,12 @@
      </div>
      <span class="sp-card-label">みんなのレポート</span>
    </button>
+   <button class="sp-card sp-card-full" id="sp-ai-card">
+     <div class="sp-card-icon" style="background:linear-gradient(135deg,#ff9f0a 0%,#ff5e00 100%)">
+       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+     </div>
+     <span class="sp-card-label">🤖 AI避難モデル解説</span>
+   </button>
    <button class="sp-card sp-card-full" id="sp-share-card">
      <div class="sp-card-icon" style="background:linear-gradient(135deg,#34c759 0%,#248a3d 100%)">
        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="24" height="24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.91 9.92 2 2 0 0 1 6.88 7.72h.06a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 14a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 20.92z"/></svg>
@@ -309,23 +315,6 @@
    </button>
  </div>
 
- <!-- Earthquake & Tsunami Info Panel -->
- <div class="sp-eq-section">
-   <div class="sp-section-header">
-     <div class="sp-section-title">
-       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13" stroke-linecap="round"><path d="M2 12h2M20 12h2M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/><circle cx="12" cy="12" r="4"/></svg>
-       地震・津波情報
-     </div>
-     <button id="sp-eq-refresh" class="sp-eq-refresh-btn" aria-label="更新">
-       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-     </button>
-   </div>
-   <span id="sp-eq-updated" class="sp-eq-updated">--</span>
-   <div id="sp-tsunami-alert-panel" class="sp-tsunami-alert-panel hidden"></div>
-   <div id="sp-eq-list" class="sp-eq-list">
-     <div class="sp-eq-placeholder">サイドバーを開くと読み込みます</div>
-   </div>
- </div>
  </div>
 
  <!-- Developer Announcements Overlay -->
@@ -741,6 +730,14 @@
  </button>
  </div>
 
+ <!-- AI Learning Model Guide Button -->
+ <div class="form-group">
+ <button id="btn-open-ai-guide" class="action-btn secondary-btn w-100" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px; background: linear-gradient(135deg, rgba(255,110,0,0.15) 0%, rgba(255,159,10,0.15) 100%); border: 1px solid rgba(255,110,0,0.3);">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+ <span>🤖 AI避難学習モデルの技術解説を読む</span>
+ </button>
+ </div>
+
  <!-- Add to Home Screen (optional, manual trigger) -->
  <div class="form-group">
  <label>ホーム画面に追加（任意）</label>
@@ -874,6 +871,28 @@
    <button id="btn-report-intro-ok" class="action-btn primary-btn btn-large w-100">参加する</button>
    <button id="btn-report-intro-skip" class="action-btn outline-btn w-100" style="margin-top:8px;">後で</button>
  </div>
+ </div>
+
+ <!-- Earthquake & Tsunami Info Overlay -->
+ <div id="quake-overlay" class="overlay hidden" style="align-items:flex-end;padding:0;">
+   <div class="quake-sheet glass-panel">
+     <div class="quake-sheet-handle"></div>
+     <div class="quake-sheet-header">
+       <div class="quake-sheet-title">
+         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="18" height="18" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+         地震・津波情報
+       </div>
+       <div class="quake-sheet-actions">
+         <button id="btn-quake-refresh" class="quake-refresh-btn" aria-label="更新">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="16" height="16" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+         </button>
+         <button id="btn-quake-close" class="close-btn" aria-label="閉じる">&times;</button>
+       </div>
+     </div>
+     <span id="quake-updated" class="quake-updated">--</span>
+     <div id="quake-tsunami-alert" class="sp-tsunami-alert-panel hidden"></div>
+     <div id="quake-eq-list" class="quake-eq-list"></div>
+   </div>
  </div>
 
  <!-- Community Report Modal -->
@@ -1071,7 +1090,70 @@
  <!-- Capture Container (used for html2canvas to ensure clean rendering) -->
  <div id="capture-container"></div>
 
+ <!-- AI Evacuation Learning Model Technical Guide Dialog -->
+ <div id="ai-guide-overlay" class="overlay hidden">
+ <div class="dialog glass-panel scenario-dialog guide-dialog" style="max-width: 520px; max-height: 90vh; display: flex; flex-direction: column;">
+ <div class="dialog-header" style="flex-shrink: 0; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border);">
+ <h2>🤖 AI避難学習モデルの技術解説</h2>
+ <button id="btn-ai-guide-close" class="close-btn">&times;</button>
+ </div>
 
+ <div class="guide-scroll-content" style="overflow-y: auto; flex: 1; padding: 15px 0; display: flex; flex-direction: column; gap: 16px; font-size: 0.9rem; line-height: 1.6;">
+ <p class="dialog-subtitle" style="margin-bottom: 5px; font-weight: 500; opacity: 0.9;">本アプリの「AI推奨ルート」に使われた強化学習モデル（高度化Option C）の技術解説です。</p>
+
+ <!-- Card 1 -->
+ <div class="guide-card" style="background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;">
+ <h3 style="color: var(--warning); font-size: 1.0rem; margin: 0;">1. 訓練シナリオ：1.4万人が逃げる鎌倉の大混雑</h3>
+ <p style="margin: 0; opacity: 0.85;">観光客・住民・就業者など実際の鎌倉の人口構成に基づいた<strong>14,440名の背景避難者</strong>が同時に避難を開始し、道路に激しい渋滞（歩行速度が最大90%低下）を引き起こすシナリオの中に、強化学習エージェント50名を投入して500エピソード学習を行いました。</p>
+ </div>
+
+ <!-- Card 2 -->
+ <div class="guide-card" style="background: rgba(0, 122, 255, 0.08); border: 1px solid rgba(0, 122, 255, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;">
+ <h3 style="color: var(--primary); font-size: 1.0rem; margin: 0;">2. AIが学習した7つの判断基準</h3>
+ <p style="margin: 0; opacity: 0.85;">Q学習（線形関数近似）を用い、以下7次元の特徴量から「最も生存確率が高い道を選ぶ」重みを最適化しました。</p>
+ <ul style="margin: 4px 0 0 16px; padding: 0; opacity: 0.85; display: flex; flex-direction: column; gap: 4px;">
+    <li>📍 安全地帯への接近量（+99.8）</li>
+    <li>🏔 標高の上昇量（+97.4）</li>
+    <li>🌊 津波到達リスクの回避（-97.4）</li>
+    <li>🔄 ループ移動（迷走）の防止（-99.3）</li>
+    <li>🛣 幅の広い道路を優先（+97.8）</li>
+    <li>👥 混雑エリアの回避（-34.6）</li>
+    <li>🚫 袋小路（行き止まり）の回避（+36.4）</li>
+  </ul>
+ </div>
+
+ <!-- Card 3 -->
+ <div class="guide-card" style="background: rgba(52, 199, 89, 0.08); border: 1px solid rgba(52, 199, 89, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;">
+ <h3 style="color: #34c759; font-size: 1.0rem; margin: 0;">3. 学習成果：生存率の推移</h3>
+ <p style="margin: 0; opacity: 0.85;">訓練1回目（エピソード1）では生存率<strong>22%</strong>でしたが、AIが試行錯誤を繰り返すことで急速に学習し、最終的に<strong>最高74%</strong>まで向上しました。</p>
+ <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; font-size: 0.82rem; text-align: center;">
+    <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px;">
+      <div style="font-weight: 700; font-size: 1.1rem; color: #ff3b30;">22%</div>
+      <div style="opacity: 0.7;">Ep.1 (初期)</div>
+    </div>
+    <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px;">
+      <div style="font-weight: 700; font-size: 1.1rem; color: var(--warning);">58%</div>
+      <div style="opacity: 0.7;">Ep.100</div>
+    </div>
+    <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px;">
+      <div style="font-weight: 700; font-size: 1.1rem; color: #34c759;">74%</div>
+      <div style="opacity: 0.7;">Ep.436 (最高)</div>
+    </div>
+  </div>
+ </div>
+
+ <!-- Card 4: Warning -->
+ <div class="guide-card" style="background: rgba(255, 59, 48, 0.08); border: 1px solid rgba(255, 59, 48, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
+ <h3 style="color: var(--danger); font-size: 1.0rem; margin: 0;">⚠️ AIルートの重要な注意事項</h3>
+ <p style="margin: 0; opacity: 0.85;">「AI推奨ルート」は事前シミュレーションに基づく<strong>参考情報</strong>です。実際の災害時には瓦礫・建物崩壊・局所的パニックなど予測不能な要因があります。必ず現地の避難誘導看板・警察・防災担当者の指示を最優先にしてください。</p>
+ </div>
+ </div>
+
+ <div style="flex-shrink: 0; padding-top: 12px; border-top: 1px solid var(--glass-border);">
+ <button id="btn-ai-guide-close-bottom" class="action-btn primary-btn w-100 btn-large" style="border-radius: 12px;">閉じる</button>
+ </div>
+ </div>
+ </div>
 
   <!-- Home Screen Add Guide Modal (triggered manually from settings) -->
   <div id="home-guide-modal" class="overlay hidden">
