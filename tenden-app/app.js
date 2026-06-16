@@ -329,22 +329,8 @@ document.addEventListener('DOMContentLoaded', () => {
  window.addEventListener('deviceorientation', handleOrientation, true);
  }
 
- // Map Click Listener to set custom starting point
- map.on('click', (e) => {
- if (isPinLocked) return; // Prevent pin change if locked
- 
- isManualLocation = true;
- currentLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
- updateMarker(currentLocation);
- fetchElevation(currentLocation);
- triggerLocationTsunamiCheck(currentLocation);
- generalizeFirstTargets(currentLocation);
- 
- if (isEmergency) {
- // If already in emergency mode, instantly recalculate the evacuation route
- recalculateRouteFromLocation(currentLocation);
- }
- });
+ // NOTE: map click-to-move-pin removed — location is set via GPS watchPosition,
+ // the evacuation demo button, or the model-area button only.
 
  // Map drag/move listener to dynamically update tsunami map based on displayed region
  map.on('moveend', () => {
@@ -645,8 +631,10 @@ document.addEventListener('DOMContentLoaded', () => {
  updateMarker(currentLocation);
  fetchElevation(currentLocation);
  
- map.on('moveend', () => {
- if(!isEmergency) {
+ // GPS error fallback: track map center once so user can pan to their location,
+ // but stop after first move to avoid following every pan.
+ map.once('moveend', () => {
+ if(!isEmergency && !isPinLocked) {
  currentLocation = { lat: map.getCenter().lat, lng: map.getCenter().lng };
  updateMarker(currentLocation);
  fetchElevation(currentLocation);
