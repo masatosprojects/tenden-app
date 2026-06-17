@@ -2458,10 +2458,11 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  function getAutoBestRouteId(candidates) {
- // Priority 1: If there's a blocked intersection, we must detour (Route B)
+ // 学習済みAIモデル推奨ルートを最優先
+ if (candidates.some(c => c.id === 'AI')) return 'AI';
+ // Fallback: 迂回が必要なら混雑回避(B)、それ以外は先頭/最短
  if (candidates.some(c => c.id === 'B' && c.blockedPoint)) return 'B';
- // Priority 2: Otherwise shortest route is safe
- return 'A';
+ return candidates[0] ? candidates[0].id : 'A';
  }
 
  function hideRouteSelectorHUD() {
@@ -2594,8 +2595,9 @@ document.addEventListener('DOMContentLoaded', () => {
    const est = Math.max(1, Math.round(dist / (speed * 60)));
    const goalElev = d.elev[endIdx];
    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   // 切り捨て表示（100%への切り上げを避け、過大主張を防ぐ）。シミュレーション上の指標。
    const survival = d.model_info && d.model_info.final_survival_rate
-     ? Math.round(d.model_info.final_survival_rate * 100) : 74;
+     ? Math.min(99, Math.floor(d.model_info.final_survival_rate * 100)) : 99;
    return {
      id: 'AI',
      label: dict.routeAiLabel || 'AIモデル推奨ルート',
@@ -2636,6 +2638,18 @@ document.addEventListener('DOMContentLoaded', () => {
      });
    }
  } catch (e) { console.warn('[TENDEN] AI route inject failed', e); }
+ // ルート提示を「AIモデル推奨」＋「要配慮者(バリアフリー)」の2本に集約。
+ // AIが最短・混雑回避・高台を統合最適化するため最短(A)/混雑回避(B)カードは撤去。
+ // バリアフリー(C)は緩勾配・要介助という別目的のため残す。AI未取得時は従来通り。
+ try {
+   const _ai = (candidates || []).filter(c => c && c.isAI);
+   if (_ai.length) {
+     const _dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+     const _acc = (candidates || []).filter(c => c && c.id === 'C').map(c =>
+       Object.assign({}, c, { color: '#5e5ce6', label: _dict.routeAccessibleLabel || '要配慮者ルート（緩やか）' }));
+     candidates = [..._ai, ..._acc];
+   }
+ } catch (e) { console.warn('[TENDEN] route consolidation failed', e); }
   // nullルートをフィルタ
   var _valid = (candidates||[]).filter(function(c){return c&&c.waypoints&&c.waypoints.length>0;});
   if (_valid.length === 0) {

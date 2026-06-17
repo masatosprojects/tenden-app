@@ -1095,34 +1095,30 @@
  <!-- Card 2 -->
  <div class="guide-card" style="background: rgba(0, 122, 255, 0.08); border: 1px solid rgba(0, 122, 255, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;">
  <h3 style="color: var(--primary); font-size: 1.0rem; margin: 0;">2. AIが学習した7つの判断基準</h3>
- <p style="margin: 0; opacity: 0.85;">Q学習（線形関数近似）を用い、以下7次元の特徴量から「最も生存確率が高い道を選ぶ」重みを最適化しました。</p>
+ <p style="margin: 0; opacity: 0.85;">Q学習（線形関数近似）を用い、以下の特徴量から「最も多くの人が高台へ避難できる道」を選ぶ方策を学習しました。</p>
  <ul style="margin: 4px 0 0 16px; padding: 0; opacity: 0.85; display: flex; flex-direction: column; gap: 4px;">
-    <li>📍 安全地帯への接近量（+99.8）</li>
-    <li>🏔 標高の上昇量（+97.4）</li>
-    <li>🌊 津波到達リスクの回避（-97.4）</li>
-    <li>🔄 ループ移動（迷走）の防止（-99.3）</li>
-    <li>🛣 幅の広い道路を優先（+97.8）</li>
-    <li>👥 混雑エリアの回避（-34.6）</li>
-    <li>🚫 袋小路（行き止まり）の回避（+36.4）</li>
+    <li>📍 最寄りの安全な高台へ最短で接近すること</li>
+    <li>🏔 標高の高い場所へ上昇すること</li>
+    <li>🌊 津波が早く到達する場所を避けること</li>
+    <li>🔄 同じ場所を行き来する「迷走」を防ぐこと</li>
+    <li>🛣 幅が広く通行しやすい道路を優先すること</li>
+    <li>🚫 袋小路（行き止まり）を避けること</li>
+    <li>👥 混雑状況を考慮すること</li>
   </ul>
  </div>
 
  <!-- Card 3 -->
  <div class="guide-card" style="background: rgba(52, 199, 89, 0.08); border: 1px solid rgba(52, 199, 89, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;">
- <h3 style="color: #34c759; font-size: 1.0rem; margin: 0;">3. 学習成果：生存率の推移</h3>
- <p style="margin: 0; opacity: 0.85;">訓練1回目（エピソード1）では生存率<strong>22%</strong>でしたが、AIが試行錯誤を繰り返すことで急速に学習し、最終的に<strong>最高74%</strong>まで向上しました。</p>
- <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; font-size: 0.82rem; text-align: center;">
+ <h3 style="color: #34c759; font-size: 1.0rem; margin: 0;">3. 学習成果：厳密な評価で確認</h3>
+ <p style="margin: 0; opacity: 0.85;">探索を切った（ε=0）方策を、複数の固定シードで繰り返し評価しました。学習済みモデルの平均避難成功率は<strong>約99%</strong>に達し、単純に「最寄りの安全地点へ最短で向かう」方式（約98%）を<strong>上回る</strong>ことを確認しています（鎌倉モデル地区・シミュレーション上の指標）。</p>
+ <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px; font-size: 0.82rem; text-align: center;">
     <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px;">
-      <div style="font-weight: 700; font-size: 1.1rem; color: #ff3b30;">22%</div>
-      <div style="opacity: 0.7;">Ep.1 (初期)</div>
+      <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-muted, #888);">約98%</div>
+      <div style="opacity: 0.7;">最短経路方式</div>
     </div>
     <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px;">
-      <div style="font-weight: 700; font-size: 1.1rem; color: var(--warning);">58%</div>
-      <div style="opacity: 0.7;">Ep.100</div>
-    </div>
-    <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px;">
-      <div style="font-weight: 700; font-size: 1.1rem; color: #34c759;">74%</div>
-      <div style="opacity: 0.7;">Ep.436 (最高)</div>
+      <div style="font-weight: 700; font-size: 1.1rem; color: #34c759;">約99%</div>
+      <div style="opacity: 0.7;">AIモデル（本アプリ）</div>
     </div>
   </div>
  </div>
