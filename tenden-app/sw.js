@@ -2,8 +2,8 @@
 // ユーザーが設定でONにした場合のみ登録されます（デフォルト: 未登録）
 // ONにすると地図・データをキャッシュしネット不要で動作しますが、アプリの自動更新が届かなくなります。
 
-const CACHE_NAME = 'tenden-v97';
-const DYNAMIC_CACHE = 'tenden-dynamic-v71';
+const CACHE_NAME = 'tenden-v98';
+const DYNAMIC_CACHE = 'tenden-dynamic-v72';
 
 const urlsToCache = [
   './',
@@ -64,16 +64,29 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const req = event.request;
+  const cleanUrl = req.url.split('?')[0];
 
-  if (TILE_DOMAINS.some(d => req.url.includes(d)) || urlsToCache.includes(req.url)) {
+  const isStaticAsset = urlsToCache.some(url => {
+    try {
+      const absoluteUrl = new URL(url, self.location.href).href;
+      return cleanUrl === absoluteUrl || cleanUrl === absoluteUrl + 'index.html';
+    } catch(e) {
+      return false;
+    }
+  });
+
+  if (TILE_DOMAINS.some(d => req.url.includes(d)) || isStaticAsset) {
     event.respondWith(
       caches.match(req).then(cachedRes => {
         if (cachedRes) return cachedRes;
         return fetch(req).then(networkRes => {
-          return caches.open(DYNAMIC_CACHE).then(cache => {
-            cache.put(req, networkRes.clone());
-            return networkRes;
-          });
+          if (TILE_DOMAINS.some(d => req.url.includes(d))) {
+            return caches.open(DYNAMIC_CACHE).then(cache => {
+              cache.put(req, networkRes.clone());
+              return networkRes;
+            });
+          }
+          return networkRes;
         }).catch(() => new Response('Offline', { status: 503, statusText: 'Service Unavailable' }));
       })
     );

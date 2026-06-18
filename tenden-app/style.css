@@ -379,6 +379,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     border-radius: 20px;
     cursor: pointer;
     color: white;
+    position: relative;
     transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     -webkit-tap-highlight-color: transparent;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.04);
@@ -541,11 +542,11 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     box-shadow: 0 8px 24px rgba(52, 199, 89, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
 }
 
-.sp-card-full#sp-announcements-card {
+#sp-announcements-card {
     background: linear-gradient(135deg, rgba(94, 92, 230, 0.15) 0%, rgba(0, 113, 227, 0.05) 100%) !important;
     border-color: rgba(94, 92, 230, 0.25) !important;
 }
-.sp-card-full#sp-announcements-card:hover {
+#sp-announcements-card:hover {
     background: linear-gradient(135deg, rgba(94, 92, 230, 0.22) 0%, rgba(0, 113, 227, 0.08) 100%) !important;
     border-color: rgba(94, 92, 230, 0.45) !important;
     box-shadow: 0 8px 24px rgba(94, 92, 230, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
@@ -746,7 +747,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 .sp-ann-badge {
     font-size: 0.68rem; font-weight: 700;
     background: #ff3b30; color: #fff;
-    border-radius: 8px; padding: 1px 7px; margin-top: 2px;
+    border-radius: 8px; padding: 2px 7.5px;
+    position: absolute;
+    top: 14px;
+    right: 36px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(255, 59, 48, 0.3);
+    z-index: 5;
 }
 /* overlay */
 .dev-ann-overlay {

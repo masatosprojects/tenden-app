@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var ver = 'v67';
+     var ver = 'v68';
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
        localStorage.setItem('tenden-pwa-ver', ver);
@@ -309,7 +309,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const _pwaEnabled = localStorage.getItem('tenden-pwa-enabled') === '1';
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
     } else {
       navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
       caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
