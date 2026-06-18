@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
      status: 'active',
      category: 'お知らせ',
      title: 'オフライン緊急モードを手動で有効化できます',
-     body: '⚙️設定から「オフライン緊急モード」をONにすると、電波のない緊急時でもTENDENが動作します。ONにするとアプリの自動更新が止まる点にご注意ください。',
+     body: '設定から「オフライン緊急モード」をONにすると、電波のない緊急時でもTENDENが動作します。ONにするとアプリの自動更新が止まる点にご注意ください。',
    },
    {
      id: 'community-reports',
@@ -922,7 +922,7 @@ document.addEventListener('DOMContentLoaded', () => {
    closeReportModal();
    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '送信する'; }
    if (result === 'ok') {
-     triggerDynamicIsland('レポートを送信しました ✓', 'success');
+     triggerDynamicIsland('レポートを送信しました', 'success');
      if (communityReportsVisible) loadCommunityReports();
    } else if (result === 'rate_limited') {
      showCustomAlert('送信制限', '連続投稿を防ぐため1分間に1件のみ送信できます。', 'warning');
@@ -1234,7 +1234,7 @@ document.addEventListener('DOMContentLoaded', () => {
        const areas = activeTsunami.areas.map(a => a.name).join('・');
        alertEl.innerHTML = `
          <div class="sp-tsunami-grade" style="color:${gradeColor[maxGrade]||'#ff9f0a'}">
-           ⚠ ${gradeLabel[maxGrade]||'津波情報'} 発令中
+           ${gradeLabel[maxGrade]||'津波情報'} 発令中
          </div>
          <div class="sp-tsunami-areas">${areas}</div>`;
      } else {
@@ -1366,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', () => {
    const loc = currentLocation;
    const elev = document.getElementById('elevation-m')?.textContent || '?';
    const text = loc
-     ? `このエリアに行く前にTENDENで安全確認を！\n📍 海抜 ${elev}m\n最寄り避難所への経路をチェックできます。\nhttps://masatosprojects.github.io/tenden-app/`
+     ? `このエリアに行く前にTENDENで安全確認を！\n海抜 ${elev}m\n最寄り避難所への経路をチェックできます。\nhttps://masatosprojects.github.io/tenden-app/`
      : `TENDENで避難ルートを事前確認しておこう！\nhttps://masatosprojects.github.io/tenden-app/`;
    if (navigator.share) {
      navigator.share({ title: 'TENDEN 防災アプリ', text }).catch(() => {});
@@ -1619,7 +1619,7 @@ document.addEventListener('DOMContentLoaded', () => {
      '① <b>浸水区域の判定</b> — 今いる場所が津波浸水想定区域内かを即座に確認します<br>' +
      '② <b>避難ルート計算</b> — 最短・混雑回避・バリアフリーの3ルートを自動算出します<br>' +
      '③ <b>海抜・海岸距離の表示</b> — リアルタイムで標高と海岸線までの距離を表示します<br><br>' +
-     '<b>🔒 プライバシー：</b> 取得した位置情報は端末内のみで処理します。' +
+     '<b>プライバシー：</b> 取得した位置情報は端末内のみで処理します。' +
      '外部サーバーには送信されません。<br><br>' +
      '次の画面でシステムの位置情報許可ダイアログが表示されます。「許可」を選んでください。';
    showCustomAlert(title, desc, 'info', function() {
@@ -2388,7 +2388,7 @@ document.addEventListener('DOMContentLoaded', () => {
       var shelterName = (secondaryRoute.target && secondaryRoute.target.name) || '避難所';
       var shelterIcon = L.divIcon({
         className: '',
-        html: '<div style="background:#ff9500;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 6px rgba(255,149,0,0.5);">🏥 ' + shelterName + '</div>',
+        html: '<div style="background:#ff9500;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 6px rgba(255,149,0,0.5);">' + shelterName + '</div>',
         iconSize: [120, 22],
         iconAnchor: [60, 11]
       });
@@ -5285,12 +5285,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── ポップアップのみで距離を通知（地図表示・線・マーカーは変更しない）──
     if (showPopup) {
       const safetyNote = distM < 300
-        ? '<br><br>⚠️ 海岸線に非常に近い位置です。津波警報発令時は直ちに内陸・高台へ避難してください。'
+        ? '<br><br>海岸線に非常に近い位置です。津波警報発令時は直ちに内陸・高台へ避難してください。'
         : distM < 800
         ? '<br><br>津波警報発令時は直ちに高台へ避難してください。'
         : '<br><br>発令時は速やかに高台へ避難してください。';
       showCustomAlert(
-        '🌊 現在地と海岸線の距離',
+        '現在地と海岸線の距離',
         `<b>${distText}</b>の位置にいます。${safetyNote}`,
         distM < 500 ? 'warning' : 'info'
       );
