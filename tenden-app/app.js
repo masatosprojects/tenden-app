@@ -6572,10 +6572,10 @@ function startOnboardingDemo() {
   if (elStep0Sub) elStep0Sub.textContent = getDemoText('demoStep0Sub', '日本全国の沿岸エリアで使える避難支援アプリ');
   if (elStep1Title) elStep1Title.textContent = getDemoText('demoStep1Title', '地震が発生しました');
   if (elStep1Desc) elStep1Desc.textContent = getDemoText('demoStep1Desc', '津波の危険があります。今すぐ避難を開始してください。');
-  if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', '3つの避難ルートを提示します');
-  if (elStep2Desc) elStep2Desc.textContent = getDemoText('demoStep2Desc', '最短・混雑回避・急坂回避の3ルートを同時表示。あなたが選びます。');
-  if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', 'TENDENは、あなたに選択肢を渡します');
-  if (elStep3Desc) elStep3Desc.textContent = getDemoText('demoStep3Desc', 'その土地を知らない観光客も、外国語話者も、迷わず逃げ出せる支援を。');
+  if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', '2つの避難ルートから選べます');
+  if (elStep2Desc) elStep2Desc.textContent = getDemoText('demoStep2Desc', '高台へ向かう経路と、坂のゆるやかな要配慮者向けの経路。正解は押し付けず、あなたが選びます。');
+  if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', '混雑も、歩く前に予習できます');
+  if (elStep3Desc) elStep3Desc.textContent = getDemoText('demoStep3Desc', '時間とともに変わる人の流れと道路の混雑を追体験。各地点で気をつけることまで学べます。');
   if (elSimWarning) elSimWarning.textContent = getDemoText('demoSimWarning', ' これは訓練用のシミュレーション画面です。実際の災害ではありません。');
 
  // Next/skip buttons

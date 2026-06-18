@@ -539,10 +539,10 @@
  </div>
  </div>
 
- <!-- Step 2: 3 Routes animation -->
+ <!-- Step 2: 2 Routes animation -->
  <div class="demo-step" id="demo-step-2">
- <h2 class="demo-step-title" id="demo-title-2"> 3つの避難ルートを提示します</h2>
- <p class="demo-step-desc" id="demo-desc-2">最短・混雑回避・急坂回避の3ルートを同時表示。あなたが選びます。</p>
+ <h2 class="demo-step-title" id="demo-title-2">2つの避難ルートから選べます</h2>
+ <p class="demo-step-desc" id="demo-desc-2">高台へ向かう経路と、坂のゆるやかな要配慮者向けの経路。正解は押し付けず、あなたが選びます。</p>
  <!-- SVG route draw animation (replaces Canvas) -->
  <div class="demo-routes-visual" aria-hidden="true">
  <svg class="demo-routes-svg" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
@@ -551,29 +551,27 @@
  <line x1="160" y1="172" x2="160" y2="10" stroke="#e5e5ea" stroke-width="1"/>
  <line x1="270" y1="172" x2="270" y2="10" stroke="#e5e5ea" stroke-width="1"/>
  <path d="M0,172 Q80,162 160,170 Q240,178 320,164" fill="none" stroke="#007aff" stroke-width="1.5" opacity="0.25"/>
- <path class="demo-route-svg-path" d="M65,162 L65,110 L120,75 L162,38 L205,18" fill="none" stroke="#34c759" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="--route-delay:0.1s"/>
- <path class="demo-route-svg-path" d="M65,162 L85,118 L162,85 L242,48 L278,18" fill="none" stroke="#007aff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="--route-delay:0.55s"/>
- <path class="demo-route-svg-path" d="M65,162 L42,118 L82,75 L140,48 L162,18" fill="none" stroke="#5e5ce6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="--route-delay:1.0s"/>
+ <path class="demo-route-svg-path" d="M65,162 L72,110 L128,72 L168,40 L208,18" fill="none" stroke="#ff6b00" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="--route-delay:0.1s"/>
+ <path class="demo-route-svg-path" d="M65,162 L46,116 L88,74 L140,46 L168,18" fill="none" stroke="#5e5ce6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="--route-delay:0.6s"/>
  <circle cx="65" cy="162" r="6" fill="#ff3b30" stroke="white" stroke-width="2"/>
  <text x="73" y="165" font-size="9" fill="#ff3b30" font-weight="700" font-family="system-ui">START</text>
- <text x="148" y="14" font-size="8" fill="#86868b" text-anchor="middle" font-family="system-ui">▲ 高台</text>
+ <text x="188" y="14" font-size="8" fill="#86868b" text-anchor="middle" font-family="system-ui">▲ 高台</text>
  </svg>
  </div>
  <div class="demo-route-legend">
- <span class="legend-item legend-green">● 最短・混雑回避</span>
- <span class="legend-item legend-blue">● 避難所分散</span>
- <span class="legend-item legend-purple">● 坂道配慮</span>
+ <span class="legend-item" style="color:#ff6b00;">● 高台優先</span>
+ <span class="legend-item legend-purple">● 要配慮者（緩やか）</span>
  </div>
  <div class="demo-nav">
- <button class="demo-btn-primary" id="btn-demo-next-2">人の流れを見る →</button>
+ <button class="demo-btn-primary" id="btn-demo-next-2">混雑を予習する →</button>
  <button class="demo-btn-ghost" id="btn-demo-skip-2" data-i18n="demoBtnSkip">スキップ</button>
  </div>
  </div>
 
  <!-- Step 3: People flow + CTA -->
  <div class="demo-step" id="demo-step-3">
- <h2 class="demo-step-title" id="demo-title-3">TENDENは、あなたに選択肢を渡します</h2>
- <p class="demo-step-desc" id="demo-desc-3">その土地を知らない観光客も、外国語話者も、迷わず逃げ出せる支援を。</p>
+ <h2 class="demo-step-title" id="demo-title-3">混雑も、歩く前に予習できます</h2>
+ <p class="demo-step-desc" id="demo-desc-3">時間とともに変わる人の流れと道路の混雑を追体験。各地点で気をつけることまで学べます。</p>
  <!-- People flow simulation — SVG animateMotion (3 routes × 4 dots) -->
  <div class="demo-flow-visual" aria-hidden="true">
  <svg class="demo-flow-svg" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
@@ -584,52 +582,38 @@
  <!-- Inundation zone hint -->
  <path d="M0,148 Q80,140 160,146 Q240,152 320,142 L320,168 Q240,172 160,166 Q80,160 0,168 Z" fill="rgba(0,122,255,0.08)"/>
  <!-- Route paths (static, faint) -->
- <path d="M65,158 L65,108 L118,73 L160,36 L202,16" fill="none" stroke="#34c759" stroke-width="2" opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
- <path d="M65,158 L84,116 L160,83 L240,46 L276,16" fill="none" stroke="#007aff" stroke-width="2" opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
- <path d="M65,158 L42,116 L80,73 L138,46 L160,16" fill="none" stroke="#5e5ce6" stroke-width="2" opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M65,158 L72,108 L126,73 L166,38 L206,16" fill="none" stroke="#ff6b00" stroke-width="2" opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M65,158 L46,116 L86,73 L140,46 L166,16" fill="none" stroke="#5e5ce6" stroke-width="2" opacity="0.35" stroke-linecap="round" stroke-linejoin="round"/>
  <!-- Labels -->
  <text x="160" y="12" font-size="8" fill="#86868b" text-anchor="middle" font-family="system-ui,sans-serif">▲ 高台（安全）</text>
  <text x="242" y="160" font-size="8" fill="#007aff" opacity="0.6" font-family="system-ui,sans-serif">海岸線</text>
  <!-- Start marker -->
  <circle cx="65" cy="158" r="6" fill="#ff3b30" stroke="white" stroke-width="2"/>
- <!-- Route A dots (green) -->
- <circle r="4.5" fill="#34c759" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.2s" begin="0.0s" repeatCount="indefinite" rotate="none" path="M65,158 L65,108 L118,73 L160,36 L202,16"/>
+ <!-- 高台優先ルート dots (orange) -->
+ <circle r="4.5" fill="#ff6b00" stroke="white" stroke-width="1.5" opacity="0.9">
+ <animateMotion dur="3.2s" begin="0.0s" repeatCount="indefinite" rotate="none" path="M65,158 L72,108 L126,73 L166,38 L206,16"/>
  </circle>
- <circle r="4.5" fill="#34c759" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.2s" begin="0.8s" repeatCount="indefinite" rotate="none" path="M65,158 L65,108 L118,73 L160,36 L202,16"/>
+ <circle r="4.5" fill="#ff6b00" stroke="white" stroke-width="1.5" opacity="0.9">
+ <animateMotion dur="3.2s" begin="0.8s" repeatCount="indefinite" rotate="none" path="M65,158 L72,108 L126,73 L166,38 L206,16"/>
  </circle>
- <circle r="4.5" fill="#34c759" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" rotate="none" path="M65,158 L65,108 L118,73 L160,36 L202,16"/>
+ <circle r="4.5" fill="#ff6b00" stroke="white" stroke-width="1.5" opacity="0.9">
+ <animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" rotate="none" path="M65,158 L72,108 L126,73 L166,38 L206,16"/>
  </circle>
- <circle r="4.5" fill="#34c759" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.2s" begin="2.4s" repeatCount="indefinite" rotate="none" path="M65,158 L65,108 L118,73 L160,36 L202,16"/>
+ <circle r="4.5" fill="#ff6b00" stroke="white" stroke-width="1.5" opacity="0.9">
+ <animateMotion dur="3.2s" begin="2.4s" repeatCount="indefinite" rotate="none" path="M65,158 L72,108 L126,73 L166,38 L206,16"/>
  </circle>
- <!-- Route B dots (blue) -->
- <circle r="4.5" fill="#007aff" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.8s" begin="0.3s" repeatCount="indefinite" rotate="none" path="M65,158 L84,116 L160,83 L240,46 L276,16"/>
- </circle>
- <circle r="4.5" fill="#007aff" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.8s" begin="1.2s" repeatCount="indefinite" rotate="none" path="M65,158 L84,116 L160,83 L240,46 L276,16"/>
- </circle>
- <circle r="4.5" fill="#007aff" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.8s" begin="2.1s" repeatCount="indefinite" rotate="none" path="M65,158 L84,116 L160,83 L240,46 L276,16"/>
- </circle>
- <circle r="4.5" fill="#007aff" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.8s" begin="3.0s" repeatCount="indefinite" rotate="none" path="M65,158 L84,116 L160,83 L240,46 L276,16"/>
- </circle>
- <!-- Route C dots (purple) -->
+ <!-- 要配慮者ルート dots (purple) -->
  <circle r="4.5" fill="#5e5ce6" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.5s" begin="0.6s" repeatCount="indefinite" rotate="none" path="M65,158 L42,116 L80,73 L138,46 L160,16"/>
+ <animateMotion dur="3.6s" begin="0.6s" repeatCount="indefinite" rotate="none" path="M65,158 L46,116 L86,73 L140,46 L166,16"/>
  </circle>
  <circle r="4.5" fill="#5e5ce6" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.5s" begin="1.5s" repeatCount="indefinite" rotate="none" path="M65,158 L42,116 L80,73 L138,46 L160,16"/>
+ <animateMotion dur="3.6s" begin="1.5s" repeatCount="indefinite" rotate="none" path="M65,158 L46,116 L86,73 L140,46 L166,16"/>
  </circle>
  <circle r="4.5" fill="#5e5ce6" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.5s" begin="2.4s" repeatCount="indefinite" rotate="none" path="M65,158 L42,116 L80,73 L138,46 L160,16"/>
+ <animateMotion dur="3.6s" begin="2.4s" repeatCount="indefinite" rotate="none" path="M65,158 L46,116 L86,73 L140,46 L166,16"/>
  </circle>
  <circle r="4.5" fill="#5e5ce6" stroke="white" stroke-width="1.5" opacity="0.9">
- <animateMotion dur="3.5s" begin="3.3s" repeatCount="indefinite" rotate="none" path="M65,158 L42,116 L80,73 L138,46 L160,16"/>
+ <animateMotion dur="3.6s" begin="3.3s" repeatCount="indefinite" rotate="none" path="M65,158 L46,116 L86,73 L140,46 L166,16"/>
  </circle>
  </svg>
  </div>
