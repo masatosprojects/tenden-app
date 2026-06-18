@@ -2823,6 +2823,7 @@ document.addEventListener('DOMContentLoaded', () => {
      wallclock: PLAYBACK_WALLCLOCK,
      cautions: _epBuildCautions(route),
      marker, congGeom, congLayer, staticCongWasOn, lastBucket: -1,
+     congActive: [], lastInfoKey: null,
      branch,
      t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
    };
@@ -2900,29 +2901,79 @@ document.addEventListener('DOMContentLoaded', () => {
    const scrub = document.getElementById('ep-scrub');
    if (scrub && document.activeElement !== scrub) scrub.value = Math.round(frac * 1000);
    const tEl = document.getElementById('ep-time'); if (tEl) tEl.textContent = _epFmt(_ep.t);
-   // 注意点（セグメントに対応）
-   const ci = Math.min(seg, _ep.cautions.length - 1);
-   if (ci !== _ep.lastCautionIdx) {
-     _ep.lastCautionIdx = ci;
-     const c = _ep.cautions[ci];
-     const box = document.getElementById('ep-caution');
-     if (box && c) {
-       box.className = 'ep-caution level-' + c.level;
-       box.innerHTML = '<div class="ep-caution-head"><span class="ep-dot"></span>' + c.head + '</div>'
-         + '<div class="ep-caution-body">' + c.body + '</div>';
-     }
-     const ph = document.getElementById('ep-phase'); if (ph && c) ph.textContent = c.head;
-   }
    // 時系列混雑：現在時刻のバケットが変わったら混雑エッジを描き直す
    const ts = congestionTimeseriesData;
+   let bucket = 0;
    if (ts && ts.edges && _ep.congLayer) {
      const bsec = ts.bucket_seconds || 60;
-     const bucket = Math.min((ts.num_buckets || 1) - 1, Math.floor(_ep.t / bsec));
+     bucket = Math.min((ts.num_buckets || 1) - 1, Math.floor(_ep.t / bsec));
      if (bucket !== _ep.lastBucket) {
        _ep.lastBucket = bucket;
        _epDrawCongestion(bucket);
      }
    }
+   // 注意点パネル：踏んでいる道(セグメント)が変わるか、時刻(バケット)が進むたびに更新
+   const ci = Math.min(seg, _ep.cautions.length - 1);
+   const infoKey = ci + ':' + bucket;
+   if (infoKey !== _ep.lastInfoKey) {
+     _ep.lastInfoKey = infoKey;
+     _epUpdateCautionPanel(ci, bucket, ll);
+   }
+ }
+
+ // 踏んでいる道の混雑・周囲の混雑・学習ポイントを詳しく提示
+ function _epUpdateCautionPanel(ci, bucket, ll) {
+   if (!_ep) return;
+   const c = _ep.cautions[ci]; if (!c) return;
+   const here = L.latLng(ll[0], ll[1]);
+   // 周囲の混雑エッジ（現在バケットで描画中のもの）を距離分析
+   const NEAR_R = 350;  // 「この付近」とみなす半径（m）
+   let nearestD = Infinity, nearestDensity = 0;
+   let nearCount = 0, nearHigh = 0;
+   (_ep.congActive || []).forEach(e => {
+     const d = here.distanceTo(L.latLng(e.mid[0], e.mid[1]));
+     if (d < nearestD) { nearestD = d; nearestDensity = e.density; }
+     if (d <= NEAR_R) { nearCount++; if (e.high) nearHigh++; }
+   });
+   // 今いる道の混雑（最も近い混雑エッジが至近にあるか）
+   let hereStatus, hereClass;
+   if (nearestD <= 28 && nearestDensity >= 2.0) { hereStatus = '激しい混雑'; hereClass = 'hi'; }
+   else if (nearestD <= 28 && nearestDensity >= 0.8) { hereStatus = 'やや混雑'; hereClass = 'mid'; }
+   else { hereStatus = '流れている'; hereClass = 'ok'; }
+   // 周囲の混雑とルートの回避（避けている混雑を可視化して学ばせる）
+   const totalCong = (_ep.congActive || []).length;
+   let nearText;
+   if (nearCount > 0) {
+     nearText = `半径${NEAR_R}m内に${nearCount}本の混雑${nearHigh ? `（激しい${nearHigh}本）` : ''}・最寄り約${Math.round(nearestD)}m。ルートはここを避けています`;
+   } else if (totalCong > 0) {
+     nearText = `この付近は空いています。市内では今${totalCong}本の道が混雑していますが、ルートはその外側を進みます`;
+   } else {
+     nearText = 'この時刻は市内全体で混雑が落ち着いています';
+   }
+   const tip = _epLearningTip(c, ci, hereClass, nearCount, nearHigh);
+   const box = document.getElementById('ep-caution');
+   if (box) {
+     box.className = 'ep-caution level-' + c.level;
+     box.innerHTML = '<div class="ep-caution-head"><span class="ep-dot"></span>' + c.head + '</div>'
+       + '<div class="ep-caution-body">' + c.body + '</div>'
+       + '<div class="ep-caution-cong">'
+       +   '<span class="epc-here epc-' + hereClass + '">今いる道：' + hereStatus + '</span>'
+       +   '<span class="epc-near">' + nearText + '</span>'
+       + '</div>'
+       + (tip ? '<div class="ep-caution-tip">' + tip + '</div>' : '');
+   }
+   const ph = document.getElementById('ep-phase'); if (ph) ph.textContent = c.head;
+ }
+
+ // 現在地点・時刻に応じた予習用の学習ポイントを返す
+ function _epLearningTip(c, ci, hereClass, nearCount, nearHigh) {
+   if (hereClass === 'hi') return '人が集中すると歩行速度が大きく落ちます。前の人との間隔を保ち、押し合わず進みましょう。';
+   if (nearHigh > 0) return '近くの広い通りが激しく混んでいます。このルートはあえて空いた道を選び、渋滞を迂回しています。';
+   if (nearCount > 0) return 'この一帯は人が集まりやすい場所です。実際の避難では合流点で詰まりやすいことを覚えておきましょう。';
+   if (c.level === 'danger' && /低地|避難開始/.test(c.head)) return 'ここは海抜が低く、津波の到達が早い区域です。立ち止まらず、まっすぐ高い場所を目指します。';
+   if (/高台|安全|避難完了/.test(c.head)) return '高い場所まで来れば津波の直接的な危険は大きく下がります。警報解除まで戻らないことが大切です。';
+   if (/上り坂/.test(c.head)) return '上り坂は息が上がりますが、標高が上がるほど安全になります。歩を緩めず進みましょう。';
+   return '避難中は足元の段差・側溝・落下物に注意。夜間や停電時はさらに見えにくくなります。';
  }
 
  // 指定バケットで混雑しているエッジを地図に描画（赤=高/橙=中）＋ライブ凡例を更新
@@ -2933,6 +2984,7 @@ document.addEventListener('DOMContentLoaded', () => {
    if (!ts || !ts.edges) return;
    const geom = _ep.congGeom || {};
    let nMid = 0, nHigh = 0;
+   _ep.congActive = [];   // 現在バケットで混雑中のエッジ（中点・密度）を保持し注意点パネルで分析
    for (const id in ts.edges) {
      const series = ts.edges[id];
      if (!series || bucket >= series.length) continue;
@@ -2943,7 +2995,9 @@ document.addEventListener('DOMContentLoaded', () => {
      const high = density >= 2.0;
      if (high) nHigh++; else nMid++;
      L.polyline(coords, { color: high ? '#ff3b30' : '#ff9f0a', weight: high ? 6 : 4, opacity: 0.7, lineCap: 'round' }).addTo(_ep.congLayer);
+     _ep.congActive.push({ mid: coords[Math.floor(coords.length / 2)], density, high });
    }
+   _ep.lastInfoKey = null;  // 混雑が変わったので注意点パネルを更新させる
    _epUpdateCongLegend(nMid, nHigh);
  }
 
@@ -2999,7 +3053,7 @@ document.addEventListener('DOMContentLoaded', () => {
    }
 
    b.decided = true; b.prompting = false;
-   _ep.lastCautionIdx = -1;  // 注意点を即時更新させる
+   _ep.lastInfoKey = null;  // 注意点パネルを即時更新させる
    // 現在地（分岐点）に対応する時刻に合わせて再生を再開
    _ep.t = (b.dist / _ep.totalDist) * _ep.evacTotalSec;
    _epRender(_ep.t);

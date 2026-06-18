@@ -2930,6 +2930,32 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .ep-caution.level-warning .ep-dot { background: var(--warning); }
 .ep-caution.level-safe    .ep-dot { background: var(--success); }
 .ep-caution-body { font-size: 0.85rem; line-height: 1.5; opacity: 0.92; }
+/* 踏んでいる道・周囲の混雑の詳細行 */
+.ep-caution-cong {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid var(--glass-border);
+    font-size: 0.74rem; line-height: 1.4;
+}
+.ep-caution-cong .epc-here {
+    font-weight: 700; padding: 2px 9px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 5px;
+}
+.ep-caution-cong .epc-here::before {
+    content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+}
+.epc-here.epc-ok  { color: #1f9d52; background: rgba(52,199,89,0.14); }
+.epc-here.epc-mid { color: #c47800; background: rgba(255,159,10,0.16); }
+.epc-here.epc-hi  { color: #d8392f; background: rgba(255,59,48,0.16); }
+.ep-caution-cong .epc-near { color: var(--text-muted); flex: 1; min-width: 140px; }
+/* 学習ポイント */
+.ep-caution-tip {
+    margin-top: 7px; padding: 7px 10px;
+    background: rgba(10,132,255,0.07);
+    border-left: 3px solid var(--primary);
+    border-radius: 8px;
+    font-size: 0.76rem; line-height: 1.5; opacity: 0.95;
+}
 
 /* 分岐選択カード（Stage 4：高台 vs 避難所） */
 .ep-branch {
