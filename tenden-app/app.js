@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var ver = 'v64';
+     var ver = 'v65';
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
        localStorage.setItem('tenden-pwa-ver', ver);

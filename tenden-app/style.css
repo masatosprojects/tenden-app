@@ -1,25 +1,26 @@
-﻿:root {
-    --primary: #007aff;
+:root {
+    --primary: #0071e3; /* iOS Premium Blue */
     --danger: #ff3b30;
-    --warning: #ff9f0a;
+    --warning: #ff9500; /* Richer Warning Orange */
     --success: #34c759;
-    --dark-bg: rgba(30, 30, 30, 0.85);
-    --glass-bg: rgba(255, 255, 255, 0.92);
-    --glass-border: rgba(0, 0, 0, 0.1);
-    --text-color: #1c1c1e;
-    --text-muted: #8e8e93;
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
-    --shadow-md: 0 8px 24px rgba(0,0,0,0.12);
-    --shadow-lg: 0 16px 40px rgba(0,0,0,0.2);
+    --dark-bg: rgba(22, 22, 23, 0.85);
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --text-color: #1d1d1f; /* Apple Off-Black */
+    --text-muted: #86868b; /* Apple Gray */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
     --hud-text: var(--text-color);
     --bg-color: #ffffff;
-    --orb-pulse-duration: 4s;
+    --orb-pulse-duration: 3s;
     --orb-color: var(--success);
 }
 
 .mode-emergency {
-    --glass-bg: rgba(20, 20, 20, 0.95);
-    --glass-border: rgba(255, 69, 58, 0.3);
+    --primary: #ff6b00; /* Glowing Orange Accent for Emergency */
+    --glass-bg: rgba(18, 18, 20, 0.9);
+    --glass-border: rgba(255, 59, 48, 0.25);
     --text-color: #ffffff;
     --text-muted: #ebebf5;
     --hud-text: #ffffff;
@@ -27,6 +28,28 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
+h1, h2, h3, h4, h5, h6, 
+.sp-header-title, 
+.status-badge, 
+.status-time, 
+.action-btn, 
+.demo-hero-title, 
+.demo-step-title,
+.ai-route-btn,
+.rcb-confirm-btn,
+.rcb-instruction,
+.report-choice-title,
+.sp-card-label,
+.dialog-header h2,
+.eh-title,
+.evac-instruction,
+.btn-flashy,
+.ep-phase,
+.ep-total,
+.ep-time {
+    font-family: 'Outfit', -apple-system, sans-serif;
+    letter-spacing: -0.01em;
+}
 html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: var(--text-color); }
 #map { width: 100%; height: 100%; z-index: 1; }
 
@@ -43,10 +66,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 /* Glass Panel Base */
 .glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.25);
     color: var(--text-color);
 }
 
@@ -215,35 +238,44 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     width: 44px; height: 44px;
     border-radius: 50%;
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-sm);
     color: var(--text-color);
     display: flex; justify-content: center; align-items: center;
-    cursor: pointer; transition: all 0.2s;
+    cursor: pointer; 
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
 }
 .fab-btn svg { width: 20px; height: 20px; }
 .fab-btn:active { transform: scale(0.92); }
-.fab-btn.fab-active { background: rgba(0,122,255,0.18); color: #4da3ff; border-color: rgba(0,122,255,0.4); }
-.fab-danger { color: var(--danger); border-color: rgba(255,59,48,0.3); }
+.fab-btn.fab-active { 
+    background: rgba(0,113,227,0.15); 
+    color: #0071e3; 
+    border-color: rgba(0,113,227,0.35); 
+    box-shadow: 0 4px 12px rgba(0,113,227,0.18);
+}
+.fab-danger { 
+    color: var(--danger); 
+    border-color: rgba(255,59,48,0.25); 
+}
 
 /* Premium visible labels next to circular FAB buttons */
 .fab-label {
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
     color: var(--text-color);
     font-size: 11px;
-    font-weight: 600;
-    padding: 5px 10px;
-    border-radius: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 10px;
     white-space: nowrap;
     box-shadow: var(--shadow-sm);
-    opacity: 0.95;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0.85;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
@@ -252,15 +284,16 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 /* Hover behaviors for premium micro-interactions */
 .fab-container:hover .fab-label {
     opacity: 1;
-    transform: scale(1.04) translateX(-2px);
+    transform: translateX(-4px) scale(1.03);
     background: var(--primary);
     color: #fff;
     border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0, 187, 255, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
 }
 .fab-container:hover .fab-btn {
-    transform: scale(1.04);
+    transform: scale(1.05);
     box-shadow: var(--shadow-md);
+    background: var(--glass-bg);
 }
 .fab-container:active .fab-label,
 .fab-container:active .fab-btn {
@@ -426,32 +459,87 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 /* Buttons inside Bottom Sheet */
 .action-btn {
     border: none; border-radius: 14px;
-    font-weight: 600; cursor: pointer;
+    font-weight: 700; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    transition: all 0.2s;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     font-size: 0.95rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
-.action-btn:active { transform: scale(0.96); }
+.action-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -150%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.24), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.6s ease;
+    pointer-events: none;
+}
+.action-btn:hover::after {
+    left: 150%;
+}
+.action-btn:active { transform: scale(0.96); opacity: 0.9; }
 .btn-large { width: 100%; padding: 16px; font-size: 1.05rem; }
 
-.primary-btn { background: var(--primary); color: white; }
-.secondary-btn { background: rgba(0, 122, 255, 0.1); color: var(--primary); border: 1px solid rgba(0, 122, 255, 0.2); }
-.mode-emergency .secondary-btn { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.2); }
-.sos-btn { background: var(--danger); color: white; }
-.outline-btn { background: transparent; color: var(--text-color); border: 1px solid var(--glass-border); padding: 12px; }
+.primary-btn { 
+    background: linear-gradient(135deg, #0071e3 0%, #007bf2 100%); 
+    color: white; 
+    border: 1px solid rgba(0, 113, 227, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.22);
+}
+.primary-btn:hover {
+    box-shadow: 0 6px 16px rgba(0, 113, 227, 0.3);
+}
+
+.secondary-btn { 
+    background: rgba(0, 113, 227, 0.08); 
+    color: #0071e3; 
+    border: 1px solid rgba(0, 113, 227, 0.15); 
+}
+.secondary-btn:hover {
+    background: rgba(0, 113, 227, 0.12);
+}
+
+.mode-emergency .secondary-btn { 
+    background: rgba(255,255,255,0.08); 
+    color: white; 
+    border-color: rgba(255,255,255,0.15); 
+}
+.mode-emergency .secondary-btn:hover {
+    background: rgba(255,255,255,0.12);
+}
+
+.sos-btn { 
+    background: linear-gradient(135deg, #ff3b30 0%, #ff453a 100%); 
+    color: white; 
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.22);
+}
+.sos-btn:hover {
+    box-shadow: 0 6px 16px rgba(255, 59, 48, 0.32);
+}
+
+.outline-btn { 
+    background: transparent; 
+    color: var(--text-color); 
+    border: 1px solid var(--glass-border); 
+    padding: 12px; 
+}
 
 /* Primary "practice evacuation" CTA — inviting, not alarming.
    Calm breathing glow (no scale jolt) reads as "tap me", warm coral gradient
    feels approachable rather than like a live alert. */
 .btn-flashy {
-    background: linear-gradient(135deg, #ff9f0a 0%, #ff6a3d 100%);
-    box-shadow: 0 6px 18px rgba(255, 94, 58, 0.32);
+    background: linear-gradient(135deg, #ff9500 0%, #ff5e00 100%);
+    box-shadow: 0 6px 18px rgba(255, 94, 58, 0.24);
     animation: pulse-flashy 2.8s ease-in-out infinite;
     color: white;
 }
 @keyframes pulse-flashy {
-    0%, 100% { box-shadow: 0 6px 18px rgba(255, 94, 58, 0.30); }
-    50%      { box-shadow: 0 9px 28px rgba(255, 94, 58, 0.54); }
+    0%, 100% { box-shadow: 0 6px 18px rgba(255, 94, 58, 0.24); }
+    50%      { box-shadow: 0 10px 28px rgba(255, 94, 58, 0.44); }
 }
 .btn-flashy:active { transform: scale(0.97); }
 
@@ -760,23 +848,60 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 }
 
 /* Emergency Mode Content */
-.emergency-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding-bottom: 12px; }
-.eh-title { font-size: 1.2rem; font-weight: 700; color: var(--warning); }
-.evac-instruction { font-size: 1.05rem; font-weight: 600; margin-bottom: 12px; }
-.disaster-details { font-size: 0.85rem; color: var(--warning); border-top: 1px solid rgba(255,159,10,0.3); padding-top: 10px; margin-bottom: 15px; }
+.emergency-mode-actions {
+    background: rgba(255, 59, 48, 0.05);
+    border: 1px solid rgba(255, 59, 48, 0.22);
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.emergency-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    cursor: pointer; 
+    padding-bottom: 0px; 
+}
+.eh-title { 
+    font-size: 1.15rem; 
+    font-weight: 800; 
+    color: #ff453a !important; /* Premium iOS Red */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.evac-instruction { 
+    font-size: 0.95rem; 
+    font-weight: 600; 
+    margin-bottom: 8px; 
+    color: var(--text-color);
+}
+#disaster-details { 
+    font-size: 0.82rem !important; 
+    color: var(--text-muted) !important; 
+    border-top: 1px solid rgba(255, 59, 48, 0.15) !important; 
+    padding-top: 12px !important; 
+    margin-top: 10px !important; 
+    line-height: 1.5 !important;
+}
 .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .action-grid .sos-btn { grid-column: span 2; padding: 14px; font-size: 1.1rem; }
 .action-grid .secondary-btn { padding: 12px; }
 
 /* Primary evacuation CTA — gentle organic pulse, distinct from the orange "start drill" flashy button */
 .evac-primary-btn {
-    background: linear-gradient(135deg, var(--primary), #34c759);
-    box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
-    animation: evacPulse 2.4s ease-in-out infinite;
+    background: linear-gradient(135deg, #0071e3 0%, #34c759 100%) !important;
+    border: 1px solid rgba(0, 113, 227, 0.2) !important;
+    box-shadow: 0 4px 16px rgba(0, 113, 227, 0.35) !important;
+    animation: evacPulse 2.4s ease-in-out infinite !important;
+    font-weight: 700 !important;
 }
 @keyframes evacPulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3); }
-    50% { transform: scale(1.015); box-shadow: 0 6px 20px rgba(52, 199, 89, 0.35); }
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 16px rgba(0, 113, 227, 0.35); }
+    50% { transform: scale(1.015); box-shadow: 0 6px 20px rgba(52, 199, 89, 0.5); }
 }
 
 /* "More" panel toggle — subtle entry point to secondary evacuation actions */
@@ -831,12 +956,22 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 /* Overlays (Dialogs) */
 .overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     z-index: 2000;
     display: flex; justify-content: center; align-items: center;
-    opacity: 0; visibility: hidden; transition: all 0.3s;
+    opacity: 0; visibility: hidden; 
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s;
 }
 .overlay.active { opacity: 1; visibility: visible; }
+.overlay .dialog {
+    transform: scale(0.92);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.overlay.active .dialog {
+    transform: scale(1);
+}
 .dialog {
     width: 90%; max-width: 360px;
     padding: 24px; border-radius: 24px;
@@ -1611,7 +1746,55 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     width: 100%;
 }
 
-/* 4. 繝懊ち繝ｳ縺ｮ縲・D繝槭う繧ｯ繝ｭ繝ｻ繝ｪ繝輔Ξ繧ｯ繧ｷ繝ｧ繝ｳ・医ぎ繝ｩ繧ｹ蜈画ｲ｢蜿榊ｰ・ｼ峨榊柑譫・*/
+/* 4. 繝懊ち繝ｳ縺ｮ縲・D繝槭う繧ｯ繝ｭ繝ｻ繝ｪ繝輔Ξ繧ｯ繧ｷ繝ｧ繝ｳ・医ぎ繝ｩ繧ｹ蜈画ｲ｢蜿榊ｰ・ｼ峨€榊柑譫・*/
+#onboarding-overlay.overlay.active {
+    position: fixed !important;
+    z-index: 20000;
+    align-items: flex-end;
+    padding: 0;
+    pointer-events: auto !important;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    /* Immersive branded backdrop so the live app chrome recedes during onboarding */
+    background: radial-gradient(circle at 50% 50%, #0d0d26 0%, #050514 80%) !important;
+}
+/* Soft aurora glow above the card for depth */
+#onboarding-overlay.overlay.active::before {
+    content: '';
+    position: absolute;
+    top: -10%; left: -10%;
+    width: 120%; height: 120%;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(0, 113, 227, 0.16) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(94, 92, 230, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 10%, rgba(52, 199, 89, 0.08) 0%, transparent 35%);
+    filter: blur(60px);
+    pointer-events: none;
+    animation: onboardAuroraDrift 16s ease-in-out infinite alternate;
+}
+@keyframes onboardAuroraDrift {
+    0% { transform: scale(1) translate(0, 0); }
+    50% { transform: scale(1.08) translate(2%, -3%); }
+    100% { transform: scale(0.96) translate(-3%, 2%); }
+}
+
+
+.demo-overlay-inner {
+    width: 100%;
+    max-height: 92svh;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border-radius: 32px 32px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 -15px 50px rgba(0,0,0,0.3);
+    padding: 32px 24px 40px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
 .fab-btn, .action-btn {
     position: relative;
     overflow: hidden;
@@ -1638,66 +1821,14 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     transform: rotate(-45deg) translate(100%, 100%);
 }
 
-/* 5. 蝨ｰ蝗ｳ・・eaflet・峨Ξ繧､繝､繝ｼ蛻・崛譎ゅ・縲梧ｵ∽ｽ薙ヵ繧ｧ繝ｼ繝峨榊柑譫・*/
+/* 5. 蝨ｰ蝗ｳ・・eaflet・峨Ξ繧､繝､繝ｼ蛻・崛譎ゅ・縲梧ｵ∽ｽ薙ヵ繧ｧ繝ｼ繝峨€榊柑譫・*/
 .leaflet-tile {
     transition: opacity 0.6s ease-in-out !important;
 }
 
-/* 笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武
-   ONBOARDING DEMO OVERLAY
-   笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武笊絶武 */
-#onboarding-overlay.overlay.active {
-    position: fixed !important;
-    z-index: 20000;
-    align-items: flex-end;
-    padding: 0;
-    pointer-events: auto !important;
-    -webkit-user-select: none;
-    touch-action: manipulation;
-    /* Immersive branded backdrop so the live app chrome recedes during onboarding */
-    background: linear-gradient(165deg, #0a0a1a 0%, #001133 55%, #00284d 100%) !important;
-}
-/* Soft aurora glow above the card for depth */
-#onboarding-overlay.overlay.active::before {
-    content: '';
-    position: absolute;
-    top: 8%; left: 50%;
-    width: 320px; height: 320px;
-    transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(0,122,255,0.28) 0%, rgba(94,92,230,0.12) 45%, transparent 70%);
-    filter: blur(8px);
-    pointer-events: none;
-    animation: onboardAuroraDrift 7s ease-in-out infinite alternate;
-}
-@keyframes onboardAuroraDrift {
-    0%   { transform: translateX(-50%) translateY(0) scale(1); opacity: 0.85; }
-    100% { transform: translateX(-50%) translateY(18px) scale(1.12); opacity: 1; }
-}
-/* ボタン・インタラクティブ要素のタップを確実に通す */
-#onboarding-overlay.overlay.active button,
-#onboarding-overlay.overlay.active .demo-dot,
-#onboarding-overlay.overlay.active a {
-    pointer-events: auto !important;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(0,0,0,0.06);
-    cursor: pointer;
-}
 
-.demo-overlay-inner {
-    width: 100%;
-    max-height: 92svh;
-    background: rgba(255, 255, 255, 0.97);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 28px 28px 0 0;
-    border-top: 1px solid rgba(0,0,0,0.08);
-    box-shadow: 0 -8px 40px rgba(0,0,0,0.12);
-    padding: 28px 24px 40px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-}
+
+
 
 /* Simulation Disclaimer Banner */
 .demo-sim-banner {
