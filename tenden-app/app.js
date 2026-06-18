@@ -2785,6 +2785,7 @@ document.addEventListener('DOMContentLoaded', () => {
    const staticCongWasOn = !!(congestionLayer && map.hasLayer(congestionLayer));
    if (staticCongWasOn) { try { map.removeLayer(congestionLayer); } catch (e) {} }
    const congLayer = L.layerGroup().addTo(map);
+   const bubbleLayer = L.layerGroup().addTo(map);  // 混雑ポイントの吹き出し
 
    // 分岐点（高台 vs 避難所）の検出：第二ルート（避難所）が主ルートから分かれる地点を探す
    let branch = null;
@@ -2822,7 +2823,7 @@ document.addEventListener('DOMContentLoaded', () => {
      route, wps, cum, totalDist, speed, evacTotalSec,
      wallclock: PLAYBACK_WALLCLOCK,
      cautions: _epBuildCautions(route),
-     marker, congGeom, congLayer, staticCongWasOn, lastBucket: -1,
+     marker, congGeom, congLayer, bubbleLayer, staticCongWasOn, lastBucket: -1,
      congActive: [], lastInfoKey: null,
      branch,
      t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
@@ -2842,7 +2843,7 @@ document.addEventListener('DOMContentLoaded', () => {
    // 再生中はボトムシート（緊急バナー）を隠してマップを広く
    document.body.classList.add('ep-mode');
 
-   try { map.setView(wps[0], 17, { animate: true, duration: 0.6 }); } catch (e) {}
+   try { map.setView(wps[0], 16, { animate: true, duration: 0.6 }); } catch (e) {}
    _epRender(0);
    // スタート地点で高台/避難所が分かれる場合は、歩き出す前に行き先を選ばせる
    if (_ep.branch && _ep.branch.atStart && !_ep.branch.decided) {
@@ -2921,59 +2922,62 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  }
 
- // 踏んでいる道の混雑・周囲の混雑・学習ポイントを詳しく提示
+ // 定型ボード：フェーズ／その地点のメモ／今いる道の状況（情報を絞る）
  function _epUpdateCautionPanel(ci, bucket, ll) {
    if (!_ep) return;
    const c = _ep.cautions[ci]; if (!c) return;
    const here = L.latLng(ll[0], ll[1]);
-   // 周囲の混雑エッジ（現在バケットで描画中のもの）を距離分析
-   const NEAR_R = 350;  // 「この付近」とみなす半径（m）
+   // 今いる道の混雑（最も近い混雑エッジが至近にあるか）
    let nearestD = Infinity, nearestDensity = 0;
-   let nearCount = 0, nearHigh = 0;
    (_ep.congActive || []).forEach(e => {
      const d = here.distanceTo(L.latLng(e.mid[0], e.mid[1]));
      if (d < nearestD) { nearestD = d; nearestDensity = e.density; }
-     if (d <= NEAR_R) { nearCount++; if (e.high) nearHigh++; }
    });
-   // 今いる道の混雑（最も近い混雑エッジが至近にあるか）
    let hereStatus, hereClass;
    if (nearestD <= 28 && nearestDensity >= 2.0) { hereStatus = '激しい混雑'; hereClass = 'hi'; }
    else if (nearestD <= 28 && nearestDensity >= 0.8) { hereStatus = 'やや混雑'; hereClass = 'mid'; }
-   else { hereStatus = '流れている'; hereClass = 'ok'; }
-   // 周囲の混雑とルートの回避（避けている混雑を可視化して学ばせる）
-   const totalCong = (_ep.congActive || []).length;
-   let nearText;
-   if (nearCount > 0) {
-     nearText = `半径${NEAR_R}m内に${nearCount}本の混雑${nearHigh ? `（激しい${nearHigh}本）` : ''}・最寄り約${Math.round(nearestD)}m。ルートはここを避けています`;
-   } else if (totalCong > 0) {
-     nearText = `この付近は空いています。市内では今${totalCong}本の道が混雑していますが、ルートはその外側を進みます`;
-   } else {
-     nearText = 'この時刻は市内全体で混雑が落ち着いています';
-   }
-   const tip = _epLearningTip(c, ci, hereClass, nearCount, nearHigh);
+   else { hereStatus = '順調'; hereClass = 'ok'; }
    const box = document.getElementById('ep-caution');
    if (box) {
-     box.className = 'ep-caution level-' + c.level;
-     box.innerHTML = '<div class="ep-caution-head"><span class="ep-dot"></span>' + c.head + '</div>'
-       + '<div class="ep-caution-body">' + c.body + '</div>'
-       + '<div class="ep-caution-cong">'
-       +   '<span class="epc-here epc-' + hereClass + '">今いる道：' + hereStatus + '</span>'
-       +   '<span class="epc-near">' + nearText + '</span>'
-       + '</div>'
-       + (tip ? '<div class="ep-caution-tip">' + tip + '</div>' : '');
+     box.className = 'ep-caution board level-' + c.level;
+     box.innerHTML =
+         '<div class="ep-board-phase"><span class="ep-dot"></span>' + c.head + '</div>'
+       + '<div class="ep-board-note">' + c.body + '</div>'
+       + '<div class="ep-board-status"><span class="ep-board-k">今いる道</span>'
+       +   '<span class="epc-here epc-' + hereClass + '">' + hereStatus + '</span></div>';
    }
    const ph = document.getElementById('ep-phase'); if (ph) ph.textContent = c.head;
+   // 混雑しやすい場所を地図上に吹き出しで提示（抽象的な文章でなく実地点で示す）
+   _epDrawBubbles(here);
  }
 
- // 現在地点・時刻に応じた予習用の学習ポイントを返す
- function _epLearningTip(c, ci, hereClass, nearCount, nearHigh) {
-   if (hereClass === 'hi') return '人が集中すると歩行速度が大きく落ちます。前の人との間隔を保ち、押し合わず進みましょう。';
-   if (nearHigh > 0) return '近くの広い通りが激しく混んでいます。このルートはあえて空いた道を選び、渋滞を迂回しています。';
-   if (nearCount > 0) return 'この一帯は人が集まりやすい場所です。実際の避難では合流点で詰まりやすいことを覚えておきましょう。';
-   if (c.level === 'danger' && /低地|避難開始/.test(c.head)) return 'ここは海抜が低く、津波の到達が早い区域です。立ち止まらず、まっすぐ高い場所を目指します。';
-   if (/高台|安全|避難完了/.test(c.head)) return '高い場所まで来れば津波の直接的な危険は大きく下がります。警報解除まで戻らないことが大切です。';
-   if (/上り坂/.test(c.head)) return '上り坂は息が上がりますが、標高が上がるほど安全になります。歩を緩めず進みましょう。';
-   return '避難中は足元の段差・側溝・落下物に注意。夜間や停電時はさらに見えにくくなります。';
+ // 地図に見えている混雑ポイントを吹き出し表示（最大3件・密度の高い順）
+ function _epDrawBubbles(here) {
+   if (!_ep || !_ep.bubbleLayer || !map) return;
+   _ep.bubbleLayer.clearLayers();
+   let bounds; try { bounds = map.getBounds().pad(-0.06); } catch (e) { return; }
+   const cand = (_ep.congActive || [])
+     .map(e => ({ e, ll: L.latLng(e.mid[0], e.mid[1]), d: here.distanceTo(L.latLng(e.mid[0], e.mid[1])) }))
+     .filter(x => x.d > 18 && bounds.contains(x.ll))   // 画面内・足元すぐは除く
+     .sort((a, b) => b.e.density - a.e.density);
+   // 近接する吹き出しを間引き（80m以内は重複とみなす）、密度の高い順に最大3件
+   const picked = [];
+   for (const x of cand) {
+     if (picked.length >= 3) break;
+     if (picked.some(p => p.ll.distanceTo(x.ll) < 80)) continue;
+     picked.push(x);
+   }
+   picked.forEach(({ e }) => {
+     const high = e.high;
+     const label = high ? '混雑ポイント' : 'やや混雑';
+     const note = high ? '人が集中し歩きにくい' : '人がやや多い';
+     const icon = L.divIcon({
+       className: '',
+       html: '<div class="ep-bubble ' + (high ? 'hi' : 'mid') + '"><b>' + label + '</b><span>' + note + '</span></div>',
+       iconSize: [120, 44], iconAnchor: [60, 50]
+     });
+     L.marker(e.mid, { icon, interactive: false, zIndexOffset: 1500 }).addTo(_ep.bubbleLayer);
+   });
  }
 
  // 指定バケットで混雑しているエッジを地図に描画（赤=高/橙=中）＋ライブ凡例を更新
@@ -3099,6 +3103,7 @@ document.addEventListener('DOMContentLoaded', () => {
      if (_ep.raf) cancelAnimationFrame(_ep.raf);
      try { routeLayerGroup.removeLayer(_ep.marker); } catch (e) {}
      try { if (_ep.congLayer) map.removeLayer(_ep.congLayer); } catch (e) {}
+     try { if (_ep.bubbleLayer) map.removeLayer(_ep.bubbleLayer); } catch (e) {}
      // 静的混雑ヒートマップを元に戻す
      try { if (_ep.staticCongWasOn && congestionLayer) congestionLayer.addTo(map); } catch (e) {}
      _ep = null;

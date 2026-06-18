@@ -2957,75 +2957,98 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .ep-caution.level-warning .ep-dot { background: var(--warning); }
 .ep-caution.level-safe    .ep-dot { background: var(--success); }
 .ep-caution-body { font-size: 0.85rem; line-height: 1.5; opacity: 0.92; }
-/* 踏んでいる道・周囲の混雑の詳細行 */
-.ep-caution-cong {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
-    margin-top: 8px; padding-top: 8px;
-    border-top: 1px solid var(--glass-border);
-    font-size: 0.74rem; line-height: 1.4;
+/* 定型ボード（フェーズ／メモ／今いる道） */
+.ep-caution.board { padding: 12px 15px; }
+.ep-board-phase {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.82rem; font-weight: 700; letter-spacing: 0.02em;
 }
-.ep-caution-cong .epc-here {
-    font-weight: 700; padding: 2px 9px; border-radius: 999px;
+.ep-board-phase .ep-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+.ep-caution.level-danger  .ep-dot { background: var(--danger); }
+.ep-caution.level-warning .ep-dot { background: var(--warning); }
+.ep-caution.level-safe    .ep-dot { background: var(--success); }
+.ep-board-note { font-size: 0.82rem; line-height: 1.5; opacity: 0.9; margin: 5px 0 8px; }
+.ep-board-status {
+    display: flex; align-items: center; gap: 8px;
+    padding-top: 8px; border-top: 1px solid var(--glass-border);
+    font-size: 0.76rem;
+}
+.ep-board-status .ep-board-k { color: var(--text-muted); font-weight: 600; }
+.epc-here {
+    font-weight: 700; padding: 2px 11px; border-radius: 999px;
     display: inline-flex; align-items: center; gap: 5px;
 }
-.ep-caution-cong .epc-here::before {
-    content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor;
-}
+.epc-here::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .epc-here.epc-ok  { color: #1f9d52; background: rgba(52,199,89,0.14); }
 .epc-here.epc-mid { color: #c47800; background: rgba(255,159,10,0.16); }
 .epc-here.epc-hi  { color: #d8392f; background: rgba(255,59,48,0.16); }
-.ep-caution-cong .epc-near { color: var(--text-muted); flex: 1; min-width: 140px; }
-/* 学習ポイント */
-.ep-caution-tip {
-    margin-top: 7px; padding: 7px 10px;
-    background: rgba(10,132,255,0.07);
-    border-left: 3px solid var(--primary);
-    border-radius: 8px;
-    font-size: 0.76rem; line-height: 1.5; opacity: 0.95;
-}
 
-/* 分岐選択カード（Stage 4：高台 vs 避難所） */
+/* 地図上の混雑吹き出し */
+.ep-bubble {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    padding: 5px 10px 6px; border-radius: 11px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    color: #fff; text-align: center; white-space: nowrap;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+.ep-bubble b { font-size: 0.72rem; font-weight: 800; }
+.ep-bubble span { font-size: 0.6rem; opacity: 0.92; font-weight: 600; }
+.ep-bubble::after {
+    content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+    border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-top: 7px solid currentColor;
+}
+.ep-bubble.hi  { background: #ff3b30; }
+.ep-bubble.hi::after  { color: #ff3b30; }
+.ep-bubble.mid { background: #ff9f0a; }
+.ep-bubble.mid::after { color: #ff9f0a; }
+
+/* 分岐選択（Stage 4：高台 vs 避難所）— 画面中央の大きな選択オーバーレイ */
 .ep-branch {
-    align-self: stretch;
-    background: var(--glass-bg);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-    padding: 13px 15px 14px;
-    color: var(--text-color);
-    animation: epCautionIn 0.32s cubic-bezier(0.16,1,0.3,1);
+    position: fixed; inset: 0; z-index: 1600;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
 }
 .ep-branch.hidden { display: none; }
-.ep-branch-head {
-    display: flex; align-items: center; gap: 7px;
-    font-size: 0.82rem; font-weight: 700; letter-spacing: 0.02em;
-    color: var(--warning);
+.ep-branch-inner {
+    width: 100%; max-width: 380px;
+    display: flex; flex-direction: column;
+    animation: epBranchIn 0.34s cubic-bezier(0.16,1,0.3,1);
 }
-.ep-branch-sub { font-size: 0.76rem; opacity: 0.8; margin: 3px 0 11px; line-height: 1.45; }
-.ep-branch-opts { display: flex; gap: 9px; }
+@keyframes epBranchIn { from { opacity:0; transform: translateY(14px) scale(0.96);} to {opacity:1; transform:none;} }
+.ep-branch-head {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    font-size: 1.15rem; font-weight: 800; letter-spacing: 0.01em;
+    color: #fff; text-align: center;
+}
+.ep-branch-head svg { color: #ffd60a; }
+.ep-branch-sub { font-size: 0.85rem; color: rgba(255,255,255,0.85); margin: 8px 0 18px; line-height: 1.5; text-align: center; }
 .ep-branch-opt {
-    flex: 1; text-align: left;
-    display: flex; flex-direction: column; gap: 3px;
-    padding: 11px 12px;
-    border-radius: 13px;
-    border: 1.5px solid var(--glass-border);
-    background: rgba(0,0,0,0.04);
-    color: var(--text-color);
+    width: 100%; text-align: left;
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    border-radius: 18px;
+    border: 2px solid transparent;
+    background: #fff;
+    color: #1d1d1f;
     cursor: pointer;
-    transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+    transition: transform 0.12s ease, box-shadow 0.15s ease;
     -webkit-tap-highlight-color: transparent;
 }
-.mode-emergency .ep-branch-opt { background: rgba(255,255,255,0.08); }
 .ep-branch-opt:active { transform: scale(0.97); }
-.ep-branch-opt.highland { border-color: rgba(0,122,255,0.55); }
-.ep-branch-opt.highland:active { background: rgba(0,122,255,0.12); }
-.ep-branch-opt.shelter  { border-color: rgba(255,149,0,0.6); }
-.ep-branch-opt.shelter:active { background: rgba(255,149,0,0.12); }
-.ep-branch-opt-head { font-size: 0.84rem; font-weight: 700; }
-.ep-branch-opt.highland .ep-branch-opt-head { color: var(--primary); }
-.ep-branch-opt.shelter  .ep-branch-opt-head { color: var(--warning); }
-.ep-branch-opt-desc { font-size: 0.7rem; line-height: 1.4; opacity: 0.85; }
+.ep-branch-opt.highland { border-color: #0a84ff; }
+.ep-branch-opt.shelter  { border-color: #ff9500; }
+.ep-branch-opt-head { font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.ep-branch-opt.highland .ep-branch-opt-head { color: #0a6adf; }
+.ep-branch-opt.highland .ep-branch-opt-head::before { content: '▲'; font-size: 0.9rem; }
+.ep-branch-opt.shelter  .ep-branch-opt-head { color: #d97800; }
+.ep-branch-opt.shelter  .ep-branch-opt-head::before { content: '■'; font-size: 0.8rem; }
+.ep-branch-opt-desc { font-size: 0.8rem; line-height: 1.5; opacity: 0.7; }
 
 /* 再生バー */
 .ep-bar {
