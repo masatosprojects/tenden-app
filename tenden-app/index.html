@@ -5,7 +5,7 @@
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
  <title>TENDEN - 日頃の備えと迷わないルートを。</title>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
- <link rel="stylesheet" href="style.css?v=68">
+ <link rel="stylesheet" href="style.css?v=69">
  <link rel="manifest" href="manifest.json">
 
   <!-- PWA / iOS ホーム画面対応 -->
@@ -1064,37 +1064,6 @@
  </div>
 
  <!-- Tsunami Evacuation 3-Principles Guide Dialog -->
- <div id="guide-overlay" class="overlay hidden">
- <div class="dialog glass-panel scenario-dialog guide-dialog" style="max-width: 480px; max-height: 90vh; display: flex; flex-direction: column;">
- <div class="dialog-header" style="flex-shrink: 0; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border);">
- <h2 data-i18n="guideTitle">津波避難の心得・3原則ガイド</h2>
- <button id="btn-guide-close" class="close-btn">&times;</button>
- </div>
- 
- <div class="guide-scroll-content" style="overflow-y: auto; flex: 1; padding: 15px 0; display: flex; flex-direction: column; gap: 16px;">
- <p class="dialog-subtitle" data-i18n="guideSubtitle" style="margin-bottom: 5px; font-weight: 500; opacity: 0.9;">命を守るための即時避難の基本原則</p>
- 
- <!-- Rule 1 -->
- <div class="guide-card" style="background: rgba(255, 59, 48, 0.08); border: 1px solid rgba(255, 59, 48, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
- <h3 style="color: var(--danger); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule1Title"> 1. すぐに避難する（即時避難）</h3>
- <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule1Desc">強い揺れを感じたら、あるいは津波警報が出たら、情報待ちをせず即座に避難を開始します。</p>
- </div>
-
- <!-- Rule 2 -->
- <div class="guide-card" style="background: rgba(0, 122, 255, 0.08); border: 1px solid rgba(0, 122, 255, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
- <h3 style="color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule2Title"> 2. 高い場所へ避難する（垂直避難）</h3>
- <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule2Desc">津波から逃れるためには、海から遠くではなく「高い場所」を目指します。頑丈なビルの3階以上へ避難してください。</p>
- </div>
-
- <!-- Rule 3 -->
- <div class="guide-card" style="background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
- <h3 style="color: var(--warning); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;" data-i18n="guideRule3Title"> 3. 戻らない（戻り禁止）</h3>
- <p style="font-size: 0.95rem; line-height: 1.5; opacity: 0.85; margin-bottom: 0;" data-i18n="guideRule3Desc">一度避難したら、絶対に荷物を取りに戻ったり、様子を見に海岸へ戻ってはいけません。警報が解除されるまで留まります。</p>
- </div>
- </div>
- 
- <div style="flex-shrink: 0; padding-top: 12px; border-top: 1px solid var(--glass-border);">
- <button id="btn-guide-close-bottom" class="action-btn primary-btn w-100 btn-large" style="border-radius: 12px;" data-i18n="btnGuideClose">閉じる</button>
  </div>
  </div>
  </div>
@@ -1226,7 +1195,7 @@
  <!-- Firebase SDK (compat v10 — CDN, no bundler needed) -->
  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
- <script src="app.js?v=68"></script>
+ <script src="app.js?v=69"></script>
 
 <!-- ======================================================
      ホーム画面追加ガイド（手動トリガーのみ）
