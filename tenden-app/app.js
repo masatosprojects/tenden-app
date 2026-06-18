@@ -947,17 +947,64 @@ document.addEventListener('DOMContentLoaded', () => {
      simulationInterval = null;
    }
 
-   // モデル地区全域を表示してから緊急モード開始
-   map.flyTo([35.308, 139.551], 13, { duration: 1.8, easeLinearity: 0.25 });
+   // モデル地区全域を表示 → 研究紹介 → ユーザー自身にピンを置いてもらう
+   map.flyTo([35.308, 139.551], 14, { duration: 1.6, easeLinearity: 0.25 });
 
    map.once('moveend', () => {
-     isManualLocation = true;
-     currentLocation = { lat: KAMAKURA_DEMO_PIN[0], lng: KAMAKURA_DEMO_PIN[1] };
-     updateMarker(currentLocation);
-     fetchElevation(currentLocation);
-     triggerEmergencyMode(true, 1, 'a');
+     const ov = document.getElementById('research-intro-overlay');
+     if (ov) { ov.classList.remove('hidden'); setTimeout(() => ov.classList.add('active'), 10); }
+     else startDrillPinDrop();
    });
  }); // Close btnTestAlert!
+
+ // 研究紹介を閉じて、ユーザーがピンを置くモードに入る（体験モード）
+ function startDrillPinDrop() {
+   const ov = document.getElementById('research-intro-overlay');
+   if (ov) { ov.classList.remove('active'); ov.classList.add('hidden'); }
+   isDrillMode = true;
+   isWaitingForPinDrop = true;
+   isPinLocked = false;
+   document.getElementById('btn-test-alert')?.classList.add('hidden');
+   document.getElementById('btn-real-mode')?.classList.add('hidden');
+   document.getElementById('crosshair-target')?.classList.remove('hidden');
+   document.getElementById('btn-set-pin')?.classList.remove('hidden');
+   const instr = document.getElementById('hud-pin-instruction');
+   if (instr) instr.style.display = '';
+ }
+ document.getElementById('btn-research-intro-start')?.addEventListener('click', () => {
+   startDrillPinDrop();
+   if (typeof triggerHapticTick === 'function') triggerHapticTick();
+ });
+
+ // ── 本番モード（実際の津波時）──────────────────────────────────────────
+ document.getElementById('btn-real-mode')?.addEventListener('click', () => {
+   const ov = document.getElementById('real-mode-confirm');
+   if (ov) { ov.classList.remove('hidden'); setTimeout(() => ov.classList.add('active'), 10); }
+   if (typeof triggerHapticTick === 'function') triggerHapticTick();
+ });
+ document.getElementById('btn-real-cancel')?.addEventListener('click', () => {
+   const ov = document.getElementById('real-mode-confirm');
+   if (ov) { ov.classList.remove('active'); setTimeout(() => ov.classList.add('hidden'), 250); }
+ });
+ document.getElementById('btn-real-confirm')?.addEventListener('click', () => {
+   const ov = document.getElementById('real-mode-confirm');
+   if (ov) { ov.classList.remove('active'); ov.classList.add('hidden'); }
+   startRealMode();
+ });
+ function startRealMode() {
+   if (!currentLocation) {
+     showCustomAlert('現在地が取得できていません', '画面右側の「現在地」ボタンで位置情報を取得してから、もう一度お試しください。', 'info');
+     return;
+   }
+   isDrillMode = false;
+   document.getElementById('btn-test-alert')?.classList.add('hidden');
+   document.getElementById('btn-real-mode')?.classList.add('hidden');
+   if (routeLayerGroup) routeLayerGroup.clearLayers();
+   isManualLocation = false;
+   updateMarker(currentLocation);
+   try { map.setView([currentLocation.lat, currentLocation.lng], 16); } catch (e) {}
+   triggerEmergencyMode(false, 1, 'a');
+ }
 
   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   
@@ -2037,6 +2084,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // Toggle UI visibility
  document.getElementById('bottom-normal-actions').classList.remove('hidden');
  document.getElementById('btn-test-alert').classList.remove('hidden');
+ document.getElementById('btn-real-mode')?.classList.remove('hidden');
  document.getElementById('evacuation-banner').classList.add('hidden');
 
  // Collapse the secondary action menu for the next evacuation
