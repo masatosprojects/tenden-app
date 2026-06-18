@@ -2416,3 +2416,122 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 }
 
 .log-item.error { color: #ff3b30; background: rgba(255,59,48,0.1); }
+
+/* ── 事前避難体験（追体験）プレイバック ─────────────────────────── */
+.evac-playback {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 0;
+    z-index: 1400;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 12px calc(env(safe-area-inset-bottom, 12px) + 12px);
+    pointer-events: none;
+}
+.evac-playback.hidden { display: none !important; }
+.evac-playback > * { pointer-events: auto; }
+
+/* 注意点カード（マーカー進行に同期して内容が変わる） */
+.ep-caution {
+    align-self: stretch;
+    background: var(--glass-bg);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    border-left: 4px solid var(--primary);
+    border-radius: 14px;
+    box-shadow: var(--shadow-md);
+    padding: 11px 14px;
+    color: var(--text-color);
+    transition: border-left-color 0.3s ease, opacity 0.25s ease;
+    animation: epCautionIn 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes epCautionIn { from { opacity:0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+.ep-caution.level-danger  { border-left-color: var(--danger); }
+.ep-caution.level-warning { border-left-color: var(--warning); }
+.ep-caution.level-safe    { border-left-color: var(--success); }
+.ep-caution-head {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em;
+    margin-bottom: 3px;
+}
+.ep-caution-head .ep-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+.ep-caution.level-danger  .ep-dot { background: var(--danger); }
+.ep-caution.level-warning .ep-dot { background: var(--warning); }
+.ep-caution.level-safe    .ep-dot { background: var(--success); }
+.ep-caution-body { font-size: 0.85rem; line-height: 1.5; opacity: 0.92; }
+
+/* 再生バー */
+.ep-bar {
+    display: flex; align-items: center; gap: 12px;
+    border-radius: 16px;
+    padding: 10px 14px;
+    box-shadow: var(--shadow-lg);
+}
+.ep-btn {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.05);
+    color: var(--text-color);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.mode-emergency .ep-btn { background: rgba(255,255,255,0.12); }
+.ep-btn:active { transform: scale(0.9); }
+.ep-play-btn { background: var(--primary); color: #fff; width: 44px; height: 44px; }
+.ep-play-btn:active { background: var(--primary); }
+.ep-track-wrap { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.ep-scrub {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 5px; border-radius: 3px;
+    background: rgba(0,0,0,0.12);
+    outline: none; cursor: pointer;
+}
+.mode-emergency .ep-scrub { background: rgba(255,255,255,0.18); }
+.ep-scrub::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    cursor: pointer;
+}
+.ep-scrub::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--primary); border: 2px solid #fff; cursor: pointer;
+}
+.ep-labels {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.7rem; font-weight: 600; color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.ep-labels #ep-phase { color: var(--primary); font-weight: 700; }
+
+/* 歩行マーカー（進行方向コーン） */
+.ep-walker {
+    width: 26px; height: 26px;
+    position: relative;
+}
+.ep-walker-cone {
+    position: absolute; top: 50%; left: 50%;
+    width: 0; height: 0;
+    border-left: 11px solid transparent;
+    border-right: 11px solid transparent;
+    border-bottom: 22px solid rgba(0,122,255,0.35);
+    transform-origin: 50% 70%;
+    transform: translate(-50%, -60%);
+}
+.ep-walker-dot {
+    position: absolute; top: 50%; left: 50%;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--primary); border: 3px solid #fff;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    transform: translate(-50%, -50%);
+}
+
+/* 追体験再生中はボトムシート（緊急バナー）を隠す */
+body.ep-mode .bottom-sheet { display: none !important; }

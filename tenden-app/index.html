@@ -379,6 +379,12 @@
  <span data-i18n="evacPrimaryBtn">避難ルートに従って進む</span>
  </button>
 
+ <!-- 事前避難体験（追体験）の再生 -->
+ <button id="btn-evac-playback" class="action-btn secondary-btn btn-large mt-10">
+ <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="margin-right:2px;"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+ <span>避難の流れを再生して予習する</span>
+ </button>
+
  <!-- Secondary actions, tucked into a "more" menu -->
  <button id="btn-panel-more-toggle" class="panel-more-toggle mt-10" aria-expanded="false">
  <span data-i18n="panelMoreBtn">その他の操作</span>
@@ -398,6 +404,24 @@
  </div>
  </div>
  </div>
+ </div>
+
+ <!-- 事前避難体験（追体験）プレイバック -->
+ <div id="evac-playback" class="evac-playback hidden">
+   <div id="ep-caution" class="ep-caution"></div>
+   <div class="ep-bar glass-panel">
+     <button id="ep-play" class="ep-btn ep-play-btn" aria-label="再生 / 一時停止">
+       <svg id="ep-play-icon" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+       <svg id="ep-pause-icon" class="hidden" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+     </button>
+     <div class="ep-track-wrap">
+       <input type="range" id="ep-scrub" class="ep-scrub" min="0" max="1000" value="0" step="1" aria-label="再生位置">
+       <div class="ep-labels"><span id="ep-time">0:00</span><span id="ep-phase">出発</span><span id="ep-total">--</span></div>
+     </div>
+     <button id="ep-close" class="ep-btn" aria-label="閉じる">
+       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+     </button>
+   </div>
  </div>
 
  <!-- Onboarding Demo Overlay (4-step cinematic scenario) -->

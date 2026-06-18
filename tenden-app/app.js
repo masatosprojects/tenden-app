@@ -1582,6 +1582,23 @@ document.addEventListener('DOMContentLoaded', () => {
  });
  }
 
+ // 事前避難体験（追体験）プレイバックの入口と操作
+ document.getElementById('btn-evac-playback')?.addEventListener('click', () => {
+   const sel = (activeRoutesList || []).find(r => r && r.id === activeSelectedRouteId);
+   const route = (sel && sel.waypoints) ? sel : (activeRoutesList || []).find(r => r && r.waypoints);
+   if (route) { startEvacuationPlayback(route); triggerHapticTick(); }
+ });
+ document.getElementById('ep-play')?.addEventListener('click', () => {
+   if (!_ep) return;
+   if (_ep.playing) _epPause(); else _epPlay();
+ });
+ document.getElementById('ep-scrub')?.addEventListener('input', (e) => {
+   if (!_ep) return;
+   _epPause();
+   _epRender((parseInt(e.target.value, 10) / 1000) * _ep.evacTotalSec);
+ });
+ document.getElementById('ep-close')?.addEventListener('click', () => stopEvacuationPlayback());
+
  // Evacuation panel: "その他の操作" springs open the secondary action menu
  const btnPanelMoreToggle = document.getElementById('btn-panel-more-toggle');
  const panelMoreMenu = document.getElementById('panel-more-menu');
@@ -2579,12 +2596,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
    const speed = (typeof getEvacuationSpeed === 'function') ? getEvacuationSpeed() : 1.2;
    const wps = [[loc.lat, loc.lng]];
+   const meta = [{ elev: null, arrival: -1, safe: false }];   // 追体験の注意点生成用
    const seen = new Set();
    let guard = 0, endIdx = cur, cumTime = 0;
    const ta = (aiTimeaware && aiTimeaware.overrides) ? aiTimeaware : null;
    while (cur !== -1 && cur !== undefined && !seen.has(cur) && guard < 3000) {
      seen.add(cur);
      wps.push([d.lat[cur], d.lon[cur]]);
+     meta.push({ elev: d.elev[cur], arrival: (d.tsunami_arrival ? d.tsunami_arrival[cur] : -1), safe: !!d.safe[cur] });
      endIdx = cur;
      if (d.safe[cur]) break;
      let nx = d.next[cur];
@@ -2629,9 +2648,189 @@ document.addEventListener('DOMContentLoaded', () => {
      congestion_score: 'ai',
      isAI: true,
      survival: survival,
+     meta: meta,
      goal: { lat: d.lat[endIdx], lng: d.lon[endIdx], elev: goalElev,
              name: (dict.routeAiGoal || 'AI推奨の高台（海抜{elev}m）').replace('{elev}', Math.round(goalElev)) }
    };
+ }
+
+ // ─────────────────────────────────────────────────────────────────────
+ // 事前避難体験（追体験）プレイバック
+ //   提示ルートを「歩いているかのように」タイムラプス再生し、各時刻・地点の
+ //   注意点を提示する。実際に歩くのではなく、減災のための予習・追体験。
+ // ─────────────────────────────────────────────────────────────────────
+ let _ep = null;  // 再生状態
+
+ function _epFmt(sec) {
+   sec = Math.max(0, Math.round(sec));
+   const m = Math.floor(sec / 60), s = sec % 60;
+   return m + ':' + String(s).padStart(2, '0');
+ }
+
+ // 各ウェイポイントの注意点を事前計算（標高・津波到達・海岸近接・終点）
+ function _epBuildCautions(route) {
+   const wps = route.waypoints, meta = route.meta || [];
+   const n = wps.length;
+   const cautions = new Array(n);
+   for (let i = 0; i < n; i++) {
+     const m = meta[i] || {};
+     let level = 'safe', head = '移動中', body = 'ルートに沿って高台へ進みます。';
+     if (i === 0) {
+       level = 'danger'; head = '避難開始';
+       body = '大津波警報。直ちに出発し、立ち止まらず高台を目指します。';
+     } else if (m.safe) {
+       level = 'safe'; head = '避難完了';
+       body = '安全な高台に到達しました。海面の変化に注意し、警報解除まで待機してください。';
+     } else if (typeof m.elev === 'number' && m.elev < 5) {
+       level = 'danger'; head = '低地・浸水想定';
+       body = '海抜' + Math.round(m.elev) + 'm の低い土地です。津波が早く到達します。速度を落とさず通過してください。';
+     } else if (typeof m.elev === 'number' && m.elev < 10) {
+       level = 'warning'; head = '上り坂・高台へ';
+       body = '海抜' + Math.round(m.elev) + 'm。さらに高い場所へ。後ろを振り返らず進みます。';
+     } else if (typeof m.elev === 'number') {
+       level = 'safe'; head = '高台に接近';
+       body = '海抜' + Math.round(m.elev) + 'm。安全圏が近づいています。';
+     }
+     cautions[i] = { level, head, body };
+   }
+   return cautions;
+ }
+
+ function startEvacuationPlayback(route) {
+   if (!route || !route.waypoints || route.waypoints.length < 2 || !map) return;
+   stopEvacuationPlayback();
+
+   const wps = route.waypoints.map(w => [w[0], w[1]]);
+   // 累積距離
+   const cum = [0];
+   for (let i = 1; i < wps.length; i++) {
+     cum[i] = cum[i - 1] + L.latLng(wps[i - 1]).distanceTo(L.latLng(wps[i]));
+   }
+   const totalDist = cum[cum.length - 1];
+   const speed = (typeof getEvacuationSpeed === 'function') ? getEvacuationSpeed() : 1.2;
+   const evacTotalSec = totalDist / Math.max(0.4, speed);   // 避難に要する時間（時系列の総尺）
+   const PLAYBACK_WALLCLOCK = Math.min(28, Math.max(14, evacTotalSec / 22)); // 再生は14〜28秒の要約
+
+   const walkerIcon = L.divIcon({
+     className: 'ep-walker-icon',
+     html: '<div class="ep-walker"><div class="ep-walker-cone"></div><div class="ep-walker-dot"></div></div>',
+     iconSize: [26, 26], iconAnchor: [13, 13]
+   });
+   const marker = L.marker(wps[0], { icon: walkerIcon, zIndexOffset: 2000, interactive: false }).addTo(routeLayerGroup);
+
+   _ep = {
+     route, wps, cum, totalDist, speed, evacTotalSec,
+     wallclock: PLAYBACK_WALLCLOCK,
+     cautions: _epBuildCautions(route),
+     marker, t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
+   };
+
+   // ルート選択シートが残っていれば閉じる（再生を遮らない）
+   try { if (typeof hideRouteSelectorHUD === 'function') hideRouteSelectorHUD(); } catch (e) {}
+   const rov = document.getElementById('route-overlay');
+   if (rov) { rov.classList.remove('active'); rov.classList.add('hidden'); }
+
+   const ov = document.getElementById('evac-playback');
+   if (ov) ov.classList.remove('hidden');
+   const total = document.getElementById('ep-total');
+   if (total) total.textContent = _epFmt(evacTotalSec);
+   // 再生中はボトムシート（緊急バナー）を隠してマップを広く
+   document.body.classList.add('ep-mode');
+
+   try { map.setView(wps[0], 17, { animate: true, duration: 0.6 }); } catch (e) {}
+   _epRender(0);
+   _epPlay();
+ }
+
+ function _epPosAt(distMeters) {
+   const { wps, cum } = _ep;
+   if (distMeters <= 0) return { ll: wps[0], heading: 0, seg: 0 };
+   if (distMeters >= cum[cum.length - 1]) return { ll: wps[wps.length - 1], heading: 0, seg: wps.length - 1 };
+   let i = 1;
+   while (i < cum.length && cum[i] < distMeters) i++;
+   const segLen = cum[i] - cum[i - 1] || 1;
+   const r = (distMeters - cum[i - 1]) / segLen;
+   const a = wps[i - 1], b = wps[i];
+   const ll = [a[0] + (b[0] - a[0]) * r, a[1] + (b[1] - a[1]) * r];
+   const heading = (typeof turf !== 'undefined') ? turf.bearing(turf.point([a[1], a[0]]), turf.point([b[1], b[0]])) : 0;
+   return { ll, heading, seg: i };
+ }
+
+ function _epRender(t) {
+   if (!_ep) return;
+   _ep.t = Math.max(0, Math.min(_ep.evacTotalSec, t));
+   const dist = (_ep.t / _ep.evacTotalSec) * _ep.totalDist;
+   const { ll, heading, seg } = _epPosAt(dist);
+   try { _ep.marker.setLatLng(ll); } catch (e) {}
+   // 進行方向コーンを回転
+   try {
+     const cone = _ep.marker.getElement()?.querySelector('.ep-walker-cone');
+     if (cone) cone.style.transform = 'translate(-50%, -60%) rotate(' + heading + 'deg)';
+   } catch (e) {}
+   // 追従カメラ（中央維持）
+   try { map.panTo(ll, { animate: false }); } catch (e) {}
+   // スクラブ＆時刻
+   const frac = _ep.t / _ep.evacTotalSec;
+   const scrub = document.getElementById('ep-scrub');
+   if (scrub && document.activeElement !== scrub) scrub.value = Math.round(frac * 1000);
+   const tEl = document.getElementById('ep-time'); if (tEl) tEl.textContent = _epFmt(_ep.t);
+   // 注意点（セグメントに対応）
+   const ci = Math.min(seg, _ep.cautions.length - 1);
+   if (ci !== _ep.lastCautionIdx) {
+     _ep.lastCautionIdx = ci;
+     const c = _ep.cautions[ci];
+     const box = document.getElementById('ep-caution');
+     if (box && c) {
+       box.className = 'ep-caution level-' + c.level;
+       box.innerHTML = '<div class="ep-caution-head"><span class="ep-dot"></span>' + c.head + '</div>'
+         + '<div class="ep-caution-body">' + c.body + '</div>';
+     }
+     const ph = document.getElementById('ep-phase'); if (ph && c) ph.textContent = c.head;
+   }
+ }
+
+ function _epTick(ts) {
+   if (!_ep || !_ep.playing) return;
+   if (!_ep.lastTs) _ep.lastTs = ts;
+   const dtWall = (ts - _ep.lastTs) / 1000;
+   _ep.lastTs = ts;
+   const rate = _ep.evacTotalSec / _ep.wallclock;  // 時系列秒 / 実時間秒
+   let nt = _ep.t + dtWall * rate;
+   if (nt >= _ep.evacTotalSec) {
+     _epRender(_ep.evacTotalSec);
+     _epPause();
+     return;
+   }
+   _epRender(nt);
+   _ep.raf = requestAnimationFrame(_epTick);
+ }
+
+ function _epPlay() {
+   if (!_ep) return;
+   if (_ep.t >= _ep.evacTotalSec) { _ep.t = 0; }  // 終端なら頭出し
+   _ep.playing = true; _ep.lastTs = 0;
+   document.getElementById('ep-play-icon')?.classList.add('hidden');
+   document.getElementById('ep-pause-icon')?.classList.remove('hidden');
+   _ep.raf = requestAnimationFrame(_epTick);
+ }
+
+ function _epPause() {
+   if (!_ep) return;
+   _ep.playing = false;
+   if (_ep.raf) cancelAnimationFrame(_ep.raf);
+   _ep.raf = null;
+   document.getElementById('ep-play-icon')?.classList.remove('hidden');
+   document.getElementById('ep-pause-icon')?.classList.add('hidden');
+ }
+
+ function stopEvacuationPlayback() {
+   if (_ep) {
+     if (_ep.raf) cancelAnimationFrame(_ep.raf);
+     try { routeLayerGroup.removeLayer(_ep.marker); } catch (e) {}
+     _ep = null;
+   }
+   document.getElementById('evac-playback')?.classList.add('hidden');
+   document.body.classList.remove('ep-mode');
  }
 
  function showRouteSelectorHUD(candidates) {
