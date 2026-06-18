@@ -4152,13 +4152,13 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  const icons = {
- info: 'ℹ️',
+ info: '',
  success: '',
  warning: '',
  error: '',
  copied: ''
  };
- iconEl.innerText = icons[type] || 'ℹ️';
+ iconEl.innerText = icons[type] || '';
  textEl.innerText = message;
 
  island.classList.remove('hidden');
