@@ -2875,6 +2875,29 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .evac-playback.hidden { display: none !important; }
 .evac-playback > * { pointer-events: auto; }
 
+/* 時系列混雑のライブ凡例（その時刻に混雑しているエッジ数を表示） */
+.ep-cong-legend {
+    align-self: center;
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-md);
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
+    animation: epCautionIn 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.ep-cong-legend.hidden { display: none; }
+.ep-cong-legend .epl-title { opacity: 0.7; font-weight: 700; }
+.ep-cong-legend .epl-item { display: inline-flex; align-items: center; gap: 5px; }
+.ep-cong-legend .epl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.ep-cong-legend .epl-mid  { background: #ff9f0a; }
+.ep-cong-legend .epl-high { background: #ff3b30; }
+.ep-cong-legend .epl-num { font-variant-numeric: tabular-nums; }
+
 /* 注意点カード（マーカー進行に同期して内容が変わる） */
 .ep-caution {
     align-self: stretch;

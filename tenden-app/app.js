@@ -2788,6 +2788,7 @@ document.addEventListener('DOMContentLoaded', () => {
      t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
    };
    try { document.getElementById('ep-branch-choice')?.classList.add('hidden'); } catch (e) {}
+   try { document.getElementById('ep-cong-legend')?.classList.add('hidden'); } catch (e) {}
 
    // ルート選択シートが残っていれば閉じる（再生を遮らない）
    try { if (typeof hideRouteSelectorHUD === 'function') hideRouteSelectorHUD(); } catch (e) {}
@@ -2885,13 +2886,14 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  }
 
- // 指定バケットで混雑しているエッジを地図に描画（赤=高/橙=中）
+ // 指定バケットで混雑しているエッジを地図に描画（赤=高/橙=中）＋ライブ凡例を更新
  function _epDrawCongestion(bucket) {
    if (!_ep || !_ep.congLayer) return;
    _ep.congLayer.clearLayers();
    const ts = congestionTimeseriesData;
    if (!ts || !ts.edges) return;
    const geom = _ep.congGeom || {};
+   let nMid = 0, nHigh = 0;
    for (const id in ts.edges) {
      const series = ts.edges[id];
      if (!series || bucket >= series.length) continue;
@@ -2899,10 +2901,22 @@ document.addEventListener('DOMContentLoaded', () => {
      if (density < 0.8) continue;                     // 低混雑は描かない
      const coords = geom[id];
      if (!coords || coords.length < 2) continue;
-     const color = density >= 2.0 ? '#ff3b30' : '#ff9f0a';
-     const weight = density >= 2.0 ? 6 : 4;
-     L.polyline(coords, { color, weight, opacity: 0.7, lineCap: 'round' }).addTo(_ep.congLayer);
+     const high = density >= 2.0;
+     if (high) nHigh++; else nMid++;
+     L.polyline(coords, { color: high ? '#ff3b30' : '#ff9f0a', weight: high ? 6 : 4, opacity: 0.7, lineCap: 'round' }).addTo(_ep.congLayer);
    }
+   _epUpdateCongLegend(nMid, nHigh);
+ }
+
+ // この時刻に混雑している道路の本数を凡例として表示（混雑ゼロなら隠す）
+ function _epUpdateCongLegend(nMid, nHigh) {
+   const el = document.getElementById('ep-cong-legend');
+   if (!el) return;
+   if (nMid + nHigh === 0) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+   el.innerHTML = '<span class="epl-title">この時刻の道路混雑</span>'
+     + '<span class="epl-item"><span class="epl-dot epl-mid"></span>中 <span class="epl-num">' + nMid + '</span></span>'
+     + '<span class="epl-item"><span class="epl-dot epl-high"></span>高 <span class="epl-num">' + nHigh + '</span></span>';
+   el.classList.remove('hidden');
  }
 
  // 分岐選択カードを表示（避難所名を反映）
@@ -2998,6 +3012,7 @@ document.addEventListener('DOMContentLoaded', () => {
    }
    document.getElementById('evac-playback')?.classList.add('hidden');
    document.getElementById('ep-branch-choice')?.classList.add('hidden');
+   document.getElementById('ep-cong-legend')?.classList.add('hidden');
    document.body.classList.remove('ep-mode');
  }
 
