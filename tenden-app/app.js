@@ -2688,12 +2688,12 @@ document.addEventListener('DOMContentLoaded', () => {
      ? Math.min(99, Math.floor(d.model_info.final_survival_rate * 100)) : 99;
    return {
      id: 'AI',
-     label: dict.routeAiLabel || '高台優先ルート',
+     label: dict.routeAiLabel || 'AIスマート避難ルート',
      color: '#ff6b00',
      waypoints: wps,
      distance_m: Math.round(dist),
      estimated_min: est,
-     characteristics: (dict.routeAiDesc || '標高・津波到達時間・道幅・混雑を総合分析した高台への経路')
+     characteristics: (dict.routeAiDesc || '強化学習AIが距離・標高・津波到達・道幅・混雑を総合判断した最適経路')
        .replace('{rate}', survival),
      congestion_score: 'ai',
      isAI: true,
@@ -3159,8 +3159,8 @@ document.addEventListener('DOMContentLoaded', () => {
   } else { candidates = _valid; }
   // フィルタ後の candidates で activeRoutesList を更新
   activeRoutesList = candidates;
+  hideRouteCalcLoading();  // 経路が確定したのでローディングを閉じる
 
- 
  // Temporarily fade out background emergency controls & banners
  const hudBottom = document.querySelector('.hud-bottom');
  if (hudBottom) hudBottom.classList.add('hidden-for-route');
@@ -3201,7 +3201,7 @@ document.addEventListener('DOMContentLoaded', () => {
      <div class="ai-route-glow"></div>
      <div style="position:relative; z-index:1; display:flex; align-items:center; gap:12px;">
        <div class="ai-route-icon">
-         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18L14 7l-3.5 6L8 10l-5 10z"/><circle cx="17.5" cy="5.5" r="1.5" fill="#fff" stroke="none"/></svg>
+         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4L12 3z"/><path d="M19 14l.8 2L22 17l-2.2.9L19 20l-.8-2.1L16 17l2.2-1z"/></svg>
        </div>
        <div style="text-align:left;">
          <div style="font-size:1rem; font-weight:800; color:#fff; line-height:1.2;">${c.label}</div>
@@ -3209,6 +3209,7 @@ document.addEventListener('DOMContentLoaded', () => {
        </div>
      </div>
      <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
+       <span class="ai-route-badge">${(dict.routeAiBadge || '強化学習AI')}</span>
        <div style="font-size:0.85rem; font-weight:800; color:#fff;">${c.estimated_min}${(dict.minutesSuffix || '分')}</div>
      </div>`;
    aiBtn.addEventListener('click', () => { selectEvacuationRoute('AI'); });
@@ -3410,9 +3411,23 @@ document.addEventListener('DOMContentLoaded', () => {
  return null;
  }
 
+ let _routeLoadingTimer = null;
+ function showRouteCalcLoading() {
+   const el = document.getElementById('route-loading');
+   if (el) el.classList.remove('hidden');
+   if (_routeLoadingTimer) clearTimeout(_routeLoadingTimer);
+   _routeLoadingTimer = setTimeout(hideRouteCalcLoading, 15000); // 安全策：長すぎる場合は自動で閉じる
+ }
+ function hideRouteCalcLoading() {
+   const el = document.getElementById('route-loading');
+   if (el) el.classList.add('hidden');
+   if (_routeLoadingTimer) { clearTimeout(_routeLoadingTimer); _routeLoadingTimer = null; }
+ }
+
  async function recalculateRouteFromLocation(loc) {
  if (!isEmergency) return;
- 
+ showRouteCalcLoading();
+
  // Stop current evacuation simulation interval
  if (simulationInterval) {
  clearInterval(simulationInterval);

@@ -2902,6 +2902,33 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .ep-cong-legend .epl-high { background: #ff3b30; }
 .ep-cong-legend .epl-num { font-variant-numeric: tabular-nums; }
 
+/* ルート計算中のローディング */
+.route-loading {
+    position: fixed; inset: 0; z-index: 2350;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+}
+.route-loading.hidden { display: none; }
+.route-loading .rl-card {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 26px 30px;
+    border-radius: 20px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
+    animation: epCautionIn 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.route-loading .rl-spinner {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 3.5px solid rgba(0,122,255,0.18);
+    border-top-color: var(--primary);
+    animation: rlSpin 0.85s linear infinite;
+}
+@keyframes rlSpin { to { transform: rotate(360deg); } }
+.route-loading .rl-title { font-size: 0.95rem; font-weight: 700; color: var(--text-color); }
+.route-loading .rl-sub { font-size: 0.76rem; color: var(--text-muted); }
+
 /* 注意点カード（マーカー進行に同期して内容が変わる） */
 .ep-caution {
     align-self: stretch;
