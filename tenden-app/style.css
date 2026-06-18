@@ -2859,3 +2859,59 @@ body.ep-mode .bottom-sheet { display: none !important; }
 .tip-card span {
     font-weight: 700;
 }
+
+/* ── Premium High-Contrast Evacuation HUD Cards (Post-Route Selection White-based) ── */
+.ep-bar, .ep-caution, .emergency-mode-actions, #evacuation-banner {
+    background: #ffffff !important;
+    color: #1c1c1e !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Ensure text inside evacuation banners/playback remains fully visible (dark text on white) */
+.ep-bar *, .ep-caution *, .emergency-mode-actions *, #evacuation-banner * {
+    color: #1c1c1e !important;
+}
+
+/* Retain status badge specific colors */
+.ep-caution.level-danger { border-left: 5px solid var(--danger) !important; }
+.ep-caution.level-warning { border-left: 5px solid var(--warning) !important; }
+.ep-caution.level-safe { border-left: 5px solid var(--success) !important; }
+.ep-caution.level-danger .ep-dot { background: var(--danger) !important; }
+.ep-caution.level-warning .ep-dot { background: var(--warning) !important; }
+.ep-caution.level-safe .ep-dot { background: var(--success) !important; }
+
+/* Pulse animations on light backgrounds */
+.emergency-mode-actions::before {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.1), transparent) !important;
+}
+
+/* Adjust playback tracker and buttons on white base */
+.mode-emergency .ep-btn {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: #1c1c1e !important;
+}
+.mode-emergency .ep-btn:active {
+    background: rgba(0, 0, 0, 0.12) !important;
+}
+.ep-play-btn {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+}
+.ep-play-btn * {
+    color: #ffffff !important;
+}
+.ep-scrub {
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+.mode-emergency .ep-scrub {
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+.ep-scrub::-webkit-slider-thumb {
+    background: var(--primary) !important;
+    border: 2px solid #ffffff !important;
+}
+.ep-labels #ep-phase {
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+}
