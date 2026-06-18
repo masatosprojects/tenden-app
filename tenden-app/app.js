@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var ver = 'v63';
+     var ver = 'v64';
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
        localStorage.setItem('tenden-pwa-ver', ver);
@@ -2718,11 +2718,30 @@ document.addEventListener('DOMContentLoaded', () => {
    });
    const marker = L.marker(wps[0], { icon: walkerIcon, zIndexOffset: 2000, interactive: false }).addTo(routeLayerGroup);
 
+   // 時系列混雑の可視化準備：エッジID→座標 のマップを構築し、専用レイヤーを用意
+   const congGeom = {};
+   try {
+     if (congestionGeojsonData && congestionGeojsonData.features) {
+       congestionGeojsonData.features.forEach(f => {
+         const id = f.properties && f.properties.id;
+         if (id && f.geometry && f.geometry.coordinates) {
+           congGeom[id] = f.geometry.coordinates.map(c => [c[1], c[0]]); // [lng,lat]→[lat,lng]
+         }
+       });
+     }
+   } catch (e) {}
+   if (typeof loadCongestionTimeseries === 'function') { try { loadCongestionTimeseries(); } catch (e) {} }
+   // 再生中は静的混雑ヒートマップを退避（時刻別の表示と二重にしない）
+   const staticCongWasOn = !!(congestionLayer && map.hasLayer(congestionLayer));
+   if (staticCongWasOn) { try { map.removeLayer(congestionLayer); } catch (e) {} }
+   const congLayer = L.layerGroup().addTo(map);
+
    _ep = {
      route, wps, cum, totalDist, speed, evacTotalSec,
      wallclock: PLAYBACK_WALLCLOCK,
      cautions: _epBuildCautions(route),
-     marker, t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
+     marker, congGeom, congLayer, staticCongWasOn, lastBucket: -1,
+     t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
    };
 
    // ルート選択シートが残っていれば閉じる（再生を遮らない）
@@ -2787,6 +2806,36 @@ document.addEventListener('DOMContentLoaded', () => {
      }
      const ph = document.getElementById('ep-phase'); if (ph && c) ph.textContent = c.head;
    }
+   // 時系列混雑：現在時刻のバケットが変わったら混雑エッジを描き直す
+   const ts = congestionTimeseriesData;
+   if (ts && ts.edges && _ep.congLayer) {
+     const bsec = ts.bucket_seconds || 60;
+     const bucket = Math.min((ts.num_buckets || 1) - 1, Math.floor(_ep.t / bsec));
+     if (bucket !== _ep.lastBucket) {
+       _ep.lastBucket = bucket;
+       _epDrawCongestion(bucket);
+     }
+   }
+ }
+
+ // 指定バケットで混雑しているエッジを地図に描画（赤=高/橙=中）
+ function _epDrawCongestion(bucket) {
+   if (!_ep || !_ep.congLayer) return;
+   _ep.congLayer.clearLayers();
+   const ts = congestionTimeseriesData;
+   if (!ts || !ts.edges) return;
+   const geom = _ep.congGeom || {};
+   for (const id in ts.edges) {
+     const series = ts.edges[id];
+     if (!series || bucket >= series.length) continue;
+     const density = series[bucket] / 10.0;          // ×10量子化を戻す
+     if (density < 0.8) continue;                     // 低混雑は描かない
+     const coords = geom[id];
+     if (!coords || coords.length < 2) continue;
+     const color = density >= 2.0 ? '#ff3b30' : '#ff9f0a';
+     const weight = density >= 2.0 ? 6 : 4;
+     L.polyline(coords, { color, weight, opacity: 0.7, lineCap: 'round' }).addTo(_ep.congLayer);
+   }
  }
 
  function _epTick(ts) {
@@ -2827,6 +2876,9 @@ document.addEventListener('DOMContentLoaded', () => {
    if (_ep) {
      if (_ep.raf) cancelAnimationFrame(_ep.raf);
      try { routeLayerGroup.removeLayer(_ep.marker); } catch (e) {}
+     try { if (_ep.congLayer) map.removeLayer(_ep.congLayer); } catch (e) {}
+     // 静的混雑ヒートマップを元に戻す
+     try { if (_ep.staticCongWasOn && congestionLayer) congestionLayer.addTo(map); } catch (e) {}
      _ep = null;
    }
    document.getElementById('evac-playback')?.classList.add('hidden');
