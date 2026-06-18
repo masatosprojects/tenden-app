@@ -416,6 +416,23 @@
  <!-- 事前避難体験（追体験）プレイバック -->
  <div id="evac-playback" class="evac-playback hidden">
    <div id="ep-caution" class="ep-caution"></div>
+   <div id="ep-branch-choice" class="ep-branch hidden">
+     <div class="ep-branch-head">
+       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+       分岐点：ここで道が分かれます
+     </div>
+     <div class="ep-branch-sub">どちらへ避難しますか？選択で体験が変わります。</div>
+     <div class="ep-branch-opts">
+       <button id="ep-branch-highland" class="ep-branch-opt highland">
+         <span class="ep-branch-opt-head">高台へ（AI推奨）</span>
+         <span class="ep-branch-opt-desc">標高の高い安全圏。津波から最も確実に離れます。</span>
+       </button>
+       <button id="ep-branch-shelter" class="ep-branch-opt shelter">
+         <span class="ep-branch-opt-head">避難所へ</span>
+         <span class="ep-branch-opt-desc" id="ep-branch-shelter-desc">指定避難所。屋内退避・情報・物資が得られます。</span>
+       </button>
+     </div>
+   </div>
    <div class="ep-bar glass-panel">
      <button id="ep-play" class="ep-btn ep-play-btn" aria-label="再生 / 一時停止">
        <svg id="ep-play-icon" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>

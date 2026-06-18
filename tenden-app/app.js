@@ -1607,6 +1607,8 @@ document.addEventListener('DOMContentLoaded', () => {
    _epRender((parseInt(e.target.value, 10) / 1000) * _ep.evacTotalSec);
  });
  document.getElementById('ep-close')?.addEventListener('click', () => stopEvacuationPlayback());
+ document.getElementById('ep-branch-highland')?.addEventListener('click', () => { _epChooseBranch('highland'); triggerHapticTick(); });
+ document.getElementById('ep-branch-shelter')?.addEventListener('click', () => { _epChooseBranch('shelter'); triggerHapticTick(); });
 
  // Evacuation panel: "その他の操作" springs open the secondary action menu
  const btnPanelMoreToggle = document.getElementById('btn-panel-more-toggle');
@@ -2305,7 +2307,7 @@ document.addEventListener('DOMContentLoaded', () => {
  html: `
  <div style="display:flex; flex-direction:column; align-items:center;">
  <div style="background:#0071e3; color:white; font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:10px; box-shadow:0 3px 8px rgba(0,113,227,0.5); white-space:nowrap; margin-bottom:4px;">
- ${primaryGoalLabel}・・${edgeName || ""}
+ ${primaryGoalLabel} → ${edgeName || ""}
  </div>
  <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #0071e3;"></div>
  </div>
@@ -2362,7 +2364,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const branchToShelterLabel = dict.branchToShelter || 'Branch to Shelter';
  const branchIcon = L.divIcon({
  className: '',
- html: `<div style="background:#ff9500; color:white; font-size:0.65rem; font-weight:700; padding:3px 7px; border-radius:8px; white-space:nowrap; box-shadow:0 2px 5px rgba(255,149,0,0.4);">竊・${branchToShelterLabel}</div>`,
+ html: `<div style="background:#ff9500; color:white; font-size:0.65rem; font-weight:700; padding:3px 7px; border-radius:8px; white-space:nowrap; box-shadow:0 2px 5px rgba(255,149,0,0.4);">→ ${branchToShelterLabel}</div>`,
  iconSize: [110, 22],
  iconAnchor: [55, 11]
  });
@@ -2385,7 +2387,7 @@ document.addEventListener('DOMContentLoaded', () => {
  html: `
  <div style="display:flex; flex-direction:column; align-items:center;">
  <div style="background:#ff9500; color:white; font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:10px; box-shadow:0 3px 8px rgba(255,149,0,0.5); white-space:nowrap; margin-bottom:4px;">
- ${secondaryGoalLabel}・・${localizedShelterName || ""}
+ ${secondaryGoalLabel} → ${localizedShelterName || ""}
  </div>
  <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #ff9500;"></div>
  </div>
@@ -2745,13 +2747,47 @@ document.addEventListener('DOMContentLoaded', () => {
    if (staticCongWasOn) { try { map.removeLayer(congestionLayer); } catch (e) {} }
    const congLayer = L.layerGroup().addTo(map);
 
+   // 分岐点（高台 vs 避難所）の検出：第二ルート（避難所）が主ルートから分かれる地点を探す
+   let branch = null;
+   try {
+     const sec = activeSecondaryRoute;
+     if (sec && sec.waypoints && sec.waypoints.length > 1) {
+       let bMain = -1, bSec = -1;
+       for (let i = sec.waypoints.length - 1; i >= 0; i--) {
+         const sp = L.latLng(sec.waypoints[i][0], sec.waypoints[i][1]);
+         let minD = Infinity, minIdx = 0;
+         for (let j = 0; j < wps.length; j++) {
+           const d = sp.distanceTo(L.latLng(wps[j]));
+           if (d < minD) { minD = d; minIdx = j; }
+         }
+         if (minD < 20.0) { bMain = minIdx; bSec = i; break; }
+       }
+       if (bMain >= 0 && bMain < wps.length - 1) {
+         const branchDist = cum[bMain];
+         // 避難所ルートに十分な残りがあり、分岐が終点付近でなければ「選べる分岐」とする
+         // （AI高台ルートと避難所ルートは多くの場合スタート地点で分かれる→出発時に選択を提示）
+         if (branchDist < totalDist - 25 && bSec < sec.waypoints.length - 1) {
+           branch = {
+             dist: branchDist, mainIdx: bMain,
+             atStart: branchDist < 30,
+             secWps: sec.waypoints.slice(bSec).map(w => [w[0], w[1]]),
+             shelterName: (sec.target && sec.target.name) || '指定避難所',
+             decided: false, prompting: false
+           };
+         }
+       }
+     }
+   } catch (e) {}
+
    _ep = {
      route, wps, cum, totalDist, speed, evacTotalSec,
      wallclock: PLAYBACK_WALLCLOCK,
      cautions: _epBuildCautions(route),
      marker, congGeom, congLayer, staticCongWasOn, lastBucket: -1,
+     branch,
      t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
    };
+   try { document.getElementById('ep-branch-choice')?.classList.add('hidden'); } catch (e) {}
 
    // ルート選択シートが残っていれば閉じる（再生を遮らない）
    try { if (typeof hideRouteSelectorHUD === 'function') hideRouteSelectorHUD(); } catch (e) {}
@@ -2767,7 +2803,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
    try { map.setView(wps[0], 17, { animate: true, duration: 0.6 }); } catch (e) {}
    _epRender(0);
-   _epPlay();
+   // スタート地点で高台/避難所が分かれる場合は、歩き出す前に行き先を選ばせる
+   if (_ep.branch && _ep.branch.atStart && !_ep.branch.decided) {
+     _ep.branch.prompting = true;
+     _epShowBranch();
+   } else {
+     _epPlay();
+   }
  }
 
  function _epPosAt(distMeters) {
@@ -2787,7 +2829,23 @@ document.addEventListener('DOMContentLoaded', () => {
  function _epRender(t) {
    if (!_ep) return;
    _ep.t = Math.max(0, Math.min(_ep.evacTotalSec, t));
-   const dist = (_ep.t / _ep.evacTotalSec) * _ep.totalDist;
+   let dist = (_ep.t / _ep.evacTotalSec) * _ep.totalDist;
+   // 分岐ゲート：未決定なら分岐点で歩行を止め、選択を促す
+   if (_ep.branch && !_ep.branch.decided) {
+     if (dist >= _ep.branch.dist) {
+       dist = _ep.branch.dist;
+       _ep.t = (dist / _ep.totalDist) * _ep.evacTotalSec;
+       if (!_ep.branch.prompting) {
+         _ep.branch.prompting = true;
+         _epPause();
+         _epShowBranch();
+       }
+     } else if (_ep.branch.prompting && dist < _ep.branch.dist - 1) {
+       // 分岐手前まで巻き戻したら選択カードを引っ込める
+       _ep.branch.prompting = false;
+       document.getElementById('ep-branch-choice')?.classList.add('hidden');
+     }
+   }
    const { ll, heading, seg } = _epPosAt(dist);
    try { _ep.marker.setLatLng(ll); } catch (e) {}
    // 進行方向コーンを回転
@@ -2847,6 +2905,54 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  }
 
+ // 分岐選択カードを表示（避難所名を反映）
+ function _epShowBranch() {
+   if (!_ep || !_ep.branch) return;
+   const sd = document.getElementById('ep-branch-shelter-desc');
+   if (sd) sd.textContent = _ep.branch.shelterName + '。屋内退避・情報・物資が得られます。';
+   const card = document.getElementById('ep-branch-choice');
+   if (card) card.classList.remove('hidden');
+ }
+
+ // 分岐の選択：'highland'＝高台へ継続 / 'shelter'＝避難所ルートへ差し替え
+ function _epChooseBranch(which) {
+   if (!_ep || !_ep.branch) return;
+   const b = _ep.branch;
+   document.getElementById('ep-branch-choice')?.classList.add('hidden');
+
+   if (which === 'shelter') {
+     // 分岐点まで（主ルート）＋ 避難所への続き でルートを組み替える
+     const keep = _ep.wps.slice(0, b.mainIdx + 1);
+     const newWps = keep.concat(b.secWps);
+     const newCum = [0];
+     for (let i = 1; i < newWps.length; i++) {
+       newCum[i] = newCum[i - 1] + L.latLng(newWps[i - 1]).distanceTo(L.latLng(newWps[i]));
+     }
+     // 注意点を作り直す（分岐前は既存、分岐後は避難所向けの汎用ガイド）
+     const oldC = _ep.cautions;
+     const nc = new Array(newWps.length);
+     for (let i = 0; i < newWps.length; i++) {
+       if (i <= b.mainIdx && oldC[i]) nc[i] = oldC[i];
+       else if (i === newWps.length - 1) nc[i] = { level: 'safe', head: '避難完了（避難所）', body: b.shelterName + 'に到達しました。係員の指示に従い、屋内のより高い階へ移動してください。' };
+       else nc[i] = { level: 'warning', head: '避難所へ移動', body: '指定避難所へ向かっています。沿道の混雑・落下物・冠水に注意して進みます。' };
+     }
+     _ep.wps = newWps; _ep.cum = newCum;
+     _ep.totalDist = newCum[newCum.length - 1];
+     _ep.evacTotalSec = _ep.totalDist / Math.max(0.4, _ep.speed);
+     _ep.cautions = nc;
+     _ep.chosenShelter = true;
+     const totalEl = document.getElementById('ep-total');
+     if (totalEl) totalEl.textContent = _epFmt(_ep.evacTotalSec);
+   }
+
+   b.decided = true; b.prompting = false;
+   _ep.lastCautionIdx = -1;  // 注意点を即時更新させる
+   // 現在地（分岐点）に対応する時刻に合わせて再生を再開
+   _ep.t = (b.dist / _ep.totalDist) * _ep.evacTotalSec;
+   _epRender(_ep.t);
+   _epPlay();
+ }
+
  function _epTick(ts) {
    if (!_ep || !_ep.playing) return;
    if (!_ep.lastTs) _ep.lastTs = ts;
@@ -2891,6 +2997,7 @@ document.addEventListener('DOMContentLoaded', () => {
      _ep = null;
    }
    document.getElementById('evac-playback')?.classList.add('hidden');
+   document.getElementById('ep-branch-choice')?.classList.add('hidden');
    document.body.classList.remove('ep-mode');
  }
 
