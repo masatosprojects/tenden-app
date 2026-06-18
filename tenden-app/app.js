@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // Emergency route tracking state
  let isPinLocked = false;
  let isWaitingForPinDrop = false;
+ let isDrillMode = true; // true=鎌倉で避難体験(予習) / false=本番モード
  let activeRoutesList = [];
  let activeSelectedRouteId = 'A';
  let activeSecondaryRoute = null; // Cached secondary (shelter) route for redraw
@@ -522,21 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
  updateTsunamiPrefecturalTile(center.lat, center.lng);
  });
 
- // Banner Toggle Logic
- const bannerToggle = document.getElementById('banner-toggle');
- const bannerContent = document.getElementById('banner-content-expanded');
- const bannerChevron = document.getElementById('banner-chevron');
- if (bannerToggle && bannerContent) {
- bannerToggle.addEventListener('click', () => {
- if (bannerContent.style.display === 'none') {
- bannerContent.style.display = 'block';
- bannerChevron.style.transform = 'rotate(180deg)';
- } else {
- bannerContent.style.display = 'none';
- bannerChevron.style.transform = 'rotate(0deg)';
- }
- });
- }
+ // 警報バナーは展開なしの常時表示ヘッダーに変更（チェブロン/展開機能は撤去）
  }
 
  function handleOrientation(event) {
@@ -1944,6 +1931,12 @@ document.addEventListener('DOMContentLoaded', () => {
  if (!isTest) {
  document.body.classList.add('emergency-mode');
  }
+ isDrillMode = isTest;
+ // モード別ボタン表示：体験=予習(再生)のみ / 本番=ルートに従って進む
+ const _btnPrimary = document.getElementById('btn-evac-primary');
+ const _btnPlayback = document.getElementById('btn-evac-playback');
+ if (_btnPrimary) _btnPrimary.classList.toggle('hidden', isTest);
+ if (_btnPlayback) _btnPlayback.classList.toggle('hidden', !isTest);
 
  // 繧ｹ繝槭・迚ｹ蛹匁ｩ溯・縺ｮ蛻晄悄蛹・
  requestWakeLock();
@@ -2045,8 +2038,6 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('bottom-normal-actions').classList.remove('hidden');
  document.getElementById('btn-test-alert').classList.remove('hidden');
  document.getElementById('evacuation-banner').classList.add('hidden');
- document.getElementById('banner-content-expanded').style.display = 'none';
- document.getElementById('banner-chevron').style.transform = 'rotate(0deg)';
 
  // Collapse the secondary action menu for the next evacuation
  const panelMoreMenu = document.getElementById('panel-more-menu');
@@ -2649,19 +2640,19 @@ document.addEventListener('DOMContentLoaded', () => {
      ? Math.min(99, Math.floor(d.model_info.final_survival_rate * 100)) : 99;
    return {
      id: 'AI',
-     label: dict.routeAiLabel || 'AIモデル推奨ルート',
+     label: dict.routeAiLabel || '高台優先ルート',
      color: '#ff6b00',
      waypoints: wps,
      distance_m: Math.round(dist),
      estimated_min: est,
-     characteristics: (dict.routeAiDesc || '強化学習モデル（生存率{rate}%）が高台への最適経路を提案')
+     characteristics: (dict.routeAiDesc || '標高・津波到達時間・道幅・混雑を総合分析した高台への経路')
        .replace('{rate}', survival),
      congestion_score: 'ai',
      isAI: true,
      survival: survival,
      meta: meta,
      goal: { lat: d.lat[endIdx], lng: d.lon[endIdx], elev: goalElev,
-             name: (dict.routeAiGoal || 'AI推奨の高台（海抜{elev}m）').replace('{elev}', Math.round(goalElev)) }
+             name: (dict.routeAiGoal || '安全な高台（海抜{elev}m）').replace('{elev}', Math.round(goalElev)) }
    };
  }
 
@@ -3076,26 +3067,16 @@ document.addEventListener('DOMContentLoaded', () => {
  if (banner) banner.classList.add('hidden-for-route');
 
  container.innerHTML = '';
- 
- // --- 1. Auto-Apply Button ---
- const bestRouteId = getAutoBestRouteId(candidates);
- const autoBtn = document.createElement('button');
- autoBtn.className = 'route-option-btn auto-best-btn';
- autoBtn.innerHTML = `
- <div style="font-size:1.1rem; font-weight:800; color:var(--primary); margin-bottom:2px;">最適ルートを自動計算</div>
- <div style="font-size:0.75rem; color:var(--text-light);">総合的に判断し、最適な経路を自動で選びます</div>
+
+ // --- 1. 案内見出し（自動選択はせず、ユーザー自身に判断してもらう） ---
+ const guideHead = document.createElement('div');
+ guideHead.style.cssText = 'padding:2px 2px 4px; text-align:left;';
+ guideHead.innerHTML = `
+ <div style="font-size:1.0rem; font-weight:800; color:var(--text-color); margin-bottom:3px;">避難ルートを選んでください</div>
+ <div style="font-size:0.76rem; color:var(--text-muted); line-height:1.5;">2つの経路の特徴を見て、ご自身の状況に合うものを選びます。どちらが正解ということはありません。</div>
  `;
- autoBtn.style.border = '2px solid var(--primary)';
- autoBtn.style.background = 'linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(52, 199, 89, 0.1) 100%)';
- autoBtn.style.borderRadius = '12px';
- autoBtn.style.padding = '14px';
- autoBtn.style.cursor = 'pointer';
- autoBtn.style.width = '100%';
- autoBtn.addEventListener('click', () => {
- selectEvacuationRoute(bestRouteId);
- });
- container.appendChild(autoBtn);
- 
+ container.appendChild(guideHead);
+
  // --- 2. Compact Route Options ---
  const optionsWrapper = document.createElement('div');
  optionsWrapper.style.display = 'flex';
@@ -3118,7 +3099,7 @@ document.addEventListener('DOMContentLoaded', () => {
      <div class="ai-route-glow"></div>
      <div style="position:relative; z-index:1; display:flex; align-items:center; gap:12px;">
        <div class="ai-route-icon">
-         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4M8 2h8"/><circle cx="8.5" cy="14" r="1.4" fill="#fff" stroke="none"/><circle cx="15.5" cy="14" r="1.4" fill="#fff" stroke="none"/></svg>
+         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18L14 7l-3.5 6L8 10l-5 10z"/><circle cx="17.5" cy="5.5" r="1.5" fill="#fff" stroke="none"/></svg>
        </div>
        <div style="text-align:left;">
          <div style="font-size:1rem; font-weight:800; color:#fff; line-height:1.2;">${c.label}</div>
@@ -3126,7 +3107,6 @@ document.addEventListener('DOMContentLoaded', () => {
        </div>
      </div>
      <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
-       <span class="ai-route-badge">${(dict.routeAiBadge || 'AI推奨')}</span>
        <div style="font-size:0.85rem; font-weight:800; color:#fff;">${c.estimated_min}${(dict.minutesSuffix || '分')}</div>
      </div>`;
    aiBtn.addEventListener('click', () => { selectEvacuationRoute('AI'); });

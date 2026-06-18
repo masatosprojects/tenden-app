@@ -364,30 +364,25 @@
 
  <!-- Emergency Mode Banner (Takes over bottom sheet during evac) -->
  <div id="evacuation-banner" class="hidden emergency-mode-actions">
- <!-- ALWAYS VISIBLE PART (Collapsed) -->
- <div class="emergency-header" id="banner-toggle" style="cursor: pointer; align-items: flex-start; padding-bottom: 8px;">
+ <!-- 警報ヘッダー（常時表示・展開なし） -->
+ <div class="emergency-header" style="align-items: flex-start; padding-bottom: 8px;">
  <div style="flex: 1;">
  <div class="eh-title"> <span id="i18n-evac-title" data-i18n="evacTitle">避難指示発令中</span></div>
  <div style="font-size: 0.85rem; color: var(--warning); margin-top: 4px;" id="disaster-details">
  鎌倉には最短で<strong>8〜14分</strong>で津波が来ます。直ちに高台へ避難してください。
  </div>
+ <p id="i18n-evac-desc" data-i18n="evacDesc" class="evac-instruction" style="font-size:0.88rem; margin-top:6px; opacity:0.9;">ルートに沿って高台へ避難してください</p>
  </div>
- <svg id="banner-chevron" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
- </div>
-
- <!-- EXPANDED PART (Hidden by default) -->
- <div id="banner-content-expanded" class="emergency-body" style="display: none; margin-top: 10px;">
- <p id="i18n-evac-desc" data-i18n="evacDesc" class="evac-instruction" style="font-size:0.95rem;">青いルートに沿って高台へ避難してください</p>
  </div>
 
- <!-- Primary CTA: always visible while evacuating -->
- <button id="btn-evac-primary" class="action-btn primary-btn btn-large evac-primary-btn mt-10">
+ <!-- 本番モード専用: ルートに従って進む（体験モードでは非表示） -->
+ <button id="btn-evac-primary" class="action-btn primary-btn btn-large evac-primary-btn mt-10 hidden">
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
  <span data-i18n="evacPrimaryBtn">避難ルートに従って進む</span>
  </button>
 
- <!-- 事前避難体験（追体験）の再生 -->
- <button id="btn-evac-playback" class="action-btn secondary-btn btn-large mt-10">
+ <!-- 体験モード専用: 事前避難体験（予習）の再生 -->
+ <button id="btn-evac-playback" class="action-btn primary-btn btn-large mt-10">
  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="margin-right:2px;"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
  <span>避難の流れを再生して予習する</span>
  </button>
@@ -425,7 +420,7 @@
      <div class="ep-branch-sub">どちらへ避難しますか？選択で体験が変わります。</div>
      <div class="ep-branch-opts">
        <button id="ep-branch-highland" class="ep-branch-opt highland">
-         <span class="ep-branch-opt-head">高台へ（AI推奨）</span>
+         <span class="ep-branch-opt-head">高台へ</span>
          <span class="ep-branch-opt-desc">標高の高い安全圏。津波から最も確実に離れます。</span>
        </button>
        <button id="ep-branch-shelter" class="ep-branch-opt shelter">

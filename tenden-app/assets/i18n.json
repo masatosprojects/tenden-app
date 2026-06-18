@@ -148,10 +148,10 @@
   "fabMore": "その他",
   "evacPrimaryBtn": "避難ルートに従って進む",
   "panelMoreBtn": "その他の操作",
-  "routeAiLabel": "AIモデル推奨ルート",
-  "routeAiDesc": "強化学習モデル（生存率{rate}%）が高台への最適経路を提案",
-  "routeAiBadge": "AI推奨",
-  "routeAiGoal": "AI推奨の高台（海抜{elev}m）",
+  "routeAiLabel": "高台優先ルート",
+  "routeAiDesc": "標高・津波到達時間・道幅・混雑を総合分析した高台への経路",
+  "routeAiBadge": "",
+  "routeAiGoal": "安全な高台（海抜{elev}m）",
   "routeAccessibleLabel": "要配慮者ルート（緩やか）"
  },
  "en": {
