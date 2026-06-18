@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
  function renderAnnouncementsList() {
    const list = document.getElementById('dev-ann-list');
    if (!list) return;
-   const LABEL = { active: '対応中', resolved: '解決済み' };
+   const LABEL = { active: '公開中', resolved: '終了' };
    list.innerHTML = DEV_ANNOUNCEMENTS.map(a => `
      <div class="ann-item ${a.status}">
        <div class="ann-item-head">

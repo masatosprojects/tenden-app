@@ -7,6 +7,7 @@
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(0, 0, 0, 0.08);
     --text-color: #1d1d1f; /* Apple Off-Black */
+    --text-primary: #1d1d1f; /* 本文見出し（未定義だと白文字消失するため明示定義） */
     --text-muted: #86868b; /* Apple Gray */
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
     --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -22,6 +23,7 @@
     --glass-bg: rgba(18, 18, 20, 0.9);
     --glass-border: rgba(255, 59, 48, 0.25);
     --text-color: #ffffff;
+    --text-primary: #ffffff;
     --text-muted: #ebebf5;
     --hud-text: #ffffff;
     --bg-color: #000000;
@@ -764,9 +766,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 }
 .dev-ann-overlay.hidden { display: none; }
 .dev-ann-overlay.active { opacity: 1; }
+/* お知らせシートは常にダーク固定（暗いシート前提のデザインのため、アプリのモードに依存させない） */
 .dev-ann-sheet {
     width: 100%; max-height: 82vh; overflow-y: auto;
-    background: var(--glass-bg, rgba(22,22,30,0.97));
+    background: #16161c;
     border-radius: 20px 20px 0 0;
     padding: 0 0 env(safe-area-inset-bottom, 16px);
     transform: translateY(0);
@@ -774,34 +777,34 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 .dev-ann-header {
     display: flex; justify-content: space-between; align-items: center;
     padding: 18px 20px 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
     position: sticky; top: 0;
-    background: var(--glass-bg, rgba(22,22,30,0.97));
+    background: #16161c;
 }
-.dev-ann-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+.dev-ann-title { font-size: 1rem; font-weight: 700; color: #f5f5f7; }
 .dev-ann-close {
-    background: none; border: none; color: var(--text-muted);
-    font-size: 1.1rem; cursor: pointer; padding: 4px 8px;
+    background: none; border: none; color: rgba(235,235,245,0.55);
+    font-size: 1.3rem; cursor: pointer; padding: 4px 8px; line-height: 1;
 }
 .dev-ann-list { padding: 12px 16px 24px; display: flex; flex-direction: column; gap: 12px; }
 .ann-item {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.06);
     border-radius: 14px; padding: 14px 16px;
     border-left: 3px solid transparent;
 }
-.ann-item.active   { border-left-color: #007aff; }
+.ann-item.active   { border-left-color: #0a84ff; }
 .ann-item.resolved { border-left-color: #34c759; opacity: 0.6; }
-.ann-item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ann-item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 .ann-badge {
     font-size: 0.65rem; font-weight: 700; padding: 2px 8px;
-    border-radius: 6px; text-transform: uppercase; letter-spacing: 0.04em;
+    border-radius: 6px; letter-spacing: 0.02em;
 }
-.ann-badge.active   { background: rgba(0,122,255,0.2); color: #4da3ff; }
-.ann-badge.resolved { background: rgba(52,199,89,0.2); color: #34c759; }
-.ann-cat  { font-size: 0.7rem; color: var(--text-muted); }
-.ann-date { font-size: 0.7rem; color: var(--text-muted); margin-left: auto; }
-.ann-title { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-.ann-body  { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+.ann-badge.active   { background: rgba(10,132,255,0.22); color: #5aa9ff; }
+.ann-badge.resolved { background: rgba(52,199,89,0.22); color: #4cd167; }
+.ann-cat  { font-size: 0.72rem; color: rgba(235,235,245,0.62); font-weight: 600; }
+.ann-date { font-size: 0.7rem; color: rgba(235,235,245,0.42); margin-left: auto; }
+.ann-title { font-size: 0.92rem; font-weight: 700; color: #f5f5f7; margin-bottom: 4px; line-height: 1.4; }
+.ann-body  { font-size: 0.8rem; color: rgba(235,235,245,0.72); line-height: 1.55; }
 
 /* Startup notice popup */
 @keyframes snSlideUp { from { opacity:0; transform:translateY(24px) scale(0.97); } to { opacity:1; transform:none; } }
@@ -812,26 +815,27 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     padding: 24px;
 }
 .startup-notice.hidden { display: none; }
+/* スタートアップ通知も常にダーク固定 */
 .sn-card {
-    background: var(--glass-bg, rgba(28,28,36,0.98));
+    background: #1c1c24;
     border-radius: 20px; padding: 22px 20px 18px;
     width: 100%; max-width: 360px;
     animation: snSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
     border: 1px solid rgba(255,255,255,0.1);
 }
 .sn-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-.sn-icon { font-size: 2rem; line-height: 1; }
-.sn-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
-.sn-sub   { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+.sn-icon { color: #5aa9ff; display: flex; align-items: center; }
+.sn-title { font-size: 1rem; font-weight: 700; color: #f5f5f7; }
+.sn-sub   { font-size: 0.75rem; color: rgba(235,235,245,0.6); margin-top: 2px; }
 .sn-body  { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
 .sn-item  {
     background: rgba(255,255,255,0.06);
     border-radius: 12px; padding: 12px 14px;
-    border-left: 3px solid #007aff;
+    border-left: 3px solid #0a84ff;
 }
-.sn-item-cat   { font-size: 0.68rem; color: #4da3ff; font-weight: 600; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
-.sn-item-title { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-.sn-item-body  { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+.sn-item-cat   { font-size: 0.68rem; color: #5aa9ff; font-weight: 700; margin-bottom: 3px; letter-spacing: 0.02em; }
+.sn-item-title { font-size: 0.85rem; font-weight: 700; color: #f5f5f7; margin-bottom: 4px; line-height: 1.4; }
+.sn-item-body  { font-size: 0.78rem; color: rgba(235,235,245,0.72); line-height: 1.55; }
 .sn-close-btn {
     width: 100%; padding: 13px;
     background: rgba(0,122,255,0.15); color: #4da3ff;
