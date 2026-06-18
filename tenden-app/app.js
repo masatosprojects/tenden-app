@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
  let congestionGeojsonData = null;
  let aiPolicyData = null;          // 学習済みRLモデルの方策ベクトル場（緊急モード時に遅延ロード）
  let aiPolicyLoading = null;       // ロード中Promise（多重フェッチ防止）
+ let aiTimeaware = null;           // 時間依存の混雑迂回override（任意・小さい。{bucket_seconds, overrides}）
  let congestionTimeseriesData = null; // 60秒バケットの時系列密度（緊急モード時に遅延ロード）
  let emergencyStartTimeMs = null; // 緊急モード開始時刻（時系列バケット算出の基準）
  let currentLocation = null; // {lat, lng}
@@ -2542,6 +2543,10 @@ document.addEventListener('DOMContentLoaded', () => {
      .then(data => {
        aiPolicyData = data;
        console.log('[TENDEN] ai_evac_policy.json loaded:', data.count, 'nodes, survival', data.model_info && data.model_info.final_survival_rate);
+       // 時間依存の混雑迂回override（任意・小さい。失敗しても基本場で動作）
+       fetch('assets/ai_evac_policy_timeaware.json').then(r => r.json())
+         .then(t => { aiTimeaware = t; console.log('[TENDEN] time-aware overrides:', t.model_info && t.model_info.total_overrides); })
+         .catch(() => {});
        return data;
      })
      .catch(e => { console.warn('[TENDEN] ai_evac_policy load failed', e); aiPolicyLoading = null; return null; });
@@ -2572,15 +2577,30 @@ document.addEventListener('DOMContentLoaded', () => {
    // 既に安全な高台にいる場合
    if (d.safe[cur]) return { id: 'AI', alreadySafe: true };
 
+   const speed = (typeof getEvacuationSpeed === 'function') ? getEvacuationSpeed() : 1.2;
    const wps = [[loc.lat, loc.lng]];
    const seen = new Set();
-   let guard = 0, endIdx = cur;
+   let guard = 0, endIdx = cur, cumTime = 0;
+   const ta = (aiTimeaware && aiTimeaware.overrides) ? aiTimeaware : null;
    while (cur !== -1 && cur !== undefined && !seen.has(cur) && guard < 3000) {
      seen.add(cur);
      wps.push([d.lat[cur], d.lon[cur]]);
      endIdx = cur;
      if (d.safe[cur]) break;
-     cur = d.next[cur];
+     let nx = d.next[cur];
+     // 時間依存：その時刻にその近傍が実際に混雑する場合のみ迂回（過剰迂回を回避）
+     if (ta) {
+       const b = Math.floor(cumTime / (ta.bucket_seconds || 60));
+       const bov = ta.overrides[b] || ta.overrides[String(b)];
+       if (bov) {
+         const alt = (bov[cur] !== undefined) ? bov[cur] : bov[String(cur)];
+         if (alt !== undefined && alt >= 0) nx = alt;
+       }
+     }
+     if (nx === undefined || nx < 0) break;
+     // 累積到達時刻を更新（次エッジの所要時間を加算）
+     cumTime += L.latLng(d.lat[cur], d.lon[cur]).distanceTo(L.latLng(d.lat[nx], d.lon[nx])) / Math.max(0.3, speed);
+     cur = nx;
      guard++;
    }
    // 安全ノードに到達できなかった（到達不能ノード等）→ 提案しない
@@ -2591,7 +2611,6 @@ document.addEventListener('DOMContentLoaded', () => {
    for (let i = 1; i < wps.length; i++) {
      dist += L.latLng(wps[i - 1][0], wps[i - 1][1]).distanceTo(L.latLng(wps[i][0], wps[i][1]));
    }
-   const speed = (typeof getEvacuationSpeed === 'function') ? getEvacuationSpeed() : 1.2;
    const est = Math.max(1, Math.round(dist / (speed * 60)));
    const goalElev = d.elev[endIdx];
    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
