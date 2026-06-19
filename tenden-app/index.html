@@ -949,7 +949,12 @@
        </div>
      </div>
      <span id="quake-updated" class="quake-updated">--</span>
-     <div id="quake-tsunami-alert" class="sp-tsunami-alert-panel hidden"></div>
+     <!-- 津波の危険性を大きく明示（常時表示） -->
+     <div id="quake-tsunami-status" class="quake-ts-status quake-ts-safe">
+       <div class="quake-ts-icon" aria-hidden="true"></div>
+       <div class="quake-ts-text"><div class="quake-ts-main">確認中…</div><div class="quake-ts-sub"></div></div>
+     </div>
+     <div class="quake-list-label">最近の地震</div>
      <div id="quake-eq-list" class="quake-eq-list"></div>
    </div>
  </div>

@@ -1250,42 +1250,60 @@ document.addEventListener('DOMContentLoaded', () => {
    if (_eqPollTimer) { clearInterval(_eqPollTimer); _eqPollTimer = null; }
  }
 
+ // 津波の危険性を大きく明示する状態ヘッダーを更新（色＋アイコン＋文言の多重表現）
+ function _setTsunamiStatus(kind, main, sub) {
+   const el = document.getElementById('quake-tsunami-status');
+   if (!el) return;
+   el.className = 'quake-ts-status quake-ts-' + kind;
+   const icons = {
+     safe: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="24" height="24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+     watch: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" width="24" height="24" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+     danger: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" width="24" height="24" stroke-linecap="round"><path d="M2 7c2 0 2 1.8 4 1.8S8 7 10 7s2 1.8 4 1.8S16 7 18 7s2 1.8 4 1.8"/><path d="M2 13c2 0 2 1.8 4 1.8s2-1.8 4-1.8 2 1.8 4 1.8 2-1.8 4-1.8 2 1.8 4 1.8"/><path d="M2 19c2 0 2 1.8 4 1.8s2-1.8 4-1.8 2 1.8 4 1.8 2-1.8 4-1.8 2 1.8 4 1.8"/></svg>'
+   };
+   const ic = el.querySelector('.quake-ts-icon'); if (ic) ic.innerHTML = icons[kind] || icons.safe;
+   const m = el.querySelector('.quake-ts-main'); if (m) m.textContent = main;
+   const s = el.querySelector('.quake-ts-sub');  if (s) s.textContent = sub || '';
+ }
+
  async function loadQuakeTsunamiPanel() {
    const listEl  = document.getElementById('quake-eq-list');
-   const alertEl = document.getElementById('quake-tsunami-alert');
    const updEl   = document.getElementById('quake-updated');
-   if (!listEl || !alertEl) return;
+   if (!listEl) return;
    listEl.innerHTML = '<div class="sp-eq-placeholder">読み込み中…</div>';
+   _setTsunamiStatus('safe', '確認中…', '');
    try {
      const [eqRes, tsRes] = await Promise.all([
-       fetch('https://api.p2pquake.net/v2/history?codes=551&limit=10', { signal: AbortSignal.timeout(8000) }),
+       fetch('https://api.p2pquake.net/v2/history?codes=551&limit=5', { signal: AbortSignal.timeout(8000) }),
        fetch('https://api.p2pquake.net/v2/history?codes=552&limit=3',  { signal: AbortSignal.timeout(8000) })
      ]);
-     const eqList = eqRes.ok ? await eqRes.json() : [];
+     const eqList = (eqRes.ok ? await eqRes.json() : []).slice(0, 5);
      const tsList = tsRes.ok ? await tsRes.json() : [];
 
-     // 津波警報バナー（最新エントリのみで判定）
+     // 津波の危険性を判定して大きく表示（常時）
      const latestTs = tsList[0];
-     const activeTsunami = (latestTs && !latestTs.cancelled) ? latestTs : null;
-     if (activeTsunami && activeTsunami.areas?.length) {
-       alertEl.classList.remove('hidden');
+     const activeTsunami = (latestTs && !latestTs.cancelled && latestTs.areas?.length) ? latestTs : null;
+     if (activeTsunami) {
        const gradeOrder = { MajorWarning: 3, Warning: 2, Watch: 1 };
        const maxGrade = activeTsunami.areas.reduce((best, a) =>
          (gradeOrder[a.grade] || 0) > (gradeOrder[best] || 0) ? a.grade : best, 'Watch');
        const gradeLabel = { MajorWarning: '大津波警報', Warning: '津波警報', Watch: '津波注意報' };
-       const gradeColor = { MajorWarning: '#ff3b30', Warning: '#ff9f0a', Watch: '#ffcc00' };
+       const kind = maxGrade === 'Watch' ? 'watch' : 'danger';
        const areas = activeTsunami.areas.map(a => a.name).join('・');
-       alertEl.innerHTML = `
-         <div class="sp-tsunami-grade" style="color:${gradeColor[maxGrade]||'#ff9f0a'}">
-           ${gradeLabel[maxGrade]||'津波情報'} 発令中
-         </div>
-         <div class="sp-tsunami-areas">${areas}</div>`;
+       _setTsunamiStatus(kind, (gradeLabel[maxGrade] || '津波情報') + ' 発令中', '対象地域：' + areas + '／直ちに高台へ避難してください');
      } else {
-       alertEl.classList.add('hidden');
-       alertEl.innerHTML = '';
+       // 直近の地震で津波あり（注意報/警報相当）が出ていないかも確認
+       const recentTs = eqList.find(eq => {
+         const dt = (eq.earthquake && eq.earthquake.domesticTsunami);
+         return dt === 'Warning' || dt === 'Watch';
+       });
+       if (recentTs) {
+         _setTsunamiStatus('watch', '津波情報に注意', '直近の地震で津波の可能性が伝えられています。最新の発表を確認してください');
+       } else {
+         _setTsunamiStatus('safe', '津波の心配はありません', '現在、津波警報・注意報は発表されていません');
+       }
      }
 
-     // 地震リスト
+     // 最近の地震（最大5件・大きめカード）
      if (!eqList.length) {
        listEl.innerHTML = '<div class="sp-eq-placeholder">データなし</div>';
      } else {
@@ -1294,33 +1312,30 @@ document.addEventListener('DOMContentLoaded', () => {
          const h = e.hypocenter || {};
          const mag = h.magnitude != null ? h.magnitude : '?';
          const place = h.name || '震源不明';
-         const depth = h.depth != null && h.depth >= 0 ? `深さ ${h.depth}km` : '';
+         const depth = h.depth != null && h.depth >= 0 ? `深さ${h.depth}km` : '';
          const scaleLabel = _eqScaleToLabel(e.maxScale);
-         const tsunamiInfo = _eqTsunamiLabel(e.domesticTsunami);
          const timeStr = _eqRelativeTime(eq.time || e.time);
-         const magColor = mag >= 6 ? '#ff3b30' : mag >= 5 ? '#ff9f0a' : mag >= 3 ? '#ffd60a' : '#8e8e93';
-         const borderColor = e.domesticTsunami === 'Warning'     ? '#ff3b30'
-                           : e.domesticTsunami === 'Watch'       ? '#ff9f0a'
-                           : e.domesticTsunami === 'NonEffective'? '#ffd60a'
-                           : 'rgba(255,255,255,0.12)';
-         const tsBadge = tsunamiInfo
-           ? `<span class="sp-eq-ts-badge" style="background:${borderColor};color:#000">${tsunamiInfo}</span>` : '';
-         return `<div class="sp-eq-item" style="border-left-color:${borderColor}">
-           <div class="sp-eq-row1">
-             <span class="sp-eq-mag" style="color:${magColor}">M${mag}</span>
-             <span class="sp-eq-place">${place}</span>
+         const magColor = mag >= 6 ? '#ff453a' : mag >= 5 ? '#ff9f0a' : mag >= 3 ? '#ffd60a' : '#8ed0ff';
+         const dt = e.domesticTsunami;
+         const tsState = (dt === 'Warning' || dt === 'Watch') ? 'danger'
+                       : (dt === 'NonEffective') ? 'minor' : 'none';
+         const tsText = tsState === 'danger' ? '津波あり' : tsState === 'minor' ? '海面変動の可能性' : '津波の心配なし';
+         const tsCls  = tsState === 'danger' ? 'eq-ts-danger' : tsState === 'minor' ? 'eq-ts-minor' : 'eq-ts-none';
+         return `<div class="eq-card ${tsCls}">
+           <div class="eq-card-mag" style="color:${magColor}"><span class="eq-mag-num">M${mag}</span></div>
+           <div class="eq-card-body">
+             <div class="eq-card-place">${place}</div>
+             <div class="eq-card-meta">${[scaleLabel ? `最大震度 ${scaleLabel}` : '', depth].filter(Boolean).join('　/　')}</div>
+             <div class="eq-card-ts"><span class="eq-ts-dot"></span>${tsText}</div>
            </div>
-           <div class="sp-eq-row2">
-             <span class="sp-eq-meta">${[depth, scaleLabel ? `震度 ${scaleLabel}` : ''].filter(Boolean).join('　')}</span>
-             ${tsBadge}
-           </div>
-           <div class="sp-eq-time">${timeStr}</div>
+           <div class="eq-card-time">${timeStr}</div>
          </div>`;
        }).join('');
      }
      if (updEl) updEl.textContent = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' }) + ' 更新';
    } catch (err) {
-     listEl.innerHTML = '<div class="sp-eq-placeholder">取得失敗（オフライン？）</div>';
+     listEl.innerHTML = '<div class="sp-eq-placeholder">取得に失敗しました（通信環境をご確認ください）</div>';
+     _setTsunamiStatus('safe', '情報を取得できませんでした', '通信環境をご確認のうえ再読み込みしてください');
      console.warn('[QuakePanel]', err);
    }
  }

@@ -2711,7 +2711,62 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     color: var(--text-secondary, #8e8e93);
     line-height: 1.5;
 }
-/* 地震リスト */
+/* ── 津波危険性ステータス（大きく明示・色＋アイコン＋文言） ── */
+.quake-ts-status {
+    display: flex; align-items: center; gap: 13px;
+    margin: 8px 16px 6px;
+    padding: 15px 16px;
+    border-radius: 16px;
+    border: 2px solid transparent;
+}
+.quake-ts-icon {
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+}
+.quake-ts-text { min-width: 0; }
+.quake-ts-main { font-size: 1.18rem; font-weight: 800; line-height: 1.25; }
+.quake-ts-sub  { font-size: 0.82rem; line-height: 1.5; margin-top: 3px; color: rgba(255,255,255,0.85); }
+.quake-ts-safe   { background: rgba(48,209,88,0.13);  border-color: rgba(48,209,88,0.5); }
+.quake-ts-safe   .quake-ts-icon { background: #30b14f; }
+.quake-ts-safe   .quake-ts-main { color: #5fe07b; }
+.quake-ts-watch  { background: rgba(255,159,10,0.16); border-color: rgba(255,159,10,0.6); }
+.quake-ts-watch  .quake-ts-icon { background: #ff9f0a; }
+.quake-ts-watch  .quake-ts-main { color: #ffbf57; }
+.quake-ts-danger { background: rgba(255,59,48,0.18);  border-color: rgba(255,59,48,0.75); animation: tsAlertPulse 1.5s ease-in-out infinite; }
+.quake-ts-danger .quake-ts-icon { background: #ff3b30; }
+.quake-ts-danger .quake-ts-main { color: #ff6a60; }
+
+.quake-list-label {
+    font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.55);
+    padding: 6px 18px 0; letter-spacing: 0.02em;
+}
+
+/* ── 地震カード（大きく・高コントラスト） ── */
+.eq-card {
+    display: flex; align-items: center; gap: 13px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 14px;
+    padding: 13px 14px;
+}
+.eq-card-mag { flex-shrink: 0; min-width: 62px; text-align: center; }
+.eq-card-mag .eq-mag-num { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+.eq-card-body { flex: 1; min-width: 0; }
+.eq-card-place { font-size: 0.98rem; font-weight: 700; color: #fff; line-height: 1.3; }
+.eq-card-meta  { font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-top: 2px; }
+.eq-card-ts { font-size: 0.78rem; font-weight: 700; margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+.eq-card-ts .eq-ts-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.eq-card.eq-ts-none   .eq-card-ts { color: #5fe07b; }
+.eq-card.eq-ts-none   .eq-ts-dot { background: #30d158; }
+.eq-card.eq-ts-minor  .eq-card-ts { color: #ffd60a; }
+.eq-card.eq-ts-minor  .eq-ts-dot { background: #ffd60a; }
+.eq-card.eq-ts-danger .eq-card-ts { color: #ff6a60; }
+.eq-card.eq-ts-danger .eq-ts-dot { background: #ff3b30; }
+.eq-card.eq-ts-danger { border-color: rgba(255,59,48,0.4); }
+.eq-card-time { flex-shrink: 0; font-size: 0.74rem; color: rgba(255,255,255,0.5); align-self: flex-start; padding-top: 2px; }
+
+/* 地震リスト（旧スタイル・互換用） */
 .sp-eq-list {
     display: flex;
     flex-direction: column;
@@ -2721,9 +2776,9 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     padding-right: 2px;
 }
 .sp-eq-placeholder {
-    font-size: 0.76rem;
-    color: var(--text-tertiary, #636366);
-    padding: 10px 0;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+    padding: 16px 0;
     text-align: center;
 }
 .sp-eq-item {
