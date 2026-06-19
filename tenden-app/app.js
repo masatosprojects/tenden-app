@@ -36,6 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
  let map, userMarker, routeLayerGroup, hazardLayer, reliefLayer, sheltersLayerGroup, congestionLayer, safeEdgesLayerGroup;
  let congestionGeojsonData = null;
  let aiPolicyData = null;          // 学習済みRLモデルの方策ベクトル場（緊急モード時に遅延ロード）
+ let aiAccessibleData = null;      // 要配慮者向け学習済み方策（緩勾配優先・遅延ロード）
+ let aiAccessibleLoading = null;
  let aiPolicyLoading = null;       // ロード中Promise（多重フェッチ防止）
  let aiTimeaware = null;           // 時間依存の混雑迂回override（任意・小さい。{bucket_seconds, overrides}）
  let congestionTimeseriesData = null; // 60秒バケットの時系列密度（緊急モード時に遅延ロード）
@@ -1989,7 +1991,8 @@ document.addEventListener('DOMContentLoaded', () => {
  activeLocationId = locationId;
  emergencyStartTimeMs = Date.now();
  loadCongestionTimeseries(); // 緊急モード中のみ時系列混雑データを遅延ロード
- loadAiPolicy();             // AIモデル推奨ルート用の方策データを先読み
+ loadAiPolicy();             // AIスマート避難ルート用の方策データを先読み
+ loadAccessiblePolicy();     // 要配慮者ルート用の方策データを先読み
  if (!isTest) {
  document.body.classList.add('emergency-mode');
  }
@@ -2728,6 +2731,71 @@ document.addEventListener('DOMContentLoaded', () => {
    };
  }
 
+ // 要配慮者向け学習済み方策（緩勾配優先）を遅延ロード
+ function loadAccessiblePolicy() {
+   if (aiAccessibleData) return Promise.resolve(aiAccessibleData);
+   if (aiAccessibleLoading) return aiAccessibleLoading;
+   aiAccessibleLoading = fetch('assets/ai_evac_policy_accessible.json')
+     .then(res => res.json())
+     .then(data => {
+       aiAccessibleData = data;
+       console.log('[TENDEN] accessible policy loaded:', data.count, 'nodes');
+       return data;
+     })
+     .catch(e => { console.warn('[TENDEN] accessible policy load failed', e); aiAccessibleLoading = null; return null; });
+   return aiAccessibleLoading;
+ }
+
+ // 要配慮者モデルの方策に従って現在地から高台までの経路を構築（id:'C'）。失敗時 null。
+ function computeAccessibleRoute(loc) {
+   const d = aiAccessibleData;
+   if (!d || !loc) return null;
+   const near = _nearestPolicyNode(loc.lat, loc.lng, d);
+   let cur = near.idx;
+   if (cur < 0 || near.dist2 > 0.00012) return null;
+   if (d.safe[cur]) return { id: 'C', alreadySafe: true };
+
+   const speed = (typeof getEvacuationSpeed === 'function') ? getEvacuationSpeed() : 1.2;
+   const wps = [[loc.lat, loc.lng]];
+   const meta = [{ elev: null, arrival: -1, safe: false }];
+   const seen = new Set();
+   let guard = 0, endIdx = cur;
+   while (cur !== -1 && cur !== undefined && !seen.has(cur) && guard < 3000) {
+     seen.add(cur);
+     wps.push([d.lat[cur], d.lon[cur]]);
+     meta.push({ elev: d.elev[cur], arrival: (d.tsunami_arrival ? d.tsunami_arrival[cur] : -1), safe: !!d.safe[cur] });
+     endIdx = cur;
+     if (d.safe[cur]) break;
+     let nx = d.next[cur];
+     if (nx === undefined || nx < 0) break;
+     cur = nx; guard++;
+   }
+   if (!(endIdx >= 0 && d.safe[endIdx])) return null;
+   if (wps.length < 2) return null;
+
+   let dist = 0;
+   for (let i = 1; i < wps.length; i++) {
+     dist += L.latLng(wps[i - 1][0], wps[i - 1][1]).distanceTo(L.latLng(wps[i][0], wps[i][1]));
+   }
+   const est = Math.max(1, Math.round(dist / (speed * 60)));
+   const goalElev = d.elev[endIdx];
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   return {
+     id: 'C',
+     label: dict.routeAccessibleLabel || '要配慮者ルート（緩やか）',
+     color: '#5e5ce6',
+     waypoints: wps,
+     distance_m: Math.round(dist),
+     estimated_min: est,
+     characteristics: '強化学習AIが急な坂を避け、緩やかで通りやすい道を優先した要配慮者向けの経路',
+     congestion_score: 'low',
+     isAccessibleAI: true,
+     meta: meta,
+     goal: { lat: d.lat[endIdx], lng: d.lon[endIdx], elev: goalElev,
+             name: '安全な高台（海抜' + Math.round(goalElev) + 'm）' }
+   };
+ }
+
  // ─────────────────────────────────────────────────────────────────────
  // 事前避難体験（追体験）プレイバック
  //   提示ルートを「歩いているかのように」タイムラプス再生し、各時刻・地点の
@@ -3161,6 +3229,21 @@ document.addEventListener('DOMContentLoaded', () => {
      });
    }
  } catch (e) { console.warn('[TENDEN] AI route inject failed', e); }
+ // 要配慮者ルートも学習済み方策（緩勾配優先）があればそれを優先（OSRMヒューリスティック版を置換）
+ try {
+   if (aiAccessibleData && currentLocation) {
+     const accRoute = computeAccessibleRoute(currentLocation);
+     if (accRoute && !accRoute.alreadySafe && accRoute.waypoints) {
+       candidates = (candidates || []).filter(c => c && c.id !== 'C');
+       candidates.push(accRoute);
+     }
+   } else if (!aiAccessibleData) {
+     loadAccessiblePolicy().then(d => {
+       const ov = document.getElementById('route-overlay');
+       if (d && ov && ov.classList.contains('active') && currentLocation) showRouteSelectorHUD(activeRoutesList || []);
+     });
+   }
+ } catch (e) { console.warn('[TENDEN] accessible route inject failed', e); }
  // ルート提示を「AIモデル推奨」＋「要配慮者(バリアフリー)」の2本に集約。
  // AIが最短・混雑回避・高台を統合最適化するため最短(A)/混雑回避(B)カードは撤去。
  // バリアフリー(C)は緩勾配・要介助という別目的のため残す。AI未取得時は従来通り。
