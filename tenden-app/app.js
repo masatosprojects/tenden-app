@@ -2070,6 +2070,15 @@ document.addEventListener('DOMContentLoaded', () => {
  isEvacuationCompleted = false;
  emergencyStartTimeMs = null;
  releaseWakeLock();
+ // モード間が干渉しないよう、再生・各オーバーレイを必ず閉じてクリーンにする
+ try { stopEvacuationPlayback(); } catch (e) {}
+ try { hideRouteCalcLoading(); } catch (e) {}
+ ['research-intro-overlay','real-mode-confirm','ep-branch-choice'].forEach(id => {
+   const el = document.getElementById(id); if (el) { el.classList.remove('active'); el.classList.add('hidden'); }
+ });
+ isWaitingForPinDrop = false;
+ document.getElementById('crosshair-target')?.classList.add('hidden');
+ document.getElementById('btn-set-pin')?.classList.add('hidden');
 
  // Restore the status orb's calm rhythm and the elevation slot
  applyAppState(false);

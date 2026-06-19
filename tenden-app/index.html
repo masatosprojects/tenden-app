@@ -351,14 +351,18 @@
  <div class="bottom-sheet-content">
  <!-- Normal Mode Actions -->
  <div id="bottom-normal-actions">
- <button class="action-btn primary-btn btn-large btn-flashy" id="btn-test-alert" style="width:100%; margin:0;">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="margin-right:8px;"><path d="M3 20h18L14 7l-3.5 6L8 10l-5 10z"></path><circle cx="17.5" cy="5.5" r="1.5" fill="currentColor" stroke="none"></circle></svg>
- <span data-i18n="testAlertText">鎌倉で避難体験</span>
- </button>
- <button id="btn-real-mode" style="width:100%; margin:8px 0 0; padding:8px; background:none; border:none; color:#ff3b30; font-size:0.78rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; -webkit-tap-highlight-color:transparent;">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
- 実際に津波が来たら（本番モード）
- </button>
+ <div class="mode-tabs">
+   <button class="mode-tab mode-tab-drill btn-flashy" id="btn-test-alert">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M3 20h18L14 7l-3.5 6L8 10l-5 10z"></path><circle cx="17.5" cy="5.5" r="1.5" fill="currentColor" stroke="none"></circle></svg>
+     <span class="mode-tab-title" data-i18n="testAlertText">鎌倉で避難体験</span>
+     <span class="mode-tab-sub">予習・体験モード</span>
+   </button>
+   <button class="mode-tab mode-tab-real" id="btn-real-mode">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+     <span class="mode-tab-title">本番モード</span>
+     <span class="mode-tab-sub">実際の津波時</span>
+   </button>
+ </div>
  <button class="action-btn primary-btn btn-large hidden" id="btn-set-pin" data-i18n="setPinBtn" style="margin-top:10px;">
  ここにピンを打つ (避難開始)
  </button>
