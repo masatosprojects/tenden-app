@@ -3149,9 +3149,42 @@ body.ep-mode .bottom-sheet { display: none !important; }
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
 }
 
+/* ── 緊急バナーをコンパクトにしてマップの視認性を確保 ── */
+.emergency-mode-actions { padding: 13px 14px !important; margin-bottom: 10px !important; border-radius: 18px !important; }
+.emergency-mode-actions .eh-title { font-size: 1.0rem !important; }
+.emergency-mode-actions #disaster-details {
+    font-size: 0.78rem !important; padding-top: 7px !important; margin-top: 7px !important; line-height: 1.45 !important;
+}
+.emergency-mode-actions #i18n-evac-desc { display: none !important; }  /* disaster-details と重複するため省略 */
+.emergency-mode-actions .btn-large { padding: 12px !important; font-size: 1.0rem !important; }
+.emergency-mode-actions .mt-10 { margin-top: 8px !important; }
+.emergency-mode-actions .panel-more-toggle { padding: 6px !important; font-size: 0.82rem !important; }
+
 /* Ensure text inside evacuation banners/playback remains fully visible (dark text on white) */
 .ep-bar *, .ep-caution *, .emergency-mode-actions *, #evacuation-banner * {
     color: #1c1c1e !important;
+}
+/* 警報タイトルは赤で強調（*の暗文字強制を上書き） */
+#evacuation-banner .eh-title, #evacuation-banner .eh-title * { color: #ff3b30 !important; }
+/* 塗りつぶしボタン（予習/避難進行/SOS）は文字を白で統一して視認性を確保 */
+#evacuation-banner .primary-btn, #evacuation-banner .primary-btn *,
+#evacuation-banner .evac-primary-btn, #evacuation-banner .evac-primary-btn *,
+#evacuation-banner .sos-btn, #evacuation-banner .sos-btn *,
+.emergency-mode-actions .primary-btn, .emergency-mode-actions .primary-btn *,
+.emergency-mode-actions .evac-primary-btn, .emergency-mode-actions .evac-primary-btn *,
+.emergency-mode-actions .sos-btn, .emergency-mode-actions .sos-btn * {
+    color: #ffffff !important;
+}
+/* 予習(再生)ボタンはAIスマートルートと同じオレンジで目立たせる */
+#evacuation-banner #btn-evac-playback,
+.emergency-mode-actions #btn-evac-playback {
+    background: linear-gradient(135deg, #ff7a18 0%, #ff5e3a 100%) !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(255, 94, 58, 0.35) !important;
+}
+#evacuation-banner #btn-evac-playback, #evacuation-banner #btn-evac-playback *,
+.emergency-mode-actions #btn-evac-playback, .emergency-mode-actions #btn-evac-playback * {
+    color: #ffffff !important;
 }
 
 /* Retain status badge specific colors */
