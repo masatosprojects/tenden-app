@@ -768,13 +768,16 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 .dev-notice-settings strong { color: var(--warning); }
 
 /* ── Developer Announcements ── */
+/* 通知バッジは親カード(#sp-announcements-card)基準で右上角に置く */
+#sp-announcements-card { position: relative; }
 .sp-ann-badge {
-    font-size: 0.68rem; font-weight: 700;
+    font-size: 0.64rem; font-weight: 800;
     background: #ff3b30; color: #fff;
-    border-radius: 8px; padding: 2px 7.5px;
+    min-width: 18px; height: 18px; line-height: 18px; text-align: center;
+    border-radius: 9px; padding: 0 5px;
     position: absolute;
-    top: 14px;
-    right: 36px;
+    top: 8px;
+    right: 8px;
     white-space: nowrap;
     box-shadow: 0 2px 6px rgba(255, 59, 48, 0.3);
     z-index: 5;
@@ -1169,6 +1172,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s;
 }
 .overlay.active { opacity: 1; visibility: visible; }
+/* ルート選択シートは背後の地図に両ルート（AI/要配慮者）を描いて見比べさせるため、
+   標準オーバーレイより薄く透過させる。 */
+#route-overlay {
+    background: rgba(0,0,0,0.12);
+    backdrop-filter: blur(0.5px);
+    -webkit-backdrop-filter: blur(0.5px);
+}
 .overlay .dialog {
     transform: scale(0.92);
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1501,6 +1511,52 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     padding: 2px 7px;
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+    white-space: nowrap;   /* バッジ文字の折り返しを防ぐ */
+}
+
+/* ── 要配慮者ルート ヒーローカード（AIルートと同格の存在感・色のみ藍色系） ── */
+.acc-route-btn {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 16px !important;
+    border-radius: 16px;
+    border: none !important;
+    width: 100%;
+    cursor: pointer;
+    background: linear-gradient(125deg, #6a5cff 0%, #5e5ce6 48%, #8a63d2 100%);
+    box-shadow: 0 8px 24px rgba(94,92,230,0.40);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: transform 0.12s cubic-bezier(0.2,0,0,1), box-shadow 0.2s ease;
+}
+.acc-route-btn .ai-route-glow {
+    position: absolute;
+    top: -40%; left: -20%;
+    width: 60%; height: 180%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-18deg);
+    animation: aiRouteShimmer 3.2s ease-in-out infinite;
+    pointer-events: none;
+}
+.acc-route-btn.active {
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.55), 0 10px 28px rgba(94,92,230,0.55);
+    transform: scale(1.02);
+}
+.acc-route-btn.pressed { transform: scale(0.96) !important; }
+.acc-route-badge {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #5e5ce6;
+    background: #fff;
+    padding: 2px 7px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+    white-space: nowrap;   /* バッジ文字の折り返しを防ぐ */
 }
 
 /* Crosshair target */
@@ -1538,6 +1594,16 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 .shelter-low    .shelter-marker-inner { background: #00a63e; border-color: #007a2e; }
 .shelter-medium .shelter-marker-inner { background: #f5a623; border-color: #c07c10; }
 .shelter-high   .shelter-marker-inner { background: #c0392b; border-color: #8e1b15; }
+
+/* 種別で形を分ける: 高台の避難空地=丸(緑) / 津波避難ビル=四角(藍・垂直避難) */
+.shelter-space .shelter-marker-inner { border-radius: 50%; }
+.shelter-building .shelter-marker-inner {
+    border-radius: 5px;   /* 四角=建物 */
+}
+.shelter-building .shelter-marker-inner::after {
+    border-radius: 1px;   /* 中央マークも四角寄りに */
+    width: 8px; height: 8px;
+}
 
 /* User Marker */
 .user-marker-container { background: none; border: none; }

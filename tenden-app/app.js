@@ -393,18 +393,13 @@ document.addEventListener('DOMContentLoaded', () => {
  const dict = i18nDict[lang] || i18nDict['ja'] || {};
  
  shelterList.forEach(s => {
- const load = s.predicted_load || 'low';
- const color = LOAD_COLORS[load] || '#888';
- 
- // Translate predicted load labels based on language
- let label = '';
- if (load === 'low') label = dict.loadLow || '低混雑';
- else if (load === 'medium') label = dict.loadMedium || 'やや混雑';
- else if (load === 'high') label = dict.loadHigh || '高混雑';
+ // 種別で見分ける: 津波避難ビル(垂直避難)=四角・藍 / 高台の避難空地=丸・緑
+ const isBuilding = (s.vertical_evacuation === true) || (s.type === '津波避難建築物');
+ const typeColor = isBuilding ? '#5e5ce6' : '#00a63e';
 
  const icon = L.divIcon({
- className: `shelter-marker shelter-${load}`,
- html: `<div class="shelter-marker-inner" style="background:${color};border-color:${color}"></div>`,
+ className: `shelter-marker ${isBuilding ? 'shelter-building' : 'shelter-space'}`,
+ html: `<div class="shelter-marker-inner shelter-marker-${isBuilding ? 'bldg' : 'space'}" style="background:${typeColor};border-color:${typeColor}"></div>`,
  iconSize: [24, 24],
  iconAnchor: [12, 12]
  });
@@ -419,22 +414,22 @@ document.addEventListener('DOMContentLoaded', () => {
  if (dict.shrinePrecincts) localizedName = localizedName.replace('境内', dict.shrinePrecincts);
  if (dict.learningCenter) localizedName = localizedName.replace('学習センター', dict.learningCenter);
 
- // Format multi-language strings with placeholders
- let capText = dict.shelterCapacity || '蜿主ｮｹ閭ｽ蜉・ {capacity}莠ｺ';
+ // 種別ラベル（津波避難ビル＝上階へ垂直避難 / 高台＝そのまま安全）
+ const typeLabel = isBuilding
+   ? (dict.shelterBuildingLabel || '津波避難ビル（上階へ垂直避難）')
+   : (dict.shelterHighGroundLabel || '高台の避難場所');
+ const typeBadge = `<div style="display:inline-block;margin:3px 0;padding:1px 7px;border-radius:6px;font-size:0.74em;font-weight:700;color:#fff;background:${typeColor}">${typeLabel}</div>`;
+
+ let capText = dict.shelterCapacity || '収容可能 {capacity}人';
  capText = capText.replace('{capacity}', s.capacity);
- 
- let occNote = '';
- if (s.typical_occupancy_pct > 0) {
- let occText = dict.shelterOccupancy || '典型利用率: {occupancy}%';
- occText = occText.replace('{occupancy}', s.typical_occupancy_pct);
- occNote = `<br><span style="color:${color};font-size:0.85em">${label} (${occText})</span>`;
- }
- 
- const disclaimerText = dict.shelterDisclaimer || '※シミュレーション統計に基づく予測。リアルタイムデータではありません';
- const disclaimer = `<br><em style="font-size:0.78em;opacity:0.7">${disclaimerText}</em>`;
- 
+ const capLine = (s.capacity && s.capacity > 0) ? `<br><span style="font-size:0.85em;opacity:0.85">${capText}</span>` : '';
+ const addrLine = s.address ? `<br><span style="font-size:0.8em;opacity:0.7">${s.address}</span>` : '';
+
+ const disclaimerText = dict.shelterSourceNote || '出典：鎌倉市公式オープンデータ';
+ const disclaimer = `<br><em style="font-size:0.74em;opacity:0.6">${disclaimerText}</em>`;
+
  L.marker([s.lat, s.lng], { icon })
- .bindPopup(`<strong>${localizedName}</strong> (${capText})${occNote}${disclaimer}`)
+ .bindPopup(`<strong>${localizedName}</strong><br>${typeBadge}${capLine}${addrLine}${disclaimer}`)
  .addTo(sheltersLayerGroup);
  });
  }
@@ -1089,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
  btnSos.addEventListener('click', () => {
  const flash = document.getElementById('flash-overlay');
  flash.classList.toggle('hidden');
- flash.classList.toggle('flashing');
+ flash.classList.toggle('flash');
  });
 
  btnShare.addEventListener('click', () => {
@@ -1433,6 +1428,8 @@ document.addEventListener('DOMContentLoaded', () => {
    } else {
      navigator.clipboard?.writeText(text).then(() => {
        triggerDynamicIsland('メッセージをコピーしました', 'copied');
+     }).catch(() => {
+       triggerDynamicIsland('コピーに失敗しました', 'error');
      });
    }
  });
@@ -1456,7 +1453,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const activeCount = DEV_ANNOUNCEMENTS.filter(a => a.status === 'active').length;
  const annBadge = document.getElementById('sp-ann-badge');
  if (annBadge && activeCount > 0) {
-   annBadge.textContent = `${activeCount}件の新しいお知らせ`;
+   annBadge.textContent = `${activeCount}`;  // 角の通知バッジは件数のみ（カードラベルで文脈は明確）
    annBadge.classList.remove('hidden');
  }
 
@@ -2787,7 +2784,7 @@ document.addEventListener('DOMContentLoaded', () => {
      waypoints: wps,
      distance_m: Math.round(dist),
      estimated_min: est,
-     characteristics: '強化学習AIが急な坂を避け、緩やかで通りやすい道を優先した要配慮者向けの経路',
+     characteristics: '急な坂や狭い道を避け、緩やかで通りやすい道を優先するよう最適化された要配慮者向けの経路',
      congestion_score: 'low',
      isAccessibleAI: true,
      meta: meta,
@@ -3273,6 +3270,13 @@ document.addEventListener('DOMContentLoaded', () => {
   activeRoutesList = candidates;
   hideRouteCalcLoading();  // 経路が確定したのでローディングを閉じる
 
+  // 選択画面が開いた時点で、確定後の候補（AI＋要配慮者）を地図に描き直す。
+  // ここより前（recalculateRouteFromLocation）の描画はAI/要配慮者への集約前の
+  // 暫定候補のままなので、カードと地図の表示が食い違っていた。
+  try {
+    drawMultipleEvacuationRoutes(currentLocation, window._cachedTargetEdge, activeSecondaryRoute, candidates, getAutoBestRouteId(candidates));
+  } catch (e) { console.error('[TENDEN] drawMultipleEvacuationRoutes error (selector):', e); }
+
  // Temporarily fade out background emergency controls & banners
  const hudBottom = document.querySelector('.hud-bottom');
  if (hudBottom) hudBottom.classList.add('hidden-for-route');
@@ -3283,11 +3287,12 @@ document.addEventListener('DOMContentLoaded', () => {
  container.innerHTML = '';
 
  // --- 1. 案内見出し（自動選択はせず、ユーザー自身に判断してもらう） ---
+ const _hd = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  const guideHead = document.createElement('div');
  guideHead.style.cssText = 'padding:2px 2px 4px; text-align:left;';
  guideHead.innerHTML = `
- <div style="font-size:1.0rem; font-weight:800; color:var(--text-color); margin-bottom:3px;">避難ルートを選んでください</div>
- <div style="font-size:0.76rem; color:var(--text-muted); line-height:1.5;">2つの経路の特徴を見て、ご自身の状況に合うものを選びます。どちらが正解ということはありません。</div>
+ <div style="font-size:1.0rem; font-weight:800; color:var(--text-color); margin-bottom:3px;">${_hd.routeSelectHead || '避難ルートを選んでください'}</div>
+ <div style="font-size:0.76rem; color:var(--text-muted); line-height:1.5;">${_hd.routeSelectTendenkoGuide || 'てんでんこ：どちらが正解ということはありません。ご自身の状況に合う方を、今すぐ選んで進みましょう。'}</div>
  `;
  container.appendChild(guideHead);
 
@@ -3328,6 +3333,34 @@ document.addEventListener('DOMContentLoaded', () => {
    aiBtn.addEventListener('touchstart', function(){ aiBtn.classList.add('pressed'); }, {passive:true});
    aiBtn.addEventListener('touchend', function(){ setTimeout(function(){ aiBtn.classList.remove('pressed'); }, 150); }, {passive:true});
    optionsWrapper.appendChild(aiBtn);
+   return;
+ }
+
+ // ── 要配慮者ルート: AIルートと同格のヒーローカード（色のみ藍色系で区別） ──
+ if (c.isAccessibleAI || c.id === 'C') {
+   const accBtn = document.createElement('button');
+   accBtn.className = `route-option-btn acc-route-btn ${isSelected ? 'active' : ''}`;
+   accBtn.setAttribute('data-route-id', c.id);
+   accBtn.setAttribute('data-color', targetColor);
+   accBtn.innerHTML = `
+     <div class="ai-route-glow"></div>
+     <div style="position:relative; z-index:1; display:flex; align-items:center; gap:12px;">
+       <div class="ai-route-icon">
+         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.6"/><path d="M6 9.5l4.2 1.3v4.2l-2.2 4.5"/><path d="M10.2 10.8l4 .6 2.3 3.2"/><path d="M10.2 14.8H14"/></svg>
+       </div>
+       <div style="text-align:left;">
+         <div style="font-size:1rem; font-weight:800; color:#fff; line-height:1.2;">${c.label}</div>
+         <div style="font-size:0.72rem; color:rgba(255,255,255,0.88); margin-top:2px;">${(dict.routeAccessibleShort || '急な坂や狭い道を避けた、緩やかで通りやすい道')}</div>
+       </div>
+     </div>
+     <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
+       <span class="acc-route-badge">${(dict.routeAccessibleBadge || 'バリアフリー')}</span>
+       <div style="font-size:0.85rem; font-weight:800; color:#fff;">${c.estimated_min}${(dict.minutesSuffix || '分')}</div>
+     </div>`;
+   accBtn.addEventListener('click', () => { selectEvacuationRoute(c.id); });
+   accBtn.addEventListener('touchstart', function(){ accBtn.classList.add('pressed'); }, {passive:true});
+   accBtn.addEventListener('touchend', function(){ setTimeout(function(){ accBtn.classList.remove('pressed'); }, 150); }, {passive:true});
+   optionsWrapper.appendChild(accBtn);
    return;
  }
 
