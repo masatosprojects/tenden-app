@@ -3042,10 +3042,11 @@ document.addEventListener('DOMContentLoaded', () => {
      branch,
      t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
    };
-   // Googleマップ風ナビ: 進行方向の矢印(前方ハイライト)＋目的地までの点線
+   // Googleマップ風ナビ: 進行方向の矢印(前方ハイライト)＋目的地までの点線。
+   //   混雑(赤/橙)と色が干渉しないよう、ナビ経路は青で統一する。
    try {
-     const navColor = (route && route.color) || '#ff6b00';
-     _ep.dottedLine = L.polyline([], { color: navColor, weight: 4, opacity: 0.55, dashArray: '1 11', lineCap: 'round' }).addTo(map);
+     const navColor = '#1a73e8';
+     _ep.dottedLine = L.polyline([], { color: navColor, weight: 4, opacity: 0.6, dashArray: '1 11', lineCap: 'round' }).addTo(map);
      _ep.aheadCasing = L.polyline([], { color: '#ffffff', weight: 11, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map);
      _ep.aheadLine = L.polyline([], { color: navColor, weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(map);
    } catch (e) {}
@@ -3217,8 +3218,8 @@ document.addEventListener('DOMContentLoaded', () => {
        +   '<span class="epc-here epc-' + hereClass + '">' + hereStatus + '</span></div>';
    }
    const ph = document.getElementById('ep-phase'); if (ph) ph.textContent = c.head;
-   // 混雑しやすい場所を地図上に吹き出しで提示（抽象的な文章でなく実地点で示す）
-   _epDrawBubbles(here);
+   // [2026-06-21] 吹き出し提示を廃止。混雑はネットワークグラフ(道路エッジ)を時刻ごとに
+   //   色分け描画する _epDrawCongestion に一本化（_epRenderのバケット更新で呼ばれる）。
  }
 
  // 地図に見えている混雑ポイントを吹き出し表示（最大3件・密度の高い順）
