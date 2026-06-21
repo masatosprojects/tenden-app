@@ -2229,13 +2229,23 @@ document.addEventListener('DOMContentLoaded', () => {
  }).addTo(routeLayerGroup);
 
  // Multiglow neon route core line (dashed flow)
- L.polyline(waypoints, {
+ const _routeCoreLine = L.polyline(waypoints, {
  color: '#ffffff', // High brightness white core for absolute neon aesthetics
  className: 'route-glow-core'
  }).addTo(routeLayerGroup);
 
  // Set custom route color custom property for dropping shadows dynamically in CSS!
  mainRouteLine.getElement().style.color = routeCandidate.color || '#00bbff';
+
+ // [2026-06-20] ネットワークの直線エッジを実道路に沿わせる（オンライン時のみ）。
+ //   ノードは実道路上(OSRMで0〜6m)なので、wpsをOSRMにスナップすると道路沿いの折れ線になる。
+ //   失敗・オフライン時は直線のまま（フォールバック＝安全）。
+ snapWaypointsToRoads(waypoints).then(snapped => {
+   if (snapped && snapped.length > 1 && mainRouteLine && routeLayerGroup.hasLayer(mainRouteLine)) {
+     mainRouteLine.setLatLngs(snapped);
+     _routeCoreLine.setLatLngs(snapped);
+   }
+ }).catch(() => {});
 
  // Route type label on the map
  const midIdx = Math.floor(waypoints.length / 2);
@@ -2273,6 +2283,42 @@ document.addEventListener('DOMContentLoaded', () => {
  }).addTo(routeLayerGroup);
  }
  }
+
+ // ルートのノード列(直線)を実道路にスナップして道路沿いの折れ線を返す（オンライン時のみ）。
+ //   ノードは実道路上なので、OSRM foot route に通すと道路に沿ったジオメトリが得られる。
+ //   waypointが多い場合は均等間引き(最大24点)してOSRMの上限内に収める。失敗時は null。
+ let _snapCache = {};
+ async function snapWaypointsToRoads(wps) {
+   try {
+     if (!wps || wps.length < 3) return null;
+     // 均等間引き（先頭・末尾は必ず残す）
+     const MAXN = 24;
+     let pts = wps;
+     if (wps.length > MAXN) {
+       pts = [];
+       const step = (wps.length - 1) / (MAXN - 1);
+       for (let i = 0; i < MAXN; i++) pts.push(wps[Math.round(i * step)]);
+     }
+     const key = pts.map(p => p[0].toFixed(5) + ',' + p[1].toFixed(5)).join(';');
+     if (_snapCache[key]) return _snapCache[key];
+     const coords = pts.map(p => `${p[1]},${p[0]}`).join(';');  // OSRMは lon,lat
+     const url = `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`;
+     const ctrl = new AbortController();
+     const tid = setTimeout(() => ctrl.abort(), 6000);
+     const res = await fetch(url, { signal: ctrl.signal });
+     clearTimeout(tid);
+     if (!res.ok) return null;
+     const data = await res.json();
+     const g = data && data.routes && data.routes[0] && data.routes[0].geometry;
+     if (!g || !g.coordinates || g.coordinates.length < 2) return null;
+     const snapped = g.coordinates.map(c => [c[1], c[0]]);  // geojson lon,lat → lat,lon
+     _snapCache[key] = snapped;
+     return snapped;
+   } catch (e) {
+     return null;  // オフライン・失敗時は直線のまま
+   }
+ }
+
  function drawMultipleEvacuationRoutes(startLoc, targetEdge, secondaryRoute, candidates, selectedId) {
  routeLayerGroup.clearLayers();
  activeRoutesList = candidates;
@@ -2295,13 +2341,21 @@ document.addEventListener('DOMContentLoaded', () => {
  className: 'route-glow-base'
  }).addTo(routeLayerGroup);
 
- L.polyline(waypoints, {
+ const _coreLine = L.polyline(waypoints, {
  color: '#ffffff', // bright center core
  className: 'route-glow-core'
  }).addTo(routeLayerGroup);
 
  // Set route color property dynamically
  try { var el=pline.getElement(); if(el) el.style.setProperty("--route-color",color); } catch(e) {}
+
+ // [2026-06-20] 直線エッジを実道路に沿わせる（オンライン時のみ・失敗時は直線のまま）
+ snapWaypointsToRoads(waypoints).then(snapped => {
+   if (snapped && snapped.length > 1 && routeLayerGroup.hasLayer(pline)) {
+     pline.setLatLngs(snapped);
+     if (routeLayerGroup.hasLayer(_coreLine)) _coreLine.setLatLngs(snapped);
+   }
+ }).catch(() => {});
  } else {
  // Inactive alternatives are rendered as thin semi-transparent dashed lines
  pline = L.polyline(waypoints, {
@@ -2644,6 +2698,47 @@ document.addEventListener('DOMContentLoaded', () => {
    return aiPolicyLoading;
  }
 
+ // 分散避難（てんでんこ）レベル1：端末ごとに固定の擬似ランダム種を持ち、
+ // 分岐ノードでは決定論的な単一最適経路ではなく上位候補から確率的に選ぶ。
+ // 通信なしで端末ごとに独立サンプリングするだけで、人口全体としては
+ // 集団追従（同じ道への集中）を避け自然に分散できる（てんでんこの考え方）。
+ // 種は端末に保存し再計算のたびに同じ経路になるよう固定する（毎回変わると混乱するため）。
+ function _getDeviceDisperseSeed() {
+   try {
+     let s = localStorage.getItem('tenden-disperse-seed');
+     if (!s) {
+       s = String((Math.random() * 4294967295) >>> 0);
+       localStorage.setItem('tenden-disperse-seed', s);
+     }
+     return parseInt(s, 10) >>> 0;
+   } catch (e) { return 1; }
+ }
+ function _mulberry32(seed) {
+   let a = seed >>> 0;
+   return function () {
+     a |= 0; a = (a + 0x6D2B79F5) | 0;
+     let t = Math.imul(a ^ (a >>> 15), 1 | a);
+     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+   };
+ }
+ // 分散方策場（d.disperse）があれば、現在ノードの上位候補から rng() に従って1つ選ぶ。
+ // 該当データが無い・分岐がないノードは null を返し、呼び出し側は d.next[cur] を使う。
+ function _sampleDispersedNext(d, cur, rng) {
+   const disp = d.disperse;
+   if (!disp) return null;
+   const alt = disp.alt[String(cur)];
+   const prob = disp.prob[String(cur)];
+   if (!alt || !prob) return null;
+   const r = rng();
+   let acc = 0;
+   for (let i = 0; i < alt.length; i++) {
+     acc += prob[i];
+     if (r < acc) return alt[i];
+   }
+   return alt[alt.length - 1];
+ }
+
  function _nearestPolicyNode(lat, lng, d) {
    let best = -1, bestD = Infinity;
    const La = d.lat, Lo = d.lon, N = d.count;
@@ -2674,13 +2769,17 @@ document.addEventListener('DOMContentLoaded', () => {
    const seen = new Set();
    let guard = 0, endIdx = cur, cumTime = 0;
    const ta = (aiTimeaware && aiTimeaware.overrides) ? aiTimeaware : null;
+   // 端末固定の擬似ランダム種で初期化：同じ端末では毎回同じ経路になる（再計算で経路が
+   // ぶれて混乱しないため）が、端末ごとには独立なので人口全体では分散する。
+   const disperseRng = _mulberry32(_getDeviceDisperseSeed());
    while (cur !== -1 && cur !== undefined && !seen.has(cur) && guard < 3000) {
      seen.add(cur);
      wps.push([d.lat[cur], d.lon[cur]]);
      meta.push({ elev: d.elev[cur], arrival: (d.tsunami_arrival ? d.tsunami_arrival[cur] : -1), safe: !!d.safe[cur] });
      endIdx = cur;
      if (d.safe[cur]) break;
-     let nx = d.next[cur];
+     const dispersed = _sampleDispersedNext(d, cur, disperseRng);
+     let nx = (dispersed !== null) ? dispersed : d.next[cur];
      // 時間依存：その時刻にその近傍が実際に混雑する場合のみ迂回（過剰迂回を回避）
      if (ta) {
        const b = Math.floor(cumTime / (ta.bucket_seconds || 60));
