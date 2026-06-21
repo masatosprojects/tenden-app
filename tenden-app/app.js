@@ -3113,6 +3113,17 @@ document.addEventListener('DOMContentLoaded', () => {
    const scrub = document.getElementById('ep-scrub');
    if (scrub && document.activeElement !== scrub) scrub.value = Math.round(frac * 1000);
    const tEl = document.getElementById('ep-time'); if (tEl) tEl.textContent = _epFmt(_ep.t);
+   // ナビ情報：目的地まで残り距離・到達まで時間（Googleマップ風の実用表示）
+   const navi = document.getElementById('ep-navinfo');
+   if (navi) {
+     navi.classList.remove('hidden');
+     const remM = Math.max(0, _ep.totalDist - dist);
+     const remT = Math.max(0, _ep.evacTotalSec - _ep.t);
+     const dEl = document.getElementById('ep-nav-dist');
+     if (dEl) dEl.textContent = remM >= 1000 ? (remM / 1000).toFixed(1) + ' km' : Math.round(remM) + ' m';
+     const eEl = document.getElementById('ep-nav-eta');
+     if (eEl) eEl.textContent = _epFmt(remT);
+   }
    // 時系列混雑：現在時刻のバケットが変わったら混雑エッジを描き直す
    const ts = congestionTimeseriesData;
    let bucket = 0;
