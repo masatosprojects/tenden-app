@@ -3397,7 +3397,7 @@ document.addEventListener('DOMContentLoaded', () => {
  guideHead.style.cssText = 'padding:2px 2px 4px; text-align:left;';
  guideHead.innerHTML = `
  <div style="font-size:1.0rem; font-weight:800; color:var(--text-color); margin-bottom:3px;">${_hd.routeSelectHead || '避難ルートを選んでください'}</div>
- <div style="font-size:0.76rem; color:var(--text-muted); line-height:1.5;">${_hd.routeSelectTendenkoGuide || 'てんでんこ：どちらが正解ということはありません。ご自身の状況に合う方を、今すぐ選んで進みましょう。'}</div>
+ <div style="font-size:0.76rem; color:var(--text-muted); line-height:1.5;">${_hd.routeSelectTendenkoGuide || '正解はありません。今すぐ合う方を選んで進みましょう。'}</div>
  `;
  container.appendChild(guideHead);
 
@@ -3423,7 +3423,7 @@ document.addEventListener('DOMContentLoaded', () => {
      <div class="ai-route-glow"></div>
      <div style="position:relative; z-index:1; display:flex; align-items:center; gap:12px;">
        <div class="ai-route-icon">
-         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4L12 3z"/><path d="M19 14l.8 2L22 17l-2.2.9L19 20l-.8-2.1L16 17l2.2-1z"/></svg>
+         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
        </div>
        <div style="text-align:left;">
          <div style="font-size:1rem; font-weight:800; color:#fff; line-height:1.2;">${c.label}</div>
@@ -3451,7 +3451,7 @@ document.addEventListener('DOMContentLoaded', () => {
      <div class="ai-route-glow"></div>
      <div style="position:relative; z-index:1; display:flex; align-items:center; gap:12px;">
        <div class="ai-route-icon">
-         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.6"/><path d="M6 9.5l4.2 1.3v4.2l-2.2 4.5"/><path d="M10.2 10.8l4 .6 2.3 3.2"/><path d="M10.2 14.8H14"/></svg>
+         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="4" r="1"/><path d="m18 19 1-7-6 1"/><path d="m5 8 3-3 5.5 3-2.36 3.5"/><path d="M4.24 14.5a5 5 0 0 0 6.88 6"/><path d="M13.76 17.5a5 5 0 0 0-6.88-6"/></svg>
        </div>
        <div style="text-align:left;">
          <div style="font-size:1rem; font-weight:800; color:#fff; line-height:1.2;">${c.label}</div>
