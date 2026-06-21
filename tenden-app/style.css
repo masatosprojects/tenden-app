@@ -1586,27 +1586,20 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 /* Shelter Markers */
 .shelter-marker { background: none; border: none; }
 .shelter-marker-inner {
-    width: 26px; height: 26px;
-    background: #34c759; border: 3px solid #ffffff;
+    width: 28px; height: 28px;
+    background: #34c759; border: 2.5px solid #ffffff;
     border-radius: 50%; display: flex; justify-content: center; align-items: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
-.shelter-marker-inner::after {
-    content: ''; width: 10px; height: 10px;
-    background: white; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-.shelter-low    .shelter-marker-inner { background: #00a63e; border-color: #007a2e; }
-.shelter-medium .shelter-marker-inner { background: #f5a623; border-color: #c07c10; }
-.shelter-high   .shelter-marker-inner { background: #c0392b; border-color: #8e1b15; }
+.shelter-marker-inner svg { display: block; }
+.shelter-low    .shelter-marker-inner { background: #00a63e; border-color: #fff; }
+.shelter-medium .shelter-marker-inner { background: #f5a623; border-color: #fff; }
+.shelter-high   .shelter-marker-inner { background: #c0392b; border-color: #fff; }
 
-/* 種別で形を分ける: 高台の避難空地=丸(緑) / 津波避難ビル=四角(藍・垂直避難) */
+/* 種別で形を分ける: 高台の避難空地=丸(緑・山アイコン) / 津波避難ビル=角丸四角(藍・建物＋上矢印) */
 .shelter-space .shelter-marker-inner { border-radius: 50%; }
 .shelter-building .shelter-marker-inner {
-    border-radius: 5px;   /* 四角=建物 */
-}
-.shelter-building .shelter-marker-inner::after {
-    border-radius: 1px;   /* 中央マークも四角寄りに */
-    width: 8px; height: 8px;
+    border-radius: 7px;   /* 角丸四角=建物 */
 }
 
 /* User Marker */
