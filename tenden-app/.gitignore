@@ -1,0 +1,8 @@
+scratch/
+fix_*.py
+_*.js
+_*.txt
+apply_fixes.py
+count_braces.py
+ANALYSIS_REPORT.md
+*.bak
