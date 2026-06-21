@@ -3039,6 +3039,13 @@ document.addEventListener('DOMContentLoaded', () => {
      branch,
      t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
    };
+   // Googleマップ風ナビ: 進行方向の矢印(前方ハイライト)＋目的地までの点線
+   try {
+     const navColor = (route && route.color) || '#ff6b00';
+     _ep.dottedLine = L.polyline([], { color: navColor, weight: 4, opacity: 0.55, dashArray: '1 11', lineCap: 'round' }).addTo(map);
+     _ep.aheadCasing = L.polyline([], { color: '#ffffff', weight: 11, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+     _ep.aheadLine = L.polyline([], { color: navColor, weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+   } catch (e) {}
    try { document.getElementById('ep-branch-choice')?.classList.add('hidden'); } catch (e) {}
    try { document.getElementById('ep-cong-legend')?.classList.add('hidden'); } catch (e) {}
 
@@ -3063,6 +3070,18 @@ document.addEventListener('DOMContentLoaded', () => {
    } else {
      _epPlay();
    }
+ }
+
+ // 現在地(d0)から d1 までのルート上の点列（端点は補間）。ナビの矢印/点線描画用。
+ function _epPath(d0, d1) {
+   const { wps, cum } = _ep;
+   const end = cum[cum.length - 1];
+   d0 = Math.max(0, Math.min(end, d0)); d1 = Math.max(0, Math.min(end, d1));
+   if (d1 <= d0) return [];
+   const pts = [_epPosAt(d0).ll];
+   for (let i = 1; i < cum.length; i++) { if (cum[i] > d0 && cum[i] < d1) pts.push(wps[i]); }
+   pts.push(_epPosAt(d1).ll);
+   return pts;
  }
 
  function _epPosAt(distMeters) {
@@ -3101,6 +3120,14 @@ document.addEventListener('DOMContentLoaded', () => {
    }
    const { ll, heading, seg } = _epPosAt(dist);
    try { _ep.marker.setLatLng(ll); } catch (e) {}
+   // ナビ誘導線：前方約50mを矢印(太線)、その先〜目的地を点線で描く
+   try {
+     const AHEAD = 50;
+     const aheadPts = _epPath(dist, dist + AHEAD);
+     if (_ep.aheadCasing) _ep.aheadCasing.setLatLngs(aheadPts);
+     if (_ep.aheadLine) _ep.aheadLine.setLatLngs(aheadPts);
+     if (_ep.dottedLine) _ep.dottedLine.setLatLngs(_epPath(dist + AHEAD, _ep.totalDist));
+   } catch (e) {}
    // 進行方向コーンを回転
    try {
      const cone = _ep.marker.getElement()?.querySelector('.ep-walker-cone');
@@ -3326,6 +3353,7 @@ document.addEventListener('DOMContentLoaded', () => {
      try { routeLayerGroup.removeLayer(_ep.marker); } catch (e) {}
      try { if (_ep.congLayer) map.removeLayer(_ep.congLayer); } catch (e) {}
      try { if (_ep.bubbleLayer) map.removeLayer(_ep.bubbleLayer); } catch (e) {}
+     try { [_ep.dottedLine, _ep.aheadCasing, _ep.aheadLine].forEach(l => { if (l) map.removeLayer(l); }); } catch (e) {}
      // 静的混雑ヒートマップを元に戻す
      try { if (_ep.staticCongWasOn && congestionLayer) congestionLayer.addTo(map); } catch (e) {}
      _ep = null;
