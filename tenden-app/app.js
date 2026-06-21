@@ -2039,8 +2039,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // Switch the status orb to "alert" rhythm and morph the top-bar elevation slot into a time-to-arrival slot
  applyAppState(true);
- const etaMatch = sc.time.match(/^(\d+分)/);
- document.getElementById('eta-value').textContent = etaMatch ? etaMatch[1] : sc.time;
+ // 津波到達までのカウントダウン（シナリオの予測到達時間から1秒ごとに減算）。
+ // 静的な「15分」固定ではつじつまが合わないため、時系列で減らす。
+ const etaMatch = sc.time.match(/^(\d+)分/);
+ const tsunamiMin = etaMatch ? parseInt(etaMatch[1], 10) : 15;
+ startTsunamiCountdown(tsunamiMin * 60);
  
  // Trigger speech synthesis evac start instruction
  speakI18n('speechEvacStart');
@@ -3070,6 +3073,24 @@ document.addEventListener('DOMContentLoaded', () => {
    } else {
      _epPlay();
    }
+ }
+
+ // 津波到達までのカウントダウン表示（上部バー）。1秒ごとに mm:ss で減算、0で「到達」。
+ let _tsunamiCdTimer = null;
+ function startTsunamiCountdown(totalSec) {
+   if (_tsunamiCdTimer) { clearInterval(_tsunamiCdTimer); _tsunamiCdTimer = null; }
+   const end = Date.now() + totalSec * 1000;
+   const el = document.getElementById('eta-value');
+   function tick() {
+     const rem = Math.max(0, Math.round((end - Date.now()) / 1000));
+     if (el) {
+       if (rem <= 0) el.textContent = '到達';
+       else { const m = Math.floor(rem / 60), s = rem % 60; el.textContent = m + ':' + String(s).padStart(2, '0'); }
+     }
+     if (rem <= 0 && _tsunamiCdTimer) { clearInterval(_tsunamiCdTimer); _tsunamiCdTimer = null; }
+   }
+   tick();
+   _tsunamiCdTimer = setInterval(tick, 1000);
  }
 
  // 現在地(d0)から d1 までのルート上の点列（端点は補間）。ナビの矢印/点線描画用。
