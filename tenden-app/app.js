@@ -397,15 +397,16 @@ document.addEventListener('DOMContentLoaded', () => {
  const isBuilding = (s.vertical_evacuation === true) || (s.type === '津波避難建築物');
  const typeColor = isBuilding ? '#5e5ce6' : '#00a63e';
 
- // 種別が直感的に分かるグリフ: 津波避難ビル=建物＋上矢印(上階へ垂直避難) / 高台=山
- const glyph = isBuilding
-   ? '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="12" height="12.5" rx="1"/><path d="M9.5 12h.01M14.5 12h.01M9.5 16h.01M14.5 16h.01"/><path d="M12 5.5V2.5"/><path d="M10 4.5l2-2 2 2"/></svg>'
-   : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20l5-9 3 5 2-3 4 7"/></svg>';
+ // 種別ごとのカスタムアイコン画像（青丸＋白絵を丸く切り抜き済み）。
+ //   津波避難建築物 → 津波避難ビル / 避難空地 → 高台。
+ //   ※マウンド・タワーのアイコンも用意済(assets/shelter_icons/)だが、現データは
+ //     建築物/空地の2種別のみで区別情報が無いため未割当（データ拡充時に使用可能）。
+ const iconFile = isBuilding ? 'building' : 'takadai';
  const icon = L.divIcon({
  className: `shelter-marker ${isBuilding ? 'shelter-building' : 'shelter-space'}`,
- html: `<div class="shelter-marker-inner shelter-marker-${isBuilding ? 'bldg' : 'space'}" style="background:${typeColor};border-color:${typeColor}">${glyph}</div>`,
- iconSize: [28, 28],
- iconAnchor: [14, 14]
+ html: `<img class="shelter-marker-img" src="assets/shelter_icons/${iconFile}.png" alt="" />`,
+ iconSize: [34, 34],
+ iconAnchor: [17, 17]
  });
  
  // Dynamically translate the prefix '驕ｿ髮｣謇' in names to local equivalents like 'Shelter'

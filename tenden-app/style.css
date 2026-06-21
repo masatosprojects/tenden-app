@@ -1585,21 +1585,12 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 
 /* Shelter Markers */
 .shelter-marker { background: none; border: none; }
-.shelter-marker-inner {
-    width: 28px; height: 28px;
-    background: #34c759; border: 2.5px solid #ffffff;
-    border-radius: 50%; display: flex; justify-content: center; align-items: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-.shelter-marker-inner svg { display: block; }
-.shelter-low    .shelter-marker-inner { background: #00a63e; border-color: #fff; }
-.shelter-medium .shelter-marker-inner { background: #f5a623; border-color: #fff; }
-.shelter-high   .shelter-marker-inner { background: #c0392b; border-color: #fff; }
-
-/* 種別で形を分ける: 高台の避難空地=丸(緑・山アイコン) / 津波避難ビル=角丸四角(藍・建物＋上矢印) */
-.shelter-space .shelter-marker-inner { border-radius: 50%; }
-.shelter-building .shelter-marker-inner {
-    border-radius: 7px;   /* 角丸四角=建物 */
+/* 種別カスタムアイコン画像（丸く切り抜き済みの青丸＋白絵） */
+.shelter-marker-img {
+    width: 34px; height: 34px; display: block;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.35);
 }
 
 /* User Marker */
