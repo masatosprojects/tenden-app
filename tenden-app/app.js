@@ -2289,7 +2289,13 @@ document.addEventListener('DOMContentLoaded', () => {
  //   waypointが多い場合は均等間引き(最大24点)してOSRMの上限内に収める。失敗時は null。
  let _snapCache = {};
  async function snapWaypointsToRoads(wps) {
-   try {
+   // [2026-06-21] OSRMスナップを無効化（蛇行バグの原因）。
+   //   公開OSRMに「間引いた最大24点を順に経由せよ」と要求すると、各点を必須経由地として
+   //   大きく迂回し、実測でAIルート約560mが1285m(2.3倍)へ膨張、海岸沿いに大蛇行していた。
+   //   方策ノードは元々実道路上にあり、生の経由点を直線で結ぶだけで道なりの折れ線になるため、
+   //   スナップは不要かつ有害。raw waypoints をそのまま描画する（呼び出し側は null で生経路を維持）。
+   return null;
+   try {  // eslint-disable-line no-unreachable
      if (!wps || wps.length < 3) return null;
      // 均等間引き（先頭・末尾は必ず残す）
      const MAXN = 24;
