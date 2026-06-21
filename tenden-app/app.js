@@ -256,12 +256,17 @@ document.addEventListener('DOMContentLoaded', () => {
        const commentHtml = comments.length
          ? '<hr style="margin:6px 0;opacity:0.3">' + comments.map(c => `<div style="margin:3px 0;font-size:0.88em">・${c}</div>`).join('')
          : '';
-       L.circleMarker([lat, lng], {
+       const mk = L.circleMarker([lat, lng], {
          radius: Math.min(7 + count * 2, 20),
          fillColor: COLORS[cat] || '#636366',
          color: 'white', weight: 2,
          fillOpacity: 0.82, opacity: 1
        }).bindPopup(`<div style="min-width:140px"><b>${LABELS[cat] || cat}</b><br><span style="font-size:0.82em;opacity:0.7">報告数: ${count}件</span>${commentHtml}</div>`).addTo(communityReportLayer);
+       // タップしなくても種別・件数が分かるよう常設ラベルを表示（詳細コメントはタップで）
+       mk.bindTooltip(`${LABELS[cat] || cat} ${count}`, {
+         permanent: true, direction: 'top', offset: [0, -4],
+         className: 'report-tip report-tip-' + cat
+       });
      });
    } catch (e) { console.error('[Firebase] load reports failed:', e); }
  }
@@ -272,11 +277,16 @@ document.addEventListener('DOMContentLoaded', () => {
    if (visible) {
      loadCommunityReports();
      if (legend) legend.classList.remove('hidden');
+     // 避難所アイコンがあると報告位置が見づらいので、閲覧中は一時的に避難所を隠す
+     try { if (sheltersLayerGroup && map.hasLayer(sheltersLayerGroup)) { map.removeLayer(sheltersLayerGroup); _sheltersHiddenForReports = true; } } catch (e) {}
    } else {
      if (communityReportLayer) communityReportLayer.clearLayers();
      if (legend) legend.classList.add('hidden');
+     // 避難所表示を元に戻す
+     try { if (_sheltersHiddenForReports && sheltersLayerGroup) { sheltersLayerGroup.addTo(map); _sheltersHiddenForReports = false; } } catch (e) {}
    }
  }
+ let _sheltersHiddenForReports = false;
 
     console.log('[TENDEN] i18n.json 30-languages dictionary loaded successfully');
  let i18nDict = {};

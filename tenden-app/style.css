@@ -3404,3 +3404,15 @@ body.ep-mode .bottom-sheet { display: none !important; }
     padding: 6px 9px; margin: 6px 0 2px;
 }
 .mode-emergency .ep-board-insight { color: #9ecbff; background: rgba(255,255,255,0.08); }
+
+/* みんなのレポート：ピンの常設ラベル（クリーンなピル・種別色） */
+.leaflet-tooltip.report-tip {
+    background: rgba(28,28,30,0.92); color: #fff; border: none;
+    border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3); white-space: nowrap;
+}
+.leaflet-tooltip.report-tip::before { display: none; }
+.report-tip-danger { background: rgba(255,59,48,0.95); }
+.report-tip-sign_needed { background: rgba(255,159,10,0.95); }
+.report-tip-crowded { background: rgba(94,92,230,0.95); }
+.report-tip-shelter_info { background: rgba(52,199,89,0.95); }
