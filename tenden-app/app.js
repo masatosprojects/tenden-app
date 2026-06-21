@@ -818,7 +818,8 @@ document.addEventListener('DOMContentLoaded', () => {
  const overlay = document.getElementById('onboarding-overlay');
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
- requestLocation();
+ // いきなりOS許可ダイアログを出さず、用途・プライバシー説明を挟んでから要求（他導線と統一）
+ showLocationExplanation(requestLocation);
  });
 
  btnErrorOk.addEventListener('click', () => {
