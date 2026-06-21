@@ -144,6 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
    if (sessionStorage.getItem('sn-dismissed') === '1') return;
    const active = DEV_ANNOUNCEMENTS.filter(a => a.status === 'active');
    if (!active.length) return;
+   // 内容が変わった時だけ起動時に表示（毎回出さない）。署名=有効お知らせのid+date。
+   const sig = active.map(a => a.id + ':' + a.date).join('|');
+   try { if (localStorage.getItem('tenden-notice-seen') === sig) return; } catch (e) {}
+   window._tendenNoticeSig = sig;
    const body = document.getElementById('sn-body');
    if (body) {
      body.innerHTML = active.map(a => `

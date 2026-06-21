@@ -1288,7 +1288,7 @@
      </div>
      <div class="sn-body" id="sn-body"></div>
      <button class="sn-close-btn" id="btn-startup-notice-close"
-       onclick="document.getElementById('startup-notice').classList.add('hidden'); sessionStorage.setItem('sn-dismissed','1');">
+       onclick="document.getElementById('startup-notice').classList.add('hidden'); sessionStorage.setItem('sn-dismissed','1'); try{localStorage.setItem('tenden-notice-seen', window._tendenNoticeSig||'1');}catch(e){}">
        確認しました
      </button>
    </div>
