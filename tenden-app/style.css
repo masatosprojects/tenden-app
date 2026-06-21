@@ -3396,3 +3396,11 @@ body.ep-mode .bottom-sheet { display: none !important; }
 .ep-navinfo-dist small { font-size: 0.6rem; font-weight: 600; color: var(--text-muted); }
 .ep-navinfo-eta { font-size: 0.78rem; color: var(--text-muted); border-left: 1px solid var(--glass-border); padding-left: 14px; }
 .ep-navinfo-eta span { font-weight: 800; color: var(--primary); font-size: 0.95rem; }
+
+/* 予習：シミュ由来の一言インサイト（混雑×AI分散の知見） */
+.ep-board-insight {
+    font-size: 0.74rem; line-height: 1.5; color: var(--primary);
+    background: rgba(0,113,227,0.07); border-radius: 8px;
+    padding: 6px 9px; margin: 6px 0 2px;
+}
+.mode-emergency .ep-board-insight { color: #9ecbff; background: rgba(255,255,255,0.08); }

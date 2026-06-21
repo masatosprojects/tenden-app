@@ -3208,12 +3208,20 @@ document.addEventListener('DOMContentLoaded', () => {
    if (nearestD <= 28 && nearestDensity >= 2.0) { hereStatus = '激しい混雑'; hereClass = 'hi'; }
    else if (nearestD <= 28 && nearestDensity >= 0.8) { hereStatus = 'やや混雑'; hereClass = 'mid'; }
    else { hereStatus = '順調'; hereClass = 'ok'; }
+   // シミュ由来の一言インサイト：この時刻の周辺混雑本数を実データで示し、AI分散の意義に結ぶ
+   const congN = (_ep.congActive || []).length;
+   let insight;
+   if (hereClass === 'hi') insight = 'この道は人が集中しています。AIは混雑を避ける道を選び、端末ごとに経路を分散させています。';
+   else if (hereClass === 'mid') insight = '少し混んできました。落ち着いて、AIが分散させた経路のまま進みましょう。';
+   else if (congN > 0) insight = 'この時刻、周辺で約' + congN + '本の道が混雑。あなたの経路は混雑を避けています。';
+   else insight = '周囲は順調です。立ち止まらず、まっすぐ高台へ。';
    const box = document.getElementById('ep-caution');
    if (box) {
      box.className = 'ep-caution board level-' + c.level;
      box.innerHTML =
          '<div class="ep-board-phase"><span class="ep-dot"></span>' + c.head + '</div>'
        + '<div class="ep-board-note">' + c.body + '</div>'
+       + '<div class="ep-board-insight">' + insight + '</div>'
        + '<div class="ep-board-status"><span class="ep-board-k">今いる道</span>'
        +   '<span class="epc-here epc-' + hereClass + '">' + hereStatus + '</span></div>';
    }
@@ -3316,7 +3324,7 @@ document.addEventListener('DOMContentLoaded', () => {
      for (let i = 0; i < newWps.length; i++) {
        if (i <= b.mainIdx && oldC[i]) nc[i] = oldC[i];
        else if (i === newWps.length - 1) nc[i] = { level: 'safe', head: '避難完了（避難所）', body: b.shelterName + 'に到達しました。係員の指示に従い、屋内のより高い階へ移動してください。' };
-       else nc[i] = { level: 'warning', head: '避難所へ移動', body: '指定避難所へ向かっています。沿道の混雑・落下物・冠水に注意して進みます。' };
+       else nc[i] = { level: 'warning', head: '避難所へ移動', body: b.shelterName + 'へ向かっています。屋内のより高い階まで上がれるのが避難ビルの強み。沿道の混雑・落下物に注意。' };
      }
      _ep.wps = newWps; _ep.cum = newCum;
      _ep.totalDist = newCum[newCum.length - 1];
