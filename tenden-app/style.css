@@ -3416,3 +3416,29 @@ body.ep-mode .bottom-sheet { display: none !important; }
 .report-tip-sign_needed { background: rgba(255,159,10,0.95); }
 .report-tip-crowded { background: rgba(94,92,230,0.95); }
 .report-tip-shelter_info { background: rgba(52,199,89,0.95); }
+
+/* 予習ナビ操作群（コンパス・最初に戻る・ルート変更）右側に縦配置 */
+.ep-nav-controls {
+    position: fixed; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 150px);
+    display: flex; flex-direction: column; gap: 10px; z-index: 1100;
+}
+.ep-nav-controls.hidden { display: none; }
+.ep-compass {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    position: relative; display: flex; align-items: center; justify-content: center;
+}
+.ep-compass-n { position: absolute; top: 3px; font-size: 9px; font-weight: 800; color: var(--danger); }
+.ep-compass-needle {
+    width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-bottom: 18px solid var(--primary); transform-origin: 50% 100%;
+    transition: transform 0.2s ease;
+}
+.ep-ctrl-btn {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2); color: var(--text-color);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.ep-ctrl-btn:active { transform: scale(0.94); }

@@ -1682,6 +1682,19 @@ document.addEventListener('DOMContentLoaded', () => {
    _epRender((parseInt(e.target.value, 10) / 1000) * _ep.evacTotalSec);
  });
  document.getElementById('ep-close')?.addEventListener('click', () => stopEvacuationPlayback());
+ // 最初に戻る（開始地点へ巻き戻して一時停止）
+ document.getElementById('ep-restart')?.addEventListener('click', () => {
+   if (!_ep) return;
+   _epPause(); _ep.lastBucket = -1; _ep.lastInfoKey = null; _epRender(0);
+   try { triggerHapticTick(); } catch (e) {}
+ });
+ // ルート変更（予習を閉じてルート選択へ戻る）
+ document.getElementById('ep-change-route')?.addEventListener('click', () => {
+   const rl = activeRoutesList;
+   stopEvacuationPlayback();
+   try { if (typeof showRouteSelectorHUD === 'function' && rl) showRouteSelectorHUD(rl); } catch (e) {}
+   try { triggerHapticTick(); } catch (e) {}
+ });
  document.getElementById('ep-branch-highland')?.addEventListener('click', () => { _epChooseBranch('highland'); triggerHapticTick(); });
  document.getElementById('ep-branch-shelter')?.addEventListener('click', () => { _epChooseBranch('shelter'); triggerHapticTick(); });
 
@@ -3159,6 +3172,9 @@ document.addEventListener('DOMContentLoaded', () => {
      if (_ep.aheadCasing) _ep.aheadCasing.setLatLngs(aheadPts);
      if (_ep.aheadLine) _ep.aheadLine.setLatLngs(aheadPts);
      if (_ep.dottedLine) _ep.dottedLine.setLatLngs(_epPath(dist + AHEAD, _ep.totalDist));
+     // コンパス：地図は北固定なので、進行方位(heading)に針を向ける
+     const needle = document.querySelector('#ep-compass .ep-compass-needle');
+     if (needle) needle.style.transform = 'rotate(' + heading + 'deg)';
    } catch (e) {}
    // 進行方向コーンを回転
    try {
