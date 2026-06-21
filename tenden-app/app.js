@@ -3364,7 +3364,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var fb = buildDirectFallbackRoute(currentLocation);
     if (fb) { candidates = [fb]; }
     else {
-      container.innerHTML = '<p style="text-align:center;padding:20px;opacity:0.7;">ルートを計算中...</p>';
+      container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;"><img class="tenden-loader sm" src="assets/loading.gif" alt="" aria-hidden="true" /><span style="opacity:0.75;font-size:0.85rem;">ルートを計算中…</span></div>';
       var _ov=document.getElementById('route-overlay');
       if(_ov){_ov.classList.remove('hidden');setTimeout(function(){_ov.classList.add('active');},10);}
       setTimeout(function(){if(currentLocation)recalculateRouteFromLocation(currentLocation);},3000);
@@ -3673,6 +3673,33 @@ document.addEventListener('DOMContentLoaded', () => {
    if (el) el.classList.add('hidden');
    if (_routeLoadingTimer) { clearTimeout(_routeLoadingTimer); _routeLoadingTimer = null; }
  }
+
+ // ── TENDEN 共通ローディング表示 ─────────────────────────────────────────
+ // 今後ローディング（重い処理・体験開始の待ち等）が必要になった箇所は、必ずこの
+ // showTendenLoading()/hideTendenLoading() を使い、ブランドGIF(assets/loading.gif)を表示する。
+ // ※起動時スプラッシュ(#splash-screen)とは別物。スプラッシュは差し替えない。
+ let _tendenLoadingTimer = null;
+ function showTendenLoading(message, autoHideMs) {
+   let ov = document.getElementById('tenden-loading');
+   if (!ov) {
+     ov = document.createElement('div');
+     ov.id = 'tenden-loading';
+     ov.className = 'tenden-loading-overlay';
+     ov.innerHTML = '<img class="tenden-loader" src="assets/loading.gif" alt="" aria-hidden="true" /><div class="tenden-loader-msg"></div>';
+     document.body.appendChild(ov);
+   }
+   const msg = ov.querySelector('.tenden-loader-msg');
+   if (msg) msg.textContent = message || '読み込み中…';
+   ov.classList.remove('hidden');
+   if (_tendenLoadingTimer) clearTimeout(_tendenLoadingTimer);
+   _tendenLoadingTimer = setTimeout(hideTendenLoading, autoHideMs || 15000); // 安全策：閉じ忘れ防止
+ }
+ function hideTendenLoading() {
+   const ov = document.getElementById('tenden-loading');
+   if (ov) ov.classList.add('hidden');
+   if (_tendenLoadingTimer) { clearTimeout(_tendenLoadingTimer); _tendenLoadingTimer = null; }
+ }
+ try { window.showTendenLoading = showTendenLoading; window.hideTendenLoading = hideTendenLoading; } catch (e) {}
 
  async function recalculateRouteFromLocation(loc) {
  if (!isEmergency) return;
