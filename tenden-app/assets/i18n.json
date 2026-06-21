@@ -37,7 +37,7 @@
   "estHeight": "避難先標高:",
   "layersTitle": "レイヤー設定",
   "toggleShelters": "避難所ピン",
-  "toggleHazard": "津波浸水想定区域",
+  "toggleHazard": "津波浸水想定区域（最大クラス）",
   "toggleCongestion": "混雑予測（ヒートマップ）",
   "toggleRelief": "色別標高図（国土地理院）",
   "toggleSafeEdges": "第一目標候補点（全安全境界点）",

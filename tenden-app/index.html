@@ -407,9 +407,8 @@
  </div>
  <div class="action-grid mt-10">
  <button id="btn-share" class="action-btn secondary-btn" data-i18n="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg> 安否共有</button>
- <button id="btn-sos" class="action-btn sos-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> SOS</button>
  </div>
- <button id="btn-reset-alert" class="text-link-btn" data-i18n="resetAlert">訓練終了</button>
+ <button id="btn-reset-alert" class="action-btn end-drill-btn" data-i18n="resetAlert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg> 訓練終了</button>
  </div>
  </div>
  </div>
@@ -870,7 +869,7 @@
  </div>
 
  <div class="toggle-group">
- <label data-i18n="toggleHazard">津波浸水想定区域</label>
+ <label data-i18n="toggleHazard">津波浸水想定区域（最大クラス）</label>
  <input type="checkbox" id="toggle-hazard" checked class="toggle-switch">
  </div>
  
@@ -1061,6 +1060,10 @@
  <button id="btn-model-area-close" class="close-btn">&times;</button>
  </div>
  <p class="dialog-subtitle" data-i18n="modelAreaDialogDesc">現在地から鎌倉のモデル地区（由比ヶ浜周辺）に表示を切り替え、アプリの機能を体験できます。実際の現在地情報は「現在地に戻る」を押すまで一時的に切り替わります。</p>
+ <div style="background:rgba(0,113,227,0.06); border:1px solid rgba(0,113,227,0.15); border-radius:12px; padding:12px 14px; margin:4px 0 14px; font-size:0.8rem; line-height:1.6; color:var(--text-color);">
+   <strong style="color:var(--primary);">このモデル地区とは</strong><br>
+   由比ヶ浜・七里ヶ浜を含む鎌倉沿岸部で、約6万人規模の津波避難を多数回シミュレーション（内閣府の避難開始時間に較正）した研究対象エリアです。ここでは強化学習AIが学習した避難ルートや、端末ごとに経路を自律分散させる「分散避難」、公式の避難所データなど、本アプリの中核機能が実データに基づいて動作します。他地域では地図表示のみとなります。
+ </div>
  <div style="display:flex; flex-direction:column; gap:10px;">
  <button id="btn-model-area-confirm" class="action-btn primary-btn w-100" data-i18n="modelAreaConfirmBtn">モデル地区を表示する</button>
  <button id="btn-model-area-cancel" class="action-btn outline-btn w-100" data-i18n="modelAreaCancelBtn">キャンセル</button>

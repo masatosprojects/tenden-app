@@ -3378,3 +3378,6 @@ body.ep-mode .bottom-sheet { display: none !important; }
     color: var(--primary) !important;
     font-weight: 700 !important;
 }
+
+/* 訓練終了ボタンを明確なボタンに（フル幅・控えめ赤系） */
+.end-drill-btn { width: 100%; margin-top: 8px; justify-content: center; color: var(--danger, #ff3b30); border-color: rgba(255,59,48,0.3); }

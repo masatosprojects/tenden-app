@@ -949,10 +949,17 @@ document.addEventListener('DOMContentLoaded', () => {
      simulationInterval = null;
    }
 
+   // 地図移動中は本番/体験タブを隠し、ローディングGIFで「体験準備中」を示す
+   // （移動中に本番モードだけ大きく表示され混乱するのを防ぐ＋空白を埋める）
+   document.getElementById('btn-test-alert')?.classList.add('hidden');
+   document.getElementById('btn-real-mode')?.classList.add('hidden');
+   try { showTendenLoading('鎌倉のモデル地区へ移動中…', 5000); } catch (e) {}
+
    // モデル地区全域を表示 → 研究紹介 → ユーザー自身にピンを置いてもらう
    map.flyTo([35.308, 139.551], 14, { duration: 1.6, easeLinearity: 0.25 });
 
    map.once('moveend', () => {
+     try { hideTendenLoading(); } catch (e) {}
      const ov = document.getElementById('research-intro-overlay');
      if (ov) { ov.classList.remove('hidden'); setTimeout(() => ov.classList.add('active'), 10); }
      else startDrillPinDrop();
@@ -1086,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', () => {
  });
  }
 
- btnSos.addEventListener('click', () => {
+ if (btnSos) btnSos.addEventListener('click', () => {
  const flash = document.getElementById('flash-overlay');
  flash.classList.toggle('hidden');
  flash.classList.toggle('flash');
