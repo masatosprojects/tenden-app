@@ -419,8 +419,8 @@
  <div id="evac-playback" class="evac-playback hidden">
    <div id="ep-cong-legend" class="ep-cong-legend hidden"></div>
    <div id="ep-navinfo" class="ep-navinfo hidden">
-     <div class="ep-navinfo-dist"><span id="ep-nav-dist">--</span><small>目的地まで</small></div>
-     <div class="ep-navinfo-eta">到着まで約<br><span id="ep-nav-eta">--</span></div>
+     <div class="ep-navinfo-dist"><span id="ep-nav-dist">--</span><small>目的地まで<span id="ep-nav-cong"></span></small></div>
+     <div class="ep-navinfo-eta">到着まで約<br><span id="ep-nav-eta">--</span><small id="ep-nav-elev"></small></div>
    </div>
    <div id="ep-caution" class="ep-caution"></div>
    <div id="ep-branch-choice" class="ep-branch hidden">
@@ -454,9 +454,12 @@
      </button>
    </div>
    <div id="ep-nav-controls" class="ep-nav-controls">
-     <div id="ep-compass" class="ep-compass" aria-label="進行方位">
-       <span class="ep-compass-n">N</span>
-       <div class="ep-compass-needle"></div>
+     <div id="ep-compass" class="ep-compass" aria-label="方位（北）">
+       <span class="ep-compass-lbl ep-c-n">N</span>
+       <span class="ep-compass-lbl ep-c-e">E</span>
+       <span class="ep-compass-lbl ep-c-s">S</span>
+       <span class="ep-compass-lbl ep-c-w">W</span>
+       <div class="ep-compass-needle"><i class="ep-needle-n"></i><i class="ep-needle-s"></i></div>
      </div>
      <button id="ep-restart" class="ep-ctrl-btn" aria-label="最初に戻る" title="最初に戻る">
        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>

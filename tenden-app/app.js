@@ -3100,8 +3100,17 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  // 津波到達までのカウントダウン表示（上部バー）。1秒ごとに mm:ss で減算、0で「到達」。
+ // 予習再生中は実時間ではなく再生の時系列(_ep.t)に同期させる（_epRenderが上書き）。
  let _tsunamiCdTimer = null;
+ let _tsunamiTotalSec = 0;
+ function _fmtTsunamiEta(rem) {
+   const el = document.getElementById('eta-value');
+   if (!el) return;
+   if (rem <= 0) el.textContent = '到達';
+   else { const m = Math.floor(rem / 60), s = Math.round(rem) % 60; el.textContent = m + ':' + String(s).padStart(2, '0'); }
+ }
  function startTsunamiCountdown(totalSec) {
+   _tsunamiTotalSec = totalSec;
    if (_tsunamiCdTimer) { clearInterval(_tsunamiCdTimer); _tsunamiCdTimer = null; }
    const end = Date.now() + totalSec * 1000;
    const el = document.getElementById('eta-value');
@@ -3172,9 +3181,6 @@ document.addEventListener('DOMContentLoaded', () => {
      if (_ep.aheadCasing) _ep.aheadCasing.setLatLngs(aheadPts);
      if (_ep.aheadLine) _ep.aheadLine.setLatLngs(aheadPts);
      if (_ep.dottedLine) _ep.dottedLine.setLatLngs(_epPath(dist + AHEAD, _ep.totalDist));
-     // コンパス：地図は北固定なので、進行方位(heading)に針を向ける
-     const needle = document.querySelector('#ep-compass .ep-compass-needle');
-     if (needle) needle.style.transform = 'rotate(' + heading + 'deg)';
    } catch (e) {}
    // 進行方向コーンを回転
    try {
@@ -3188,6 +3194,8 @@ document.addEventListener('DOMContentLoaded', () => {
    const scrub = document.getElementById('ep-scrub');
    if (scrub && document.activeElement !== scrub) scrub.value = Math.round(frac * 1000);
    const tEl = document.getElementById('ep-time'); if (tEl) tEl.textContent = _epFmt(_ep.t);
+   // 津波到達カウントダウンを再生の時系列(_ep.t)に同期（実時間タイマーは止める）
+   if (_tsunamiTotalSec > 0) { if (_tsunamiCdTimer) { clearInterval(_tsunamiCdTimer); _tsunamiCdTimer = null; } _fmtTsunamiEta(_tsunamiTotalSec - _ep.t); }
    // ナビ情報：目的地まで残り距離・到達まで時間（Googleマップ風の実用表示）
    const navi = document.getElementById('ep-navinfo');
    if (navi) {
@@ -3244,12 +3252,18 @@ document.addEventListener('DOMContentLoaded', () => {
    const box = document.getElementById('ep-caution');
    if (box) {
      box.className = 'ep-caution board level-' + c.level;
+     // 長文(c.body)は廃止し、フェーズ見出し＋青いインサイトの一言に集約（コンパクト化）
      box.innerHTML =
          '<div class="ep-board-phase"><span class="ep-dot"></span>' + c.head + '</div>'
-       + '<div class="ep-board-note">' + c.body + '</div>'
-       + '<div class="ep-board-insight">' + insight + '</div>'
-       + '<div class="ep-board-status"><span class="ep-board-k">今いる道</span>'
-       +   '<span class="epc-here epc-' + hereClass + '">' + hereStatus + '</span></div>';
+       + '<div class="ep-board-insight">' + insight + '</div>';
+   }
+   // 今いる道の混雑は上部チップ(目的地まで○m の横)、標高は(到着まで約 の横)に表示
+   const congEl = document.getElementById('ep-nav-cong');
+   if (congEl) congEl.textContent = '・' + hereStatus;
+   const elevEl = document.getElementById('ep-nav-elev');
+   if (elevEl) {
+     const mElev = ((_ep.route && _ep.route.meta && _ep.route.meta[ci]) || {}).elev;
+     elevEl.textContent = (typeof mElev === 'number') ? '海抜' + Math.round(mElev) + 'm' : '';
    }
    const ph = document.getElementById('ep-phase'); if (ph) ph.textContent = c.head;
    // [2026-06-21] 吹き出し提示を廃止。混雑はネットワークグラフ(道路エッジ)を時刻ごとに
@@ -4807,14 +4821,10 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  const formattedAccuracy = Math.round(accuracy);
- if (accuracy < 15) {
+ // 低精度でも長い警告文は付けない（上部バーの他項目=海岸距離/津波到達 を押し出すため）。
+ // 低精度は色(gps-low-accuracy)で示すのみに留める。
  accuracyEl.innerText = `GPS: ±${formattedAccuracy}m`;
- box.className = 'status-badge gps-badge';
- } else {
-  const warningText = dict.gpsLowAccuracy || '(Outdoor Use Recommended)';
- accuracyEl.innerText = `GPS: ±${formattedAccuracy}m ${warningText}`;
- box.className = 'status-badge gps-badge gps-low-accuracy';
- }
+ box.className = accuracy < 15 ? 'status-badge gps-badge' : 'status-badge gps-badge gps-low-accuracy';
  }
 
  function updateNetworkStatusHUD() {

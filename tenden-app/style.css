@@ -3430,12 +3430,16 @@ body.ep-mode .bottom-sheet { display: none !important; }
     box-shadow: 0 4px 14px rgba(0,0,0,0.2);
     position: relative; display: flex; align-items: center; justify-content: center;
 }
-.ep-compass-n { position: absolute; top: 3px; font-size: 9px; font-weight: 800; color: var(--danger); }
-.ep-compass-needle {
-    width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
-    border-bottom: 18px solid var(--primary); transform-origin: 50% 100%;
-    transition: transform 0.2s ease;
-}
+/* 北固定コンパス（地図が北上のため針は常に上=N） */
+.ep-compass-lbl { position: absolute; font-size: 8px; font-weight: 800; color: var(--text-muted); }
+.ep-compass-lbl.ep-c-n { top: 2px; left: 50%; transform: translateX(-50%); color: var(--danger); }
+.ep-compass-lbl.ep-c-s { bottom: 2px; left: 50%; transform: translateX(-50%); }
+.ep-compass-lbl.ep-c-e { right: 3px; top: 50%; transform: translateY(-50%); }
+.ep-compass-lbl.ep-c-w { left: 3px; top: 50%; transform: translateY(-50%); }
+.ep-compass-needle { position: relative; width: 0; height: 26px; }
+.ep-compass-needle i { position: absolute; left: 50%; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; transform: translateX(-50%); }
+.ep-needle-n { top: 0; border-bottom: 13px solid var(--danger); }
+.ep-needle-s { bottom: 0; border-top: 13px solid #c7c7cc; }
 .ep-ctrl-btn {
     width: 46px; height: 46px; border-radius: 50%;
     background: var(--glass-bg); border: 1px solid var(--glass-border);
@@ -3443,3 +3447,7 @@ body.ep-mode .bottom-sheet { display: none !important; }
     display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
 .ep-ctrl-btn:active { transform: scale(0.94); }
+
+/* ナビチップ内の混雑/標高サブ表示 */
+#ep-nav-cong { color: var(--text-muted); font-weight: 600; }
+#ep-nav-elev { display: block; font-size: 0.6rem; font-weight: 600; color: var(--text-muted); margin-top: 1px; }
