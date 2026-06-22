@@ -994,6 +994,8 @@ document.addEventListener('DOMContentLoaded', () => {
    document.getElementById('btn-set-pin')?.classList.remove('hidden');
    const instr = document.getElementById('hud-pin-instruction');
    if (instr) instr.style.display = '';
+   // ワンクッションのガイド：何をすればよいか明示（いきなりピン設置で戸惑わせない）
+   try { triggerDynamicIsland('避難を体験したい出発地点を、地図を動かして十字に合わせ「ここにピンを打つ」を押しましょう', 'info'); } catch (e) {}
  }
  document.getElementById('btn-research-intro-start')?.addEventListener('click', () => {
    startDrillPinDrop();
