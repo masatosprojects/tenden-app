@@ -3418,8 +3418,9 @@ body.ep-mode .bottom-sheet { display: none !important; }
 .report-tip-shelter_info { background: rgba(52,199,89,0.95); }
 
 /* 予習ナビ操作群（コンパス・最初に戻る・ルート変更）右側に縦配置 */
+/* 右側は既存FAB(現在地/モデル地区/レポート/メニュー)があるため、ナビ操作群は左側に置いて干渉を避ける */
 .ep-nav-controls {
-    position: fixed; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 150px);
+    position: fixed; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 150px);
     display: flex; flex-direction: column; gap: 10px; z-index: 1100;
 }
 .ep-nav-controls.hidden { display: none; }
