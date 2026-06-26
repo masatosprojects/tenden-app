@@ -3461,3 +3461,12 @@ body.ep-mode .bottom-sheet { display: none !important; }
 /* ナビチップ内の混雑/標高サブ表示 */
 #ep-nav-cong { color: var(--text-muted); font-weight: 600; }
 #ep-nav-elev { display: block; font-size: 0.6rem; font-weight: 600; color: var(--text-muted); margin-top: 1px; }
+
+/* 予習：目的地名のミニラベル（「第一目標」等の表記なし。ピン直上を避け上にオフセット） */
+.route-dest-mini { width: 0 !important; height: 0 !important; }
+.route-dest-mini-pill {
+    position: absolute; left: 0; top: -16px; transform: translate(-50%, -100%);
+    background: #1d1d1f; color: #fff; font-size: 0.72rem; font-weight: 700;
+    padding: 3px 9px; border-radius: 10px; white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}

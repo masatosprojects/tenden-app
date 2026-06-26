@@ -3073,6 +3073,9 @@ document.addEventListener('DOMContentLoaded', () => {
      _ep.aheadCasing = L.polyline([], { color: '#ffffff', weight: 11, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map);
      _ep.aheadLine = L.polyline([], { color: navColor, weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round' }).addTo(map);
    } catch (e) {}
+   // 目的地の名前だけを、ピンを覆わない位置（上に少しオフセット）に表示。
+   // 「第一目標／第二目標」のような表記はユーザーに不要なため出さない。必要最小限の名前のみ。
+   _epUpdateDestLabel();
    try { document.getElementById('ep-branch-choice')?.classList.add('hidden'); } catch (e) {}
    try { document.getElementById('ep-cong-legend')?.classList.add('hidden'); } catch (e) {}
 
@@ -3124,6 +3127,21 @@ document.addEventListener('DOMContentLoaded', () => {
    }
    tick();
    _tsunamiCdTimer = setInterval(tick, 1000);
+ }
+
+ // 目的地名のミニラベル（「第一目標／第二目標」等の表記はしない・ピンの直上を避けてオフセット表示）
+ function _epUpdateDestLabel() {
+   if (!_ep || !map) return;
+   const name = _ep.chosenShelter && _ep.branch ? _ep.branch.shelterName
+     : ((_ep.route && _ep.route.goal && _ep.route.goal.name) || '');
+   const dest = _ep.wps[_ep.wps.length - 1];
+   if (!name || !dest) return;
+   if (_ep.destMarker) { try { map.removeLayer(_ep.destMarker); } catch (e) {} }
+   const icon = L.divIcon({
+     className: 'route-dest-mini',
+     html: '<div class="route-dest-mini-pill">' + name + '</div>'
+   });
+   _ep.destMarker = L.marker(dest, { icon, zIndexOffset: 950, interactive: false }).addTo(map);
  }
 
  // 現在地(d0)から d1 までのルート上の点列（端点は補間）。ナビの矢印/点線描画用。
@@ -3374,6 +3392,7 @@ document.addEventListener('DOMContentLoaded', () => {
      const totalEl = document.getElementById('ep-total');
      if (totalEl) totalEl.textContent = _epFmt(_ep.evacTotalSec);
    }
+   _epUpdateDestLabel();
 
    b.decided = true; b.prompting = false;
    _ep.lastInfoKey = null;  // 注意点パネルを即時更新させる
@@ -3423,7 +3442,7 @@ document.addEventListener('DOMContentLoaded', () => {
      try { routeLayerGroup.removeLayer(_ep.marker); } catch (e) {}
      try { if (_ep.congLayer) map.removeLayer(_ep.congLayer); } catch (e) {}
      try { if (_ep.bubbleLayer) map.removeLayer(_ep.bubbleLayer); } catch (e) {}
-     try { [_ep.dottedLine, _ep.aheadCasing, _ep.aheadLine].forEach(l => { if (l) map.removeLayer(l); }); } catch (e) {}
+     try { [_ep.dottedLine, _ep.aheadCasing, _ep.aheadLine, _ep.destMarker].forEach(l => { if (l) map.removeLayer(l); }); } catch (e) {}
      // 静的混雑ヒートマップを元に戻す
      try { if (_ep.staticCongWasOn && congestionLayer) congestionLayer.addTo(map); } catch (e) {}
      _ep = null;
