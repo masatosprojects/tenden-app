@@ -1068,9 +1068,12 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnUnlockPin = document.getElementById('btn-unlock-pin');
  if (btnUnlockPin) {
  btnUnlockPin.addEventListener('click', () => {
+ // 予習再生中にこのボタンを押した場合、再生を確実に終了してから戻る。
+ // (再生画面を閉じないと#evac-playbackが残り続け、下のピン設置ボタンが隠れて機能しなくなる)
+ try { if (typeof stopEvacuationPlayback === 'function') stopEvacuationPlayback(); } catch (e) {}
  isPinLocked = false;
  isWaitingForPinDrop = true; // Re-enable crosshair pin drop
- 
+
  // Stop simulation and clear routes
  if (simulationInterval) {
  clearInterval(simulationInterval);

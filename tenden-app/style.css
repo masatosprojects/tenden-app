@@ -3478,12 +3478,13 @@ body.ep-mode .map-action-fabs, body.tenden-nav-active .map-action-fabs { display
 }
 
 /* ルート選択カード：簡潔テンプレート（アイコン＋名前＋短いキーワード＋分数を1行で揺れなく整列） */
-.route-card-row { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; }
+.route-card-row { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; width: 100%; }
 .route-card-text { flex: 1; min-width: 0; text-align: left; }
 .route-card-name { font-size: 1rem; font-weight: 800; color: #fff; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .route-card-kw { font-size: 0.74rem; color: rgba(255,255,255,0.85); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.route-card-time { flex-shrink: 0; font-size: 1.05rem; font-weight: 800; color: #fff; }
-.route-card-time small { font-size: 0.65rem; font-weight: 700; margin-left: 1px; }
+/* 所要時間：ルート名の長さに関係なく常に右端の固定幅スロットに大きく表示 */
+.route-card-time { flex-shrink: 0; min-width: 56px; text-align: right; font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1; }
+.route-card-time small { font-size: 0.85rem; font-weight: 700; margin-left: 2px; }
 
 /* ルート選択シートは背面の地図がイメージできる程度の高さに留める（覆い過ぎを防止） */
 .route-bottom-sheet { max-height: 50vh; overflow-y: auto; }
