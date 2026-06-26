@@ -1494,8 +1494,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     100% { left: 130%; }
 }
 .ai-route-btn.active {
+    /* [2026-06-21] scale(1.02)を撤去：選択時にアイコン位置が数px視覚的にずれる原因だったため、
+       拡大ではなく枠線(box-shadow)のみで選択状態を示す。 */
     box-shadow: 0 0 0 3px rgba(255,255,255,0.55), 0 10px 28px rgba(255,94,58,0.55);
-    transform: scale(1.02);
 }
 .ai-route-btn.pressed { transform: scale(0.96) !important; }
 .ai-route-icon {
@@ -1548,7 +1549,6 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 }
 .acc-route-btn.active {
     box-shadow: 0 0 0 3px rgba(255,255,255,0.55), 0 10px 28px rgba(94,92,230,0.55);
-    transform: scale(1.02);
 }
 .acc-route-btn.pressed { transform: scale(0.96) !important; }
 .acc-route-badge {
@@ -3476,3 +3476,14 @@ body.ep-mode .map-action-fabs, body.tenden-nav-active .map-action-fabs { display
     padding: 3px 9px; border-radius: 10px; white-space: nowrap;
     box-shadow: 0 2px 8px rgba(0,0,0,0.35);
 }
+
+/* ルート選択カード：簡潔テンプレート（アイコン＋名前＋短いキーワード＋分数を1行で揺れなく整列） */
+.route-card-row { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; }
+.route-card-text { flex: 1; min-width: 0; text-align: left; }
+.route-card-name { font-size: 1rem; font-weight: 800; color: #fff; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.route-card-kw { font-size: 0.74rem; color: rgba(255,255,255,0.85); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.route-card-time { flex-shrink: 0; font-size: 1.05rem; font-weight: 800; color: #fff; }
+.route-card-time small { font-size: 0.65rem; font-weight: 700; margin-left: 1px; }
+
+/* ルート選択シートは背面の地図がイメージできる程度の高さに留める（覆い過ぎを防止） */
+.route-bottom-sheet { max-height: 50vh; overflow-y: auto; }

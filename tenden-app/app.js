@@ -3554,7 +3554,7 @@ document.addEventListener('DOMContentLoaded', () => {
  optionsWrapper.style.display = 'flex';
  optionsWrapper.style.flexDirection = 'column';
  optionsWrapper.style.gap = '8px';
- optionsWrapper.style.marginTop = '12px';
+ optionsWrapper.style.marginTop = '6px';
  
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  candidates.forEach(c => {
@@ -3569,18 +3569,15 @@ document.addEventListener('DOMContentLoaded', () => {
    aiBtn.setAttribute('data-color', targetColor);
    aiBtn.innerHTML = `
      <div class="ai-route-glow"></div>
-     <div style="position:relative; z-index:1; display:flex; align-items:center; gap:12px;">
+     <div class="route-card-row">
        <div class="ai-route-icon">
          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
        </div>
-       <div style="text-align:left;">
-         <div style="font-size:1rem; font-weight:800; color:#fff; line-height:1.2;">${c.label}</div>
-         <div style="font-size:0.72rem; color:rgba(255,255,255,0.88); margin-top:2px;">${c.characteristics}</div>
+       <div class="route-card-text">
+         <div class="route-card-name">${c.label}</div>
+         <div class="route-card-kw">${(dict.routeAiBadge || 'AI推奨・最適ルート')}</div>
        </div>
-     </div>
-     <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
-       <span class="ai-route-badge">${(dict.routeAiBadge || '強化学習AI')}</span>
-       <div style="font-size:0.85rem; font-weight:800; color:#fff;">${c.estimated_min}${(dict.minutesSuffix || '分')}</div>
+       <div class="route-card-time">${c.estimated_min}<small>${(dict.minutesSuffix || '分')}</small></div>
      </div>`;
    aiBtn.addEventListener('click', () => { selectEvacuationRoute('AI'); });
    aiBtn.addEventListener('touchstart', function(){ aiBtn.classList.add('pressed'); }, {passive:true});
@@ -3597,18 +3594,15 @@ document.addEventListener('DOMContentLoaded', () => {
    accBtn.setAttribute('data-color', targetColor);
    accBtn.innerHTML = `
      <div class="ai-route-glow"></div>
-     <div style="position:relative; z-index:1; display:flex; align-items:center; gap:12px;">
+     <div class="route-card-row">
        <div class="ai-route-icon">
          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="4" r="1"/><path d="m18 19 1-7-6 1"/><path d="m5 8 3-3 5.5 3-2.36 3.5"/><path d="M4.24 14.5a5 5 0 0 0 6.88 6"/><path d="M13.76 17.5a5 5 0 0 0-6.88-6"/></svg>
        </div>
-       <div style="text-align:left;">
-         <div style="font-size:1rem; font-weight:800; color:#fff; line-height:1.2;">${c.label}</div>
-         <div style="font-size:0.72rem; color:rgba(255,255,255,0.88); margin-top:2px;">${(dict.routeAccessibleShort || '急な坂や狭い道を避けた、緩やかで通りやすい道')}</div>
+       <div class="route-card-text">
+         <div class="route-card-name">${c.label}</div>
+         <div class="route-card-kw">${(dict.routeAccessibleBadge || 'やさしい道')}</div>
        </div>
-     </div>
-     <div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
-       <span class="acc-route-badge">${(dict.routeAccessibleBadge || 'バリアフリー')}</span>
-       <div style="font-size:0.85rem; font-weight:800; color:#fff;">${c.estimated_min}${(dict.minutesSuffix || '分')}</div>
+       <div class="route-card-time">${c.estimated_min}<small>${(dict.minutesSuffix || '分')}</small></div>
      </div>`;
    accBtn.addEventListener('click', () => { selectEvacuationRoute(c.id); });
    accBtn.addEventListener('touchstart', function(){ accBtn.classList.add('pressed'); }, {passive:true});
