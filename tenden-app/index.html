@@ -394,23 +394,9 @@
  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="margin-right:2px;"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
  <span>避難の流れを再生して予習する</span>
  </button>
-
- <!-- Secondary actions, tucked into a "more" menu -->
- <button id="btn-panel-more-toggle" class="panel-more-toggle mt-10" aria-expanded="false">
- <span data-i18n="panelMoreBtn">その他の操作</span>
- <svg class="panel-more-chevron" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
- </button>
- <div class="panel-more-menu" id="panel-more-menu">
- <div class="action-grid mt-10" id="essential-buttons">
- <button id="btn-change-route" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 2.13-5.88L2 9"></path></svg> <span data-i18n="changeRouteBtn">ルート変更</span></button>
- <button id="btn-unlock-pin" class="action-btn secondary-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <span data-i18n="unlockPinBtn">ピン解除</span></button>
- </div>
- <div class="action-grid mt-10">
- <button id="btn-share" class="action-btn secondary-btn" data-i18n="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg> 安否共有</button>
- </div>
+ <!-- [2026-06-21] 「その他の操作」メニューは廃止。ルート変更/ピン差し直し/安否共有は
+      左側に常設する操作群(#tenden-nav-controls)に集約し、二重の操作経路を作らない。 -->
  <button id="btn-reset-alert" class="action-btn end-drill-btn" data-i18n="resetAlert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg> 訓練終了</button>
- </div>
- </div>
  </div>
  </div>
  </div>
@@ -453,21 +439,29 @@
        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="18" height="18" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
      </button>
    </div>
-   <div id="ep-nav-controls" class="ep-nav-controls">
-     <div id="ep-compass" class="ep-compass" aria-label="方位（北）">
-       <span class="ep-compass-lbl ep-c-n">N</span>
-       <span class="ep-compass-lbl ep-c-e">E</span>
-       <span class="ep-compass-lbl ep-c-s">S</span>
-       <span class="ep-compass-lbl ep-c-w">W</span>
-       <div class="ep-compass-needle"><i class="ep-needle-n"></i><i class="ep-needle-s"></i></div>
-     </div>
-     <button id="ep-restart" class="ep-ctrl-btn" aria-label="最初に戻る" title="最初に戻る">
-       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-     </button>
-     <button id="ep-change-route" class="ep-ctrl-btn" aria-label="ルート変更" title="ルート変更">
-       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-     </button>
+ </div>
+
+ <!-- 避難ナビ操作群（体験/本番モードの誘導中・予習再生中に共通で表示。既存FABの代わりに出す） -->
+ <div id="tenden-nav-controls" class="ep-nav-controls">
+   <div id="ep-compass" class="ep-compass" aria-label="方位（北）">
+     <span class="ep-compass-lbl ep-c-n">N</span>
+     <span class="ep-compass-lbl ep-c-e">E</span>
+     <span class="ep-compass-lbl ep-c-s">S</span>
+     <span class="ep-compass-lbl ep-c-w">W</span>
+     <div class="ep-compass-needle"><i class="ep-needle-n"></i><i class="ep-needle-s"></i></div>
    </div>
+   <button id="ep-restart" class="ep-ctrl-btn ep-restart-only" aria-label="最初に戻る" title="最初に戻る">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+   </button>
+   <button id="ep-change-route" class="ep-ctrl-btn" aria-label="ルート変更" title="ルート変更">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+   </button>
+   <button id="btn-unlock-pin" class="ep-ctrl-btn" aria-label="ピンを差し直す" title="ピンを差し直す">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+   </button>
+   <button id="btn-share" class="ep-ctrl-btn" aria-label="安否共有" title="安否共有">
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="20" height="20" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+   </button>
  </div>
 
  <!-- 鎌倉で避難体験：研究紹介 → ピン設置の案内 -->

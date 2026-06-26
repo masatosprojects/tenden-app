@@ -3427,13 +3427,19 @@ body.ep-mode .bottom-sheet { display: none !important; }
 .report-tip-crowded { background: rgba(94,92,230,0.95); }
 .report-tip-shelter_info { background: rgba(52,199,89,0.95); }
 
-/* 予習ナビ操作群（コンパス・最初に戻る・ルート変更）右側に縦配置 */
-/* 右側は既存FAB(現在地/モデル地区/レポート/メニュー)があるため、ナビ操作群は左側に置いて干渉を避ける */
+/* 避難ナビ操作群（コンパス・最初に戻る・ルート変更・ピンを差し直す・安否共有）左側に縦配置。
+   体験/本番モードの避難誘導中(body.tenden-nav-active)・予習再生中(body.ep-mode)にのみ表示し、
+   その間は右側の既存FAB(現在地/モデル地区/レポート/メニュー)を隠す（操作の二重化を避ける）。
+   右側は既存FABがあるため、ナビ操作群は左側に置いて干渉を避ける。 */
 .ep-nav-controls {
     position: fixed; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 150px);
-    display: flex; flex-direction: column; gap: 10px; z-index: 1100;
+    display: none; flex-direction: column; gap: 10px; z-index: 1100;
 }
-.ep-nav-controls.hidden { display: none; }
+body.ep-mode .ep-nav-controls, body.tenden-nav-active .ep-nav-controls { display: flex; }
+/* 「最初に戻る」は再生位置の巻き戻しなので予習再生中のみ意味を持つ */
+.ep-restart-only { display: none; }
+body.ep-mode .ep-restart-only { display: flex; }
+body.ep-mode .map-action-fabs, body.tenden-nav-active .map-action-fabs { display: none !important; }
 .ep-compass {
     width: 46px; height: 46px; border-radius: 50%;
     background: var(--glass-bg); border: 1px solid var(--glass-border);

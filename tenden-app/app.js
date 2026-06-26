@@ -1084,6 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
  
  // Hide HUD banner and restore instruction UI
  document.getElementById('evacuation-banner').classList.add('hidden');
+ document.body.classList.remove('tenden-nav-active');
  document.getElementById('btn-test-alert').classList.add('hidden');
  
  const btnSetPin = document.getElementById('btn-set-pin');
@@ -2050,6 +2051,7 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('bottom-normal-actions').classList.add('hidden');
  document.getElementById('btn-test-alert').classList.add('hidden');
  document.getElementById('evacuation-banner').classList.remove('hidden');
+ document.body.classList.add('tenden-nav-active');
  document.getElementById('disaster-details').style.display = 'block';
  
  // Load scenario parameters
@@ -2155,6 +2157,7 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('btn-test-alert').classList.remove('hidden');
  document.getElementById('btn-real-mode')?.classList.remove('hidden');
  document.getElementById('evacuation-banner').classList.add('hidden');
+ document.body.classList.remove('tenden-nav-active');
 
  // Collapse the secondary action menu for the next evacuation
  const panelMoreMenu = document.getElementById('panel-more-menu');
