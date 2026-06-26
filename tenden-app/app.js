@@ -2046,11 +2046,13 @@ document.addEventListener('DOMContentLoaded', () => {
  if (_btnPrimary) _btnPrimary.classList.toggle('hidden', isTest);
  if (_btnPlayback) _btnPlayback.classList.toggle('hidden', !isTest);
 
- // 繧ｹ繝槭・迚ｹ蛹匁ｩ溯・縺ｮ蛻晄悄蛹・
+ // スマホ特化機能の初期化
  requestWakeLock();
  requestNotificationPermission();
- requestOrientationPermission();
- 
+ // 動作・方向(コンパス)の許可は実際に進行方向が意味を持つ本番モードのみ求める。
+ // 体験モード(予習・ピン設置)では不要なため、毎回許可を求めないようにする。
+ if (!isTest) requestOrientationPermission();
+
  document.getElementById('bottom-normal-actions').classList.add('hidden');
  document.getElementById('btn-test-alert').classList.add('hidden');
  document.getElementById('evacuation-banner').classList.remove('hidden');
