@@ -1566,18 +1566,28 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 /* Crosshair target */
 #crosshair-target { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 80px; height: 80px; pointer-events: none; }
 
-/* Route Label Pillon Map */
+/* Route Label Pill on Map（自動幅でテキストのはみ出しを防止）。
+   LeafletはdivIconの外側divにtransform:translate3d()を直接インライン指定するため、
+   中心寄せは内側の別要素(position:absolute+transform)で行う(外側に重ねがけしない)。 */
+.route-label-container { width: 0 !important; height: 0 !important; }
 .route-label-pill {
+    position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
+    display: inline-block;
     background: #00bbff;
     color: white;
     font-weight: bold;
-    font-size: 0.8rem;
-    padding: 2px 8px;
+    font-size: 0.78rem;
+    padding: 3px 10px;
     border-radius: 12px;
     white-space: nowrap;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     border: 2px solid white;
 }
+/* 予習再生中はマップ上のルートラベル類を隠す（道が見えなくなるため。誘導は専用UIで行う） */
+body.ep-mode .route-label-container,
+body.ep-mode .blocked-point-container,
+body.ep-mode .route-dest-label,
+body.ep-mode .route-branch-marker { display: none !important; }
 
 /* Flash Screen */
 #flash-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }

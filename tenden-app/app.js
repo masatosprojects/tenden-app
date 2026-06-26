@@ -2298,9 +2298,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const midPt = waypoints[midIdx];
  const labelIcon = L.divIcon({
  className: 'route-label-container',
- html: `<div class="route-label-pill" style="background:${routeCandidate.color || '#00bbff'}">${routeCandidate.label}</div>`,
- iconSize: [110, 22],
- iconAnchor: [55, 11]
+ html: `<div class="route-label-pill" style="background:${routeCandidate.color || '#00bbff'}">${routeCandidate.label}</div>`
  });
  L.marker(midPt, { icon: labelIcon }).addTo(routeLayerGroup);
  }
@@ -2432,13 +2430,11 @@ document.addEventListener('DOMContentLoaded', () => {
  const midPt = waypoints[midIdx];
  const labelIcon = L.divIcon({
  className: 'route-label-container',
- html: `<div class="route-label-pill active" style="background:${color}">${candidate.label}</div>`,
- iconSize: [120, 24],
- iconAnchor: [60, 12]
+ html: `<div class="route-label-pill active" style="background:${color}">${candidate.label}</div>`
  });
  L.marker(midPt, { icon: labelIcon }).addTo(routeLayerGroup);
  }
- 
+
  // Render X marker at blocked intersection if exists
  if (candidate.blockedPoint) {
  const blockedIcon = L.divIcon({
@@ -2471,7 +2467,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (dict.learningCenter) edgeName = edgeName.replace('学習センター', dict.learningCenter);
 
  const goalIcon = L.divIcon({
- className: '',
+ className: 'route-dest-label',
  html: `
  <div style="display:flex; flex-direction:column; align-items:center;">
  <div style="background:#0071e3; color:white; font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:10px; box-shadow:0 3px 8px rgba(0,113,227,0.5); white-space:nowrap; margin-bottom:4px;">
@@ -2530,11 +2526,13 @@ document.addEventListener('DOMContentLoaded', () => {
  // Branch divergence label
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   const branchToShelterLabel = dict.branchToShelter || 'Branch to Shelter';
+ // 分岐点はテキストでなく一目で分かる小さなマーク（道が分かれます画面のフォークアイコンとは
+ // 別の見た目にし、『ルート変更』ボタンとの混同を避ける）。
  const branchIcon = L.divIcon({
- className: '',
- html: `<div style="background:#ff9500; color:white; font-size:0.65rem; font-weight:700; padding:3px 7px; border-radius:8px; white-space:nowrap; box-shadow:0 2px 5px rgba(255,149,0,0.4);">→ ${branchToShelterLabel}</div>`,
- iconSize: [110, 22],
- iconAnchor: [55, 11]
+ className: 'route-branch-marker',
+ html: `<div style="width:22px;height:22px;border-radius:50%;background:#ff9500;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(255,149,0,0.5);display:flex;align-items:center;justify-content:center;" title="${branchToShelterLabel}"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 2v6M5 20l5.5-6M19 20l-5.5-6"/></svg></div>`,
+ iconSize: [22, 22],
+ iconAnchor: [11, 11]
  });
  L.marker(branchPoint, { icon: branchIcon, zIndexOffset: 900 }).addTo(routeLayerGroup);
 
@@ -2551,7 +2549,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (dict.learningCenter) localizedShelterName = localizedShelterName.replace('学習センター', dict.learningCenter);
 
  const shelterIcon = L.divIcon({
- className: '',
+ className: 'route-dest-label',
  html: `
  <div style="display:flex; flex-direction:column; align-items:center;">
  <div style="background:#ff9500; color:white; font-size:0.72rem; font-weight:700; padding:4px 10px; border-radius:10px; box-shadow:0 3px 8px rgba(255,149,0,0.5); white-space:nowrap; margin-bottom:4px;">
