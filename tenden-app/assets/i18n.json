@@ -44,6 +44,7 @@
   "routeSelectTitle": " 避難ルートを選択",
   "routeSelectHead": "避難ルートを選んでください",
   "routeSelectTendenkoGuide": "正解はありません。今すぐ合う方を選んで進みましょう。",
+  "routeSelectSuccess": "{routeLabel}を選択しました",
   "routeDisclaimer": " これらはシミュレーション結果に基づく参考情報です。",
   "routeShortestLabel": "最短避難ルート",
   "routeShortestDesc": "混雑を考慮せず、最も近い安全高台「{target}」へ直行するルート。",

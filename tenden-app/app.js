@@ -2300,16 +2300,7 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  }).catch(() => {});
 
- // Route type label on the map
- const midIdx = Math.floor(waypoints.length / 2);
- if (midIdx < waypoints.length) {
- const midPt = waypoints[midIdx];
- const labelIcon = L.divIcon({
- className: 'route-label-container',
- html: `<div class="route-label-pill" style="background:${routeCandidate.color || '#00bbff'}">${routeCandidate.label}</div>`
- });
- L.marker(midPt, { icon: labelIcon }).addTo(routeLayerGroup);
- }
+ // [2026-06-21] ルート上の常設ラベルは廃止（道に重なり視認性を落とすため）。
  } else {
  // Fallback: draw from static SCENARIOS waypoints
  const mainWaypoints = [ [startLoc.lat, startLoc.lng], ...scLoc.mainRoute ];
@@ -2431,17 +2422,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
  if (isSelected) {
  mainRouteLine = pline;
- 
- // Render selected route badge label at midpoint
- const midIdx = Math.floor(waypoints.length / 2);
- if (midIdx < waypoints.length) {
- const midPt = waypoints[midIdx];
- const labelIcon = L.divIcon({
- className: 'route-label-container',
- html: `<div class="route-label-pill active" style="background:${color}">${candidate.label}</div>`
- });
- L.marker(midPt, { icon: labelIcon }).addTo(routeLayerGroup);
- }
+ // [2026-06-21] ルート上に常設のラベル（AIスマート避難ルート等）を置くのをやめた。
+ //   道の上に重なって視認性を落とすため。選択した旨は selectEvacuationRoute() 側で
+ //   triggerDynamicIsland() の一時トースト（約4.5秒で自動的に消える）に一本化。
 
  // Render X marker at blocked intersection if exists
  if (candidate.blockedPoint) {
@@ -2575,28 +2558,9 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  });
 
-  // ── 第二ルート（避難所への分岐）を描画 ──
-  if (secondaryRoute && secondaryRoute.waypoints && secondaryRoute.waypoints.length > 0) {
-    try {
-      L.polyline(secondaryRoute.waypoints, {
-        color: '#ff9500',
-        weight: 4,
-        opacity: 0.8,
-        dashArray: '6, 6',
-        className: 'secondary-route-line'
-      }).addTo(routeLayerGroup);
-      // 避難所マーカー
-      var shelterPt = secondaryRoute.waypoints[secondaryRoute.waypoints.length - 1];
-      var shelterName = (secondaryRoute.target && secondaryRoute.target.name) || '避難所';
-      var shelterIcon = L.divIcon({
-        className: '',
-        html: '<div style="background:#ff9500;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 6px rgba(255,149,0,0.5);">' + shelterName + '</div>',
-        iconSize: [120, 22],
-        iconAnchor: [60, 11]
-      });
-      L.marker(shelterPt, { icon: shelterIcon, zIndexOffset: 600 }).addTo(routeLayerGroup);
-    } catch(e) {}
-  }
+  // [2026-06-21] ここに「第二ルート（避難所への分岐）」を描く重複ブロックがあったが削除。
+  //   forEach内(isSelected時)の「SECONDARY ROUTE」ブロックと完全に同じ内容(分岐線+避難所ラベル)を
+  //   二重に描いており、ラベル同士が重なって避難所アイコンが見えなくなる不具合の原因だった。
 
  }
 
