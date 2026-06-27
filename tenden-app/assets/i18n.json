@@ -125,7 +125,7 @@
   "systemNotificationLabel": "スマホのシステム通知 (危険進入・逸脱)",
   "smartCompassLabel": "スマートコンパス (進行方向コーン表示)",
   "lowBatteryWarning": " バッテリー残量20%以下：画面の明るさを下げ、GPS追従を維持してください。",
-  "privacyNotice": "位置情報は完全に暗号化されて端末内でのみ処理されます。サーバーへ送信・収集されることは一切なく、個人情報の特定は行いません。安心してご利用ください。",
+  "privacyNotice": "位置情報は標高取得・ルート計算・ハザード判定のため各公開サービスへ送信されますが、ユーザー特定の保存や第三者提供は行いません。安否共有は操作した場合のみ送信されます。",
   "promoBtnText": " アプリの開発背景・解説サイトを見る",
   "promoSiteLabel": "アプリ公式サイト・研究背景",
   "promoSiteBtnText": " TENDEN 解説サイトを開く",
@@ -162,7 +162,11 @@
   "routeAiGoal": "安全な高台（海抜{elev}m）",
   "routeAccessibleLabel": "要配慮者ルート（緩やか）",
   "routeAccessibleShort": "急な坂や狭い道を避けた、緩やかで通りやすい道",
-  "routeAccessibleBadge": "バリアフリー"
+  "routeAccessibleBadge": "バリアフリー",
+  "locationExplTitle": "現在地の使用について",
+  "locationExplReasons": "<b>TENDENが現在地を使う理由：</b><br><br>① <b>浸水区域の判定</b> — 今いる場所が津波浸水想定区域内かを即座に確認します<br>② <b>避難ルート計算</b> — AIルートと要配慮者向けルートを自動算出します<br>③ <b>海抜・海岸距離の表示</b> — リアルタイムで標高と海岸線までの距離を表示します<br><br>",
+  "locationExplPrivacy": "<b>プライバシー：</b> 位置情報は、標高取得（国土地理院API）・避難ルート計算（OSRM）・ハザード判定（国土地理院タイル）のために各公開サービスへ送信されます。ユーザー特定のための保存や第三者提供は行いません。安否共有は、操作した場合のみ送信されます。<br><br>",
+  "locationExplFooter": "次の画面でシステムの位置情報許可ダイアログが表示されます。「許可」を選んでください。"
  },
  "en": {
   "onboardingTitle": "We will guide you to the nearest<br>safe location.",
@@ -289,7 +293,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -326,7 +330,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "zh": {
   "onboardingTitle": "我们将引导您前往最近的<br>安全地点。",
@@ -446,7 +454,7 @@
   "systemNotificationLabel": "智能系统通知 (浸水进入・逸脱)",
   "smartCompassLabel": "智能指南针 (雷达方向锥)",
   "lowBatteryWarning": " 电池电量低于20%：请降低屏幕亮度并保持GPS跟踪。",
-  "privacyNotice": "您的位置信息已完全加密，且仅在终端本地处理。绝不会上传或收集到服务器，也不会用于识别个人信息。请放心使用。",
+  "privacyNotice": "位置信息会发送至公开服务用于海拔、路线与灾害判定，不会保存或提供可识别用户的信息。安否共享仅在您主动操作时发送。",
   "promoBtnText": " 查看应用开发背景与介绍网站",
   "promoSiteLabel": "应用官网与研究背景",
   "promoSiteBtnText": " 打开 TENDEN 介绍网站",
@@ -475,7 +483,11 @@
   "routeAiDesc": "强化学习模型（生存率{rate}%）推荐前往高地的最优路径",
   "routeAiBadge": "AI推荐",
   "routeAiGoal": "AI推荐的高地（海拔{elev}m）",
-  "routeAccessibleLabel": "无障碍路线（缓坡）"
+  "routeAccessibleLabel": "无障碍路线（缓坡）",
+  "locationExplTitle": "关于位置信息",
+  "locationExplReasons": "<b>TENDEN使用位置信息的原因：</b><br><br>① <b>浸水区域判定</b> — 即时确认当前位置是否在津波浸水想定区域内<br>② <b>避难路线计算</b> — 自动计算AI路线与需照顾者路线<br>③ <b>海拔与海岸距离</b> — 实时显示海拔与到海岸线的距离<br><br>",
+  "locationExplPrivacy": "<b>隐私：</b> 位置信息会发送至公开服务，用于海拔获取（国土地理院API）、避难路线计算（OSRM）和灾害判定（国土地理院瓦片）。不会保存或向第三方提供可识别用户的信息。安否共享仅在您主动操作时发送。<br><br>",
+  "locationExplFooter": "接下来将显示系统的位置信息许可对话框，请选择“允许”。"
  },
  "zh-tw": {
   "onboardingTitle": "我們將引導您前往最近的<br>安全地點。",
@@ -597,7 +609,7 @@
   "systemNotificationLabel": "智能系統通知 (浸水進入・逸脫)",
   "smartCompassLabel": "智能指南針 (雷達方向錐)",
   "lowBatteryWarning": " 電池電量低於20%：請降低螢幕亮度並保持GPS跟蹤。",
-  "privacyNotice": "您的位置資訊已完全加密，且僅在終端本地處理。絕不會上傳或收集到伺服器，頁不會用於識別個人資訊。請放心使用。",
+  "privacyNotice": "位置資訊會傳送至公開服務用於海拔、路線與災害判定，不會保存或提供可識別使用者的資訊。安否共享僅在您主動操作時傳送。",
   "promoBtnText": " 查看應用開發背景與介紹網站",
   "promoSiteLabel": "應用官網與研究背景",
   "promoSiteBtnText": " 打開 TENDEN 介紹網站",
@@ -626,7 +638,11 @@
   "routeAiDesc": "強化學習模型（生存率{rate}%）推薦前往高地的最佳路徑",
   "routeAiBadge": "AI推薦",
   "routeAiGoal": "AI推薦的高地（海拔{elev}m）",
-  "routeAccessibleLabel": "無障礙路線（緩坡）"
+  "routeAccessibleLabel": "無障礙路線（緩坡）",
+  "locationExplTitle": "關於位置資訊",
+  "locationExplReasons": "<b>TENDEN使用位置資訊的原因：</b><br><br>① <b>浸水區域判定</b> — 即時確認目前位置是否在津波浸水想定區域內<br>② <b>避難路線計算</b> — 自動計算AI路線與需照顧者路線<br>③ <b>海拔與海岸距離</b> — 即時顯示海拔與到海岸線的距離<br><br>",
+  "locationExplPrivacy": "<b>隱私：</b> 位置資訊會傳送至公開服務，用於海拔取得（國土地理院API）、避難路線計算（OSRM）和災害判定（國土地理院圖磚）。不會保存或向第三方提供可識別使用者的資訊。安否共享僅在您主動操作時傳送。<br><br>",
+  "locationExplFooter": "接下來將顯示系統的位置資訊許可對話框，請選擇「允許」。"
  },
  "ko": {
   "onboardingTitle": "가장 가까운 안전한 장소로<br>안내해 드립니다.",
@@ -746,7 +762,7 @@
   "systemNotificationLabel": "스마트 시스템 알림 (진입 및 이탈)",
   "smartCompassLabel": "스마트 나침반 (레이더 방향 표시)",
   "lowBatteryWarning": " 배터리 20% 이하: 화면 밝기를 낮추고 GPS 추적을 유지하십시오.",
-  "privacyNotice": "위치 정보는 완전히 암호화되어 기기 내에서만 처리됩니다. 서버로 전송되거나 수집되지 않으며 개인 정보 식별도 수행하지 않으므로 안심하고 사용하십시오.",
+  "privacyNotice": "위치 정보는 해발·경로·재해 판정을 위해 공개 서비스로 전송되지만, 사용자 식별을 위한 저장이나 제3자 제공은 하지 않습니다. 안전 공유는 사용자가 직접 조작한 경우에만 전송됩니다.",
   "promoBtnText": " 앱 개발 배경 및 안내 사이트 보기",
   "promoSiteLabel": "앱 공식 사이트 및 연구 배경",
   "promoSiteBtnText": " TENDEN 안내 사이트 열기",
@@ -775,7 +791,11 @@
   "routeAiDesc": "강화학습 모델(생존율 {rate}%)이 고지대로의 최적 경로를 제안",
   "routeAiBadge": "AI 추천",
   "routeAiGoal": "AI 추천 고지대(해발 {elev}m)",
-  "routeAccessibleLabel": "배려대상자 경로(완만)"
+  "routeAccessibleLabel": "배려대상자 경로(완만)",
+  "locationExplTitle": "위치 정보 사용 안내",
+  "locationExplReasons": "<b>TENDEN이 위치 정보를 사용하는 이유:</b><br><br>① <b>침수 구역 판정</b> — 현재 위치가 쓰나미 침수 예상 구역 안인지 즉시 확인<br>② <b>피난 경로 계산</b> — AI 경로와 취약계층 경로를 자동 계산<br>③ <b>해발·해안 거리 표시</b> — 실시간으로 해발과 해안선까지의 거리 표시<br><br>",
+  "locationExplPrivacy": "<b>개인정보:</b> 위치 정보는 해발 조회(국토지리원 API), 피난 경로 계산(OSRM), 재해 판정(국토지리원 타일)을 위해 각 공개 서비스로 전송됩니다. 사용자 식별을 위한 저장이나 제3자 제공은 하지 않습니다. 안전 공유는 사용자가 직접 조작한 경우에만 전송됩니다.<br><br>",
+  "locationExplFooter": "다음 화면에서 시스템 위치 정보 허용 대화상자가 표시됩니다. 허용을 선택해 주세요."
  },
  "fr": {
   "onboardingTitle": "Nous vous guiderons vers le lieu<br>sûr le plus proche.",
@@ -897,7 +917,7 @@
   "systemNotificationLabel": "Notifications système (Entrée et Écart)",
   "smartCompassLabel": "Boussole intelligente (Cône de direction)",
   "lowBatteryWarning": " Batterie < 20% : Baissez la luminosité et maintenez le suivi GPS.",
-  "privacyNotice": "Votre position est cryptée et traitée uniquement localement. Elle n'est jamais envoyée à un serveur, garantissant le respect de votre vie privée.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Découvrir le site de recherche de l'application",
   "promoSiteLabel": "Site officiel et contexte de recherche",
   "promoSiteBtnText": " Ouvrir le site explicatif TENDEN",
@@ -928,7 +948,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "es": {
   "onboardingTitle": "Le guiaremos al lugar seguro<br>más cercano.",
@@ -1050,7 +1074,7 @@
   "systemNotificationLabel": "Notificaciones del sistema (Ingreso y Desviación)",
   "smartCompassLabel": "Brújula inteligente (Cono de dirección)",
   "lowBatteryWarning": " Batería < 20%: Baje el brillo y mantenga el seguimiento GPS.",
-  "privacyNotice": "Su ubicación está encriptada y se procesa solo localmente. Nunca se envía a un servidor, garantizando la máxima protección de su privacidad.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Ver el sitio web de explicación de la aplicación",
   "promoSiteLabel": "Sitio oficial y contexto de investigación",
   "promoSiteBtnText": " Abrir el sitio explicativo de TENDEN",
@@ -1081,7 +1105,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "de": {
   "onboardingTitle": "Wir führen Sie zum nächsten<br>sicheren Ort.",
@@ -1203,7 +1231,7 @@
   "systemNotificationLabel": "Systembenachrichtigungen (Eintritt & Abweichung)",
   "smartCompassLabel": "Intelligenter Kompass (Gegenwindkegel)",
   "lowBatteryWarning": " Batterie < 20%: Helligkeit reduzieren und GPS-Tracking beibehalten.",
-  "privacyNotice": "Ihr Standort wird verschlüsselt und nur lokal verarbeitet. Er wird niemals an einen Server gesendet, was Ihre Privatsphäre absolut schützt.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " App-Forschungs- und Erklärungsseite lesen",
   "promoSiteLabel": "Offizielle App- und Forschungswebsite",
   "promoSiteBtnText": " TENDEN-Erklärungsseite öffnen",
@@ -1234,7 +1262,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "it": {
   "onboardingTitle": "Ti guideremo verso il luogo<br>sicuro più vicino.",
@@ -1356,7 +1388,7 @@
   "systemNotificationLabel": "Notifiche di sistema (Ingresso e Deviazione)",
   "smartCompassLabel": "Bussola intelligente (Cono di direzione)",
   "lowBatteryWarning": " Batteria < 20%: Riduci la luminosità e mantieni il tracciamento GPS.",
-  "privacyNotice": "La tua posizione è crittografata e elaborata solo localmente. Non viene mai inviata a un server, garantendo la tua totale privacy.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Leggi il sito di spiegazione dell'app",
   "promoSiteLabel": "Sito ufficiale e contesto di ricerca",
   "promoSiteBtnText": " Apri il sito esplicativo TENDEN",
@@ -1387,7 +1419,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "pt": {
   "onboardingTitle": "Iremos guiar você até o local<br>seguro mais próximo.",
@@ -1509,7 +1545,7 @@
   "systemNotificationLabel": "Notificações do sistema (Ingresso e Desvio)",
   "smartCompassLabel": "Bússola inteligente (Cone de direção)",
   "lowBatteryWarning": " Bateria < 20%: Reduza o brilho e mantenha o rastreamento GPS.",
-  "privacyNotice": "A sua localização é encriptada e processada apenas localmente. Nunca é enviada para um servidor, garantindo a sua total privacidade.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Ver o site de explicação do aplicativo",
   "promoSiteLabel": "Site oficial e contexto de pesquisa",
   "promoSiteBtnText": " Abrir o site explicativo TENDEN",
@@ -1540,7 +1576,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "ru": {
   "onboardingTitle": "Мы направим вас к ближайшему<br>безопасному месту.",
@@ -1662,7 +1702,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -1693,7 +1733,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "vi": {
   "onboardingTitle": "Chúng tôi sẽ dẫn bạn đến nơi<br>an toàn gần nhất.",
@@ -1815,7 +1859,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -1846,7 +1890,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "th": {
   "onboardingTitle": "เราจะนำทางคุณไปยังสถานที่<br>ที่ปลอดภัยที่สุดใกล้ตัวคุณ",
@@ -1968,7 +2016,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -1999,7 +2047,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "id": {
   "onboardingTitle": "Kami akan memandu Anda ke tempat<br>aman terdekat.",
@@ -2121,7 +2173,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -2152,7 +2204,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "tl": {
   "onboardingTitle": "Gagabayan ka namin sa pinakamalapit<br>na ligtas na lokasyon.",
@@ -2276,7 +2332,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -2307,7 +2363,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "ms": {
   "onboardingTitle": "Kami akan memandu anda ke lokasi<br>selamat yang terdekat.",
@@ -2429,7 +2489,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -2460,7 +2520,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "hi": {
   "onboardingTitle": "हम आपको निकटतम सुरक्षित स्थान<br>तक मार्गदर्शन करेंगे।",
@@ -2582,7 +2646,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -2613,7 +2677,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "bn": {
   "onboardingTitle": "আমরা আপনাকে নিকটতম নিরাপদ স্থানে<br>গাইড করব।",
@@ -2735,7 +2803,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -2766,7 +2834,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "ar": {
   "onboardingTitle": "سنوجهك إلى أقرب<br>مكان آمن.",
@@ -2888,7 +2960,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -2919,7 +2991,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "fa": {
   "onboardingTitle": "ما شما را به نزدیک‌ترین<br>مکان امن هدایت می‌کنیم.",
@@ -3041,7 +3117,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -3072,7 +3148,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "tr": {
   "onboardingTitle": "Sizi en yakın güvenli yere<br>yönlendireceğiz.",
@@ -3194,7 +3274,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -3225,7 +3305,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "nl": {
   "onboardingTitle": "Wij leiden u naar de dichtstbijzijnde<br>veilige locatie.",
@@ -3347,7 +3431,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -3378,7 +3462,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "sv": {
   "onboardingTitle": "Vi leder dig till närmaste<br>säkra plats.",
@@ -3500,7 +3588,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -3531,7 +3619,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "no": {
   "onboardingTitle": "Vi vil lede deg til nærmeste<br>sikre sted.",
@@ -3653,7 +3745,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -3684,7 +3776,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "fi": {
   "onboardingTitle": "Ohjaamme sinut lähimpään<br>turvalliseen paikkaan.",
@@ -3806,7 +3902,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -3837,7 +3933,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "da": {
   "onboardingTitle": "Vi leder dig til det nærmeste<br>sikre sted.",
@@ -3959,7 +4059,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -3990,7 +4090,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "pl": {
   "onboardingTitle": "Poprowadzimy Cię do najbliższego<br>bezpiecznego miejsca.",
@@ -4112,7 +4216,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -4143,7 +4247,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "uk": {
   "onboardingTitle": "Ми направимо вас до найближчого<br>безпечного місця.",
@@ -4265,7 +4373,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -4296,7 +4404,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "el": {
   "onboardingTitle": "Θα σας οδηγήσουμε στο πλησιέστερο<br>ασφαλές σημείο.",
@@ -4418,7 +4530,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -4449,7 +4561,11 @@
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
   "routeAccessibleLabel": "Accessible route (gentle slope)",
   "routeAccessibleShort": "Gentle, easy-to-walk path avoiding steep or narrow roads",
-  "routeAccessibleBadge": "Barrier-free"
+  "routeAccessibleBadge": "Barrier-free",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  },
  "he": {
   "onboardingTitle": "נוביל אותך למקום המבטחים<br>הקרוב ביותר.",
@@ -4571,7 +4687,7 @@
   "systemNotificationLabel": "System Notifications (Ingress & Deviation)",
   "smartCompassLabel": "Smart Compass (Radar Heading Cone)",
   "lowBatteryWarning": " Battery under 20%: Lower screen brightness and maintain GPS tracking.",
-  "privacyNotice": "Your location is encrypted and processed strictly locally. It is never uploaded to any server or used to identify personal information. Use with absolute peace of mind.",
+  "privacyNotice": "Location is sent to public services for elevation, routing, and hazard checks. We do not store or share data to identify you. Safety sharing is sent only when you choose to share.",
   "promoBtnText": " Read App Research & Promo Site",
   "promoSiteLabel": "Official App & Research Website",
   "promoSiteBtnText": " Open TENDEN Explanation Site",
@@ -4600,6 +4716,10 @@
   "routeAiDesc": "Reinforcement-learning model ({rate}% survival) proposes the optimal path to high ground",
   "routeAiBadge": "AI",
   "routeAiGoal": "AI-recommended high ground ({elev}m)",
-  "routeAccessibleLabel": "Accessible route (gentle slope)"
+  "routeAccessibleLabel": "Accessible route (gentle slope)",
+  "locationExplTitle": "About Your Location",
+  "locationExplReasons": "<b>Why TENDEN uses your location:</b><br><br>① <b>Flood-zone check</b> — Instantly see if you are inside a tsunami inundation area<br>② <b>Evacuation routes</b> — AI route and accessible route are calculated automatically<br>③ <b>Elevation & coast distance</b> — Real-time elevation and distance to the shoreline<br><br>",
+  "locationExplPrivacy": "<b>Privacy:</b> Your location is sent to public services for elevation (GSI API), route calculation (OSRM), and hazard checks (GSI tiles). We do not store or share data to identify you. Safety sharing is sent only when you explicitly choose to share.<br><br>",
+  "locationExplFooter": "The system location permission dialog will appear next. Please choose Allow."
  }
 }

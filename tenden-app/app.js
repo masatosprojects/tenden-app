@@ -1743,15 +1743,12 @@ document.addEventListener('DOMContentLoaded', () => {
      if (callback) callback();
      return;
    }
-   var title = '現在地の使用について';
+   var dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   var title = dict.locationExplTitle || '現在地の使用について';
    var desc =
-     '<b>TENDENが現在地を使う理由：</b><br><br>' +
-     '① <b>浸水区域の判定</b> — 今いる場所が津波浸水想定区域内かを即座に確認します<br>' +
-     '② <b>避難ルート計算</b> — 最短・混雑回避・バリアフリーの3ルートを自動算出します<br>' +
-     '③ <b>海抜・海岸距離の表示</b> — リアルタイムで標高と海岸線までの距離を表示します<br><br>' +
-     '<b>プライバシー：</b> 取得した位置情報は端末内のみで処理します。' +
-     '外部サーバーには送信されません。<br><br>' +
-     '次の画面でシステムの位置情報許可ダイアログが表示されます。「許可」を選んでください。';
+     (dict.locationExplReasons || '') +
+     (dict.locationExplPrivacy || '') +
+     (dict.locationExplFooter || '');
    showCustomAlert(title, desc, 'info', function() {
      try { localStorage.setItem('tenden-location-explained', 'true'); } catch(e) {}
      if (callback) setTimeout(function() { if (callback) callback(); }, 200);
