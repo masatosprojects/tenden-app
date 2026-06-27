@@ -1694,6 +1694,14 @@ document.addEventListener('DOMContentLoaded', () => {
    _epPause(); _ep.lastBucket = -1; _ep.lastInfoKey = null; _epRender(0);
    try { triggerHapticTick(); } catch (e) {}
  });
+ // 視点を戻す（自分でドラッグ/ズームして外した追従カメラを、再生中の自分の位置へ戻す）
+ document.getElementById('ep-recenter')?.addEventListener('click', () => {
+   if (!_ep) return;
+   _ep.followCam = true;
+   try { map.panTo(_ep.lastLL, { animate: true, duration: 0.4 }); } catch (e) {}
+   document.getElementById('ep-recenter')?.classList.add('hidden');
+   try { triggerHapticTick(); } catch (e) {}
+ });
  // ルート変更（予習を閉じてルート選択へ戻る）
  document.getElementById('ep-change-route')?.addEventListener('click', () => {
    const rl = activeRoutesList;
@@ -2973,7 +2981,7 @@ document.addEventListener('DOMContentLoaded', () => {
    const walkerIcon = L.divIcon({
      className: 'ep-walker-icon',
      html: '<div class="ep-walker"><div class="ep-walker-cone"></div><div class="ep-walker-dot"></div></div>',
-     iconSize: [26, 26], iconAnchor: [13, 13]
+     iconSize: [40, 40], iconAnchor: [20, 20]
    });
    const marker = L.marker(wps[0], { icon: walkerIcon, zIndexOffset: 2000, interactive: false }).addTo(routeLayerGroup);
 
@@ -2990,9 +2998,10 @@ document.addEventListener('DOMContentLoaded', () => {
      }
    } catch (e) {}
    if (typeof loadCongestionTimeseries === 'function') { try { loadCongestionTimeseries(); } catch (e) {} }
-   // 再生中は静的混雑ヒートマップを退避（時刻別の表示と二重にしない）
+   // [2026-06-21] 再生中も「シミュレーションで実際に使った」ネットワーク混雑表示を消さない。
+   //   以前は時刻別の表示と二重にしないため静的ヒートマップを退避していたが、これにより再生中に
+   //   混雑表示が消えてしまうとの指摘があったため、常に表示したままにする（時刻別の強調表示は上に重ねる）。
    const staticCongWasOn = !!(congestionLayer && map.hasLayer(congestionLayer));
-   if (staticCongWasOn) { try { map.removeLayer(congestionLayer); } catch (e) {} }
    const congLayer = L.layerGroup().addTo(map);
    const bubbleLayer = L.layerGroup().addTo(map);  // 混雑ポイントの吹き出し
 
@@ -3035,7 +3044,8 @@ document.addEventListener('DOMContentLoaded', () => {
      marker, congGeom, congLayer, bubbleLayer, staticCongWasOn, lastBucket: -1,
      congActive: [], lastInfoKey: null,
      branch,
-     t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1
+     t: 0, playing: false, raf: null, lastTs: 0, lastCautionIdx: -1,
+     followCam: true, lastLL: wps[0]
    };
    // Googleマップ風ナビ: 進行方向の矢印(前方ハイライト)＋目的地までの点線。
    //   混雑(赤/橙)と色が干渉しないよう、ナビ経路は青で統一する。
@@ -3064,6 +3074,23 @@ document.addEventListener('DOMContentLoaded', () => {
    document.body.classList.add('ep-mode');
 
    try { map.setView(wps[0], 16, { animate: true, duration: 0.6 }); } catch (e) {}
+   // 自分中心の追従表示が既定だが、ユーザーが地図を自分でドラッグ/ズームしたら追従を解除し
+   // 周囲を自由に確認できるようにする（「視点を戻す」ボタンで再追従）。
+   // ※直前のsetViewによる自動移動を「ユーザー操作」と誤検知しないよう、setView完了後に登録する。
+   setTimeout(() => {
+     if (!_ep) return;
+     _ep.onUserMapMove = () => {
+       if (_ep && _ep.followCam) {
+         _ep.followCam = false;
+         document.getElementById('ep-recenter')?.classList.remove('hidden');
+       }
+     };
+     map.on('dragstart', _ep.onUserMapMove);
+     map.on('zoomstart', _ep.onUserMapMove);
+   }, 700);
+   // 予習中もコンパスを実機の方位に合わせて動かすため、ここで許可を要求する
+   // （ピン設置時点では不要・このコンパスが実際に表示される再生開始時のみ求める）。
+   try { requestOrientationPermission(); } catch (e) {}
    _epRender(0);
    // スタート地点で高台/避難所が分かれる場合は、歩き出す前に行き先を選ばせる
    if (_ep.branch && _ep.branch.atStart && !_ep.branch.decided) {
@@ -3175,10 +3202,17 @@ document.addEventListener('DOMContentLoaded', () => {
    // 進行方向コーンを回転
    try {
      const cone = _ep.marker.getElement()?.querySelector('.ep-walker-cone');
-     if (cone) cone.style.transform = 'translate(-50%, -60%) rotate(' + heading + 'deg)';
+     if (cone) cone.style.transform = 'translate(-50%, -56%) rotate(' + heading + 'deg)';
    } catch (e) {}
-   // 追従カメラ（中央維持）
-   try { map.panTo(ll, { animate: false }); } catch (e) {}
+   // 追従カメラ（中央維持）：ユーザーが手動でドラッグ/ズームした後は追従を止め、
+   // 「視点を戻す」ボタンを押すまで自由に周囲を確認できるようにする。
+   _ep.lastLL = ll;
+   if (_ep.followCam) { try { map.panTo(ll, { animate: false }); } catch (e) {} }
+   // コンパス：実機の方位(lastHeading)に合わせて針を回す（北を指すよう逆回転）
+   try {
+     const needle = document.querySelector('#ep-compass .ep-compass-needle');
+     if (needle) needle.style.transform = 'rotate(' + (-lastHeading) + 'deg)';
+   } catch (e) {}
    // スクラブ＆時刻
    const frac = _ep.t / _ep.evacTotalSec;
    const scrub = document.getElementById('ep-scrub');
@@ -3415,13 +3449,14 @@ document.addEventListener('DOMContentLoaded', () => {
      try { if (_ep.congLayer) map.removeLayer(_ep.congLayer); } catch (e) {}
      try { if (_ep.bubbleLayer) map.removeLayer(_ep.bubbleLayer); } catch (e) {}
      try { [_ep.dottedLine, _ep.aheadCasing, _ep.aheadLine, _ep.destMarker].forEach(l => { if (l) map.removeLayer(l); }); } catch (e) {}
-     // 静的混雑ヒートマップを元に戻す
-     try { if (_ep.staticCongWasOn && congestionLayer) congestionLayer.addTo(map); } catch (e) {}
+     // 自由パン検知の後始末
+     try { if (_ep.onUserMapMove) { map.off('dragstart', _ep.onUserMapMove); map.off('zoomstart', _ep.onUserMapMove); } } catch (e) {}
      _ep = null;
    }
    document.getElementById('evac-playback')?.classList.add('hidden');
    document.getElementById('ep-branch-choice')?.classList.add('hidden');
    document.getElementById('ep-cong-legend')?.classList.add('hidden');
+   document.getElementById('ep-recenter')?.classList.add('hidden');
    document.body.classList.remove('ep-mode');
  }
 

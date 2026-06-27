@@ -3259,26 +3259,27 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 }
 .ep-labels #ep-phase { color: var(--primary); font-weight: 700; }
 
-/* 歩行マーカー（進行方向コーン） */
+/* 歩行マーカー（Googleマップ風：白い丸＋進行方向を指す矢印） */
 .ep-walker {
-    width: 26px; height: 26px;
+    width: 40px; height: 40px;
     position: relative;
 }
-.ep-walker-cone {
-    position: absolute; top: 50%; left: 50%;
-    width: 0; height: 0;
-    border-left: 11px solid transparent;
-    border-right: 11px solid transparent;
-    border-bottom: 22px solid rgba(0,122,255,0.35);
-    transform-origin: 50% 70%;
-    transform: translate(-50%, -60%);
-}
 .ep-walker-dot {
-    position: absolute; top: 50%; left: 50%;
-    width: 16px; height: 16px; border-radius: 50%;
-    background: var(--primary); border: 3px solid #fff;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    position: absolute; top: 50%; left: 50%; z-index: 1;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #ffffff; border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
     transform: translate(-50%, -50%);
+}
+.ep-walker-cone {
+    position: absolute; top: 50%; left: 50%; z-index: 2;
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 20px solid var(--primary);
+    transform-origin: 50% 65%;
+    transform: translate(-50%, -56%);
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));
 }
 
 /* 追体験再生中はボトムシート（緊急バナー）を隠す */
