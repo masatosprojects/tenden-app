@@ -3088,9 +3088,8 @@ document.addEventListener('DOMContentLoaded', () => {
      map.on('dragstart', _ep.onUserMapMove);
      map.on('zoomstart', _ep.onUserMapMove);
    }, 700);
-   // 予習中もコンパスを実機の方位に合わせて動かすため、ここで許可を要求する
-   // （ピン設置時点では不要・このコンパスが実際に表示される再生開始時のみ求める）。
-   try { requestOrientationPermission(); } catch (e) {}
+   // [2026-06-21] 予習中のコンパスは仮想の歩行者の進行方向を示すだけなので、
+   //   実機の方位許可は不要（体験モードでは求めない）。本番モードのみ triggerEmergencyMode 側で要求する。
    _epRender(0);
    // スタート地点で高台/避難所が分かれる場合は、歩き出す前に行き先を選ばせる
    if (_ep.branch && _ep.branch.atStart && !_ep.branch.decided) {
@@ -3208,10 +3207,11 @@ document.addEventListener('DOMContentLoaded', () => {
    // 「視点を戻す」ボタンを押すまで自由に周囲を確認できるようにする。
    _ep.lastLL = ll;
    if (_ep.followCam) { try { map.panTo(ll, { animate: false }); } catch (e) {} }
-   // コンパス：実機の方位(lastHeading)に合わせて針を回す（北を指すよう逆回転）
+   // コンパス：予習中は実機の向きでなく、仮想の歩行者(白丸＋矢印)が今向いている進行方向を示す。
+   // 地図は北固定のため、歩行者アイコンのコーン回転と同じ heading をそのまま使う。
    try {
      const needle = document.querySelector('#ep-compass .ep-compass-needle');
-     if (needle) needle.style.transform = 'rotate(' + (-lastHeading) + 'deg)';
+     if (needle) needle.style.transform = 'rotate(' + heading + 'deg)';
    } catch (e) {}
    // スクラブ＆時刻
    const frac = _ep.t / _ep.evacTotalSec;
@@ -5930,6 +5930,12 @@ document.addEventListener('DOMContentLoaded', () => {
  if (arrow) {
  arrow.style.display = 'block';
  arrow.style.transform = `rotate(${heading}deg)`;
+ }
+ // 本番モードのコンパス：実機の向きに合わせ、北を指すよう針を逆回転する。
+ // （予習中は_epRenderが仮想の歩行者の進行方向で上書きするため、_epが無い時のみ更新）
+ if (!_ep) {
+ const needle = document.querySelector('#ep-compass .ep-compass-needle');
+ if (needle) needle.style.transform = 'rotate(' + (-heading) + 'deg)';
  }
  }
  }
