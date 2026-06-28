@@ -1275,6 +1275,9 @@ body.ep-mode .coast-dist-dismiss-chip {
     opacity: 1;
     pointer-events: auto;
 }
+.dock-sub-sheet.dock-sub-guard .dock-item {
+    pointer-events: none;
+}
 .dock-sub-sheet.hidden { display: block; }
 .dock-sub-header {
     display: flex;

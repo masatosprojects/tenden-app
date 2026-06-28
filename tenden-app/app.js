@@ -1969,6 +1969,12 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
      }
      subSheet?.classList.remove('hidden');
      subSheet?.setAttribute('aria-hidden', 'false');
+     // トランクタップ直後のゴーストクリックでサブ項目（QR共有等）が誤発火しないよう短時間ガード
+     if (subSheet) {
+       subSheet.classList.add('dock-sub-guard');
+       clearTimeout(subSheet._guardTimer);
+       subSheet._guardTimer = setTimeout(() => subSheet.classList.remove('dock-sub-guard'), 450);
+     }
    }
 
    trunkItems.forEach(trunk => {
