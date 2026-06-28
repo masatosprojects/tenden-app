@@ -1969,9 +1969,6 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
      }
      subSheet?.classList.remove('hidden');
      subSheet?.setAttribute('aria-hidden', 'false');
-     if (trunkId === 'community') {
-       setTimeout(() => openAppShareOverlay(), 150);
-     }
    }
 
    trunkItems.forEach(trunk => {
