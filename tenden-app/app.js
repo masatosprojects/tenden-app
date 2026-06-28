@@ -1,10 +1,44 @@
 // app.js
+
+function applyTendenConfig() {
+  const cfg = window.TENDEN_CONFIG || {};
+  document.querySelectorAll('[data-config-href]').forEach(function (el) {
+    const key = el.getAttribute('data-config-href');
+    if (key && cfg[key]) el.href = cfg[key];
+  });
+  if (cfg.version) {
+    const label = 'v' + cfg.version;
+    document.querySelectorAll('[data-config-version]').forEach(function (el) {
+      el.textContent = label;
+    });
+  }
+}
+
+// ── オンボーディング定数（DOMContentLoaded 初回 boot より前に初期化）
+var ONBOARDING_AGENT_CFG = [
+  { feature: 'onboarding-intro', type: 'info' },
+  { feature: 'onboarding-quake', type: 'warning' },
+  { feature: 'onboarding-routes', type: 'info' },
+  { feature: 'onboarding-flow', type: 'info' }
+];
+var ONBOARDING_AGENT_FALLBACKS = [
+  'エージェントが吹き出しで、使い方をご案内します！',
+  '地震が発生しました。津波の危険があります。すぐに避難を始めましょう。',
+  '2つの避難ルートから選べます。あなたに合った道を、自分の判断で。',
+  '歩く前に混雑を予習できます。準備ができたら、下のボタンではじめましょう！'
+];
+var _onboardingAgentParent = null;
+var _onboardingAgentNext = null;
+var _onboardingStartedThisLoad = false;
+
 document.addEventListener('DOMContentLoaded', () => {
+ applyTendenConfig();
 
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var ver = 'v69';
+     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.1';
+     var ver = 'v' + cfgVer;
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
        localStorage.setItem('tenden-pwa-ver', ver);
@@ -22,10 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
        var bl = (navigator.language || 'ja').split('-')[0];
        var forceLang = (bl === 'ja') ? 'ja' : bl;
        // body に lang クラスを設定
-       document.body.classList.remove('lang-en','lang-zh','lang-ko','lang-es','lang-fr');
+       Array.from(document.body.classList).filter(function(c) { return c.indexOf('lang-') === 0; }).forEach(function(c) { document.body.classList.remove(c); });
        document.body.classList.add('lang-' + forceLang);
      } else {
-       document.body.classList.remove('lang-ja','lang-en','lang-zh','lang-ko','lang-es','lang-fr');
+       Array.from(document.body.classList).filter(function(c) { return c.indexOf('lang-') === 0; }).forEach(function(c) { document.body.classList.remove(c); });
        document.body.classList.add('lang-' + saved);
      }
    } catch(e) {}
@@ -34,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // Basic state
  let isEmergency = false;
  let map, userMarker, routeLayerGroup, hazardLayer, reliefLayer, sheltersLayerGroup, congestionLayer, safeEdgesLayerGroup;
+ let coastDistLayerGroup = null, _coastDistActive = false;
  let congestionGeojsonData = null;
  let aiPolicyData = null;          // 学習済みRLモデルの方策ベクトル場（緊急モード時に遅延ロード）
  let aiAccessibleData = null;      // 要配慮者向け学習済み方策（緩勾配優先・遅延ロード）
@@ -49,10 +84,19 @@ document.addEventListener('DOMContentLoaded', () => {
  let isWaitingForPinDrop = false;
  let isDrillMode = true; // true=鎌倉で避難体験(予習) / false=本番モード
  let activeRoutesList = [];
- let activeSelectedRouteId = 'A';
+ let activeSelectedRouteId = null; // ユーザーが明示選択するまで null（AI等の自動選択なし）
+ let pendingEvacPlayback = false;  // 予習再生ボタン押下後、ルート選択待ち
  let activeSecondaryRoute = null; // Cached secondary (shelter) route for redraw
  let simulationInterval = null;
  let popupTimeoutId = null; // Timeout ID for auto-closing manual pin thought popup
+ // オンボーディングデモ（startOnboardingDemo より前に宣言 — TDZ 回避）
+ let mapAnimFrame = null;
+ let routesAnimFrame = null;
+ let flowAnimFrame = null;
+ let demoQuakeMap = null;
+ // 平時ガイド（initSafeZoneGuide より前に宣言 — TDZ 回避）
+ const SAFE_GUIDE_SESSION_KEY = 'safe-guide-dismissed';
+ const SAFE_GUIDE_BUBBLE_MODE = 'safe-guide';
  let mainRouteLine = null;
  let activeScenarioId = 1;
  let activeLocationId = 'a';
@@ -60,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
  // Premium features state variables
  let lastOffCourseSpeakTime = 0;
  let isEvacuationCompleted = false;
- let dynamicIslandTimer = null;
  
  // Simulation-derived data
  let routeData = {}; // loaded from assets/routes.json
@@ -75,8 +118,16 @@ document.addEventListener('DOMContentLoaded', () => {
  let wakeLock = null;
  let lastInundationNotificationTime = 0;
  let lastDeviationNotificationTime = 0;
+ let lastTsunamiIsInundated = null; // null=未判定, true=浸水区域内, false=区域外
+ let _hudTsunamiKind = 'checking'; // checking|safe|watch|danger
+ let _hudTsunamiPollTimer = null;
  let hasWarnedLowBattery = false;
  let lastHeading = 0;
+ let deviceHeadingTs = 0;
+ let gpsMovementHeading = null;
+ let prevTrackLocation = null;
+ let movementHeading = null;
+ let isModelAreaDemo = false;
  let lastScanCenter = null;
  
  // 地域設定（将来の複数地域対応のための抽象化）
@@ -97,8 +148,9 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  };
  const KAMAKURA_CENTER = REGIONS.kamakura.center; // 後方互換エイリアス
- const KAMAKURA_DEMO_PIN = [35.3069, 139.5518]; // 由比ヶ浜海岸（デモ開始ピン）
- const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地区全域
+const KAMAKURA_DEMO_PIN = [35.3069, 139.5518]; // 由比ヶ浜海岸（デモ開始ピン・浸水想定区域内）
+const DEMO_QUAKE_FLOOD_POINT = KAMAKURA_DEMO_PIN; // オンボーディング Step1：現在地＝浸水リスク地点
+const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地区全域
 
  // ── Developer Announcements ───────────────────────────────────────────────
  // status: 'active' = 現在有効  |  'resolved' = 対応済み・過去のもの
@@ -277,11 +329,13 @@ document.addEventListener('DOMContentLoaded', () => {
    if (visible) {
      loadCommunityReports();
      if (legend) legend.classList.remove('hidden');
+     document.body.classList.add('report-legend-visible');
      // 避難所アイコンがあると報告位置が見づらいので、閲覧中は一時的に避難所を隠す
      try { if (sheltersLayerGroup && map.hasLayer(sheltersLayerGroup)) { map.removeLayer(sheltersLayerGroup); _sheltersHiddenForReports = true; } } catch (e) {}
    } else {
      if (communityReportLayer) communityReportLayer.clearLayers();
      if (legend) legend.classList.add('hidden');
+     document.body.classList.remove('report-legend-visible');
      // 避難所表示を元に戻す
      try { if (_sheltersHiddenForReports && sheltersLayerGroup) { sheltersLayerGroup.addTo(map); _sheltersHiddenForReports = false; } } catch (e) {}
    }
@@ -297,12 +351,13 @@ document.addEventListener('DOMContentLoaded', () => {
  try { initUI(); } catch(e) { console.error('[TENDEN] initUI error:', e); }
  try { startClock(); } catch(e) {}
  try { connectP2PQuake(); } catch(e) {}
- try { startOnboardingDemo(); } catch(e) { console.error('[TENDEN] onboarding error:', e); }
- try { wireOnboardingButtons(); } catch(e) {}
+ try { initHudTsunamiPolling(); } catch(e) {}
+ try { wireEndDrillButton(); } catch(e) {}
+ try { wireShareSafetyNavButton(); } catch(e) {}
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
- fetch('assets/i18n.json')
+ fetch('assets/i18n.json?v=179')
  .then(res => res.json())
  .then(data => {
  i18nDict = data;
@@ -523,12 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
  })
   .catch(e => console.log('[TENDEN] congestion_edges.json not found', e));
 
- // Initialize Device Orientation for Compass
- if (window.DeviceOrientationEvent) {
- window.addEventListener('deviceorientationabsolute', handleOrientation, true);
- // Fallback for non-absolute
- window.addEventListener('deviceorientation', handleOrientation, true);
- }
+ // Compass: deviceorientation listeners are registered via requestOrientationPermission()
 
  // NOTE: map click-to-move-pin removed — location is set via GPS watchPosition,
  // the evacuation demo button, or the model-area button only.
@@ -542,16 +592,102 @@ document.addEventListener('DOMContentLoaded', () => {
  // 警報バナーは展開なしの常時表示ヘッダーに変更（チェブロン/展開機能は撤去）
  }
 
- function handleOrientation(event) {
- let heading = null;
- if (event.webkitCompassHeading) {
- heading = event.webkitCompassHeading;
- } else if (event.alpha !== null) {
- heading = 360 - event.alpha;
+ let _drillFlyMoveHandler = null;
+
+ function clearDrillFlyHandler() {
+   if (_drillFlyMoveHandler && map) {
+     map.off('moveend', _drillFlyMoveHandler);
+     _drillFlyMoveHandler = null;
+   }
  }
- if (heading !== null) {
- document.documentElement.style.setProperty('--compass-heading', `${heading}deg`);
+
+ function endDrillTraining() {
+   if (window._endDrillRunning) return;
+   window._endDrillRunning = true;
+   try {
+     isEmergency = false;
+     isPinLocked = false;
+     isWaitingForPinDrop = false;
+     clearDrillFlyHandler();
+     pendingEvacPlayback = false;
+     try { stopEvacuationPlayback(); } catch (e) {}
+     try { hideTendenLoading(); } catch (e) {}
+     try { hideRouteCalcLoading(); } catch (e) {}
+     try { hideRouteSelectorHUD(); } catch (e) {}
+     var rov = document.getElementById('route-overlay');
+     if (rov) { rov.classList.remove('active'); rov.classList.add('hidden'); }
+     ['onboarding-overlay', 'research-intro-overlay', 'real-mode-confirm', 'ep-branch-choice'].forEach(function (id) {
+       var el = document.getElementById(id);
+       if (el) { el.classList.remove('active'); el.classList.add('hidden'); }
+     });
+     resetEmergencyMode();
+     if (typeof triggerHapticTick === 'function') triggerHapticTick();
+   } catch (err) {
+     console.error('[TENDEN] endDrillTraining error:', err);
+     try {
+       document.body.classList.remove('ep-mode', 'tenden-nav-active', 'emergency-mode');
+       document.getElementById('evacuation-banner')?.classList.add('hidden');
+       document.getElementById('evac-playback')?.classList.add('hidden');
+       document.getElementById('bottom-normal-actions')?.classList.remove('hidden');
+       document.getElementById('btn-test-alert')?.classList.remove('hidden');
+       document.getElementById('btn-real-mode')?.classList.remove('hidden');
+     } catch (e2) {}
+   } finally {
+     window._endDrillRunning = false;
+   }
  }
+
+ function startDrillExperienceFlow() {
+   if (!map) return;
+   clearDrillFlyHandler();
+   try { hideTendenLoading(); } catch (e) {}
+   try { hideRouteCalcLoading(); } catch (e) {}
+
+   document.getElementById('btn-test-alert')?.classList.add('hidden');
+   document.getElementById('btn-real-mode')?.classList.add('hidden');
+
+   if (routeLayerGroup) routeLayerGroup.clearLayers();
+   clearRouteDestinationHighlights();
+   if (simulationInterval) {
+     clearInterval(simulationInterval);
+     simulationInterval = null;
+   }
+
+   try { showTendenLoading('鎌倉のモデル地区へ移動中…', 8000); } catch (e) {}
+
+   map.flyTo([35.308, 139.551], 14, { duration: 1.6, easeLinearity: 0.25 });
+
+   const onMoveEnd = function () {
+     clearDrillFlyHandler();
+     try { hideTendenLoading(); } catch (e) {}
+     const ov = document.getElementById('research-intro-overlay');
+     if (ov) {
+       ov.classList.remove('hidden');
+       setTimeout(function () { ov.classList.add('active'); }, 10);
+     } else {
+       startDrillPinDrop();
+     }
+   };
+   _drillFlyMoveHandler = onMoveEnd;
+   map.once('moveend', onMoveEnd);
+   setTimeout(function () {
+     if (_drillFlyMoveHandler === onMoveEnd) onMoveEnd();
+   }, 2200);
+ }
+
+ function startDrillPinDrop() {
+   const ov = document.getElementById('research-intro-overlay');
+   if (ov) { ov.classList.remove('active'); ov.classList.add('hidden'); }
+   isDrillMode = true;
+   isWaitingForPinDrop = true;
+   isPinLocked = false;
+   document.getElementById('btn-test-alert')?.classList.add('hidden');
+   document.getElementById('btn-real-mode')?.classList.add('hidden');
+   document.getElementById('crosshair-target')?.classList.remove('hidden');
+   document.getElementById('btn-set-pin')?.classList.remove('hidden');
+   const instr = document.getElementById('hud-pin-instruction');
+   if (instr) instr.style.display = '';
+   try { triggerDynamicIsland('避難を体験したい出発地点を、地図を動かして十字に合わせ「ここにピンを打つ」を押しましょう', 'info'); } catch (e) {}
  }
 
  function initUI() {
@@ -561,14 +697,12 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnSos = document.getElementById('btn-sos');
  const btnCoastDist = document.getElementById('btn-coastline-dist');
   if (btnCoastDist) {
-    btnCoastDist.addEventListener('click', () => {
-      if (!currentLocation) {
-        showCustomAlert('現在地が未取得', '「現在地」ボタンで位置情報を取得してから再度お試しください。', 'info');
-        return;
-      }
-      drawProximityToCoastline(currentLocation, true);
-    });
+    btnCoastDist.addEventListener('click', () => toggleCoastDistDisplay());
   }
+  document.getElementById('coast-dist-dismiss-chip')?.addEventListener('click', () => {
+    if (_coastDistActive) clearCoastDistOverlay();
+    if (typeof triggerHapticTick === 'function') triggerHapticTick();
+  });
 
   // ── AI Learning Model Guide Overlay ───────────────────────────────────
   const aiGuideOverlay = document.getElementById('ai-guide-overlay');
@@ -599,7 +733,6 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnSettingsClose = document.getElementById('btn-settings-close');
  const langSelect = document.getElementById('lang-select');
  const btnClearCache = document.getElementById('btn-clear-cache');
- const btnShare = document.getElementById('btn-share');
  
  // Bind settings elements & load from localStorage
  const walkSpeedSelect = document.getElementById('walk-speed-select');
@@ -631,10 +764,29 @@ document.addEventListener('DOMContentLoaded', () => {
  if (btnGuideClose) btnGuideClose.addEventListener('click', closeGuideFunc);
  if (btnGuideCloseBottom) btnGuideCloseBottom.addEventListener('click', closeGuideFunc);
 
+ // 学ぶドック: オンボーディングデモ再生（初回以外でも常に配線）
+ document.getElementById('btn-replay-demo')?.addEventListener('click', replayOnboardingDemo);
+
  // Network Status initialization & listeners
  window.addEventListener('online', updateNetworkStatusHUD);
  window.addEventListener('offline', updateNetworkStatusHUD);
  updateNetworkStatusHUD(); // Initial call
+
+ (function initHudCompactResize() {
+  const appEl = document.getElementById('app-container');
+  if (!appEl || typeof ResizeObserver === 'undefined') return;
+  let hudResizeTimer = null;
+  const refreshHudLabels = function () {
+   if (lastTsunamiIsInundated === null) return;
+   updateTsunamiStatusUI(lastTsunamiIsInundated);
+  };
+  const observer = new ResizeObserver(function () {
+   clearTimeout(hudResizeTimer);
+   hudResizeTimer = setTimeout(refreshHudLabels, 120);
+  });
+  observer.observe(appEl);
+  window.addEventListener('orientationchange', refreshHudLabels);
+ })();
 
  // Preload Web Speech API voices
  if ('speechSynthesis' in window) {
@@ -743,12 +895,9 @@ document.addEventListener('DOMContentLoaded', () => {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
   triggerDynamicIsland((dict.smartCompassLabel || "Smart Compass") + ": " + statusText, "info");
  triggerHapticTick();
- 
- const arrow = document.querySelector('.user-marker-arrow');
- if (arrow) {
- arrow.style.display = (e.target.checked && lastHeading !== 0) ? 'block' : 'none';
- }
- 
+
+ applyCompassDisplay();
+
  if (e.target.checked) {
  requestOrientationPermission();
  }
@@ -841,6 +990,7 @@ document.addEventListener('DOMContentLoaded', () => {
  currentLocation = { lat: map.getCenter().lat, lng: map.getCenter().lng };
  updateMarker(currentLocation);
  fetchElevation(currentLocation);
+ triggerLocationTsunamiCheck(currentLocation);
  
  // GPS error fallback: track map center once so user can pan to their location,
  // but stop after first move to avoid following every pan.
@@ -849,6 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
  currentLocation = { lat: map.getCenter().lat, lng: map.getCenter().lng };
  updateMarker(currentLocation);
  fetchElevation(currentLocation);
+ triggerLocationTsunamiCheck(currentLocation);
  }
  });
  });
@@ -955,48 +1106,9 @@ document.addEventListener('DOMContentLoaded', () => {
  });
 
  btnTestAlert.addEventListener('click', () => {
-   document.getElementById('btn-test-alert').classList.add('hidden');
+   startDrillExperienceFlow();
+ });
 
-   // Clear any old route layers & active simulations
-   if (routeLayerGroup) routeLayerGroup.clearLayers();
-   if (simulationInterval) {
-     clearInterval(simulationInterval);
-     simulationInterval = null;
-   }
-
-   // 地図移動中は本番/体験タブを隠し、ローディングGIFで「体験準備中」を示す
-   // （移動中に本番モードだけ大きく表示され混乱するのを防ぐ＋空白を埋める）
-   document.getElementById('btn-test-alert')?.classList.add('hidden');
-   document.getElementById('btn-real-mode')?.classList.add('hidden');
-   try { showTendenLoading('鎌倉のモデル地区へ移動中…', 5000); } catch (e) {}
-
-   // モデル地区全域を表示 → 研究紹介 → ユーザー自身にピンを置いてもらう
-   map.flyTo([35.308, 139.551], 14, { duration: 1.6, easeLinearity: 0.25 });
-
-   map.once('moveend', () => {
-     try { hideTendenLoading(); } catch (e) {}
-     const ov = document.getElementById('research-intro-overlay');
-     if (ov) { ov.classList.remove('hidden'); setTimeout(() => ov.classList.add('active'), 10); }
-     else startDrillPinDrop();
-   });
- }); // Close btnTestAlert!
-
- // 研究紹介を閉じて、ユーザーがピンを置くモードに入る（体験モード）
- function startDrillPinDrop() {
-   const ov = document.getElementById('research-intro-overlay');
-   if (ov) { ov.classList.remove('active'); ov.classList.add('hidden'); }
-   isDrillMode = true;
-   isWaitingForPinDrop = true;
-   isPinLocked = false;
-   document.getElementById('btn-test-alert')?.classList.add('hidden');
-   document.getElementById('btn-real-mode')?.classList.add('hidden');
-   document.getElementById('crosshair-target')?.classList.remove('hidden');
-   document.getElementById('btn-set-pin')?.classList.remove('hidden');
-   const instr = document.getElementById('hud-pin-instruction');
-   if (instr) instr.style.display = '';
-   // ワンクッションのガイド：何をすればよいか明示（いきなりピン設置で戸惑わせない）
-   try { triggerDynamicIsland('避難を体験したい出発地点を、地図を動かして十字に合わせ「ここにピンを打つ」を押しましょう', 'info'); } catch (e) {}
- }
  document.getElementById('btn-research-intro-start')?.addEventListener('click', () => {
    startDrillPinDrop();
    if (typeof triggerHapticTick === 'function') triggerHapticTick();
@@ -1026,6 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
    document.getElementById('btn-test-alert')?.classList.add('hidden');
    document.getElementById('btn-real-mode')?.classList.add('hidden');
    if (routeLayerGroup) routeLayerGroup.clearLayers();
+   clearRouteDestinationHighlights();
    isManualLocation = false;
    updateMarker(currentLocation);
    try { map.setView([currentLocation.lat, currentLocation.lng], 16); } catch (e) {}
@@ -1080,6 +1193,7 @@ document.addEventListener('DOMContentLoaded', () => {
  simulationInterval = null;
  }
  routeLayerGroup.clearLayers();
+ clearRouteDestinationHighlights();
  
  // Show crosshair
  const crosshair = document.getElementById('crosshair-target');
@@ -1103,16 +1217,7 @@ document.addEventListener('DOMContentLoaded', () => {
  });
  }
 
- // Handle drill reset (End Drill)
- const btnResetAlert = document.getElementById('btn-reset-alert');
- if (btnResetAlert) {
- btnResetAlert.addEventListener('click', () => {
- isEmergency = false;
- isPinLocked = false;
- isWaitingForPinDrop = false;
- resetEmergencyMode();
- });
- }
+ // 訓練終了: wireEndDrillButton() で document 委譲（重複配線を避ける）
 
  if (btnSos) btnSos.addEventListener('click', () => {
  const flash = document.getElementById('flash-overlay');
@@ -1120,29 +1225,12 @@ document.addEventListener('DOMContentLoaded', () => {
  flash.classList.toggle('flash');
  });
 
- btnShare.addEventListener('click', () => {
- const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- const lang = getLanguageCode();
- if (navigator.share && currentLocation) {
-  const shareTitle = dict.alertSosTitle || '安否情報 (現在地)';
- const shareTextDefault = lang === 'ja' ? '現在、安全な高台へ避難中です。\n現在地: ' : 'I am currently evacuating to safe high ground.\nMy location: ';
- const shareText = (dict.shareText || shareTextDefault) + `https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`;
- navigator.share({
- title: shareTitle,
- text: shareText
- }).catch(console.error);
- } else if (currentLocation) {
-  const shareTitle = dict.alertSosTitle || '安否情報 (現在地)';
-  const shareDescPrefix = dict.alertSosDesc || "Please copy and send to family and friends:\n\n";
- showCustomAlert(shareTitle, `${shareDescPrefix}https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`, "success");
- } else {
-  showCustomAlert(dict.alertSosTitle || "Safety Status", dict.alertSosError || "Failed to get current location. Please tap the map to set a location.", "warning");
- }
- });
+ // #btn-share: wireShareSafetyNavButton() で document 委譲（避難ナビ中のタップを確実に捕捉）
 
  // Default layers state to active
  if (hazardLayer) hazardLayer.addTo(map);
  if (sheltersLayerGroup) sheltersLayerGroup.addTo(map);
+ syncDockHazardToggle();
 
  btnToggleLayers.addEventListener('click', () => {
  const overlay = document.getElementById('layers-overlay');
@@ -1165,13 +1253,34 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  });
 
- document.getElementById('toggle-hazard').addEventListener('change', (e) => {
- if (e.target.checked) {
- if (hazardLayer) hazardLayer.addTo(map);
- } else {
- if (hazardLayer) map.removeLayer(hazardLayer);
- }
+ document.getElementById('toggle-hazard')?.addEventListener('change', (e) => {
+ setHazardLayerVisible(!!e.target.checked);
  });
+
+ function setHazardLayerVisible(visible) {
+ const toggle = document.getElementById('toggle-hazard');
+ if (toggle && toggle.checked !== visible) toggle.checked = visible;
+ if (map && hazardLayer) {
+ if (visible) hazardLayer.addTo(map);
+ else map.removeLayer(hazardLayer);
+ }
+ syncDockHazardToggle();
+ if (typeof setAgentForFeature === 'function') {
+   if (visible) setAgentForFeature('hazard-layer', undefined, { persist: true });
+   else if (!isEmergency && !document.body.classList.contains('tenden-nav-active')) {
+     setAgentForFeature('default', undefined, { persist: true });
+   }
+ }
+ }
+
+ function syncDockHazardToggle() {
+ const toggle = document.getElementById('toggle-hazard');
+ const dock = document.getElementById('dock-hazard-toggle');
+ if (!toggle || !dock) return;
+ const on = toggle.checked;
+ dock.setAttribute('aria-pressed', on ? 'true' : 'false');
+ dock.classList.toggle('dock-toggle-active', on);
+ }
 
  document.getElementById('toggle-congestion').addEventListener('change', (e) => {
  if (e.target.checked) {
@@ -1206,8 +1315,12 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnGpsLocation = document.getElementById('btn-gps-location');
  if (btnGpsLocation) {
  btnGpsLocation.addEventListener('click', () => {
- isManualLocation = false;
- requestLocation();
+ if (isModelAreaDemo) {
+   exitModelAreaDemo();
+ } else {
+   isManualLocation = false;
+   requestLocation();
+ }
  requestOrientationPermission();
  requestNotificationPermission();
  triggerHapticTick();
@@ -1234,9 +1347,11 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnFocusModel = document.getElementById('btn-focus-model');
  if (btnFocusModel) {
  btnFocusModel.addEventListener('click', () => {
+ if (typeof resetModelAreaMorePanel === 'function') resetModelAreaMorePanel();
  const overlay = document.getElementById('model-area-overlay');
  overlay.classList.remove('hidden');
  setTimeout(() => overlay.classList.add('active'), 10);
+ if (typeof setAgentForFeature === 'function') setAgentForFeature('model-area', undefined, { persist: true });
  });
  }
 
@@ -1261,15 +1376,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // ── 地震・津波情報オーバーレイ ───────────────────────────────────────────
  let _eqPollTimer = null;
+ let _quakeOverlayFocus = 'all';
 
- function openQuakeOverlay() {
+ function _applyQuakeOverlayFocus(focus) {
+   const f = (focus === 'tsunami' || focus === 'earthquake') ? focus : 'all';
+   _quakeOverlayFocus = f;
+   const ov = document.getElementById('quake-overlay');
+   if (ov) ov.dataset.focus = f;
+   const titleEl = document.getElementById('quake-sheet-title-text');
+   if (titleEl) {
+     const titleKey = f === 'tsunami' ? 'quakeOverlayTitleTsunami'
+       : f === 'earthquake' ? 'quakeOverlayTitleEarthquake'
+       : 'trunkQuakeTitle';
+     titleEl.setAttribute('data-i18n', titleKey);
+     titleEl.textContent = _quakeT(titleKey, f === 'tsunami' ? '津波情報' : f === 'earthquake' ? '地震情報' : '地震・津波情報');
+   }
+ }
+
+ function openQuakeOverlay(focus) {
    closeSidePanel();
    const ov = document.getElementById('quake-overlay');
    if (!ov) return;
+   _applyQuakeOverlayFocus(focus);
    ov.classList.remove('hidden');
    requestAnimationFrame(() => ov.classList.add('active'));
    loadQuakeTsunamiPanel();
    if (!_eqPollTimer) _eqPollTimer = setInterval(loadQuakeTsunamiPanel, 120000);
+   if (typeof setAgentForFeature === 'function') {
+     const agentFeature = _quakeOverlayFocus === 'tsunami' ? 'tsunami-panel'
+       : _quakeOverlayFocus === 'earthquake' ? 'earthquake-panel'
+       : 'quake-panel';
+     setAgentForFeature(agentFeature, undefined, { persist: true });
+   }
    triggerHapticTick();
  }
  function closeQuakeOverlay() {
@@ -1278,9 +1416,151 @@ document.addEventListener('DOMContentLoaded', () => {
    ov.classList.remove('active');
    setTimeout(() => ov.classList.add('hidden'), 380);
    if (_eqPollTimer) { clearInterval(_eqPollTimer); _eqPollTimer = null; }
+   if (typeof setAgentForFeature === 'function') {
+     if (isEmergency || document.body.classList.contains('tenden-nav-active')) {
+       setAgentForFeature('emergency-active', undefined, { persist: true });
+     } else {
+       setAgentForFeature('default', undefined, { persist: true });
+     }
+   }
  }
 
  // 津波の危険性を大きく明示する状態ヘッダーを更新（色＋アイコン＋文言の多重表現）
+ const JMA_TSUNAMI_MAP_URL = 'https://www.jma.go.jp/bosai/map.html#contents=tsunami';
+ const _TS_GRADE_ORDER = { MajorWarning: 3, Warning: 2, Watch: 1, Unknown: 0 };
+ const _TS_GRADE_KEYS = { MajorWarning: 'quakeGradeMajorWarning', Warning: 'quakeGradeWarning', Watch: 'quakeGradeWatch', Unknown: 'quakeGradeUnknown' };
+ const _TS_GRADE_CLS  = { MajorWarning: 'ts-grade-major', Warning: 'ts-grade-warning', Watch: 'ts-grade-watch', Unknown: 'ts-grade-unknown' };
+
+ function _quakeT(key, fallback, vars) {
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   let text = dict[key] || fallback || '';
+   if (vars) Object.entries(vars).forEach(([k, v]) => { text = text.replace(`{${k}}`, v); });
+   return text;
+ }
+
+ function _eqFormatTime(str) {
+   if (!str) return '';
+   const d = new Date(str.replace(/\//g, '-').replace(' ', 'T') + '+09:00');
+   if (isNaN(d.getTime())) return str.slice(0, 16);
+   return d.toLocaleString(getLanguageCode() === 'ja' ? 'ja-JP' : undefined, {
+     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+   });
+ }
+
+ function _eqTsunamiGradeLabel(grade) {
+   return _quakeT(_TS_GRADE_KEYS[grade] || 'quakeGradeUnknown', grade || '不明');
+ }
+
+ function _eqDomesticTsunamiText(dt) {
+   const keyMap = {
+     None: 'quakeDomesticNone', Unknown: 'quakeDomesticUnknown', Checking: 'quakeDomesticChecking',
+     NonEffective: 'quakeDomesticNonEffective', Watch: 'quakeDomesticWatch', Warning: 'quakeDomesticWarning'
+   };
+   return _quakeT(keyMap[dt] || 'quakeDomesticUnknown', _eqTsunamiLabel(dt) || dt || '—');
+ }
+
+ function _renderTsunamiAreaList(activeTsunami, eqList) {
+   const listEl = document.getElementById('quake-ts-area-list');
+   const issueEl = document.getElementById('quake-ts-issue-time');
+   if (!listEl) return;
+
+   if (activeTsunami && activeTsunami.areas?.length) {
+     const issueTime = activeTsunami.issue?.time || activeTsunami.time || '';
+     if (issueEl) {
+       issueEl.textContent = issueTime
+         ? `${_quakeT('quakeTsunamiUpdated', '発表')}: ${_eqFormatTime(issueTime)}`
+         : '';
+     }
+     const sorted = [...activeTsunami.areas].sort((a, b) =>
+       (_TS_GRADE_ORDER[b.grade] || 0) - (_TS_GRADE_ORDER[a.grade] || 0));
+     listEl.innerHTML = sorted.map(area => {
+       const grade = area.grade || 'Unknown';
+       const gradeCls = _TS_GRADE_CLS[grade] || 'ts-grade-unknown';
+       const meta = [];
+       const maxH = area.maxHeight?.description;
+       if (maxH) meta.push(`${_quakeT('quakeTsunamiAreaHeight', '予想高さ')}: ${maxH}`);
+       const arrival = area.firstHeight?.arrivalTime || area.firstHeight?.condition;
+       if (arrival) meta.push(`${_quakeT('quakeTsunamiAreaArrival', '到達予想')}: ${arrival}`);
+       if (area.immediate) meta.push(_quakeT('quakeTsunamiImmediate', '直ちに来襲の可能性'));
+       return `<div class="quake-ts-area-item ${gradeCls}" role="listitem">
+         <span class="quake-ts-area-grade">${_eqTsunamiGradeLabel(grade)}</span>
+         <div class="quake-ts-area-body">
+           <div class="quake-ts-area-name">${area.name || '—'}</div>
+           ${meta.length ? `<div class="quake-ts-area-meta">${meta.join(' · ')}</div>` : ''}
+         </div>
+       </div>`;
+     }).join('');
+     return;
+   }
+
+   if (issueEl) issueEl.textContent = '';
+   const recentTs = eqList.find(eq => {
+     const dt = eq.earthquake?.domesticTsunami;
+     return dt === 'Warning' || dt === 'Watch';
+   });
+   if (recentTs) {
+     const e = recentTs.earthquake || {};
+     const h = e.hypocenter || {};
+     listEl.innerHTML = `<div class="quake-ts-area-item ts-grade-watch ts-from-eq" role="listitem">
+       <span class="quake-ts-area-grade">${_eqDomesticTsunamiText(e.domesticTsunami)}</span>
+       <div class="quake-ts-area-body">
+         <div class="quake-ts-area-name">${h.name || '—'}</div>
+         <div class="quake-ts-area-meta">${_quakeT('quakeTsFromEqNote', '地震情報より（公式発表待ち）')}</div>
+       </div>
+     </div>`;
+   } else {
+     listEl.innerHTML = `<div class="quake-ts-area-empty">${_quakeT('quakeTsunamiNoAlert', '津波警報・注意報は発表されていません')}</div>`;
+   }
+ }
+
+ function _renderEarthquakeList(eqList) {
+   const listEl = document.getElementById('quake-eq-list');
+   if (!listEl) return;
+   if (!eqList.length) {
+     listEl.innerHTML = `<div class="sp-eq-placeholder">${_quakeT('quakeNoData', 'データなし')}</div>`;
+     return;
+   }
+   listEl.innerHTML = eqList.map(eq => {
+     const e = eq.earthquake || {};
+     const h = e.hypocenter || {};
+     const mag = h.magnitude != null ? h.magnitude : '?';
+     const place = h.name || '—';
+     const depth = h.depth != null && h.depth >= 0
+       ? _quakeT('quakeDepthFmt', '{depth}km', { depth: h.depth }) : '';
+     const scaleLabel = _eqScaleToLabel(e.maxScale);
+     const occurTime = _eqFormatTime(e.time || eq.time);
+     const relTime = _eqRelativeTime(eq.time || e.time);
+     const coords = (h.latitude != null && h.longitude != null)
+       ? `${h.latitude.toFixed(1)}°N ${h.longitude.toFixed(1)}°E` : '';
+     const magColor = mag >= 6 ? '#ff453a' : mag >= 5 ? '#ff9f0a' : mag >= 3 ? '#ffd60a' : '#8ed0ff';
+     const dt = e.domesticTsunami;
+     const tsState = (dt === 'Warning' || dt === 'Watch') ? 'danger'
+                   : (dt === 'NonEffective') ? 'minor' : 'none';
+     const tsText = _eqDomesticTsunamiText(dt);
+     const tsCls  = tsState === 'danger' ? 'eq-ts-danger' : tsState === 'minor' ? 'eq-ts-minor' : 'eq-ts-none';
+     const fields = [
+       [_quakeT('quakeFieldOccurrence', '発生時刻'), `${occurTime}${relTime ? ` (${relTime})` : ''}`],
+       [_quakeT('quakeFieldHypocenter', '震源'), place],
+       [_quakeT('quakeFieldMagnitude', 'マグニチュード'), `M${mag}`],
+       scaleLabel ? [_quakeT('quakeFieldIntensity', '最大震度'), scaleLabel] : null,
+       depth ? [_quakeT('quakeFieldDepth', '深さ'), depth] : null,
+       coords ? [_quakeT('quakeFieldCoords', '位置'), coords] : null,
+       dt ? [_quakeT('quakeFieldDomesticTsunami', '津波の見通し'), tsText] : null,
+     ].filter(Boolean);
+     return `<div class="eq-card ${tsCls}">
+       <div class="eq-card-mag" style="color:${magColor}"><span class="eq-mag-num">M${mag}</span></div>
+       <div class="eq-card-body">
+         <div class="eq-card-place">${place}</div>
+         <dl class="eq-card-fields">${fields.map(([lbl, val]) =>
+           `<div class="eq-field-row"><dt>${lbl}</dt><dd>${val}</dd></div>`
+         ).join('')}</dl>
+         <div class="eq-card-ts"><span class="eq-ts-dot"></span>${tsText}</div>
+       </div>
+       <div class="eq-card-time">${relTime}</div>
+     </div>`;
+   }).join('');
+ }
+
  function _setTsunamiStatus(kind, main, sub) {
    const el = document.getElementById('quake-tsunami-status');
    if (!el) return;
@@ -1293,79 +1573,162 @@ document.addEventListener('DOMContentLoaded', () => {
    const ic = el.querySelector('.quake-ts-icon'); if (ic) ic.innerHTML = icons[kind] || icons.safe;
    const m = el.querySelector('.quake-ts-main'); if (m) m.textContent = main;
    const s = el.querySelector('.quake-ts-sub');  if (s) s.textContent = sub || '';
+   const mapBtn = document.getElementById('btn-quake-tsunami-map');
+   if (mapBtn) {
+     const showMap = kind !== 'safe';
+     mapBtn.classList.toggle('hidden', !showMap);
+     mapBtn.href = JMA_TSUNAMI_MAP_URL;
+   }
+ }
+
+ function _resolveHudTsunamiKindFromApi(activeTsunami, eqList) {
+   if (activeTsunami) {
+     const maxGrade = activeTsunami.areas.reduce((best, a) =>
+       (_TS_GRADE_ORDER[a.grade] || 0) > (_TS_GRADE_ORDER[best] || 0) ? a.grade : best, 'Watch');
+     return maxGrade === 'Watch' ? 'watch' : 'danger';
+   }
+   const recentTs = eqList.find(eq => {
+     const dt = (eq.earthquake && eq.earthquake.domesticTsunami);
+     return dt === 'Warning' || dt === 'Watch';
+   });
+   return recentTs ? 'watch' : 'safe';
+ }
+
+ function _updateHudTsunamiChip(kind) {
+   _hudTsunamiKind = kind || 'checking';
+   const chip = document.getElementById('hud-tsunami-chip');
+   const textEl = document.getElementById('hud-tsunami-chip-text');
+   if (!chip || !textEl) return;
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   const labels = {
+     checking: dict.hudTsunamiChipChecking || '津波: …',
+     safe: dict.hudTsunamiChipSafe || '津波: なし',
+     watch: dict.hudTsunamiChipWatch || '津波: 注意',
+     danger: dict.hudTsunamiChipDanger || '津波: 警報'
+   };
+   chip.className = 'status-badge hud-tsunami-chip hud-tsunami-chip--' + (_hudTsunamiKind === 'checking' ? 'checking' : _hudTsunamiKind);
+   textEl.textContent = labels[_hudTsunamiKind] || labels.checking;
+   if (dict.hudTsunamiChipAria) chip.setAttribute('aria-label', dict.hudTsunamiChipAria);
+   if (typeof updateHudTimeWarning === 'function') updateHudTimeWarning();
+ }
+
+ function updateHudTimeWarning() {
+   const wrap = document.getElementById('status-time-wrap');
+   if (!wrap) return;
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   const p2pDot = document.getElementById('p2p-dot');
+   const p2pAlert = p2pDot && p2pDot.classList.contains('p2p-alert');
+   let level = 'safe';
+   let ariaKey = 'hudTimeAriaSafe';
+   if (isEmergency) {
+     level = 'emergency';
+     ariaKey = 'hudTimeAriaEmergency';
+   } else if (_hudTsunamiKind === 'danger' || lastTsunamiIsInundated === true) {
+     level = 'danger';
+     ariaKey = 'hudTimeAriaDanger';
+   } else if (_hudTsunamiKind === 'watch' || p2pAlert) {
+     level = 'watch';
+     ariaKey = 'hudTimeAriaWatch';
+   }
+   wrap.classList.remove('hud-time--watch', 'hud-time--danger', 'hud-time--emergency');
+   if (level !== 'safe') wrap.classList.add('hud-time--' + level);
+   if (dict[ariaKey]) wrap.setAttribute('aria-label', dict[ariaKey]);
+ }
+
+ async function refreshHudTsunamiStatus() {
+   _updateHudTsunamiChip('checking');
+   try {
+     const [eqRes, tsRes] = await Promise.all([
+       fetch('https://api.p2pquake.net/v2/history?codes=551&limit=5', { signal: AbortSignal.timeout(8000) }),
+       fetch('https://api.p2pquake.net/v2/history?codes=552&limit=5',  { signal: AbortSignal.timeout(8000) })
+     ]);
+     const eqList = (eqRes.ok ? await eqRes.json() : []).slice(0, 5);
+     const tsList = tsRes.ok ? await tsRes.json() : [];
+     const activeTsunami = tsList.find(ts => !ts.cancelled && ts.areas?.length) || null;
+     _updateHudTsunamiChip(_resolveHudTsunamiKindFromApi(activeTsunami, eqList));
+   } catch (err) {
+     console.warn('[HudTsunami]', err);
+     _updateHudTsunamiChip('safe');
+   }
+ }
+
+ function initHudTsunamiPolling() {
+   refreshHudTsunamiStatus();
+   if (!_hudTsunamiPollTimer) {
+     _hudTsunamiPollTimer = setInterval(refreshHudTsunamiStatus, 120000);
+   }
+   document.getElementById('hud-tsunami-chip')?.addEventListener('click', () => openQuakeOverlay('tsunami'));
  }
 
  async function loadQuakeTsunamiPanel() {
    const listEl  = document.getElementById('quake-eq-list');
    const updEl   = document.getElementById('quake-updated');
+   const tsListEl = document.getElementById('quake-ts-area-list');
    if (!listEl) return;
-   listEl.innerHTML = '<div class="sp-eq-placeholder">読み込み中…</div>';
-   _setTsunamiStatus('safe', '確認中…', '');
+   listEl.innerHTML = `<div class="sp-eq-placeholder">${_quakeT('quakeLoading', '読み込み中…')}</div>`;
+   if (tsListEl) tsListEl.innerHTML = `<div class="quake-ts-area-empty">${_quakeT('quakeLoading', '読み込み中…')}</div>`;
+   _setTsunamiStatus('safe', _quakeT('quakeTsStatusChecking', '確認中…'), '');
+   _updateHudTsunamiChip('checking');
    try {
      const [eqRes, tsRes] = await Promise.all([
        fetch('https://api.p2pquake.net/v2/history?codes=551&limit=5', { signal: AbortSignal.timeout(8000) }),
-       fetch('https://api.p2pquake.net/v2/history?codes=552&limit=3',  { signal: AbortSignal.timeout(8000) })
+       fetch('https://api.p2pquake.net/v2/history?codes=552&limit=5',  { signal: AbortSignal.timeout(8000) })
      ]);
      const eqList = (eqRes.ok ? await eqRes.json() : []).slice(0, 5);
      const tsList = tsRes.ok ? await tsRes.json() : [];
 
-     // 津波の危険性を判定して大きく表示（常時）
-     const latestTs = tsList[0];
-     const activeTsunami = (latestTs && !latestTs.cancelled && latestTs.areas?.length) ? latestTs : null;
+     const activeTsunami = tsList.find(ts => !ts.cancelled && ts.areas?.length) || null;
+     const hudKind = _resolveHudTsunamiKindFromApi(activeTsunami, eqList);
+     _updateHudTsunamiChip(hudKind);
      if (activeTsunami) {
-       const gradeOrder = { MajorWarning: 3, Warning: 2, Watch: 1 };
        const maxGrade = activeTsunami.areas.reduce((best, a) =>
-         (gradeOrder[a.grade] || 0) > (gradeOrder[best] || 0) ? a.grade : best, 'Watch');
-       const gradeLabel = { MajorWarning: '大津波警報', Warning: '津波警報', Watch: '津波注意報' };
+         (_TS_GRADE_ORDER[a.grade] || 0) > (_TS_GRADE_ORDER[best] || 0) ? a.grade : best, 'Watch');
        const kind = maxGrade === 'Watch' ? 'watch' : 'danger';
-       const areas = activeTsunami.areas.map(a => a.name).join('・');
-       _setTsunamiStatus(kind, (gradeLabel[maxGrade] || '津波情報') + ' 発令中', '対象地域：' + areas + '／直ちに高台へ避難してください');
+       const gradeLabel = _eqTsunamiGradeLabel(maxGrade);
+       const count = activeTsunami.areas.length;
+       _setTsunamiStatus(
+         kind,
+         _quakeT('quakeTsStatusActive', '{grade} 発令中', { grade: gradeLabel }),
+         _quakeT('quakeTsStatusActiveSub', '対象 {count} 区／直ちに高台へ避難してください', { count: String(count) })
+       );
      } else {
-       // 直近の地震で津波あり（注意報/警報相当）が出ていないかも確認
        const recentTs = eqList.find(eq => {
          const dt = (eq.earthquake && eq.earthquake.domesticTsunami);
          return dt === 'Warning' || dt === 'Watch';
        });
        if (recentTs) {
-         _setTsunamiStatus('watch', '津波情報に注意', '直近の地震で津波の可能性が伝えられています。最新の発表を確認してください');
+         _setTsunamiStatus(
+           'watch',
+           _quakeT('quakeTsStatusWatchEq', '津波情報に注意'),
+           _quakeT('quakeTsStatusWatchEqSub', '直近の地震で津波の可能性が伝えられています。最新の発表を確認してください')
+         );
        } else {
-         _setTsunamiStatus('safe', '津波の心配はありません', '現在、津波警報・注意報は発表されていません');
+         _setTsunamiStatus(
+           'safe',
+           _quakeT('quakeTsStatusSafe', '津波の心配はありません'),
+           _quakeT('quakeTsStatusSafeSub', '現在、津波警報・注意報は発表されていません')
+         );
        }
      }
 
-     // 最近の地震（最大5件・大きめカード）
-     if (!eqList.length) {
-       listEl.innerHTML = '<div class="sp-eq-placeholder">データなし</div>';
-     } else {
-       listEl.innerHTML = eqList.map(eq => {
-         const e = eq.earthquake || {};
-         const h = e.hypocenter || {};
-         const mag = h.magnitude != null ? h.magnitude : '?';
-         const place = h.name || '震源不明';
-         const depth = h.depth != null && h.depth >= 0 ? `深さ${h.depth}km` : '';
-         const scaleLabel = _eqScaleToLabel(e.maxScale);
-         const timeStr = _eqRelativeTime(eq.time || e.time);
-         const magColor = mag >= 6 ? '#ff453a' : mag >= 5 ? '#ff9f0a' : mag >= 3 ? '#ffd60a' : '#8ed0ff';
-         const dt = e.domesticTsunami;
-         const tsState = (dt === 'Warning' || dt === 'Watch') ? 'danger'
-                       : (dt === 'NonEffective') ? 'minor' : 'none';
-         const tsText = tsState === 'danger' ? '津波あり' : tsState === 'minor' ? '海面変動の可能性' : '津波の心配なし';
-         const tsCls  = tsState === 'danger' ? 'eq-ts-danger' : tsState === 'minor' ? 'eq-ts-minor' : 'eq-ts-none';
-         return `<div class="eq-card ${tsCls}">
-           <div class="eq-card-mag" style="color:${magColor}"><span class="eq-mag-num">M${mag}</span></div>
-           <div class="eq-card-body">
-             <div class="eq-card-place">${place}</div>
-             <div class="eq-card-meta">${[scaleLabel ? `最大震度 ${scaleLabel}` : '', depth].filter(Boolean).join('　/　')}</div>
-             <div class="eq-card-ts"><span class="eq-ts-dot"></span>${tsText}</div>
-           </div>
-           <div class="eq-card-time">${timeStr}</div>
-         </div>`;
-       }).join('');
+     _renderTsunamiAreaList(activeTsunami, eqList);
+     _renderEarthquakeList(eqList);
+
+     if (updEl) {
+       const now = new Date().toLocaleTimeString(getLanguageCode() === 'ja' ? 'ja-JP' : undefined, { hour:'2-digit', minute:'2-digit' });
+       updEl.textContent = `${now} ${_quakeT('quakeUpdatedSuffix', '更新')}`;
      }
-     if (updEl) updEl.textContent = new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' }) + ' 更新';
    } catch (err) {
-     listEl.innerHTML = '<div class="sp-eq-placeholder">取得に失敗しました（通信環境をご確認ください）</div>';
-     _setTsunamiStatus('safe', '情報を取得できませんでした', '通信環境をご確認のうえ再読み込みしてください');
+     listEl.innerHTML = `<div class="sp-eq-placeholder">${_quakeT('quakeFetchError', '取得に失敗しました（通信環境をご確認ください）')}</div>`;
+     const tsListEl2 = document.getElementById('quake-ts-area-list');
+     if (tsListEl2) tsListEl2.innerHTML = '';
+     const issueEl = document.getElementById('quake-ts-issue-time');
+     if (issueEl) issueEl.textContent = '';
+     _setTsunamiStatus(
+       'safe',
+       _quakeT('quakeTsStatusFetchError', '情報を取得できませんでした'),
+       _quakeT('quakeTsStatusFetchErrorSub', '通信環境をご確認のうえ再読み込みしてください')
+     );
      console.warn('[QuakePanel]', err);
    }
  }
@@ -1390,9 +1753,21 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('btn-open-side-panel')?.addEventListener('click', openSidePanel);
  document.getElementById('btn-side-panel-close')?.addEventListener('click', closeSidePanel);
  document.getElementById('side-panel-backdrop')?.addEventListener('click', closeSidePanel);
- document.getElementById('sp-quake-card')?.addEventListener('click', openQuakeOverlay);
+ document.getElementById('sp-quake-card')?.addEventListener('click', () => openQuakeOverlay('all'));
  document.getElementById('btn-quake-close')?.addEventListener('click', closeQuakeOverlay);
+ document.getElementById('btn-quake-tsunami-map')?.addEventListener('click', () => {
+   if (typeof setAgentForFeature === 'function') setAgentForFeature('tsunami-map', undefined, { persist: true });
+ });
  document.getElementById('btn-quake-refresh')?.addEventListener('click', loadQuakeTsunamiPanel);
+ document.getElementById('dock-quake-tsunami')?.addEventListener('click', () => openQuakeOverlay('tsunami'));
+ document.getElementById('dock-quake-earthquake')?.addEventListener('click', () => openQuakeOverlay('earthquake'));
+ document.getElementById('btn-quake-open-guide')?.addEventListener('click', () => {
+   closeQuakeOverlay();
+   const guideOverlay = document.getElementById('guide-overlay');
+   if (!guideOverlay) return;
+   guideOverlay.classList.remove('hidden');
+   setTimeout(() => guideOverlay.classList.add('active'), 10);
+ });
  document.getElementById('quake-overlay')?.addEventListener('click', e => {
    if (e.target === document.getElementById('quake-overlay')) closeQuakeOverlay();
  });
@@ -1406,6 +1781,224 @@ document.addEventListener('DOMContentLoaded', () => {
    });
  });
 
+ // ボトムドック → 対応ボタン / サイドパネルカードをトリガー
+ document.querySelectorAll('.dock-item[data-trigger]').forEach(item => {
+   item.addEventListener('click', () => {
+     const target = document.getElementById(item.dataset.trigger);
+     if (target) target.click();
+   });
+ });
+ [
+   ['dock-report-card', 'sp-report-card'],
+   ['dock-announcements-card', 'sp-announcements-card'],
+ ].forEach(([dockId, spId]) => {
+   document.getElementById(dockId)?.addEventListener('click', () => {
+     document.getElementById(spId)?.click();
+   });
+ });
+ document.getElementById('dock-share-card')?.addEventListener('click', () => {
+   shareSafetyStatus({ closeDock: true });
+ });
+ document.getElementById('dock-app-share')?.addEventListener('click', () => {
+   openAppShareOverlay({ closeDock: true });
+ });
+
+ function _isLocalDevHost() {
+   const h = location.hostname;
+   return h === 'localhost' || h === '127.0.0.1' || /^192\.168\./.test(h) || h.endsWith('.local');
+ }
+
+ function getAppShareUrl() {
+   const cfgUrl = window.TENDEN_CONFIG?.appUrl?.trim();
+   if (cfgUrl && !_isLocalDevHost()) return cfgUrl;
+   const canonical = document.querySelector('link[rel="canonical"]')?.href?.trim();
+   if (canonical && !_isLocalDevHost()) return canonical;
+   let path = location.pathname || '/';
+   if (path.endsWith('/index.html')) path = path.slice(0, -'/index.html'.length) || '/';
+   if (!path.endsWith('/')) path += '/';
+   return location.origin + path;
+ }
+
+ function renderAppShareQr(url) {
+   const container = document.getElementById('app-share-qr');
+   if (!container || typeof qrcode !== 'function') return;
+   container.innerHTML = '';
+   try {
+     const qr = qrcode(0, 'M');
+     qr.addData(url, 'Byte');
+     qr.make();
+     const dict = i18nDict[getLanguageCode()] || i18nDict.ja || {};
+     const ariaLabel = dict.appShareQrAria || 'TENDEN app share QR code';
+     container.innerHTML = qr.createSvgTag({
+       cellSize: 5,
+       margin: 2,
+       scalable: true,
+       title: ariaLabel,
+     });
+     const svg = container.querySelector('svg');
+     if (svg) {
+       svg.setAttribute('role', 'img');
+       svg.setAttribute('aria-label', ariaLabel);
+     }
+   } catch (e) {
+     console.warn('[app-share] QR render failed', e);
+     container.textContent = url;
+   }
+ }
+
+ function openAppShareOverlay(options = {}) {
+   const overlay = document.getElementById('app-share-overlay');
+   if (!overlay) return;
+   const url = getAppShareUrl();
+   renderAppShareQr(url);
+   const urlEl = document.getElementById('app-share-url');
+   if (urlEl) urlEl.textContent = url;
+   if (options.closeDock && typeof window.closeDockSub === 'function') window.closeDockSub();
+   overlay.classList.remove('hidden');
+   setTimeout(() => overlay.classList.add('active'), 10);
+   document.getElementById('btn-app-share-close')?.focus();
+ }
+
+ function closeAppShareOverlay() {
+   const overlay = document.getElementById('app-share-overlay');
+   if (!overlay) return;
+   overlay.classList.remove('active');
+   setTimeout(() => overlay.classList.add('hidden'), 300);
+ }
+
+ document.getElementById('btn-app-share-close')?.addEventListener('click', closeAppShareOverlay);
+ document.getElementById('app-share-overlay')?.addEventListener('click', function(e) {
+   if (e.target === this) closeAppShareOverlay();
+ });
+ document.getElementById('btn-app-share-copy')?.addEventListener('click', async () => {
+   const dict = i18nDict[getLanguageCode()] || i18nDict.ja || {};
+   const url = getAppShareUrl();
+   try {
+     if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+     else throw new Error('clipboard unavailable');
+     triggerDynamicIsland(dict.appShareCopied || dict.copiedLabel || 'Copied', 'copied');
+   } catch (_) {
+     triggerDynamicIsland(dict.appShareError || 'Could not copy', 'warning');
+   }
+ });
+ document.getElementById('btn-app-share-system')?.addEventListener('click', async () => {
+   const dict = i18nDict[getLanguageCode()] || i18nDict.ja || {};
+   const url = getAppShareUrl();
+   const title = dict.appShareTitle || 'Share TENDEN';
+   const text = dict.appShareDesc || '';
+   const payloads = [{ title, text, url }, { title, text }, { text, url }, { url }];
+   if (navigator.share && window.isSecureContext) {
+     for (const data of payloads) {
+       if (navigator.canShare && !navigator.canShare(data)) continue;
+       try {
+         await navigator.share(data);
+         triggerDynamicIsland(dict.appShareShared || dict.sharedLabel || 'Shared', 'success');
+         return;
+       } catch (e) {
+         if (e?.name === 'AbortError') return;
+       }
+     }
+   }
+   document.getElementById('btn-app-share-copy')?.click();
+ });
+
+ function _bindDockCheckboxToggle(dockId, checkboxId) {
+   const dock = document.getElementById(dockId);
+   const toggle = document.getElementById(checkboxId);
+   if (!dock || !toggle) return;
+   function sync() {
+     const on = toggle.checked;
+     dock.setAttribute('aria-pressed', on ? 'true' : 'false');
+     dock.classList.toggle('dock-toggle-active', on);
+   }
+   dock.addEventListener('click', () => {
+     toggle.checked = !toggle.checked;
+     toggle.dispatchEvent(new Event('change', { bubbles: true }));
+     sync();
+     triggerHapticTick();
+   });
+   toggle.addEventListener('change', sync);
+   sync();
+ }
+ _bindDockCheckboxToggle('dock-p2p-toggle', 'toggle-p2p-auto');
+ document.getElementById('dock-hazard-toggle')?.addEventListener('click', () => {
+   const toggle = document.getElementById('toggle-hazard');
+   if (!toggle) return;
+   setHazardLayerVisible(!toggle.checked);
+   triggerHapticTick();
+ });
+
+ // トランク → サブシート展開
+ (function initDockTrunks() {
+   const subSheet = document.getElementById('dock-sub-sheet');
+   const subTitle = document.getElementById('dock-sub-title');
+   const trunkItems = document.querySelectorAll('.trunk-item');
+   const trunkTitleKeys = { evac: 'trunkEvac', quake: 'trunkQuake', map: 'trunkMap', community: 'trunkCommunityTitle', learn: 'trunkLearn', more: 'trunkMore' };
+   let activeTrunk = null;
+
+   function closeDockSub() {
+     subSheet?.classList.add('hidden');
+     subSheet?.setAttribute('aria-hidden', 'true');
+     trunkItems.forEach(t => {
+       t.classList.remove('active');
+       t.setAttribute('aria-expanded', 'false');
+     });
+     document.querySelectorAll('.dock-sub-panel').forEach(p => { p.hidden = true; });
+     activeTrunk = null;
+   }
+
+   function openDockSub(trunkId) {
+     if (activeTrunk === trunkId) { closeDockSub(); return; }
+     activeTrunk = trunkId;
+     trunkItems.forEach(t => {
+       const isActive = t.dataset.trunk === trunkId;
+       t.classList.toggle('active', isActive);
+       t.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+     });
+     document.querySelectorAll('.dock-sub-panel').forEach(p => {
+       p.hidden = p.dataset.trunk !== trunkId;
+     });
+     const key = trunkTitleKeys[trunkId];
+     if (subTitle && key) {
+       subTitle.setAttribute('data-i18n', key);
+       const lang = typeof getLanguageCode === 'function' ? getLanguageCode() : 'ja';
+       const dict = i18nDict[lang] || i18nDict.ja;
+       const trunkLabel = document.querySelector(`.trunk-item[data-trunk="${trunkId}"] .trunk-label`);
+       if (dict?.[key]) subTitle.textContent = dict[key];
+       else if (trunkLabel) subTitle.textContent = trunkLabel.textContent;
+     }
+     subSheet?.classList.remove('hidden');
+     subSheet?.setAttribute('aria-hidden', 'false');
+     if (trunkId === 'community') {
+       setTimeout(() => openAppShareOverlay(), 150);
+     }
+   }
+
+   trunkItems.forEach(trunk => {
+     trunk.addEventListener('click', e => {
+       e.stopPropagation();
+       openDockSub(trunk.dataset.trunk);
+     });
+   });
+   document.getElementById('dock-sub-close')?.addEventListener('click', closeDockSub);
+   document.querySelectorAll('.dock-sub-panel .dock-item').forEach(item => {
+     item.addEventListener('click', () => {
+       if (item.classList.contains('dock-toggle-p2p') || item.classList.contains('dock-toggle-hazard')) return;
+       // 海岸距離はトグル操作 — サブシートを開いたままにして再タップでOFFできるようにする
+       if (item.dataset.trigger === 'btn-coastline-dist') return;
+       setTimeout(closeDockSub, 80);
+     });
+   });
+   document.addEventListener('click', e => {
+     if (activeTrunk && !e.target.closest('.bottom-dock-wrap')) {
+       // 海岸距離ON中は地図サブシートを開いたまま → ボタン再タップでOFFしやすくする
+       if (_coastDistActive && activeTrunk === 'map') return;
+       closeDockSub();
+     }
+   });
+   window.closeDockSub = closeDockSub;
+ })();
+
  // レポートカード（サイドパネル内）— 選択画面を表示
  document.getElementById('sp-report-card')?.addEventListener('click', () => {
    closeSidePanel();
@@ -1416,6 +2009,13 @@ document.addEventListener('DOMContentLoaded', () => {
  function closeReportChoice() {
    const overlay = document.getElementById('report-choice-overlay');
    if (overlay) { overlay.classList.remove('active'); setTimeout(() => overlay.classList.add('hidden'), 300); }
+ }
+
+ function showReportChoiceHint(key, feature) {
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   const msg = dict[key];
+   if (!msg || typeof showAgentBubble !== 'function') return;
+   setTimeout(() => showAgentBubble(msg, { type: 'info', duration: 5000, feature }), 350);
  }
 
  document.getElementById('btn-report-choice-close')?.addEventListener('click', closeReportChoice);
@@ -1440,31 +2040,20 @@ document.addEventListener('DOMContentLoaded', () => {
    }
    const fab = document.getElementById('btn-toggle-reports-fab');
    if (fab) { fab.classList.add('fab-active'); fab.setAttribute('aria-pressed', 'true'); }
+   showReportChoiceHint('reportChoiceHintView', 'report-view');
  });
 
  // 「危険な場所を報告する」
  document.getElementById('btn-submit-report-choice')?.addEventListener('click', () => {
    closeReportChoice();
    setTimeout(() => document.getElementById('btn-report')?.click(), 320);
+   showReportChoiceHint('reportChoiceHintSubmit', 'report-submit');
  });
 
- // 友達に安全情報を送る
+ // 友達に安全情報を送る（安否共有）
  document.getElementById('sp-share-card')?.addEventListener('click', () => {
    closeSidePanel();
-   const loc = currentLocation;
-   const elev = document.getElementById('elevation-m')?.textContent || '?';
-   const text = loc
-     ? `このエリアに行く前にTENDENで安全確認を！\n海抜 ${elev}m\n最寄り避難所への経路をチェックできます。\nhttps://masatosprojects.github.io/tenden-app/`
-     : `TENDENで避難ルートを事前確認しておこう！\nhttps://masatosprojects.github.io/tenden-app/`;
-   if (navigator.share) {
-     navigator.share({ title: 'TENDEN 防災アプリ', text }).catch(() => {});
-   } else {
-     navigator.clipboard?.writeText(text).then(() => {
-       triggerDynamicIsland('メッセージをコピーしました', 'copied');
-     }).catch(() => {
-       triggerDynamicIsland('コピーに失敗しました', 'error');
-     });
-   }
+   shareSafetyStatus();
  });
 
  // 開発者からの連絡
@@ -1485,17 +2074,61 @@ document.addEventListener('DOMContentLoaded', () => {
  // サイドパネルバッジ更新
  const activeCount = DEV_ANNOUNCEMENTS.filter(a => a.status === 'active').length;
  const annBadge = document.getElementById('sp-ann-badge');
+ const dockAnnBadge = document.getElementById('dock-ann-badge');
  if (annBadge && activeCount > 0) {
    annBadge.textContent = `${activeCount}`;  // 角の通知バッジは件数のみ（カードラベルで文脈は明確）
    annBadge.classList.remove('hidden');
  }
+ if (dockAnnBadge && activeCount > 0) {
+   dockAnnBadge.textContent = `${activeCount}`;
+   dockAnnBadge.classList.remove('hidden');
+ }
 
  // 起動時ポップアップはオンボーディング完了後 or すでに見た場合は即時（後述）
+
+ function setModelAreaDismissChipVisible(visible) {
+ const chip = document.getElementById('model-area-dismiss-chip');
+ if (!chip) return;
+ chip.classList.toggle('hidden', !visible);
+ if (visible) {
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   const span = chip.querySelector('[data-i18n="modelAreaDismissChip"]');
+   if (span && dict.modelAreaDismissChip) span.textContent = dict.modelAreaDismissChip;
+   if (dict.modelAreaDismissAria) chip.setAttribute('aria-label', dict.modelAreaDismissAria);
+ }
+ }
+
+ function exitModelAreaDemo() {
+ if (!isModelAreaDemo) return;
+ isManualLocation = false;
+ isModelAreaDemo = false;
+ document.body.classList.remove('model-area-demo');
+ prevTrackLocation = null;
+ movementHeading = null;
+ setModelAreaDismissChipVisible(false);
+ applyCompassDisplay();
+ if (typeof setAgentForFeature === 'function' && !isEmergency && !document.body.classList.contains('tenden-nav-active')) {
+   setAgentForFeature('default', undefined, { persist: true });
+ }
+ requestLocation();
+ if (typeof triggerHapticTick === 'function') triggerHapticTick();
+ }
+
+ function resetModelAreaMorePanel() {
+ const btn = document.getElementById('btn-model-area-more');
+ const panel = document.getElementById('model-area-more-panel');
+ if (panel) panel.classList.remove('expanded');
+ if (btn) btn.setAttribute('aria-expanded', 'false');
+ }
 
  function closeModelAreaOverlay() {
  const overlay = document.getElementById('model-area-overlay');
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
+ resetModelAreaMorePanel();
+ if (typeof setAgentForFeature === 'function' && !isEmergency && !document.body.classList.contains('tenden-nav-active')) {
+   setAgentForFeature('default', undefined, { persist: true });
+ }
  }
 
  const btnModelAreaClose = document.getElementById('btn-model-area-close');
@@ -1504,6 +2137,16 @@ document.addEventListener('DOMContentLoaded', () => {
  const btnModelAreaCancel = document.getElementById('btn-model-area-cancel');
  if (btnModelAreaCancel) btnModelAreaCancel.addEventListener('click', closeModelAreaOverlay);
 
+ const btnModelAreaMore = document.getElementById('btn-model-area-more');
+ const modelAreaMorePanel = document.getElementById('model-area-more-panel');
+ if (btnModelAreaMore && modelAreaMorePanel) {
+ btnModelAreaMore.addEventListener('click', () => {
+ const expanded = modelAreaMorePanel.classList.toggle('expanded');
+ btnModelAreaMore.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+ triggerHapticTick();
+ });
+ }
+
  const btnModelAreaConfirm = document.getElementById('btn-model-area-confirm');
  if (btnModelAreaConfirm) {
  btnModelAreaConfirm.addEventListener('click', () => {
@@ -1511,27 +2154,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // モデル地区全域を表示してピンを由比ヶ浜に設定
  isManualLocation = true;
+ isModelAreaDemo = true;
+ document.body.classList.add('model-area-demo');
+ prevTrackLocation = null;
+ movementHeading = null;
  currentLocation = { lat: KAMAKURA_DEMO_PIN[0], lng: KAMAKURA_DEMO_PIN[1] };
 
  map.flyTo([35.308, 139.551], 13, { duration: 1.8, easeLinearity: 0.25 });
 
  updateMarker(currentLocation);
  fetchElevation(currentLocation);
+ triggerLocationTsunamiCheck(currentLocation);
+ recordLocationForCompass(currentLocation);
+ requestOrientationPermission();
+ applyCompassDisplay();
 
- const badge = document.getElementById('model-area-badge');
- if (badge) badge.classList.remove('hidden');
+ setModelAreaDismissChipVisible(true);
+ if (typeof setAgentForFeature === 'function') setAgentForFeature('model-area', undefined, { persist: true });
+ const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+ if (typeof showAgentBubble === 'function') {
+   showAgentBubble(dict.modelAreaBubbleHint || '鎌倉モデル地区でデモ表示中です', {
+     type: 'warning',
+     duration: 4500,
+     syncState: false
+   });
+ }
+ if (typeof updateSafeZoneGuideVisibility === 'function') updateSafeZoneGuideVisibility();
  });
  }
 
- const btnReturnLocation = document.getElementById('btn-return-location');
- if (btnReturnLocation) {
- btnReturnLocation.addEventListener('click', () => {
- isManualLocation = false;
- const badge = document.getElementById('model-area-badge');
- if (badge) badge.classList.add('hidden');
- requestLocation();
- });
- }
+ document.getElementById('model-area-dismiss-chip')?.addEventListener('click', exitModelAreaDemo);
 
  btnSettings.addEventListener('click', () => {
  const overlay = document.getElementById('settings-overlay');
@@ -1543,6 +2195,31 @@ document.addEventListener('DOMContentLoaded', () => {
  const overlay = document.getElementById('settings-overlay');
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
+ });
+
+ const btnOpenAbout = document.getElementById('btn-open-about');
+ const btnAboutClose = document.getElementById('btn-about-close');
+ const aboutOverlay = document.getElementById('about-overlay');
+
+ function openAboutOverlay(options = {}) {
+   if (!aboutOverlay) return;
+   applyTendenConfig();
+   aboutOverlay.classList.remove('hidden');
+   setTimeout(() => aboutOverlay.classList.add('active'), 10);
+   if (options.closeDock && typeof window.closeDockSub === 'function') window.closeDockSub();
+   btnAboutClose?.focus();
+ }
+
+ function closeAboutOverlay() {
+   if (!aboutOverlay) return;
+   aboutOverlay.classList.remove('active');
+   setTimeout(() => aboutOverlay.classList.add('hidden'), 300);
+ }
+
+ btnOpenAbout?.addEventListener('click', () => openAboutOverlay({ closeDock: true }));
+ btnAboutClose?.addEventListener('click', closeAboutOverlay);
+ aboutOverlay?.addEventListener('click', (e) => {
+   if (e.target === aboutOverlay) closeAboutOverlay();
  });
 
  // Initialize Lang Select
@@ -1674,9 +2351,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // 事前避難体験（追体験）プレイバックの入口と操作
  document.getElementById('btn-evac-playback')?.addEventListener('click', () => {
-   const sel = (activeRoutesList || []).find(r => r && r.id === activeSelectedRouteId);
-   const route = (sel && sel.waypoints) ? sel : (activeRoutesList || []).find(r => r && r.waypoints);
-   if (route) { startEvacuationPlayback(route); triggerHapticTick(); }
+   if (!currentLocation || !isEmergency) {
+     triggerDynamicIsland('先に避難開始地点（ピン）を設定してください。', 'warning');
+     triggerHapticTick();
+     return;
+   }
+   pendingEvacPlayback = true;
+   triggerHapticTick();
+   const hasRoutes = (activeRoutesList || []).some(function (r) { return r && r.waypoints && r.waypoints.length > 0; });
+   if (hasRoutes) {
+     // 計算済みでもユーザー自身に選ばせる（AIルートの自動適用・自動再生はしない）
+     try { showRouteSelectorHUD(activeRoutesList); } catch (e) {}
+     triggerDynamicIsland('避難ルートを選んでから再生を開始します', 'info');
+     return;
+   }
+   triggerDynamicIsland('ルートを計算中…', 'info');
+   recalculateRouteFromLocation(currentLocation).catch(function () {
+     pendingEvacPlayback = false;
+     triggerDynamicIsland('ルート計算に失敗しました。', 'error');
+   });
  });
  document.getElementById('ep-play')?.addEventListener('click', () => {
    if (!_ep) return;
@@ -1732,6 +2425,9 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  });
  });
+
+ if (typeof initTendenAgent === 'function') initTendenAgent();
+ initSafeZoneGuide();
  }
 
 
@@ -1744,12 +2440,16 @@ document.addEventListener('DOMContentLoaded', () => {
      return;
    }
    var dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
-   var title = dict.locationExplTitle || '現在地の使用について';
+   var title = dict.locationExplTitle || '位置情報について';
    var desc =
      (dict.locationExplReasons || '') +
      (dict.locationExplPrivacy || '') +
      (dict.locationExplFooter || '');
+   var overlay = document.getElementById('alert-overlay');
+   var dialogEl = overlay ? overlay.querySelector('.dialog') : null;
+   if (dialogEl) dialogEl.classList.add('dialog-compact');
    showCustomAlert(title, desc, 'info', function() {
+     if (dialogEl) dialogEl.classList.remove('dialog-compact');
      try { localStorage.setItem('tenden-location-explained', 'true'); } catch(e) {}
      if (callback) setTimeout(function() { if (callback) callback(); }, 200);
    });
@@ -1758,6 +2458,8 @@ document.addEventListener('DOMContentLoaded', () => {
  function requestLocation() {
  if ("geolocation" in navigator) {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+ if (typeof setAgentForFeature === 'function') setAgentForFeature('location-fetch', dict.fetchingLocationLabel || '現在地を取得中...', { revertTo: 'default', revertMs: 15000 });
+ else if (typeof setAgentState === 'function') setAgentState('listening', dict.fetchingLocationLabel || '現在地を取得中...', { revertTo: 'idle', revertMs: 15000 });
  triggerDynamicIsland(dict.fetchingLocationLabel || " 現在地を取得中...", "info");
 
  const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
@@ -1788,6 +2490,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
  function handleLocationSuccess(position) {
  updateGPSAccuracyHUD(position.coords.accuracy);
+ if (typeof position.coords.heading === 'number' && !isNaN(position.coords.heading) && position.coords.heading >= 0) {
+   gpsMovementHeading = position.coords.heading;
+ }
  currentLocation = {
  lat: position.coords.latitude,
  lng: position.coords.longitude
@@ -1799,6 +2504,8 @@ document.addEventListener('DOMContentLoaded', () => {
  generalizeFirstTargets(currentLocation);
  
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+ if (typeof setAgentForFeature === 'function') setAgentForFeature('location-synced', dict.locationAcquiredLabel || '現在地を同期しました', { revertTo: 'default', revertMs: 3500 });
+ else if (typeof setAgentState === 'function') setAgentState('celebrate', dict.locationAcquiredLabel || '現在地を同期しました', { revertTo: 'idle', revertMs: 3500 });
  triggerDynamicIsland(dict.locationAcquiredLabel || " 現在地を同期しました", "success");
 
  // 初回のみ海岸線距離をポップアップで表示
@@ -1810,6 +2517,10 @@ document.addEventListener('DOMContentLoaded', () => {
  // Track location changes
  navigator.geolocation.watchPosition(pos => {
  updateGPSAccuracyHUD(pos.coords.accuracy);
+ if (typeof pos.coords.heading === 'number' && !isNaN(pos.coords.heading) && pos.coords.heading >= 0) {
+   gpsMovementHeading = pos.coords.heading;
+   if (!isManualLocation && !_ep) applyCompassDisplay();
+ }
  if (!isManualLocation) {
  currentLocation = {
  lat: pos.coords.latitude,
@@ -1838,6 +2549,8 @@ document.addEventListener('DOMContentLoaded', () => {
  }
 
  function updateMarker(loc) {
+ // 予習再生中は仮想歩行者(ep-walker)のみ表示。現在地ピンは非表示のまま。
+ if (document.body.classList.contains('ep-mode')) return;
  if (userMarker) {
  userMarker.setLatLng([loc.lat, loc.lng]);
  } else {
@@ -1850,15 +2563,8 @@ document.addEventListener('DOMContentLoaded', () => {
  userMarker = L.marker([loc.lat, loc.lng], { icon: userIcon }).addTo(map);
  }
 
- // Keep compass arrow rotated and visible
- const arrow = document.querySelector('.user-marker-arrow');
- if (arrow) {
- const isCompassEnabled = localStorage.getItem('tenden-smart-compass') !== 'false';
- arrow.style.display = (isCompassEnabled && lastHeading !== 0) ? 'block' : 'none';
- if (lastHeading !== 0) {
- arrow.style.transform = `rotate(${lastHeading}deg)`;
- }
- }
+ recordLocationForCompass(loc);
+ syncUserMarkerArrow();
 
  // Show a simple thought-provoking popup if user placed the pin manually
  if (isManualLocation) {
@@ -2005,11 +2711,10 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  };
 
- // Reflects isEmergency on the persistent UI shell (status orb + top-bar slot)
+ // Reflects isEmergency on the persistent UI shell (top-bar slot + agent)
  // without swapping layouts: same elements, different content/rhythm.
  function applyAppState(isEmergency) {
- document.documentElement.style.setProperty('--orb-color', isEmergency ? 'var(--danger)' : 'var(--success)');
- document.documentElement.style.setProperty('--orb-pulse-duration', isEmergency ? '1.5s' : '4s');
+ if (typeof syncAgentEmergency === 'function') syncAgentEmergency(isEmergency);
 
  const elevDisplay = document.getElementById('elev-display');
  const etaDisplay = document.getElementById('eta-display');
@@ -2029,6 +2734,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (bottomSheet) {
  bottomSheet.classList.toggle('panel-expanded', isEmergency);
  }
+ updateHudTimeWarning();
  }
 
  function triggerEmergencyMode(isTest = false, scenarioId = 1, locationId = 'a') {
@@ -2056,7 +2762,8 @@ document.addEventListener('DOMContentLoaded', () => {
  requestNotificationPermission();
  // 動作・方向(コンパス)の許可は実際に進行方向が意味を持つ本番モードのみ求める。
  // 体験モード(予習・ピン設置)では不要なため、毎回許可を求めないようにする。
- if (!isTest) requestOrientationPermission();
+ // ただしモデル地区デモ中は仮想位置の方位表示のため許可を求める。
+ if (!isTest || isModelAreaDemo) requestOrientationPermission();
 
  document.getElementById('bottom-normal-actions').classList.add('hidden');
  document.getElementById('btn-test-alert').classList.add('hidden');
@@ -2076,6 +2783,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // Switch the status orb to "alert" rhythm and morph the top-bar elevation slot into a time-to-arrival slot
  applyAppState(true);
+ dismissSafeZoneGuide();
  // 津波到達までのカウントダウン（シナリオの予測到達時間から1秒ごとに減算）。
  // 静的な「15分」固定ではつじつまが合わないため、時系列で減らす。
  const etaMatch = sc.time.match(/^(\d+)分/);
@@ -2124,6 +2832,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  function resetEmergencyMode() {
  isEmergency = false;
+ isDrillMode = true;
  isEvacuationCompleted = false;
  emergencyStartTimeMs = null;
  releaseWakeLock();
@@ -2137,8 +2846,9 @@ document.addEventListener('DOMContentLoaded', () => {
  document.getElementById('crosshair-target')?.classList.add('hidden');
  document.getElementById('btn-set-pin')?.classList.add('hidden');
 
- // Restore the status orb's calm rhythm and the elevation slot
+ // Restore the agent calm state and the elevation slot
  applyAppState(false);
+ updateSafeZoneGuideVisibility();
 
  // Close route selection modal if open
  const routeOverlay = document.getElementById('route-overlay');
@@ -2147,6 +2857,8 @@ document.addEventListener('DOMContentLoaded', () => {
  routeOverlay.classList.add('hidden');
  }
  pendingRouteArgs = null;
+ pendingEvacPlayback = false;
+ activeSelectedRouteId = null;
 
  // Stop evacuation simulation interval
  if (simulationInterval) {
@@ -2157,6 +2869,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // Clear evacuation route layer
  if (routeLayerGroup) {
  routeLayerGroup.clearLayers();
+ clearRouteDestinationHighlights();
  }
 
  // Remove emergency dark class
@@ -2266,6 +2979,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  function drawEvacuationRoutes(startLoc, scLoc, routeCandidate) {
  routeLayerGroup.clearLayers();
+ clearRouteDestinationHighlights();
 
  if (!scLoc) {
  scLoc = SCENARIOS[1].locations['a'];
@@ -2372,15 +3086,54 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  }
 
+ function _coordsNearMarker(ll, dest, thresholdM) {
+  if (!dest || dest.lat == null || dest.lng == null) return false;
+  try {
+   return L.latLng(ll.lat, ll.lng).distanceTo(L.latLng(dest.lat, dest.lng)) < (thresholdM || 45);
+  } catch (e) { return false; }
+ }
+
+ function clearRouteDestinationHighlights() {
+  if (!sheltersLayerGroup) return;
+  sheltersLayerGroup.eachLayer(function (marker) {
+   const el = marker.getElement && marker.getElement();
+   if (el) {
+    el.classList.remove('shelter-marker-destination', 'shelter-marker-destination-primary', 'shelter-marker-destination-secondary');
+   }
+   if (marker.setZIndexOffset) marker.setZIndexOffset(0);
+  });
+ }
+
+ function updateRouteDestinationHighlights(primaryDest, secondaryDest) {
+  clearRouteDestinationHighlights();
+  if (!sheltersLayerGroup) return;
+  sheltersLayerGroup.eachLayer(function (marker) {
+   const ll = marker.getLatLng();
+   const el = marker.getElement && marker.getElement();
+   if (!el) return;
+   let role = null;
+   if (_coordsNearMarker(ll, secondaryDest)) role = 'secondary';
+   else if (_coordsNearMarker(ll, primaryDest)) role = 'primary';
+   if (!role) return;
+   el.classList.add('shelter-marker-destination');
+   el.classList.add(role === 'secondary' ? 'shelter-marker-destination-secondary' : 'shelter-marker-destination-primary');
+   if (marker.setZIndexOffset) marker.setZIndexOffset(850);
+  });
+ }
+
  function drawMultipleEvacuationRoutes(startLoc, targetEdge, secondaryRoute, candidates, selectedId) {
  routeLayerGroup.clearLayers();
+ clearRouteDestinationHighlights();
  activeRoutesList = candidates;
- activeSelectedRouteId = selectedId || 'A';
+ // selectedId === undefined: 既存の activeSelectedRouteId を維持
+ // selectedId === null: 未選択（選択UI表示時・自動ハイライトなし）
+ // それ以外: 明示的なルート ID
+ if (selectedId !== undefined) activeSelectedRouteId = selectedId;
  // targetEdge をキャッシュ
  if (targetEdge) window._cachedTargetEdge = targetEdge;
 
  candidates.forEach(candidate => {
- const isSelected = candidate.id === activeSelectedRouteId;
+ const isSelected = activeSelectedRouteId != null && candidate.id === activeSelectedRouteId;
  const color = candidate.color || '#00bbff';
  
  if (candidate.waypoints && candidate.waypoints.length > 0) {
@@ -2429,7 +3182,7 @@ document.addEventListener('DOMContentLoaded', () => {
  mainRouteLine = pline;
  // [2026-06-21] ルート上に常設のラベル（AIスマート避難ルート等）を置くのをやめた。
  //   道の上に重なって視認性を落とすため。選択した旨は selectEvacuationRoute() 側で
- //   triggerDynamicIsland() の一時トースト（約4.5秒で自動的に消える）に一本化。
+ //   showAgentBubble() の一時トースト（約4.5秒で自動的に消える）に一本化。
 
  // Render X marker at blocked intersection if exists
  if (candidate.blockedPoint) {
@@ -2567,6 +3320,18 @@ document.addEventListener('DOMContentLoaded', () => {
   //   forEach内(isSelected時)の「SECONDARY ROUTE」ブロックと完全に同じ内容(分岐線+避難所ラベル)を
   //   二重に描いており、ラベル同士が重なって避難所アイコンが見えなくなる不具合の原因だった。
 
+  // 選択中ルートの目的地に対応する避難所ピンをハイライト（第一目標=青 / 第二目標=橙）
+  try {
+   const selCandidate = candidates.find(function (c) { return c && c.id === activeSelectedRouteId; });
+   if (selCandidate) {
+    const primaryDest = (selCandidate.goal) ? selCandidate.goal : targetEdge;
+    const secondaryDest = (secondaryRoute && secondaryRoute.target) ? secondaryRoute.target : null;
+    updateRouteDestinationHighlights(primaryDest, secondaryDest);
+   } else {
+    clearRouteDestinationHighlights();
+   }
+  } catch (e) {}
+
  }
 
  async function selectEvacuationRoute(routeId) {
@@ -2606,6 +3371,16 @@ document.addEventListener('DOMContentLoaded', () => {
  // Voice Navigation speech for route choice
  speakI18n('speechRouteSelect', { routeLabel: selectedRoute.label });
   triggerDynamicIsland((dict.routeSelectSuccess || 'Selected Route {routeLabel}').replace('{routeLabel}', selectedRoute.label), 'success');
+ }
+
+ // 予習再生待ち: 選択後にプレイバック開始（simulateEvacuation はスキップ）
+ if (pendingEvacPlayback) {
+   pendingEvacPlayback = false;
+   hideRouteSelectorHUD();
+   if (selectedRoute && selectedRoute.waypoints && selectedRoute.waypoints.length > 1) {
+     startEvacuationPlayback(selectedRoute);
+   }
+   return;
  }
 
  // Restart simulation along new selected path
@@ -2655,9 +3430,18 @@ document.addEventListener('DOMContentLoaded', () => {
  function updateRouteSelectorUI(selectedId) {
  const container = document.getElementById('route-options-container');
  if (!container) return;
- 
- container.querySelectorAll('.route-option-btn.compact-route-btn').forEach(btn => {
+
+ container.querySelectorAll('.route-option-btn').forEach(btn => {
  const btnId = btn.getAttribute('data-route-id');
+ const isHero = btn.classList.contains('ai-route-btn')
+   || btn.classList.contains('acc-route-btn')
+   || btn.classList.contains('short-route-btn')
+   || btn.classList.contains('avoid-route-btn');
+ if (isHero) {
+   btn.classList.toggle('active', btnId === selectedId);
+   return;
+ }
+ if (!btn.classList.contains('compact-route-btn')) return;
  const targetColor = btn.getAttribute('data-color');
  if (btnId === selectedId) {
  btn.classList.add('active');
@@ -2924,6 +3708,7 @@ document.addEventListener('DOMContentLoaded', () => {
  //   注意点を提示する。実際に歩くのではなく、減災のための予習・追体験。
  // ─────────────────────────────────────────────────────────────────────
  let _ep = null;  // 再生状態
+ let _epUserMarkerWasOnMap = false;  // 再生開始前に現在地ピンが地図上にあったか
 
  function _epFmt(sec) {
    sec = Math.max(0, Math.round(sec));
@@ -2962,7 +3747,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
  function startEvacuationPlayback(route) {
    if (!route || !route.waypoints || route.waypoints.length < 2 || !map) return;
+   if (typeof setAgentForFeature === 'function') setAgentForFeature('evac-playback', undefined, { persist: true });
    stopEvacuationPlayback();
+
+   try {
+     if (currentLocation && routeLayerGroup && routeLayerGroup.getLayers().length === 0) {
+       drawMultipleEvacuationRoutes(currentLocation, window._cachedTargetEdge, activeSecondaryRoute, activeRoutesList || [route], route.id || activeSelectedRouteId);
+     }
+   } catch (e) { console.warn('[TENDEN] playback route redraw:', e); }
 
    const wps = route.waypoints.map(w => [w[0], w[1]]);
    // 累積距離
@@ -3070,6 +3862,20 @@ document.addEventListener('DOMContentLoaded', () => {
    // 再生中はボトムシート（緊急バナー）を隠してマップを広く
    document.body.classList.add('ep-mode');
 
+   // 再生中は現在地ピン(userMarker)を隠す。仮想歩行者(ep-walker)のみ表示。
+   _epUserMarkerWasOnMap = false;
+   if (userMarker && map.hasLayer(userMarker)) {
+     _epUserMarkerWasOnMap = true;
+     if (popupTimeoutId) { clearTimeout(popupTimeoutId); popupTimeoutId = null; }
+     try {
+       if (userMarker.getPopup && userMarker.getPopup()) {
+         userMarker.closePopup();
+         userMarker.unbindPopup();
+       }
+     } catch (e) {}
+     try { map.removeLayer(userMarker); } catch (e) {}
+   }
+
    try { map.setView(wps[0], 16, { animate: true, duration: 0.6 }); } catch (e) {}
    // 自分中心の追従表示が既定だが、ユーザーが地図を自分でドラッグ/ズームしたら追従を解除し
    // 周囲を自由に確認できるようにする（「視点を戻す」ボタンで再追従）。
@@ -3109,6 +3915,7 @@ document.addEventListener('DOMContentLoaded', () => {
  }
  function startTsunamiCountdown(totalSec) {
    _tsunamiTotalSec = totalSec;
+   if (typeof setAgentForFeature === 'function') setAgentForFeature('tsunami-countdown', undefined, { persist: true });
    if (_tsunamiCdTimer) { clearInterval(_tsunamiCdTimer); _tsunamiCdTimer = null; }
    const end = Date.now() + totalSec * 1000;
    const el = document.getElementById('eta-value');
@@ -3217,7 +4024,7 @@ document.addEventListener('DOMContentLoaded', () => {
    const tEl = document.getElementById('ep-time'); if (tEl) tEl.textContent = _epFmt(_ep.t);
    // 津波到達カウントダウンを再生の時系列(_ep.t)に同期（実時間タイマーは止める）
    if (_tsunamiTotalSec > 0) { if (_tsunamiCdTimer) { clearInterval(_tsunamiCdTimer); _tsunamiCdTimer = null; } _fmtTsunamiEta(_tsunamiTotalSec - _ep.t); }
-   // ナビ情報：目的地まで残り距離・到達まで時間（Googleマップ風の実用表示）
+   // ナビ情報：避難先まで残り距離・避難完了までの時間（Googleマップ風の実用表示）
    const navi = document.getElementById('ep-navinfo');
    if (navi) {
      navi.classList.remove('hidden');
@@ -3260,9 +4067,10 @@ document.addEventListener('DOMContentLoaded', () => {
      if (d < nearestD) { nearestD = d; nearestDensity = e.density; }
    });
    let hereStatus, hereClass;
-   if (nearestD <= 28 && nearestDensity >= 2.0) { hereStatus = '激しい混雑'; hereClass = 'hi'; }
-   else if (nearestD <= 28 && nearestDensity >= 0.8) { hereStatus = 'やや混雑'; hereClass = 'mid'; }
-   else { hereStatus = '順調'; hereClass = 'ok'; }
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   if (nearestD <= 28 && nearestDensity >= 2.0) { hereStatus = dict.epNavCongHi || '激しい混雑'; hereClass = 'hi'; }
+   else if (nearestD <= 28 && nearestDensity >= 0.8) { hereStatus = dict.epNavCongMid || 'やや混雑'; hereClass = 'mid'; }
+   else { hereStatus = dict.epNavCongOk || '順調'; hereClass = 'ok'; }
    // シミュ由来の一言インサイト：この時刻の周辺混雑本数を実データで示し、AI分散の意義に結ぶ
    const congN = (_ep.congActive || []).length;
    let insight;
@@ -3278,13 +4086,15 @@ document.addEventListener('DOMContentLoaded', () => {
          '<div class="ep-board-phase"><span class="ep-dot"></span>' + c.head + '</div>'
        + '<div class="ep-board-insight">' + insight + '</div>';
    }
-   // 今いる道の混雑は上部チップ(目的地まで○m の横)、標高は(到着まで約 の横)に表示
+   // 今いる道の混雑は上部チップ(避難先まで○m の横)、現在地標高は(目的地まで約 の横)に表示
    const congEl = document.getElementById('ep-nav-cong');
    if (congEl) congEl.textContent = '・' + hereStatus;
    const elevEl = document.getElementById('ep-nav-elev');
    if (elevEl) {
      const mElev = ((_ep.route && _ep.route.meta && _ep.route.meta[ci]) || {}).elev;
-     elevEl.textContent = (typeof mElev === 'number') ? '海抜' + Math.round(mElev) + 'm' : '';
+     elevEl.textContent = (typeof mElev === 'number')
+       ? (dict.epNavCurrentElev || '現在地 海抜{elev}m').replace('{elev}', Math.round(mElev))
+       : '';
    }
    const ph = document.getElementById('ep-phase'); if (ph) ph.textContent = c.head;
    // [2026-06-21] 吹き出し提示を廃止。混雑はネットワークグラフ(道路エッジ)を時刻ごとに
@@ -3455,6 +4265,37 @@ document.addEventListener('DOMContentLoaded', () => {
    document.getElementById('ep-cong-legend')?.classList.add('hidden');
    document.getElementById('ep-recenter')?.classList.add('hidden');
    document.body.classList.remove('ep-mode');
+   // 再生前に表示していた現在地ピンを復元
+   if (_epUserMarkerWasOnMap && userMarker && currentLocation && map) {
+     try {
+       userMarker.setLatLng([currentLocation.lat, currentLocation.lng]);
+       if (!map.hasLayer(userMarker)) userMarker.addTo(map);
+       syncUserMarkerArrow();
+     } catch (e) {}
+   }
+   _epUserMarkerWasOnMap = false;
+ }
+
+ function _appendHeroRouteOption(wrapper, c, opts) {
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   const btn = document.createElement('button');
+   btn.className = `route-option-btn ${opts.className} ${opts.isSelected ? 'active' : ''}`;
+   btn.setAttribute('data-route-id', c.id);
+   btn.setAttribute('data-color', c.color || '#00bbff');
+   btn.innerHTML = `
+     <div class="ai-route-glow"></div>
+     <div class="route-card-row">
+       <div class="ai-route-icon">${opts.iconSvg}</div>
+       <div class="route-card-text">
+         <div class="route-card-name">${c.label}</div>
+         <div class="route-card-kw">${opts.badgeText}</div>
+       </div>
+       <div class="route-card-time">${c.estimated_min}<small>${(dict.minutesSuffix || '分')}</small></div>
+     </div>`;
+   btn.addEventListener('click', () => { opts.onSelect(); });
+   btn.addEventListener('touchstart', function(){ btn.classList.add('pressed'); }, {passive:true});
+   btn.addEventListener('touchend', function(){ setTimeout(function(){ btn.classList.remove('pressed'); }, 150); }, {passive:true});
+   wrapper.appendChild(btn);
  }
 
  function showRouteSelectorHUD(candidates) {
@@ -3524,11 +4365,15 @@ document.addEventListener('DOMContentLoaded', () => {
   activeRoutesList = candidates;
   hideRouteCalcLoading();  // 経路が確定したのでローディングを閉じる
 
+  // AI学習済みルートが候補に含まれるか（フォールバックUI切替の判定）
+  const hasAiRoute = (candidates || []).some(c => c && c.isAI);
+
   // 選択画面が開いた時点で、確定後の候補（AI＋要配慮者）を地図に描き直す。
   // ここより前（recalculateRouteFromLocation）の描画はAI/要配慮者への集約前の
   // 暫定候補のままなので、カードと地図の表示が食い違っていた。
   try {
-    drawMultipleEvacuationRoutes(currentLocation, window._cachedTargetEdge, activeSecondaryRoute, candidates, getAutoBestRouteId(candidates));
+    // 自動選択せず全候補を同列表示（AI/smart ルートもユーザーがタップするまで適用しない）
+    drawMultipleEvacuationRoutes(currentLocation, window._cachedTargetEdge, activeSecondaryRoute, candidates, null);
   } catch (e) { console.error('[TENDEN] drawMultipleEvacuationRoutes error (selector):', e); }
 
  // Temporarily fade out background emergency controls & banners
@@ -3558,8 +4403,11 @@ document.addEventListener('DOMContentLoaded', () => {
  optionsWrapper.style.marginTop = '6px';
  
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+ const _heroIconShort = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>';
+ const _heroIconAvoid = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+ const _heroIconAcc = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="4" r="1"/><path d="m18 19 1-7-6 1"/><path d="m5 8 3-3 5.5 3-2.36 3.5"/><path d="M4.24 14.5a5 5 0 0 0 6.88 6"/><path d="M13.76 17.5a5 5 0 0 0-6.88-6"/></svg>';
  candidates.forEach(c => {
- const isSelected = c.id === activeSelectedRouteId;
+ const isSelected = activeSelectedRouteId != null && c.id === activeSelectedRouteId;
  const targetColor = c.color || '#00bbff';
 
  // ── AIモデル推奨ルート: 専用のヒーローカード ──
@@ -3587,8 +4435,8 @@ document.addEventListener('DOMContentLoaded', () => {
    return;
  }
 
- // ── 要配慮者ルート: AIルートと同格のヒーローカード（色のみ藍色系で区別） ──
- if (c.isAccessibleAI || c.id === 'C') {
+ // ── 要配慮者ルート（AI学習済み時のみ）: ヒーローカード ──
+ if (c.isAccessibleAI || (hasAiRoute && c.id === 'C')) {
    const accBtn = document.createElement('button');
    accBtn.className = `route-option-btn acc-route-btn ${isSelected ? 'active' : ''}`;
    accBtn.setAttribute('data-route-id', c.id);
@@ -3609,6 +4457,24 @@ document.addEventListener('DOMContentLoaded', () => {
    accBtn.addEventListener('touchstart', function(){ accBtn.classList.add('pressed'); }, {passive:true});
    accBtn.addEventListener('touchend', function(){ setTimeout(function(){ accBtn.classList.remove('pressed'); }, 150); }, {passive:true});
    optionsWrapper.appendChild(accBtn);
+   return;
+ }
+
+ // ── フォールバック時（AI未取得）: A/B/C を同格のヒーローカードで表示 ──
+ if (!hasAiRoute && (c.id === 'A' || c.id === 'B' || c.id === 'C')) {
+   const fallbackHero = {
+     A: { className: 'short-route-btn', badge: dict.routeShortest || '最短距離', icon: _heroIconShort },
+     B: { className: 'avoid-route-btn', badge: dict.routeAvoid || '混雑回避', icon: _heroIconAvoid },
+     C: { className: 'acc-route-btn', badge: dict.routeAccessibleBadge || dict.routeBarrier || 'やさしい道', icon: _heroIconAcc }
+   };
+   const cfg = fallbackHero[c.id];
+   _appendHeroRouteOption(optionsWrapper, c, {
+     className: cfg.className,
+     badgeText: cfg.badge,
+     iconSvg: cfg.icon,
+     isSelected,
+     onSelect: () => { selectEvacuationRoute(c.id); }
+   });
    return;
  }
 
@@ -3670,6 +4536,8 @@ document.addEventListener('DOMContentLoaded', () => {
  // Show overlay with animation
  const overlay = document.getElementById('route-overlay');
  if (overlay) {
+ const sheet = overlay.querySelector('.route-bottom-sheet');
+ if (sheet) sheet.classList.toggle('route-fallback-mode', !hasAiRoute);
  overlay.classList.remove('hidden');
  setTimeout(() => overlay.classList.add('active'), 10);
  }
@@ -3810,11 +4678,15 @@ document.addEventListener('DOMContentLoaded', () => {
    if (el) el.classList.remove('hidden');
    if (_routeLoadingTimer) clearTimeout(_routeLoadingTimer);
    _routeLoadingTimer = setTimeout(hideRouteCalcLoading, 15000); // 安全策：長すぎる場合は自動で閉じる
+   if (typeof setAgentForFeature === 'function') setAgentForFeature('route-calc', undefined, { persist: true });
+   else if (typeof setAgentState === 'function') setAgentState('thinking', undefined, { persist: true });
  }
  function hideRouteCalcLoading() {
    const el = document.getElementById('route-loading');
    if (el) el.classList.add('hidden');
    if (_routeLoadingTimer) { clearTimeout(_routeLoadingTimer); _routeLoadingTimer = null; }
+   if (typeof syncAgentEmergency === 'function') syncAgentEmergency(!!isEmergency);
+   else if (typeof setAgentState === 'function') setAgentState(isEmergency ? 'alert' : 'idle', undefined, { persist: true });
  }
 
  // ── TENDEN 共通ローディング表示 ─────────────────────────────────────────
@@ -3836,11 +4708,17 @@ document.addEventListener('DOMContentLoaded', () => {
    ov.classList.remove('hidden');
    if (_tendenLoadingTimer) clearTimeout(_tendenLoadingTimer);
    _tendenLoadingTimer = setTimeout(hideTendenLoading, autoHideMs || 15000); // 安全策：閉じ忘れ防止
+   if (typeof setAgentForFeature === 'function') setAgentForFeature('tenden-loading', undefined, { persist: true });
  }
  function hideTendenLoading() {
    const ov = document.getElementById('tenden-loading');
    if (ov) ov.classList.add('hidden');
    if (_tendenLoadingTimer) { clearTimeout(_tendenLoadingTimer); _tendenLoadingTimer = null; }
+   if (typeof syncAgentEmergency === 'function' && (isEmergency || document.body.classList.contains('tenden-nav-active'))) {
+     syncAgentEmergency(true);
+   } else if (typeof setAgentForFeature === 'function') {
+     setAgentForFeature('default', undefined, { persist: true });
+   }
  }
  try { window.showTendenLoading = showTendenLoading; window.hideTendenLoading = hideTendenLoading; } catch (e) {}
 
@@ -4154,10 +5032,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Draw multiple routes with default selection 'A' and secondary route
+  // Draw multiple routes without pre-selecting (showRouteSelectorHUD で選択 UI を開く)
   activeSecondaryRoute = secondaryRoute;
   try {
-    drawMultipleEvacuationRoutes(loc, targetEdge, secondaryRoute, candidates, activeSelectedRouteId || 'A');
+    drawMultipleEvacuationRoutes(loc, targetEdge, secondaryRoute, candidates, null);
   } catch(e) { console.error('[TENDEN] drawMultipleEvacuationRoutes error:', e); }
 
   // Dynamically populate bottom sheet HUD cards and show
@@ -4605,7 +5483,7 @@ document.addEventListener('DOMContentLoaded', () => {
  html2canvas(document.body, {
  useCORS: true,
  allowTaint: true,
- ignoreElements: (el) => el.id === 'onboarding-overlay' || el.id === 'error-overlay' || el.id === 'share-overlay' || el.id === 'settings-overlay' || el.id === 'layers-overlay'
+ ignoreElements: (el) => el.id === 'onboarding-overlay' || el.id === 'error-overlay' || el.id === 'share-overlay' || el.id === 'app-share-overlay' || el.id === 'settings-overlay' || el.id === 'about-overlay' || el.id === 'layers-overlay'
  }).then(canvas => {
  const link = document.createElement('a');
  link.download = `tenden_backup_${new Date().toISOString().split('T')[0]}.png`;
@@ -4657,10 +5535,12 @@ document.addEventListener('DOMContentLoaded', () => {
    // 地震・津波オーバーレイが開いていれば即時更新
    const qov = document.getElementById('quake-overlay');
    if (qov && qov.classList.contains('active')) loadQuakeTsunamiPanel();
+   else if (data.code === 552 || data.code === 551) refreshHudTsunamiStatus();
 
    if (data.code === 552) {
      // 津波警報 (code 552)
      if (!data.cancelled) {
+       _updateHudTsunamiChip('danger');
        setP2PStatus('alert');
        const p2pAuto = localStorage.getItem('tenden-p2p-auto') !== 'false';
        if (p2pAuto && !isEmergency) {
@@ -4722,12 +5602,13 @@ document.addEventListener('DOMContentLoaded', () => {
  if (dateEl) {
  dateEl.innerText = d.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', weekday: 'short' });
  }
+ if (typeof updateHudTimeWarning === 'function') updateHudTimeWarning();
  }
  tick();
  setInterval(tick, 1000);
  }
 
- // P2P謗･邯夂憾諷九ｒHUD縺ｫ蜿肴丐縺吶ｋ
+ // P2P接続状態をHUDに反映する
  function setP2PStatus(state) {
  const dot = document.getElementById('p2p-dot');
  const label = document.getElementById('p2p-label');
@@ -4746,6 +5627,8 @@ document.addEventListener('DOMContentLoaded', () => {
  if (bar) {
  bar.classList.toggle('p2p-alert-active', state === 'alert');
  }
+ if (typeof syncAgentFromP2P === 'function') syncAgentFromP2P(state);
+ if (typeof updateHudTimeWarning === 'function') updateHudTimeWarning();
  }
 
  function getLanguageCode() {
@@ -4757,8 +5640,79 @@ document.addEventListener('DOMContentLoaded', () => {
  return i18nDict[browserLang] ? browserLang : 'ja';
  }
 
+ /** 安否共有 — タップ直後に Web Share API、非対応時のみクリップボード＋トースト */
+ async function shareSafetyStatus(options = {}) {
+ const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+ const lang = getLanguageCode();
+ if (!currentLocation) {
+  showCustomAlert(
+   dict.alertSosTitle || '安否情報 (現在地)',
+   dict.alertSosError || '現在地を取得できませんでした。まず地図上をタップして現在地を設定してください。',
+   'warning'
+  );
+  return;
+ }
+ const mapsUrl = `https://maps.google.com/?q=${currentLocation.lat},${currentLocation.lng}`;
+ const shareTextDefault = lang === 'ja'
+  ? '現在、安全な高台へ避難中です。\n現在地: '
+  : 'I am currently evacuating to safe high ground.\nMy location: ';
+ const text = (dict.shareText || shareTextDefault) + mapsUrl;
+ const title = dict.alertSosTitle || '安否情報 (現在地)';
+ const sharePayloads = [
+  { title, text, url: mapsUrl },
+  { title, text },
+  { text },
+ ];
+ if (navigator.share && window.isSecureContext) {
+  for (const data of sharePayloads) {
+   if (navigator.canShare && !navigator.canShare(data)) continue;
+   try {
+    if (options.closeDock && typeof window.closeDockSub === 'function') window.closeDockSub();
+    await navigator.share(data);
+    if (typeof setAgentForFeature === 'function') setAgentForFeature('safety-share', undefined, { persist: true });
+    triggerDynamicIsland(dict.sharedLabel || '共有しました', 'success');
+    return;
+   } catch (e) {
+    if (e?.name === 'AbortError') {
+     if (options.closeDock && typeof window.closeDockSub === 'function') window.closeDockSub();
+     return;
+    }
+   }
+  }
+ }
+ if (options.closeDock && typeof window.closeDockSub === 'function') window.closeDockSub();
+ if (typeof setAgentForFeature === 'function') setAgentForFeature('safety-share', undefined, { persist: true });
+ if (navigator.clipboard?.writeText) {
+  try {
+   await navigator.clipboard.writeText(text);
+   triggerDynamicIsland(dict.copiedLabel || 'コピーしました', 'copied');
+   return;
+  } catch (_) { /* fall through */ }
+ }
+ try {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  triggerDynamicIsland(dict.copiedLabel || 'コピーしました', 'copied');
+ } catch (_) {
+  triggerDynamicIsland(dict.alertSosError || '共有できませんでした', 'warning');
+ }
+ }
+
+ function syncBodyLangClass(langCode) {
+ Array.from(document.body.classList).filter(c => c.startsWith('lang-')).forEach(c => document.body.classList.remove(c));
+ document.body.classList.add('lang-' + langCode);
+ }
+
  function initI18n() {
  const langCode = getLanguageCode();
+ syncBodyLangClass(langCode);
 
  // Reset to original Japanese if not in dict
  if (!i18nDict[langCode]) {
@@ -4775,47 +5729,31 @@ document.addEventListener('DOMContentLoaded', () => {
  el.innerHTML = dict[key];
  }
  });
+ document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+ const key = el.getAttribute('data-i18n-aria');
+ if (dict[key]) el.setAttribute('aria-label', dict[key]);
+ });
+ if (_coastDistActive && typeof updateCoastDistDockLabels === 'function') {
+   updateCoastDistDockLabels(true);
+ }
+ if (_coastDistActive && typeof setCoastDistDismissChipVisible === 'function') {
+   setCoastDistDismissChipVisible(true);
+ }
+ if (isModelAreaDemo && typeof setModelAreaDismissChipVisible === 'function') {
+   setModelAreaDismissChipVisible(true);
+ }
+ if (typeof _updateHudTsunamiChip === 'function') _updateHudTsunamiChip(_hudTsunamiKind);
+ if (typeof updateHudTimeWarning === 'function') updateHudTimeWarning();
+ if (typeof updateSafeZoneGuideVisibility === 'function') updateSafeZoneGuideVisibility();
  }
  }
 
  function triggerDynamicIsland(message, type = 'info') {
- const island = document.getElementById('dynamic-island');
- const iconEl = document.getElementById('island-icon');
- const textEl = document.getElementById('island-text');
- if (!island || !iconEl || !textEl) return;
-
- // Reset state & clear active timers to handle rapid triggers elegantly
- if (dynamicIslandTimer) {
- clearTimeout(dynamicIslandTimer);
- dynamicIslandTimer = null;
+ if (typeof showAgentBubble === 'function') {
+ showAgentBubble(message, { type: type });
+ return;
  }
-
- const icons = {
- info: '',
- success: '',
- warning: '',
- error: '',
- copied: ''
- };
- iconEl.innerText = icons[type] || '';
- textEl.innerText = message;
-
- island.classList.remove('hidden');
- island.className = 'dynamic-island-collapsed';
-
- // Force browser repaint to trigger slide down animation
- setTimeout(() => {
- island.className = 'dynamic-island-expanded';
- }, 30);
-
- // Retract after 3.8 seconds
- dynamicIslandTimer = setTimeout(() => {
- island.className = 'dynamic-island-collapsed';
- dynamicIslandTimer = setTimeout(() => {
- island.classList.add('hidden');
- dynamicIslandTimer = null;
- }, 650);
- }, 3800);
+ if (typeof syncAgentFromIsland === 'function') syncAgentFromIsland(type, message);
  }
 
  function updateGPSAccuracyHUD(accuracy) {
@@ -4828,11 +5766,13 @@ document.addEventListener('DOMContentLoaded', () => {
  if (accuracy === null || accuracy === undefined) {
  // Manual pin or mock high accuracy
  if (isManualLocation) {
- accuracyEl.innerText = `GPS: ±3m`;
+ accuracyEl.innerText = '±3m';
  box.className = 'status-badge gps-badge';
+ box.setAttribute('aria-label', (dict.gpsAccuracyAria || 'GPS精度 {accuracy}').replace('{accuracy}', '±3m'));
  } else {
- accuracyEl.innerText = 'GPS: --';
+ accuracyEl.innerText = '--';
  box.className = 'status-badge gps-badge';
+ box.setAttribute('aria-label', dict.gpsAccuracyAriaUnknown || 'GPS精度 未取得');
  }
  return;
  }
@@ -4840,8 +5780,10 @@ document.addEventListener('DOMContentLoaded', () => {
  const formattedAccuracy = Math.round(accuracy);
  // 低精度でも長い警告文は付けない（上部バーの他項目=海岸距離/津波到達 を押し出すため）。
  // 低精度は色(gps-low-accuracy)で示すのみに留める。
- accuracyEl.innerText = `GPS: ±${formattedAccuracy}m`;
+ const accuracyText = `±${formattedAccuracy}m`;
+ accuracyEl.innerText = accuracyText;
  box.className = accuracy < 15 ? 'status-badge gps-badge' : 'status-badge gps-badge gps-low-accuracy';
+ box.setAttribute('aria-label', (dict.gpsAccuracyAria || 'GPS精度 {accuracy}').replace('{accuracy}', accuracyText));
  }
 
  function updateNetworkStatusHUD() {
@@ -4967,6 +5909,7 @@ document.addEventListener('DOMContentLoaded', () => {
  const distance = L.latLng(loc.lat, loc.lng).distanceTo(destLatLng);
  if (distance < 25) { // Within 25 meters (Apple GPS standard margin)
  isEvacuationCompleted = true;
+ if (typeof setAgentForFeature === 'function') setAgentForFeature('evac-complete', undefined, { persist: true });
  
  // Speak arrival
  speakI18n('speechArrived');
@@ -5664,20 +6607,220 @@ document.addEventListener('DOMContentLoaded', () => {
  });
  }
 
+ /** GSI 津波浸水想定（新）タイル色 → 浸水深区分 */
+ const _GSI_TSUNAMI_DEPTH_COLORS = [
+   { rgb: [255, 255, 190], key: 'hudDepthLt03' },
+   { rgb: [255, 255, 128], key: 'hudDepth03_05' },
+   { rgb: [255, 255, 0], key: 'hudDepth05_3' },
+   { rgb: [255, 192, 0], key: 'hudDepth3_5' },
+   { rgb: [255, 128, 0], key: 'hudDepth5_10' },
+   { rgb: [255, 0, 0], key: 'hudDepth10_20' },
+   { rgb: [170, 0, 0], key: 'hudDepth20plus' }
+ ];
+
+ function _matchGsiTsunamiDepthLabel(r, g, b) {
+   let best = null;
+   let bestDist = Infinity;
+   for (const entry of _GSI_TSUNAMI_DEPTH_COLORS) {
+     const d = Math.sqrt(
+       Math.pow(r - entry.rgb[0], 2) +
+       Math.pow(g - entry.rgb[1], 2) +
+       Math.pow(b - entry.rgb[2], 2)
+     );
+     if (d < bestDist) { bestDist = d; best = entry; }
+   }
+   return (best && bestDist < 90) ? best.key : 'hudDepthUnknown';
+ }
+
+ /** 浸水深バッジ: 区域外(inZone=false)→「—」、区域内→GSIタイル色から深さ区分を表示 */
+ function _setInundationDepthHUD(inZone, depthKey) {
+   const valEl = document.getElementById('inundation-depth-value');
+   const badge = document.getElementById('inundation-depth-badge');
+   if (!valEl || !badge) return;
+   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+   badge.classList.toggle('depth-outside', !inZone);
+   badge.classList.toggle('depth-in-zone', !!inZone);
+   if (!inZone) {
+     valEl.textContent = dict.hudDepthOutside || '—';
+     return;
+   }
+   valEl.textContent = dict[depthKey] || dict.hudDepthUnknown || '?';
+ }
+
+ async function updateInundationDepthHUD(loc, prefCode) {
+   if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return;
+   const code = prefCode || await updateTsunamiPrefecturalTile(loc.lat, loc.lng);
+   const zoom = 14;
+   const coords = getTileCoords(loc.lat, loc.lng, zoom);
+   const tileUrl = `https://disaportaldata.gsi.go.jp/raster/04_tsunami_newlegend_pref_data/${code}/${zoom}/${coords.x}/${coords.y}.png`;
+   return new Promise((resolve) => {
+     const img = new Image();
+     img.crossOrigin = 'anonymous';
+     img.onload = function() {
+       try {
+         const canvas = document.createElement('canvas');
+         canvas.width = 256;
+         canvas.height = 256;
+         const ctx = canvas.getContext('2d');
+         ctx.drawImage(img, 0, 0);
+         const pixel = ctx.getImageData(coords.px, coords.py, 1, 1).data;
+         const alpha = pixel[3];
+         if (alpha <= 0) {
+           _setInundationDepthHUD(false, null);
+           resolve(false);
+           return;
+         }
+         const depthKey = _matchGsiTsunamiDepthLabel(pixel[0], pixel[1], pixel[2]);
+         _setInundationDepthHUD(true, depthKey);
+         resolve(true);
+       } catch (e) {
+         console.warn('[InundationDepthHUD]', e);
+         _setInundationDepthHUD(false, null);
+         resolve(false);
+       }
+     };
+     img.onerror = function() {
+       _setInundationDepthHUD(false, null);
+       resolve(false);
+     };
+     img.src = tileUrl;
+   });
+ }
+
+ /**
+ * 平時ガイド — 浸水区域外かつ平時モードでエージェント吹き出し表示
+ */
+ function isSafeGuideDismissed() {
+ try { return sessionStorage.getItem(SAFE_GUIDE_SESSION_KEY) === '1'; } catch (e) { return false; }
+ }
+
+ function getSafeGuideBubbleMessage() {
+ const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+ return dict.safeGuideBubble || 'いまの場所は安全です。避難の流れを体験してみましょう。';
+ }
+
+ function hideSafeZoneGuideBubble() {
+ if (typeof isAgentBubbleMode === 'function' && isAgentBubbleMode(SAFE_GUIDE_BUBBLE_MODE)) {
+ if (typeof dismissAgentBubble === 'function') dismissAgentBubble();
+ }
+ if (typeof syncAgentSafeGuide === 'function') syncAgentSafeGuide(false);
+ }
+
+ function dismissSafeZoneGuide() {
+ document.body.classList.remove('safe-zone-guide-visible');
+ hideSafeZoneGuideBubble();
+ try { sessionStorage.setItem(SAFE_GUIDE_SESSION_KEY, '1'); } catch (e) {}
+ }
+
+ function showSafeZoneGuideBubble() {
+ if (typeof showAgentBubble !== 'function') return;
+ showAgentBubble(getSafeGuideBubbleMessage(), {
+ type: 'success',
+ persist: true,
+ dismissible: true,
+ interactive: true,
+ mode: SAFE_GUIDE_BUBBLE_MODE,
+ syncState: false
+ });
+ if (typeof syncAgentSafeGuide === 'function') syncAgentSafeGuide(true);
+ }
+
+ function shouldShowSafeZoneGuide() {
+ if (isEmergency || document.body.classList.contains('emergency-mode') || document.body.classList.contains('tenden-nav-active')) return false;
+ if (isSafeGuideDismissed()) return false;
+ if (lastTsunamiIsInundated !== false) return false;
+ if (isWaitingForPinDrop) return false;
+ const onboarding = document.getElementById('onboarding-overlay');
+ if (onboarding && !onboarding.classList.contains('hidden')) return false;
+ const startupNotice = document.getElementById('startup-notice');
+ if (startupNotice && !startupNotice.classList.contains('hidden')) return false;
+ const modelBadge = document.getElementById('model-area-dismiss-chip');
+ if (isModelAreaDemo || (modelBadge && !modelBadge.classList.contains('hidden'))) return false;
+ const crosshair = document.getElementById('crosshair-target');
+ if (crosshair && !crosshair.classList.contains('hidden')) return false;
+ return true;
+ }
+
+ function updateSafeZoneGuideVisibility() {
+ const visible = shouldShowSafeZoneGuide();
+ document.body.classList.toggle('safe-zone-guide-visible', visible);
+ if (visible) {
+ if (typeof isAgentBubbleMode === 'function' && isAgentBubbleMode(SAFE_GUIDE_BUBBLE_MODE)) {
+ const textEl = document.getElementById('tenden-agent-bubble-text');
+ if (textEl) textEl.textContent = getSafeGuideBubbleMessage();
+ if (typeof syncAgentSafeGuide === 'function') syncAgentSafeGuide(true);
+ return;
+ }
+ showSafeZoneGuideBubble();
+ } else {
+ hideSafeZoneGuideBubble();
+ }
+ }
+
+ function initSafeZoneGuide() {
+ window.onAgentBubbleDismiss = function () {
+ if (typeof isAgentBubbleMode === 'function' && isAgentBubbleMode(SAFE_GUIDE_BUBBLE_MODE)) {
+ dismissSafeZoneGuide();
+ if (typeof triggerHapticTick === 'function') triggerHapticTick();
+ return;
+ }
+ if (typeof dismissAgentBubble === 'function') dismissAgentBubble();
+ };
+
+ const drillBtn = document.getElementById('safe-guide-btn-drill');
+ const modelBtn = document.getElementById('safe-guide-btn-model');
+ if (drillBtn) {
+ drillBtn.addEventListener('click', (e) => {
+ e.stopPropagation();
+ dismissSafeZoneGuide();
+ startDrillExperienceFlow();
+ if (typeof triggerHapticTick === 'function') triggerHapticTick();
+ });
+ }
+ if (modelBtn) {
+ modelBtn.addEventListener('click', (e) => {
+ e.stopPropagation();
+ dismissSafeZoneGuide();
+ clearDrillFlyHandler();
+ try { hideTendenLoading(); } catch (err) {}
+ document.getElementById('btn-focus-model')?.click();
+ if (typeof triggerHapticTick === 'function') triggerHapticTick();
+ });
+ }
+ if (map) {
+ map.on('click', () => {
+ if (typeof isAgentBubbleMode === 'function' && isAgentBubbleMode(SAFE_GUIDE_BUBBLE_MODE)) {
+ dismissSafeZoneGuide();
+ }
+ });
+ }
+ const snClose = document.getElementById('btn-startup-notice-close');
+ if (snClose) {
+ snClose.addEventListener('click', () => setTimeout(updateSafeZoneGuideVisibility, 400));
+ }
+ updateSafeZoneGuideVisibility();
+ }
+
  /**
  * 蛻､螳夂ｵ先棡繧辿UD荳企Κ繝舌・・・sunami-status-box・峨↓鄒弱＠縺・げ繝ｩ繧ｹ繝｢繝ｫ繝輔ぅ繧ｺ繝繝舌ャ繧ｸ縺ｨ縺励※蜿肴丐縺吶ｋ
  * @param {boolean} isInundated 豬ｸ豌ｴ諠ｳ螳壼玄蝓溷・縺九←縺・°
  */
  function updateTsunamiStatusUI(isInundated) {
+ lastTsunamiIsInundated = isInundated;
  const box = document.getElementById('tsunami-status-box');
  const textSpan = document.getElementById('tsunami-status-text');
- if (!box || !textSpan) return;
+ if (!box || !textSpan) {
+ updateSafeZoneGuideVisibility();
+ return;
+ }
  
  box.classList.remove('hidden');
  box.className = 'dash-info-card'; // クラスの初期化
  
- // 逕ｻ髱｢蟷・′繧ｹ繝槭・縺九←縺・°・医Ξ繧ｹ繝昴Φ繧ｷ繝悶↑陦ｨ險倥・蠕ｮ隱ｿ謨ｴ・・
- const isMobile = window.innerWidth <= 600;
+ // コンパクトHUD幅（実機・PCモック枠の #app-container 幅で判定）
+ const appEl = document.getElementById('app-container');
+ const hudWidth = appEl ? appEl.clientWidth : window.innerWidth;
+ const isMobile = hudWidth <= 768;
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  
  if (isInundated) {
@@ -5707,6 +6850,8 @@ document.addEventListener('DOMContentLoaded', () => {
   ? (dict.tsunamiStatusSafeMobile || 'Outside Inundation Zone') 
   : (dict.tsunamiStatusSafeDesktop || 'Outside Tsunami Inundation Zone');
  }
+ updateSafeZoneGuideVisibility();
+ updateHudTimeWarning();
  }
 
  /**
@@ -5724,6 +6869,7 @@ document.addEventListener('DOMContentLoaded', () => {
  
  // 3. UI縺ｫ邨先棡繧貞渚譏
  updateTsunamiStatusUI(isInundated);
+ updateInundationDepthHUD(loc, prefCode);
  }
 
  function getEvacuationSpeed() {
@@ -5776,7 +6922,7 @@ document.addEventListener('DOMContentLoaded', () => {
  if (currentLang === 'ja') {
  shareText = `【TENDENマイ避難計画】\n大地震発生時、私の第一目標（浸水安全境界）を完了し次第避難所「${localizedDest}」へ向かいます。`;
  } else {
- shareText = `[TENDEN Personal Evacuation Plan]\nIn the event of a tsunami, I will evacuate to the designated shelter "${localizedDest}" via the 1st safe boundary.\n- Evacuation Route: ${routeLabel}\n- Estimated Time: approx. ${duration_min} min (Speed: ${speed} km/h)\nCheck your own evacuation route now using the offline-first PWA app "TENDEN"!\nApp Link: https://masatosprojects.github.io/tenden-app/`;
+ shareText = `[TENDEN Personal Evacuation Plan]\nIn the event of a tsunami, I will evacuate to the designated shelter "${localizedDest}" via the 1st safe boundary.\n- Evacuation Route: ${routeLabel}\n- Estimated Time: approx. ${duration_min} min (Speed: ${speed} km/h)\nCheck your own evacuation route now using the offline-first PWA app "TENDEN"!\nApp Link: ${(window.TENDEN_CONFIG && window.TENDEN_CONFIG.appUrl) || 'https://masatosprojects.github.io/tenden-app/'}`;
  }
  
  const shareTextArea = document.getElementById('share-text-area');
@@ -5794,6 +6940,95 @@ document.addEventListener('DOMContentLoaded', () => {
  // ==========================================================================
  // Smartphone Premium Features Core Logic (Wake Lock, Compass, Native Notifications, Haptics, Battery Status)
  // ==========================================================================
+
+ function isVirtualLocationMode() {
+   return isModelAreaDemo || (isManualLocation && currentLocation && isInModelArea(currentLocation));
+ }
+
+ function bearingBetweenLocations(from, to) {
+   if (!from || !to) return null;
+   if (Math.abs(from.lat - to.lat) < 1e-8 && Math.abs(from.lng - to.lng) < 1e-8) return null;
+   if (typeof turf !== 'undefined') {
+     return turf.bearing(turf.point([from.lng, from.lat]), turf.point([to.lng, to.lat]));
+   }
+   const dLng = (to.lng - from.lng) * Math.PI / 180;
+   const lat1 = from.lat * Math.PI / 180;
+   const lat2 = to.lat * Math.PI / 180;
+   const y = Math.sin(dLng) * Math.cos(lat2);
+   const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+   return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+ }
+
+ function recordLocationForCompass(newLoc) {
+   if (!newLoc) return;
+   const moved = prevTrackLocation &&
+     (Math.abs(prevTrackLocation.lat - newLoc.lat) > 1e-7 || Math.abs(prevTrackLocation.lng - newLoc.lng) > 1e-7);
+   if (moved) {
+     const bearing = bearingBetweenLocations(prevTrackLocation, newLoc);
+     if (bearing !== null) movementHeading = bearing;
+   }
+   prevTrackLocation = { lat: newLoc.lat, lng: newLoc.lng };
+   if (!_ep) applyCompassDisplay();
+ }
+
+ function getActiveCompassHeading() {
+   const isCompassEnabled = localStorage.getItem('tenden-smart-compass') !== 'false';
+   if (!isCompassEnabled) return null;
+
+   const deviceFresh = lastHeading !== 0 && (Date.now() - deviceHeadingTs) < 2500;
+   const virtualMode = isVirtualLocationMode();
+
+   if (virtualMode) {
+     if (movementHeading !== null) return { heading: movementHeading, invert: false, source: 'virtual-move' };
+     if (deviceFresh) return { heading: lastHeading, invert: true, source: 'device' };
+     return { heading: 0, invert: false, source: 'north' };
+   }
+
+   if (deviceFresh) return { heading: lastHeading, invert: true, source: 'device' };
+   if (gpsMovementHeading !== null) return { heading: gpsMovementHeading, invert: true, source: 'gps' };
+   if (movementHeading !== null) return { heading: movementHeading, invert: false, source: 'move' };
+   return { heading: 0, invert: false, source: 'north' };
+ }
+
+ function applyCompassDisplay() {
+   if (_ep) return;
+   const result = getActiveCompassHeading();
+   const needle = document.querySelector('#ep-compass .ep-compass-needle');
+   const compass = document.getElementById('ep-compass');
+   if (!needle) return;
+
+   if (!result) {
+     needle.style.transform = '';
+     syncUserMarkerArrow();
+     return;
+   }
+
+   const rot = result.invert ? -result.heading : result.heading;
+   needle.style.transform = 'rotate(' + rot + 'deg)';
+   document.documentElement.style.setProperty('--compass-heading', result.heading + 'deg');
+
+   if (compass) {
+     compass.dataset.headingSource = result.source;
+     const virtualMode = isVirtualLocationMode();
+     compass.setAttribute('aria-label', virtualMode
+       ? '方位（仮想位置・' + Math.round(result.heading) + '°）'
+       : '方位（' + Math.round(result.heading) + '°）');
+   }
+   syncUserMarkerArrow();
+ }
+
+ function syncUserMarkerArrow() {
+   const arrow = document.querySelector('.user-marker-arrow');
+   if (!arrow) return;
+   const isCompassEnabled = localStorage.getItem('tenden-smart-compass') !== 'false';
+   const result = getActiveCompassHeading();
+   if (!isCompassEnabled || !result || result.source === 'north') {
+     arrow.style.display = 'none';
+     return;
+   }
+   arrow.style.display = 'block';
+   arrow.style.transform = 'rotate(' + result.heading + 'deg)';
+ }
 
  function triggerHapticTick() {
  if ('vibrate' in navigator) {
@@ -5861,7 +7096,7 @@ document.addEventListener('DOMContentLoaded', () => {
  navigator.serviceWorker.ready.then(registration => {
  registration.showNotification(title, {
  body: body,
- icon: 'assets/icons/icon.svg',
+ icon: 'assets/icons/TENDEN.gif',
  vibrate: [500, 100, 500],
  tag: tag,
  renotify: true
@@ -5871,7 +7106,7 @@ document.addEventListener('DOMContentLoaded', () => {
  try {
  new Notification(title, {
  body: body,
- icon: 'assets/icons/icon.svg',
+ icon: 'assets/icons/TENDEN.gif',
  tag: tag
  });
  } catch (e) {
@@ -5907,8 +7142,7 @@ document.addEventListener('DOMContentLoaded', () => {
  function handleOrientation(event) {
  const isCompassEnabled = localStorage.getItem('tenden-smart-compass') !== 'false';
  if (!isCompassEnabled) {
- const arrow = document.querySelector('.user-marker-arrow');
- if (arrow) arrow.style.display = 'none';
+ syncUserMarkerArrow();
  return;
  }
 
@@ -5923,17 +7157,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
  if (heading !== null) {
  lastHeading = heading;
- const arrow = document.querySelector('.user-marker-arrow');
- if (arrow) {
- arrow.style.display = 'block';
- arrow.style.transform = `rotate(${heading}deg)`;
- }
- // 本番モードのコンパス：実機の向きに合わせ、北を指すよう針を逆回転する。
- // （予習中は_epRenderが仮想の歩行者の進行方向で上書きするため、_epが無い時のみ更新）
- if (!_ep) {
- const needle = document.querySelector('#ep-compass .ep-compass-needle');
- if (needle) needle.style.transform = 'rotate(' + (-heading) + 'deg)';
- }
+ deviceHeadingTs = Date.now();
+ if (!_ep) applyCompassDisplay();
  }
  }
 
@@ -6168,57 +7393,394 @@ document.addEventListener('DOMContentLoaded', () => {
     val.textContent = d >= 1000 ? `${(d / 1000).toFixed(1)}km` : `${d}m`;
   }
 
-  async function drawProximityToCoastline(loc, showPopup) {
-    if (showPopup === undefined) showPopup = true;
-    const coast = await findNearestCoastline(loc);
-    if (!coast) {
-      if (showPopup) showCustomAlert('海岸線データ未取得', '現在地付近の海岸線データを取得できませんでした。オンライン環境で再度お試しください。', 'info');
+  function updateCoastDistDockLabels(active) {
+    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+    const labelKey = active ? 'dockCoastActive' : 'dockCoast';
+    const ariaKey = active ? 'dockCoastActiveAria' : 'dockCoastAria';
+    const hint = dict.coastDistLineTapHint || '';
+    document.querySelectorAll('[data-trigger="btn-coastline-dist"]').forEach(function (el) {
+      const label = el.querySelector('[data-i18n="dockCoast"], [data-i18n="dockCoastActive"]');
+      if (label) {
+        label.setAttribute('data-i18n', labelKey);
+        if (dict[labelKey]) label.textContent = dict[labelKey];
+      }
+      if (label && label.classList.contains('dock-label')) {
+        if (active && hint) label.setAttribute('data-coast-hint', hint);
+        else label.removeAttribute('data-coast-hint');
+      }
+      if (dict[ariaKey]) el.setAttribute('aria-label', dict[ariaKey]);
+    });
+  }
+
+  function setCoastDistDismissChipVisible(visible) {
+    const chip = document.getElementById('coast-dist-dismiss-chip');
+    if (!chip) return;
+    chip.classList.toggle('hidden', !visible);
+    if (visible) {
+      const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+      const span = chip.querySelector('[data-i18n="coastDistDismissChip"]');
+      if (span && dict.coastDistDismissChip) span.textContent = dict.coastDistDismissChip;
+      if (dict.coastDistDismissAria) chip.setAttribute('aria-label', dict.coastDistDismissAria);
+    }
+  }
+
+  function clearCoastDistOverlay() {
+    if (coastDistLayerGroup && map) {
+      try { map.removeLayer(coastDistLayerGroup); } catch (e) {}
+      coastDistLayerGroup = null;
+    }
+    _coastDistActive = false;
+    document.querySelectorAll('[data-trigger="btn-coastline-dist"]').forEach(function (el) {
+      el.classList.remove('dock-coast-active');
+      el.setAttribute('aria-pressed', 'false');
+    });
+    updateCoastDistDockLabels(false);
+    setCoastDistDismissChipVisible(false);
+    if (typeof setAgentForFeature === 'function' && !isEmergency && !document.body.classList.contains('tenden-nav-active')) {
+      setAgentForFeature('default', undefined, { persist: true });
+    }
+  }
+
+  async function toggleCoastDistDisplay() {
+    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+    if (!currentLocation) {
+      showCustomAlert(
+        dict.coastDistNoLocationTitle || '現在地が未取得',
+        dict.coastDistNoLocationDesc || '「現在地」ボタンで位置情報を取得してから再度お試しください。',
+        'info'
+      );
       return;
     }
+    if (_coastDistActive) {
+      clearCoastDistOverlay();
+      return;
+    }
+    try { showTendenLoading(dict.coastLoadingMsg || '海岸距離を計算中…', 60000); } catch (e) {}
+    try {
+      await drawProximityToCoastline(currentLocation);
+    } finally {
+      try { hideTendenLoading(); } catch (e) {}
+    }
+  }
+
+  async function drawProximityToCoastline(loc) {
+    clearCoastDistOverlay();
+    const coast = await findNearestCoastline(loc);
+    const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+    if (!coast) {
+      showCustomAlert(
+        dict.coastDistNoDataTitle || '海岸線データ未取得',
+        dict.coastDistNoDataDesc || '現在地付近の海岸線データを取得できませんでした。オンライン環境で再度お試しください。',
+        'info'
+      );
+      return null;
+    }
+    if (!map) return coast;
 
     const distM = Math.round(coast.distance);
+    const distText = distM >= 1000 ? `${(distM / 1000).toFixed(1)}km` : `${distM}m`;
+    const startLatLng = [loc.lat, loc.lng];
+    const endLatLng = [coast.lat, coast.lng];
 
-    // 距離テキスト（1000m以上はkm表記）
-    const distText = distM >= 1000
-      ? `現在地から最も近い海岸線まで約 ${(distM/1000).toFixed(1)}km`
-      : `現在地から最も近い海岸線まで約 ${distM}m`;
+    coastDistLayerGroup = L.layerGroup().addTo(map);
 
-    // ── ポップアップのみで距離を通知（地図表示・線・マーカーは変更しない）──
-    if (showPopup) {
-      const safetyNote = distM < 300
-        ? '<br><br>海岸線に非常に近い位置です。津波警報発令時は直ちに内陸・高台へ避難してください。'
-        : distM < 800
-        ? '<br><br>津波警報発令時は直ちに高台へ避難してください。'
-        : '<br><br>発令時は速やかに高台へ避難してください。';
-      showCustomAlert(
-        '現在地と海岸線の距離',
-        `<b>${distText}</b>の位置にいます。${safetyNote}`,
-        distM < 500 ? 'warning' : 'info'
-      );
-    }
+    const line = L.polyline([startLatLng, endLatLng], {
+      color: '#ff2d55',
+      dashArray: '8, 8',
+      weight: 4,
+      opacity: 0.85,
+      className: 'coastal-proximity-line'
+    }).addTo(coastDistLayerGroup);
+    line.on('click', clearCoastDistOverlay);
+
+    const badgeTpl = dict.coastDistLineBadge || '海岸線 {dist}';
+    const shorelineIcon = L.divIcon({
+      className: 'shoreline-icon-container',
+      html: '<div class="shoreline-badge">' + badgeTpl.replace('{dist}', distText) + '</div>',
+      iconSize: [140, 24],
+      iconAnchor: [70, 12]
+    });
+    L.marker(endLatLng, { icon: shorelineIcon, interactive: false }).addTo(coastDistLayerGroup);
+
+    L.circleMarker(startLatLng, {
+      radius: 6,
+      color: '#fff',
+      weight: 2,
+      fillColor: '#007aff',
+      fillOpacity: 1,
+      interactive: true
+    }).addTo(coastDistLayerGroup).on('click', onLineDismiss);
+
+    try {
+      map.fitBounds(L.latLngBounds([startLatLng, endLatLng]), {
+        padding: [80, 80],
+        maxZoom: 16,
+        animate: true,
+        duration: 0.8
+      });
+    } catch (e) {}
+
+    _coastDistActive = true;
+    document.querySelectorAll('[data-trigger="btn-coastline-dist"]').forEach(function (el) {
+      el.classList.add('dock-coast-active');
+      el.setAttribute('aria-pressed', 'true');
+    });
+    updateCoastDistDockLabels(true);
+    setCoastDistDismissChipVisible(true);
+    if (typeof setAgentForFeature === 'function') setAgentForFeature('coast-dist', undefined, { persist: true });
+
+    const islandMsg = (dict.coastDistIslandMsg || '海岸線まで {dist}').replace('{dist}', distText);
+    triggerDynamicIsland(islandMsg, distM < 500 ? 'warning' : 'info');
+
+    const dismissHint = dict.coastDistDismissHint || 'もう一度タップで解除';
+    setTimeout(function () {
+      if (!_coastDistActive) return;
+      if (typeof showAgentBubble === 'function') {
+        showAgentBubble(dismissHint, { type: 'info', duration: 7000, feature: 'coast-dist' });
+      }
+    }, 4800);
 
     return coast;
   }
 
 
 
+function resolveDemoLangDict() {
+  try {
+    var lang = (localStorage.getItem('tenden-lang') === 'auto' || !localStorage.getItem('tenden-lang'))
+      ? (navigator.language || 'ja').split('-')[0]
+      : localStorage.getItem('tenden-lang');
+    return (typeof i18nDict !== 'undefined' && i18nDict[lang]) || {};
+  } catch (e) { return {}; }
+}
+
+function getOnboardingAgentText(step) {
+  var dict = resolveDemoLangDict();
+  var key = 'onboardingAgentStep' + step;
+  return dict[key] || ONBOARDING_AGENT_FALLBACKS[step] || ONBOARDING_AGENT_FALLBACKS[0];
+}
+
+function getAgentHomeContainer() {
+  return document.getElementById('app-container');
+}
+
+function reparentAgentToMainApp(agent) {
+  var home = getAgentHomeContainer();
+  if (!agent || !home) return false;
+  var anchor = document.getElementById('crosshair-target');
+  if (_onboardingAgentParent && _onboardingAgentParent !== agent.parentNode && _onboardingAgentParent.id === 'app-container') {
+    try {
+      if (_onboardingAgentNext && _onboardingAgentNext.parentNode === _onboardingAgentParent) {
+        _onboardingAgentParent.insertBefore(agent, _onboardingAgentNext);
+      } else {
+        _onboardingAgentParent.appendChild(agent);
+      }
+      return true;
+    } catch (e) { /* fall through to anchor insert */ }
+  }
+  if (anchor && anchor.parentNode === home) {
+    home.insertBefore(agent, anchor);
+  } else {
+    home.appendChild(agent);
+  }
+  return true;
+}
+
+function resetAgentMainAppStyles(agent) {
+  if (!agent) return;
+  ['transform', 'top', 'right', 'bottom', 'left', 'opacity', 'visibility'].forEach(function (prop) {
+    agent.style.removeProperty(prop);
+  });
+}
+
+function setOnboardingDemoActive(active) {
+  document.body.classList.toggle('onboarding-demo-active', !!active);
+  if (active) {
+    dockAgentForOnboarding();
+  } else {
+    undockAgentFromOnboarding();
+  }
+}
+
+function dockAgentForOnboarding() {
+  var agent = document.getElementById('tenden-agent');
+  var overlay = document.getElementById('onboarding-overlay');
+  if (!agent || !overlay || agent.dataset.onboardingDocked === '1') return;
+  _onboardingAgentParent = agent.parentNode;
+  _onboardingAgentNext = agent.nextSibling;
+  overlay.appendChild(agent);
+  agent.dataset.onboardingDocked = '1';
+  agent.classList.add('tenden-agent--onboarding');
+}
+
+function undockAgentFromOnboarding() {
+  var agent = document.getElementById('tenden-agent');
+  var overlay = document.getElementById('onboarding-overlay');
+  if (!agent) return;
+  var inOverlay = !!(overlay && agent.parentNode === overlay);
+  var wasDocked = agent.dataset.onboardingDocked === '1';
+  if (!inOverlay && !wasDocked) return;
+
+  agent.classList.remove('tenden-agent--onboarding');
+  if (inOverlay) {
+    reparentAgentToMainApp(agent);
+  } else if (_onboardingAgentParent) {
+    try {
+      if (_onboardingAgentNext && _onboardingAgentNext.parentNode === _onboardingAgentParent) {
+        _onboardingAgentParent.insertBefore(agent, _onboardingAgentNext);
+      } else {
+        _onboardingAgentParent.appendChild(agent);
+      }
+    } catch (e) {
+      reparentAgentToMainApp(agent);
+    }
+  }
+  resetAgentMainAppStyles(agent);
+  delete agent.dataset.onboardingDocked;
+  _onboardingAgentParent = null;
+  _onboardingAgentNext = null;
+}
+
+function applyOnboardingAgentStep(step) {
+  var cfg = ONBOARDING_AGENT_CFG[step];
+  if (!cfg) return;
+  setOnboardingDemoActive(true);
+  var msg = getOnboardingAgentText(step);
+  if (typeof showAgentBubble === 'function') {
+    showAgentBubble(msg, { type: cfg.type, persist: true, feature: cfg.feature, syncState: false });
+  }
+  if (typeof setAgentForFeature === 'function') {
+    setAgentForFeature(cfg.feature, msg, { persist: true });
+  }
+}
+
+function teardownOnboardingAgent() {
+  setOnboardingDemoActive(false);
+  undockAgentFromOnboarding();
+  if (typeof dismissAgentBubble === 'function') dismissAgentBubble();
+  if (typeof setAgentForFeature === 'function') {
+    setAgentForFeature('default', undefined, { persist: true });
+  }
+}
+
+function finishOnboardingDemo() {
+  teardownOnboardingAgent();
+  var overlay = document.getElementById('onboarding-overlay');
+  if (overlay) {
+    overlay.classList.remove('active');
+    setTimeout(function () {
+      undockAgentFromOnboarding();
+      overlay.classList.add('hidden');
+    }, 300);
+  }
+  try {
+    localStorage.setItem('tenden-demo-seen', 'true');
+  } catch (e) {}
+  setTimeout(function () {
+    try { showStartupNoticeIfNeeded(); } catch (e) {}
+    try {
+      if (typeof updateSafeZoneGuideVisibility === 'function') updateSafeZoneGuideVisibility();
+    } catch (e) {}
+  }, 600);
+}
+
+// ── 学ぶドックからデモを再再生 ───────────────────────────────────────
+function replayOnboardingDemo() {
+  teardownOnboardingAgent();
+  try { localStorage.removeItem('tenden-demo-seen'); } catch (e) {}
+  try { sessionStorage.removeItem('tenden-demo-skipped'); } catch (e) {}
+  if (typeof window.closeDockSub === 'function') window.closeDockSub();
+  document.querySelectorAll('.overlay').forEach(function (el) {
+    if (el.id !== 'onboarding-overlay') {
+      el.classList.remove('active');
+      el.classList.add('hidden');
+    }
+  });
+  var demoOv = document.getElementById('onboarding-overlay');
+  if (!demoOv) { console.error('[TENDEN] onboarding-overlay not found'); return; }
+  document.querySelectorAll('.demo-step').forEach(function (el) { el.classList.remove('active'); });
+  var s0 = document.getElementById('demo-step-0');
+  if (s0) s0.classList.add('active');
+  document.querySelectorAll('.demo-dot').forEach(function (d, i) { d.classList.toggle('active', i === 0); });
+  demoOv.style.zIndex = '99998';
+  demoOv.classList.remove('hidden');
+  demoOv.classList.remove('active');
+  setTimeout(function () {
+    demoOv.classList.add('active');
+    applyOnboardingAgentStep(0);
+    if (typeof initDemoQuakeMap === 'function') {
+      setTimeout(function () { initDemoQuakeMap(); }, 400);
+    }
+  }, 50);
+}
+
+// ── 避難ナビ安否共有（#btn-share）── document 委譲で Web Share を確実に起動
+function wireShareSafetyNavButton() {
+  if (document.documentElement.dataset.navShareDelegated === '1') return;
+  document.documentElement.dataset.navShareDelegated = '1';
+
+  function onNavShare(e) {
+    var btn = e.target && e.target.closest ? e.target.closest('#btn-share') : null;
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof triggerHapticTick === 'function') triggerHapticTick();
+    shareSafetyStatus();
+  }
+
+  document.addEventListener('click', onNavShare, true);
+  document.addEventListener('touchend', function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest('#btn-share') : null;
+    if (!btn) return;
+    e.preventDefault();
+    onNavShare(e);
+  }, { capture: true, passive: false });
+}
+
+// ── 訓練終了ボタン（#btn-reset-alert / #ep-end-drill）── document 委譲で確実に動作
+function wireEndDrillButton() {
+  if (document.documentElement.dataset.endDrillDelegated === '1') return;
+  document.documentElement.dataset.endDrillDelegated = '1';
+
+  function onEndDrill(e) {
+    var btn = e.target && e.target.closest ? e.target.closest('#btn-reset-alert, #ep-end-drill') : null;
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    endDrillTraining();
+  }
+
+  document.addEventListener('click', onEndDrill, true);
+  document.addEventListener('touchend', function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest('#btn-reset-alert, #ep-end-drill') : null;
+    if (!btn) return;
+    e.preventDefault();
+    onEndDrill(e);
+  }, { capture: true, passive: false });
+
+  ['btn-reset-alert', 'ep-end-drill'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.dataset.endDrillWired = '1';
+  });
+}
+
 // ── オンボーディングボタンの安全な直接配線 ──────────────────────────
 // startOnboardingDemo 内でエラーが起きても必ずボタンが機能するフォールバック。
 function wireOnboardingButtons() {
-  var ov = document.getElementById('onboarding-overlay');
   function closeFB() {
-    if (ov) {
-      ov.classList.remove('active');
-      setTimeout(function() { ov.classList.add('hidden'); }, 300);
-    }
-    try { localStorage.setItem('tenden-demo-seen', 'true'); } catch(e) {}
-    setTimeout(function() { try { showStartupNoticeIfNeeded(); } catch(e) {} }, 600);
+    finishOnboardingDemo();
   }
   function goFB(step) {
     document.querySelectorAll('.demo-step').forEach(function(el) { el.classList.remove('active'); });
     var t = document.getElementById('demo-step-' + step);
     if (t) t.classList.add('active');
     document.querySelectorAll('.demo-dot').forEach(function(d, i) { d.classList.toggle('active', i === step); });
+    applyOnboardingAgentStep(step);
+    if (step === 1 && typeof initDemoQuakeMap === 'function') {
+      requestAnimationFrame(function() { initDemoQuakeMap(); });
+    } else if (step !== 1 && typeof destroyDemoQuakeMap === 'function') {
+      destroyDemoQuakeMap();
+    }
   }
   [
     ['btn-demo-next-0', function() { goFB(1); }],
@@ -6239,11 +7801,58 @@ function wireOnboardingButtons() {
   });
 }
 
- // ─── canvasアニメーション用変数（DOMContentLoaded スコープ）───────────────
- // Canvas animation handles
- let mapAnimFrame = null;
- let routesAnimFrame = null;
- let flowAnimFrame = null;
+ function destroyDemoQuakeMap() {
+  if (demoQuakeMap) {
+   demoQuakeMap.remove();
+   demoQuakeMap = null;
+  }
+ }
+
+ function initDemoQuakeMap() {
+  const container = document.getElementById('demo-quake-map');
+  if (!container) return;
+  if (demoQuakeMap) {
+   requestAnimationFrame(() => {
+    if (!demoQuakeMap) return;
+    demoQuakeMap.invalidateSize();
+    demoQuakeMap.setView(DEMO_QUAKE_FLOOD_POINT, 14, { animate: false });
+   });
+   return;
+  }
+
+  demoQuakeMap = L.map(container, {
+   zoomControl: false,
+   attributionControl: false,
+   dragging: false,
+   scrollWheelZoom: false,
+   doubleClickZoom: false,
+   boxZoom: false,
+   keyboard: false,
+   touchZoom: false
+  }).setView(DEMO_QUAKE_FLOOD_POINT, 13);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+   maxZoom: 19
+  }).addTo(demoQuakeMap);
+
+  const icon = L.divIcon({
+   className: 'demo-quake-marker',
+   html: `<div class="demo-flood-marker">
+    <div class="flood-ring flood-ring-1"></div>
+    <div class="flood-ring flood-ring-2"></div>
+    <div class="flood-pin"></div>
+   </div>`,
+   iconSize: [56, 56],
+   iconAnchor: [28, 28]
+  });
+  L.marker(DEMO_QUAKE_FLOOD_POINT, { icon, interactive: false }).addTo(demoQuakeMap);
+
+  requestAnimationFrame(() => {
+   if (!demoQuakeMap) return;
+   demoQuakeMap.invalidateSize();
+   demoQuakeMap.setView(DEMO_QUAKE_FLOOD_POINT, 14, { animate: true });
+  });
+ }
 
 
  // ─── canvasアニメーション関数（DOMContentLoaded スコープ）───────────────
@@ -6938,37 +8547,19 @@ function startOnboardingDemo() {
  const overlay = document.getElementById('onboarding-overlay');
  if (!overlay) return;
 
- // Show demo always on first load (localStorage tracks if demo was ever completed)
- // If user has seen it, skip onboarding and immediately request location tracking
- const hasSeen = localStorage.getItem('tenden-demo-seen') === 'true';
- if (hasSeen) {
- overlay.classList.remove('active');
- overlay.classList.add('hidden');
- requestLocation();
- setTimeout(showStartupNoticeIfNeeded, 800);
- return;
- }
+ // Show agent-guided intro on every page load/reload (returning users included).
+ // tenden-demo-seen remains for replay/settings only.
+ // In-memory guard prevents duplicate init if startOnboardingDemo runs twice on same load.
+ try { sessionStorage.removeItem('tenden-demo-skipped'); } catch (e) {}
+ if (_onboardingStartedThisLoad) return;
+ _onboardingStartedThisLoad = true;
 
  overlay.classList.remove('hidden');
  overlay.classList.add('active');
+ setOnboardingDemoActive(true);
 
  let currentStep = 0;
  const totalSteps = 4;
-
- // Automatic slideshow timer
- let slideshowTimeout = null;
-
- function stopAutoSlideshow() {
- if (slideshowTimeout) {
- clearTimeout(slideshowTimeout);
- slideshowTimeout = null;
- }
- }
-
- function startAutoSlideshow() {
- stopAutoSlideshow();
- goToStep(0, true);
- }
 
  // 笏笏 i18n helper (uses global i18nDict once loaded)
  function getDemoText(key, fallback) {
@@ -6979,16 +8570,6 @@ function startOnboardingDemo() {
  const dict = (typeof i18nDict !== 'undefined' && i18nDict[lang]) || {};
  if (dict[key]) return dict[key];
 
- // Safety Warning Multilingual fallback
-   if (key === 'demoSimWarning') {
-    // 日本語の防災アプリのため、警告は常に日本語を優先
-    const jaText = ' これは訓練用のシミュレーション画面です。実際の災害ではありません。';
-    // i18n.jsonが読み込まれていれば優先使用
-    if (typeof i18nDict !== 'undefined' && i18nDict['ja'] && i18nDict['ja'][key]) {
-      return i18nDict['ja'][key];
-    }
-    return jaText;
-  }
  return fallback;
  } catch (e) { return fallback; }
  }
@@ -6998,22 +8579,22 @@ function startOnboardingDemo() {
  const elStep0Title = document.getElementById('demo-title-0');
  const elStep0Sub = document.getElementById('demo-sub-0');
  const elStep1Title = document.getElementById('demo-title-1');
+ const elStep1DrillNotice = document.getElementById('demo-drill-notice-1');
  const elStep1Desc = document.getElementById('demo-desc-1');
  const elStep2Title = document.getElementById('demo-title-2');
  const elStep2Desc = document.getElementById('demo-desc-2');
  const elStep3Title = document.getElementById('demo-title-3');
  const elStep3Desc = document.getElementById('demo-desc-3');
- const elSimWarning = document.getElementById('demo-sim-warning');
 
   if (elStep0Title) elStep0Title.textContent = getDemoText('demoStep0Title', '津波から命を守るために');
   if (elStep0Sub) elStep0Sub.textContent = getDemoText('demoStep0Sub', '日本全国の沿岸エリアで使える避難支援アプリ');
   if (elStep1Title) elStep1Title.textContent = getDemoText('demoStep1Title', '地震が発生しました');
+  if (elStep1DrillNotice) elStep1DrillNotice.textContent = getDemoText('demoStep1DrillNotice', '※これは訓練です。架空のシナリオです。');
   if (elStep1Desc) elStep1Desc.textContent = getDemoText('demoStep1Desc', '津波の危険があります。今すぐ避難を開始してください。');
   if (elStep2Title) elStep2Title.textContent = getDemoText('demoStep2Title', '2つの避難ルートから選べます');
   if (elStep2Desc) elStep2Desc.textContent = getDemoText('demoStep2Desc', '高台へ向かう経路と、坂のゆるやかな要配慮者向けの経路。正解は押し付けず、あなたが選びます。');
   if (elStep3Title) elStep3Title.textContent = getDemoText('demoStep3Title', '混雑も、歩く前に予習できます');
   if (elStep3Desc) elStep3Desc.textContent = getDemoText('demoStep3Desc', '時間とともに変わる人の流れと道路の混雑を追体験。各地点で気をつけることまで学べます。');
-  if (elSimWarning) elSimWarning.textContent = getDemoText('demoSimWarning', ' これは訓練用のシミュレーション画面です。実際の災害ではありません。');
 
  // Next/skip buttons
  document.querySelectorAll('[data-i18n="demoBtnSkip"]').forEach(el => {
@@ -7021,10 +8602,14 @@ function startOnboardingDemo() {
  });
   const useHereSpan = document.querySelector('[data-i18n="demoBtnUseHere"]');
   const replaySpan = document.querySelector('[data-i18n="demoBtnReplay"]');
-  const settingsDemoSpan = document.querySelector('[data-i18n="settingsDemoBtn"]');
   if (useHereSpan) useHereSpan.textContent = getDemoText('demoBtnUseHere', '今いる場所で使ってみる');
   if (replaySpan) replaySpan.textContent = getDemoText('demoBtnReplay', 'もう一度見る');
-  if (settingsDemoSpan) settingsDemoSpan.textContent = getDemoText('settingsDemoBtn', 'オンボーディングデモを起動する');
+
+  const etaEl = document.getElementById('demo-quake-eta');
+  if (etaEl) {
+   const etaLabel = getDemoText('etaLabel', '津波到達まで:').replace(/:$/, '');
+   etaEl.innerHTML = `${etaLabel} <strong>約15分</strong>`;
+  }
  }
 
  // Apply i18n immediately (may use fallbacks), then re-apply when i18n loads
@@ -7034,7 +8619,7 @@ function startOnboardingDemo() {
 
 
  // 笏笏 Step navigation
- function goToStep(step, isAutoFlow = false) {
+ function goToStep(step) {
  // Stop any running animations
  if (mapAnimFrame) { cancelAnimationFrame(mapAnimFrame); mapAnimFrame = null; }
  if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
@@ -7047,6 +8632,12 @@ function startOnboardingDemo() {
  if (target) {
  target.classList.add('active');
  }
+
+ if (step === 1) {
+  requestAnimationFrame(() => initDemoQuakeMap());
+ } else {
+  destroyDemoQuakeMap();
+ }
  // Update dots
  document.querySelectorAll('.demo-dot').forEach((dot, i) => {
  dot.classList.toggle('active', i === step);
@@ -7054,30 +8645,17 @@ function startOnboardingDemo() {
 
  currentStep = step;
 
- // Canvas animations removed — visuals are now CSS/SVG driven
+ applyOnboardingAgentStep(step);
 
- // Handle auto slideshow transitions
- stopAutoSlideshow();
- if (isAutoFlow) {
- if (step === 0) {
- slideshowTimeout = setTimeout(() => goToStep(1, true), 3800);
- } else if (step === 1) {
- slideshowTimeout = setTimeout(() => goToStep(2, true), 4800);
- } else if (step === 2) {
- slideshowTimeout = setTimeout(() => goToStep(3, true), 5800);
- }
- }
+ // Canvas animations removed — visuals are now CSS/SVG driven
  }
 
  function closeDemo() {
- stopAutoSlideshow();
  if (mapAnimFrame) { cancelAnimationFrame(mapAnimFrame); mapAnimFrame = null; }
  if (routesAnimFrame) { cancelAnimationFrame(routesAnimFrame); routesAnimFrame = null; }
  if (flowAnimFrame) { cancelAnimationFrame(flowAnimFrame); flowAnimFrame = null; }
- overlay.classList.remove('active');
- setTimeout(() => overlay.classList.add('hidden'), 300);
- localStorage.setItem('tenden-demo-seen', 'true');
- setTimeout(showStartupNoticeIfNeeded, 600);
+ destroyDemoQuakeMap();
+ finishOnboardingDemo();
  }
 
  // 笏笏 Button wiring
@@ -7090,69 +8668,35 @@ function startOnboardingDemo() {
  const btnUse = document.getElementById('btn-demo-use-here');
  const btnReplay = document.getElementById('btn-demo-replay');
 
- if (btn0Next) btn0Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(1); });
- if (btn0Skip) btn0Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); showLocationExplanation(requestLocation); });
- if (btn1Next) btn1Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(2); });
- if (btn1Skip) btn1Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); showLocationExplanation(requestLocation); });
- if (btn2Next) btn2Next.addEventListener('click', () => { stopAutoSlideshow(); goToStep(3); });
- if (btn2Skip) btn2Skip.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); showLocationExplanation(requestLocation); });
- if (btnReplay) btnReplay.addEventListener('click', () => { startAutoSlideshow(); });
- if (btnUse) btnUse.addEventListener('click', () => { stopAutoSlideshow(); closeDemo(); showLocationExplanation(requestLocation); });
+ if (btn0Next) btn0Next.addEventListener('click', () => goToStep(1));
+ if (btn0Skip) btn0Skip.addEventListener('click', () => { closeDemo(); showLocationExplanation(requestLocation); });
+ if (btn1Next) btn1Next.addEventListener('click', () => goToStep(2));
+ if (btn1Skip) btn1Skip.addEventListener('click', () => { closeDemo(); showLocationExplanation(requestLocation); });
+ if (btn2Next) btn2Next.addEventListener('click', () => goToStep(3));
+ if (btn2Skip) btn2Skip.addEventListener('click', () => { closeDemo(); showLocationExplanation(requestLocation); });
+ if (btnReplay) btnReplay.addEventListener('click', () => goToStep(0));
+ if (btnUse) btnUse.addEventListener('click', () => { closeDemo(); showLocationExplanation(requestLocation); });
 
  // Dot clicks
  document.querySelectorAll('.demo-dot').forEach(dot => {
  dot.addEventListener('click', () => {
- stopAutoSlideshow();
  const step = parseInt(dot.dataset.step);
  if (!isNaN(step)) goToStep(step);
  });
  });
 
- // Settings panel replay button
- const btnReplaySettings = document.getElementById('btn-replay-demo');
- if (btnReplaySettings) {
- btnReplaySettings.addEventListener('click', () => {
- // Close settings panel first
- const settingsOverlay = document.getElementById('settings-overlay');
- if (settingsOverlay) {
- settingsOverlay.classList.remove('active');
- setTimeout(() => settingsOverlay.classList.add('hidden'), 300);
- }
-   // Show demo again: 確実にoverlay表示（z-indexと他overlayのリセット）
-  setTimeout(function() {
-    try { localStorage.removeItem('tenden-demo-seen'); } catch(e) {}
-    // 他の全overlayを非表示に
-    document.querySelectorAll('.overlay').forEach(function(el){
-      if(el.id !== 'onboarding-overlay'){
-        el.classList.remove('active');
-        el.classList.add('hidden');
-      }
-    });
-    var demoOv = document.getElementById('onboarding-overlay');
-    if (!demoOv) { console.error('[TENDEN] onboarding-overlay not found'); return; }
-    // step0 を表示
-    document.querySelectorAll('.demo-step').forEach(function(el){ el.classList.remove('active'); });
-    var s0 = document.getElementById('demo-step-0');
-    if(s0) s0.classList.add('active');
-    document.querySelectorAll('.demo-dot').forEach(function(d,i){ d.classList.toggle('active',i===0); });
-    // overlay を最前面に表示
-    demoOv.style.zIndex = '99998';
-    demoOv.classList.remove('hidden');
-    demoOv.classList.remove('active');
-    setTimeout(function(){ demoOv.classList.add('active'); }, 50);
-  }, 500);
- });
- }
-
  // 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
  // STEP 1: Map Canvas 窶・zoom-in effect + earthquake epicenter
  // 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
 
- // Start automatic slideshow
- startAutoSlideshow();
+ // Start on step 0 — user taps primary CTA to advance each step
+ goToStep(0);
 
- console.log('[TENDEN] Onboarding demo started.');
+ console.log('[TENDEN] Onboarding demo started (manual advance).');
 }
+
+ try { startOnboardingDemo(); } catch(e) { console.error('[TENDEN] onboarding error:', e); }
+ try { wireOnboardingButtons(); } catch(e) {}
 
   // --- HOME SCREEN ADD GUIDE (manual, no auto-prompt) ---
   setupHomeGuide();

@@ -1,0 +1,174 @@
+{
+  "version": 3,
+  "defaultState": "idle",
+  "size": { "width": 84, "height": 96 },
+  "states": {
+    "idle": {
+      "type": "image",
+      "src": "assets/agent/agent-idle.png",
+      "label": "案内中",
+      "animation": "bob",
+      "message": "案内中",
+      "usedBy": ["default", "onboarding", "bubble-info", "app-init"]
+    },
+    "search": {
+      "type": "image",
+      "src": "assets/agent/agent-search.png",
+      "label": "位置取得中",
+      "animation": "pulse",
+      "message": "位置情報を取得しています",
+      "usedBy": ["location-fetch", "p2p-connecting", "gps-acquiring"]
+    },
+    "halt": {
+      "type": "image",
+      "src": "assets/agent/agent-halt.png",
+      "label": "立入禁止",
+      "animation": "alert",
+      "message": "危険区域・停止",
+      "usedBy": ["danger-zone", "bubble-warning", "bubble-error", "inundated"]
+    },
+    "route-plan": {
+      "type": "image",
+      "src": "assets/agent/agent-route-plan.png",
+      "label": "ルート計算",
+      "animation": "bob",
+      "message": "ルートを計算中",
+      "usedBy": ["route-calc", "route-loading", "ai-route", "tenden-loading"]
+    },
+    "navigate": {
+      "type": "image",
+      "src": "assets/agent/agent-navigate.png",
+      "label": "海岸・方位",
+      "animation": "bob",
+      "message": "海岸距離・方位案内",
+      "usedBy": ["coast-dist", "model-area", "compass"]
+    },
+    "broadcast": {
+      "type": "image",
+      "src": "assets/agent/agent-broadcast.png",
+      "label": "緊急放送",
+      "animation": "alert",
+      "message": "緊急モード",
+      "usedBy": ["emergency", "p2p-alert", "triggerEmergencyMode"]
+    },
+    "destination": {
+      "type": "image",
+      "src": "assets/agent/agent-destination.png",
+      "label": "避難先到達",
+      "animation": "pulse",
+      "message": "避難先に到着",
+      "usedBy": ["safe-zone", "shelter-arrival", "evac-complete"]
+    },
+    "ar-demo": {
+      "type": "image",
+      "src": "assets/agent/agent-ar-demo.png",
+      "label": "体験モード",
+      "animation": "bob",
+      "message": "体験・デモ",
+      "usedBy": ["demo-mode", "onboarding-demo", "model-preview"]
+    },
+    "evac-active": {
+      "type": "image",
+      "src": "assets/agent/agent-evac-active.png",
+      "label": "避難実行中",
+      "animation": "bob",
+      "message": "避難を実行中",
+      "usedBy": ["evac-active", "evac-playback"]
+    },
+    "directing": {
+      "type": "image",
+      "src": "assets/agent/agent-directing.png",
+      "label": "避難誘導",
+      "animation": "bob",
+      "message": "避難ルート案内中",
+      "usedBy": ["route-guidance", "nav-active"]
+    },
+    "high-ground": {
+      "type": "image",
+      "src": "assets/agent/agent-high-ground.png",
+      "label": "高台へ",
+      "animation": "bob",
+      "message": "高台へ避難",
+      "usedBy": ["elevation", "tsunami-countdown"]
+    },
+    "monitor": {
+      "type": "image",
+      "src": "assets/agent/agent-monitor.png",
+      "label": "地震監視",
+      "animation": "pulse",
+      "message": "地震・津波を監視中",
+      "usedBy": ["quake-panel", "hazard-watch"]
+    },
+    "scout": {
+      "type": "image",
+      "src": "assets/agent/agent-scout.png",
+      "label": "海岸偵察",
+      "animation": "bob",
+      "message": "海岸線を確認中",
+      "usedBy": ["coast-scout", "hazard-survey"]
+    },
+    "safety-share": {
+      "type": "image",
+      "src": "assets/agent/agent-safety-share.png",
+      "label": "安否共有",
+      "animation": "pulse",
+      "message": "安否情報を共有",
+      "usedBy": ["safety-share", "share-status"]
+    },
+    "urgent": {
+      "type": "image",
+      "src": "assets/agent/agent-urgent.png",
+      "label": "緊急避難",
+      "animation": "alert",
+      "message": "直ちに避難",
+      "usedBy": ["urgent-evac", "countdown-mode", "emergency-active"]
+    },
+    "synced": {
+      "type": "image",
+      "src": "assets/agent/agent-synced.png",
+      "label": "同期完了",
+      "animation": "pulse",
+      "message": "位置情報を同期しました",
+      "usedBy": ["location-synced", "p2p-connected", "bubble-success"]
+    },
+    "night-alert": {
+      "type": "image",
+      "src": "assets/agent/agent-night-alert.png",
+      "label": "夜間警戒",
+      "animation": "alert",
+      "message": "夜間・低視界警戒",
+      "usedBy": ["night-alert", "drill-mode", "low-visibility"]
+    },
+    "flood": {
+      "type": "image",
+      "src": "assets/agent/agent-flood.png",
+      "label": "浸水リスク",
+      "animation": "bob",
+      "message": "浸水・津波区域",
+      "usedBy": ["hazard-layer", "flood-layer", "inundation"]
+    },
+    "checkin": {
+      "type": "image",
+      "src": "assets/agent/agent-checkin.png",
+      "label": "報告完了",
+      "animation": "pulse",
+      "message": "報告・チェックイン完了",
+      "usedBy": ["report-submit", "checkin", "bubble-copied"]
+    },
+    "watch-coast": {
+      "type": "image",
+      "src": "assets/agent/agent-watch-coast.png",
+      "label": "沿岸監視",
+      "animation": "bob",
+      "message": "沿岸・津波を監視",
+      "usedBy": ["tsunami-map", "coast-watch", "jma-link"]
+    }
+  },
+  "_legacyAliases": {
+    "listening": "search",
+    "thinking": "route-plan",
+    "alert": "broadcast",
+    "celebrate": "synced",
+    "warn": "navigate"
+  }
+}

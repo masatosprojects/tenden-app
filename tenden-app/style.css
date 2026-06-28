@@ -1,4 +1,22 @@
+/* Optional decorative override — drop KitchenMaster.woff2 into assets/fonts/ to enable */
+/*
+@font-face {
+    font-family: 'Kitchen Master';
+    src: url('assets/fonts/KitchenMaster.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+*/
+
 :root {
+    /* Agent bubble: Noto Sans family covers all 30 i18n scripts; system fonts when offline */
+    --agent-bubble-font:
+        'Noto Sans', 'Noto Sans JP', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR',
+        'Noto Sans Arabic', 'Noto Sans Thai', 'Noto Sans Devanagari', 'Noto Sans Bengali', 'Noto Sans Hebrew',
+        system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+        'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI',
+        'PingFang SC', 'Microsoft YaHei', 'Malgun Gothic', sans-serif;
     --primary: #0071e3; /* iOS Premium Blue */
     --danger: #ff3b30;
     --warning: #ff9500; /* Richer Warning Orange */
@@ -14,8 +32,29 @@
     --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
     --hud-text: var(--text-color);
     --bg-color: #ffffff;
-    --orb-pulse-duration: 3s;
-    --orb-color: var(--success);
+    --route-ai-color: #ff6b00;
+    --route-accessible-color: #5e5ce6;
+    --hud-safe-area-top: max(env(safe-area-inset-top, 10px), 10px);
+    --top-status-bar-body: 42px;
+    --dynamic-island-gap: 8px;
+    --safe-zone-guide-gap: 10px;
+    --safe-zone-guide-height: 132px;
+    --safe-zone-guide-top: calc(var(--hud-safe-area-top) + var(--top-status-bar-body) + var(--safe-zone-guide-gap));
+    --dynamic-island-top: calc(var(--hud-safe-area-top) + var(--top-status-bar-body) + var(--dynamic-island-gap));
+    --agent-width: 72px;
+    --agent-height: 72px;
+    --agent-dock-offset: 160px;
+    --agent-bubble-gap: 12px;
+    --agent-bubble-max-height: 148px;
+    --report-legend-gap: 10px;
+    --bottom-dock-clearance: 94px;
+    --report-legend-bottom: calc(var(--bottom-dock-clearance) + var(--report-legend-gap));
+}
+body.tenden-nav-active:not(.ep-mode) {
+    --report-legend-bottom: calc(var(--bottom-dock-clearance) + 62px + var(--report-legend-gap));
+}
+body.ep-mode {
+    --report-legend-bottom: calc(var(--report-legend-gap) + 4px);
 }
 
 .mode-emergency {
@@ -38,9 +77,12 @@ h1, h2, h3, h4, h5, h6,
 .demo-hero-title, 
 .demo-step-title,
 .ai-route-btn,
+.short-route-btn,
+.avoid-route-btn,
+.acc-route-btn,
 .rcb-confirm-btn,
 .rcb-instruction,
-.report-choice-title,
+.report-choice-label,
 .sp-card-label,
 .dialog-header h2,
 .eh-title,
@@ -118,19 +160,25 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 .coast-dist-badge { background: rgba(0,122,255,0.08); padding: 4px 10px; border-radius: 8px; color: var(--accent, #007aff); }
 .mode-emergency .coast-dist-badge { background: rgba(255,255,255,0.1); color: #fff; }
 
-/* Community Reports Legend */
+/* Community Reports Legend — bottom-right (agent/bubble stack is left-only) */
 .report-legend {
-    position: fixed;
-    bottom: 160px;
-    left: 14px;
-    z-index: 900;
+    position: absolute;
+    left: auto;
+    right: max(env(safe-area-inset-right, 12px), 12px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--report-legend-bottom));
+    z-index: 885;
     background: rgba(255,255,255,0.92);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 12px;
-    padding: 10px 14px;
+    padding: 8px 10px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-    min-width: 120px;
+    min-width: 112px;
+    max-width: min(168px, calc(100vw - 24px - env(safe-area-inset-right, 0px) - env(safe-area-inset-left, 0px)));
+    max-height: min(168px, calc(100% - env(safe-area-inset-top, 0px) - 120px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    pointer-events: auto;
 }
 .report-legend-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -144,8 +192,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 }
 .report-legend-close {
     background: none; border: none; cursor: pointer;
-    font-size: 1rem; line-height: 1; color: #666;
-    padding: 0 0 0 8px; opacity: 0.7;
+    font-size: 1.1rem; line-height: 1; color: #666;
+    min-width: 44px; min-height: 44px;
+    margin: -10px -8px -10px 0;
+    padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.7;
+    -webkit-tap-highlight-color: transparent;
 }
 .report-legend-close:active { opacity: 1; }
 .report-legend-item {
@@ -164,56 +217,571 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     border: 1.5px solid rgba(255,255,255,0.9);
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
+@container tenden-app (max-width: 420px) {
+    .report-legend {
+        padding: 7px 8px;
+        min-width: 108px;
+        max-width: min(156px, calc(100vw - 24px - env(safe-area-inset-right, 0px) - env(safe-area-inset-left, 0px)));
+    }
+    .report-legend-title { font-size: 0.7rem; }
+    .report-legend-item { font-size: 0.75rem; gap: 6px; margin-bottom: 3px; }
+    .report-legend-dot { width: 10px; height: 10px; }
+}
 .slot-content { display: flex; align-items: center; gap: 6px; }
 
-/* Ambient breathing status orb */
-#status-orb {
-    display: inline-block;
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--orb-color);
-    box-shadow: 0 0 8px var(--orb-color);
-    animation: orbBreathe var(--orb-pulse-duration) ease-in-out infinite;
-    flex-shrink: 0;
-}
 @keyframes orbBreathe {
     0%, 100% { transform: scale(0.85); opacity: 0.7; }
     50% { transform: scale(1.15); opacity: 1; }
 }
 
-.model-area-badge {
+/* ── TENDEN Agent (左下・HUD/FAB非重複) ──
+   column-reverse stack: sprite (bottom) → bubble */
+#tenden-agent {
     position: absolute;
-    top: 56px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 950;
+    left: max(env(safe-area-inset-left, 28px), 28px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--agent-dock-offset));
+    z-index: 880;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    width: auto;
+    min-width: var(--agent-width);
+    max-width: min(280px, calc(100vw - 88px));
+    height: auto;
+    pointer-events: none;
+    overflow: visible;
+    opacity: 1;
+    visibility: visible;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+/* メインアプリ: オンボーディング終了後は #app-container 直下で左下表示を保証 */
+body:not(.onboarding-demo-active) #app-container > #tenden-agent {
+    opacity: 1;
+    visibility: visible;
+}
+.tenden-agent-bubble {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    flex-shrink: 0;
+    order: 1;
+    width: 100%;
+    min-width: 120px;
+    max-width: min(280px, calc(100vw - 88px));
+    margin-bottom: var(--agent-bubble-gap);
+    padding: 0;
+    border-radius: 14px;
+    background: rgba(15, 15, 15, 0.94);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    color: #fff;
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+    transform-origin: left bottom;
+    transition:
+        opacity 0.35s ease,
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: visible;
+    pointer-events: none;
+    z-index: 2;
+}
+.tenden-agent-bubble-scroll {
+    max-height: var(--agent-bubble-max-height);
+    min-width: 0;
+    padding: 10px 14px 12px;
+    border-radius: inherit;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.tenden-agent-bubble-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+.tenden-agent-bubble::after {
+    content: '';
+    position: absolute;
+    left: 22px;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background: rgba(15, 15, 15, 0.94);
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    transform: rotate(45deg);
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+    z-index: 0;
+}
+#tenden-agent.tenden-agent--interactive {
+    pointer-events: auto;
+}
+.tenden-agent-bubble--interactive {
+    pointer-events: auto;
+}
+.tenden-agent-bubble--interactive .tenden-agent-bubble-scroll {
+    padding: 10px 32px 10px 12px;
+}
+.tenden-agent-bubble-dismiss {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.72);
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: rgba(255, 159, 10, 0.92);
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    white-space: nowrap;
-    box-shadow: var(--shadow-sm);
-}
-.model-area-badge.hidden { display: none; }
-.badge-action-btn {
-    border: none;
-    background: #fff;
-    color: var(--warning);
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 999px;
+    justify-content: center;
     cursor: pointer;
-    margin-left: 2px;
-    white-space: nowrap;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s, transform 0.15s;
 }
-.badge-action-btn:active { opacity: 0.8; }
-.status-time { font-size: 1.05rem; font-weight: 700; margin: 0 6px; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
+.tenden-agent-bubble-dismiss:active { transform: scale(0.92); }
+.tenden-agent-bubble-dismiss.hidden { display: none; }
+.tenden-agent-bubble-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    max-width: 100%;
+}
+.tenden-agent-bubble-actions.hidden { display: none; }
+.tenden-agent-bubble-chip {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s, background 0.2s;
+}
+.tenden-agent-bubble-chip:active { transform: scale(0.96); }
+.tenden-agent-bubble-chip.primary {
+    background: rgba(0, 113, 227, 0.88);
+    border-color: rgba(0, 113, 227, 0.95);
+}
+.tenden-agent-bubble-text {
+    margin: 0;
+    font-family: var(--agent-bubble-font);
+    font-size: 0.92rem;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.015em;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    font-feature-settings: 'kern' 1;
+    font-variant-ligatures: common-ligatures;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    color: rgba(255, 255, 255, 0.96);
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.38),
+        0 0 14px rgba(255, 255, 255, 0.05);
+}
+@container tenden-app (max-width: 420px) {
+    .tenden-agent-bubble-text {
+        font-size: 0.86rem;
+        line-height: 1.55;
+        letter-spacing: 0.01em;
+    }
+}
+.tenden-agent-bubble--visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+.tenden-agent-bubble--exiting {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+    transition-duration: 0.28s;
+}
+.tenden-agent-bubble[data-bubble-type="info"] {
+    border-left: 3px solid rgba(0, 113, 227, 0.95);
+}
+.tenden-agent-bubble[data-bubble-type="success"],
+.tenden-agent-bubble[data-bubble-type="copied"] {
+    border-left: 3px solid rgba(52, 199, 89, 0.95);
+}
+.tenden-agent-bubble[data-bubble-type="warning"] {
+    border-left: 3px solid rgba(255, 149, 0, 0.95);
+}
+.tenden-agent-bubble[data-bubble-type="error"] {
+    border-left: 3px solid rgba(255, 59, 48, 0.95);
+}
+.tenden-agent-bubble.hidden { display: none; }
+.tenden-agent-visual {
+    position: relative;
+    flex-shrink: 0;
+    order: 0;
+    width: var(--agent-width);
+    height: var(--agent-height);
+}
+.tenden-agent-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(0, 113, 227, 0.92), rgba(52, 199, 89, 0.85));
+    box-shadow: 0 6px 20px rgba(0, 113, 227, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #fff;
+    text-transform: uppercase;
+    animation: agentIdleFloat 4s ease-in-out infinite;
+}
+.tenden-agent-placeholder::after {
+    content: 'Agent';
+}
+.tenden-agent-placeholder.hidden { display: none; }
+.tenden-agent-asset {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+.tenden-agent-asset.is-active { opacity: 1; }
+.tenden-agent-asset--image,
+.tenden-agent-asset--svg {
+    object-fit: contain;
+    object-position: center bottom;
+    transform-origin: center bottom;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.28));
+}
+/* Sprite animations — grouped by manifest animation type */
+.tenden-agent--idle .tenden-agent-asset.is-active,
+.tenden-agent--route-plan .tenden-agent-asset.is-active,
+.tenden-agent--navigate .tenden-agent-asset.is-active,
+.tenden-agent--ar-demo .tenden-agent-asset.is-active,
+.tenden-agent--evac-active .tenden-agent-asset.is-active,
+.tenden-agent--directing .tenden-agent-asset.is-active,
+.tenden-agent--high-ground .tenden-agent-asset.is-active,
+.tenden-agent--scout .tenden-agent-asset.is-active,
+.tenden-agent--flood .tenden-agent-asset.is-active,
+.tenden-agent--watch-coast .tenden-agent-asset.is-active,
+.tenden-agent--thinking .tenden-agent-asset.is-active,
+.tenden-agent--warn .tenden-agent-asset.is-active {
+    animation: agentBob 3.4s ease-in-out infinite;
+}
+.tenden-agent--route-plan .tenden-agent-asset.is-active,
+.tenden-agent--thinking .tenden-agent-asset.is-active {
+    animation-duration: 2.6s;
+}
+.tenden-agent--search .tenden-agent-asset.is-active,
+.tenden-agent--destination .tenden-agent-asset.is-active,
+.tenden-agent--monitor .tenden-agent-asset.is-active,
+.tenden-agent--safety-share .tenden-agent-asset.is-active,
+.tenden-agent--synced .tenden-agent-asset.is-active,
+.tenden-agent--checkin .tenden-agent-asset.is-active,
+.tenden-agent--listening .tenden-agent-asset.is-active,
+.tenden-agent--celebrate .tenden-agent-asset.is-active {
+    animation: agentPulse 1.8s ease-in-out infinite;
+}
+.tenden-agent--destination .tenden-agent-asset.is-active,
+.tenden-agent--synced .tenden-agent-asset.is-active,
+.tenden-agent--celebrate .tenden-agent-asset.is-active {
+    animation-duration: 2.8s;
+}
+.tenden-agent--halt .tenden-agent-asset.is-active,
+.tenden-agent--broadcast .tenden-agent-asset.is-active,
+.tenden-agent--urgent .tenden-agent-asset.is-active,
+.tenden-agent--night-alert .tenden-agent-asset.is-active,
+.tenden-agent--alert .tenden-agent-asset.is-active {
+    animation: agentAlertBob 0.75s ease-in-out infinite;
+}
+.tenden-agent-message.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+.tenden-agent--listening .tenden-agent-placeholder { animation: agentListenPulse 1.2s ease-in-out infinite; }
+.tenden-agent--thinking .tenden-agent-placeholder { animation: agentThinkSpin 2.4s linear infinite; }
+.tenden-agent--alert .tenden-agent-placeholder {
+    background: linear-gradient(145deg, #ff3b30, #ff9500);
+    animation: agentAlertShake 0.55s ease-in-out infinite;
+}
+.tenden-agent--celebrate .tenden-agent-placeholder { animation: agentCelebratePop 0.9s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+.tenden-agent--warn .tenden-agent-placeholder {
+    background: linear-gradient(145deg, #ff9500, #ffcc00);
+    animation: agentWarnBlink 1.1s ease-in-out infinite;
+}
+.mode-emergency { --agent-dock-offset: 212px; }
+body.tenden-nav-active { --agent-dock-offset: 222px; }
+body.tenden-nav-active .mode-emergency { --agent-dock-offset: 222px; }
+@keyframes agentIdleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+@keyframes agentListenPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.35); }
+    50% { transform: scale(1.06); box-shadow: 0 0 0 10px rgba(0, 113, 227, 0); }
+}
+@keyframes agentThinkSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes agentAlertShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+}
+@keyframes agentCelebratePop {
+    0%, 100% { transform: scale(1); }
+    40% { transform: scale(1.12); }
+}
+@keyframes agentWarnBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.65; }
+}
+@keyframes agentBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+@keyframes agentPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+}
+@keyframes agentAlertBob {
+    0%, 100% { transform: translateY(0) scale(1); }
+    35% { transform: translateY(-4px) scale(1.04); }
+    70% { transform: translateY(1px) scale(0.98); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tenden-agent-placeholder,
+    .tenden-agent--listening .tenden-agent-placeholder,
+    .tenden-agent--thinking .tenden-agent-placeholder,
+    .tenden-agent--alert .tenden-agent-placeholder,
+    .tenden-agent--celebrate .tenden-agent-placeholder,
+    .tenden-agent--warn .tenden-agent-placeholder,
+    .tenden-agent-asset.is-active,
+    .tenden-agent--idle .tenden-agent-asset.is-active,
+    .tenden-agent--search .tenden-agent-asset.is-active,
+    .tenden-agent--halt .tenden-agent-asset.is-active,
+    .tenden-agent--route-plan .tenden-agent-asset.is-active,
+    .tenden-agent--navigate .tenden-agent-asset.is-active,
+    .tenden-agent--broadcast .tenden-agent-asset.is-active,
+    .tenden-agent--destination .tenden-agent-asset.is-active,
+    .tenden-agent--ar-demo .tenden-agent-asset.is-active,
+    .tenden-agent--evac-active .tenden-agent-asset.is-active,
+    .tenden-agent--directing .tenden-agent-asset.is-active,
+    .tenden-agent--high-ground .tenden-agent-asset.is-active,
+    .tenden-agent--monitor .tenden-agent-asset.is-active,
+    .tenden-agent--scout .tenden-agent-asset.is-active,
+    .tenden-agent--safety-share .tenden-agent-asset.is-active,
+    .tenden-agent--urgent .tenden-agent-asset.is-active,
+    .tenden-agent--synced .tenden-agent-asset.is-active,
+    .tenden-agent--night-alert .tenden-agent-asset.is-active,
+    .tenden-agent--flood .tenden-agent-asset.is-active,
+    .tenden-agent--checkin .tenden-agent-asset.is-active,
+    .tenden-agent--watch-coast .tenden-agent-asset.is-active,
+    .tenden-agent--listening .tenden-agent-asset.is-active,
+    .tenden-agent--thinking .tenden-agent-asset.is-active,
+    .tenden-agent--alert .tenden-agent-asset.is-active,
+    .tenden-agent--warn .tenden-agent-asset.is-active,
+    .tenden-agent--celebrate .tenden-agent-asset.is-active {
+        animation: none !important;
+    }
+    .tenden-agent-bubble {
+        transition: opacity 0.01ms linear;
+    }
+}
+.tenden-agent--reduced-motion .tenden-agent-asset.is-active {
+    animation: none !important;
+}
+
+/* Model area demo — compact exit chip above bottom dock */
+.model-area-dismiss-chip {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom, 12px) + 158px);
+    z-index: 961;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 159, 10, 0.94);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 6px 22px rgba(255, 159, 10, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    animation: coastChipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.model-area-dismiss-chip:active {
+    transform: translateX(-50%) scale(0.96);
+}
+.model-area-dismiss-chip.hidden { display: none; }
+.model-area-dismiss-chip svg {
+    flex-shrink: 0;
+    opacity: 0.92;
+}
+.coast-dist-dismiss-chip:not(.hidden) ~ .model-area-dismiss-chip:not(.hidden) {
+    bottom: calc(env(safe-area-inset-bottom, 12px) + 168px);
+}
+body.tenden-nav-active .model-area-dismiss-chip,
+body.ep-mode .model-area-dismiss-chip {
+    bottom: calc(env(safe-area-inset-bottom, 12px) + 188px);
+}
+body.tenden-nav-active .coast-dist-dismiss-chip:not(.hidden) ~ .model-area-dismiss-chip:not(.hidden),
+body.ep-mode .coast-dist-dismiss-chip:not(.hidden) ~ .model-area-dismiss-chip:not(.hidden) {
+    bottom: calc(env(safe-area-inset-bottom, 12px) + 198px);
+}
+.mode-emergency .model-area-dismiss-chip {
+    background: rgba(255, 149, 0, 0.88);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Coast distance mode — floating dismiss chip above bottom dock */
+.coast-dist-dismiss-chip {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom, 12px) + 118px);
+    z-index: 960;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #ff375f;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 6px 22px rgba(255, 55, 95, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    animation: coastChipIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.coast-dist-dismiss-chip:active {
+    transform: translateX(-50%) scale(0.96);
+}
+.coast-dist-dismiss-chip.hidden { display: none; }
+.coast-dist-dismiss-chip svg {
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+.mode-emergency .coast-dist-dismiss-chip {
+    background: rgba(28, 28, 30, 0.92);
+    color: #ff6b8a;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+body.tenden-nav-active .coast-dist-dismiss-chip,
+body.ep-mode .coast-dist-dismiss-chip {
+    bottom: calc(env(safe-area-inset-bottom, 12px) + 148px);
+}
+@keyframes coastChipIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.94); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+.status-time { font-size: 1.05rem; font-weight: 700; margin: 0 6px; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px; }
+.status-time .status-icon { font-size: 0.85rem; font-weight: 600; opacity: 0.72; }
+.hud-time-warn-icon { display: none; font-size: 0.82em; line-height: 1; flex-shrink: 0; }
+.status-time.hud-time--watch { color: var(--warning); }
+.status-time.hud-time--watch .hud-time-warn-icon { display: inline; }
+.status-time.hud-time--danger,
+.status-time.hud-time--emergency { color: var(--danger); }
+.status-time.hud-time--danger .hud-time-warn-icon,
+.status-time.hud-time--emergency .hud-time-warn-icon { display: inline; animation: hudTimeWarnPulse 1.4s ease-in-out infinite; }
+.mode-emergency .status-time.hud-time--watch { color: #ffb340; }
+.mode-emergency .status-time.hud-time--danger,
+.mode-emergency .status-time.hud-time--emergency { color: #ff6961; }
+@keyframes hudTimeWarnPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.92); }
+}
+
+/* HUD tsunami alert chip (JMA P2P code 552) */
+.hud-tsunami-chip {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--text-muted);
+    -webkit-tap-highlight-color: transparent;
+}
+.hud-tsunami-chip:active { opacity: 0.82; }
+.hud-tsunami-chip--checking { color: var(--text-muted); background: rgba(0, 0, 0, 0.04); }
+.hud-tsunami-chip--safe {
+    color: #1f8f3b;
+    background: rgba(52, 199, 89, 0.14);
+    border-color: rgba(52, 199, 89, 0.28);
+}
+.hud-tsunami-chip--watch {
+    color: #a86200;
+    background: rgba(255, 149, 0, 0.16);
+    border-color: rgba(255, 149, 0, 0.32);
+}
+.hud-tsunami-chip--danger {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(215, 38, 38, 0.85), rgba(230, 126, 34, 0.9));
+    border-color: rgba(231, 76, 60, 0.45);
+    animation: danger-pulse 2s infinite alternate;
+}
+.mode-emergency .hud-tsunami-chip--safe { color: #5be584; background: rgba(52, 199, 89, 0.18); }
+.mode-emergency .hud-tsunami-chip--watch { color: #ffb340; background: rgba(255, 149, 0, 0.2); }
+
+.inundation-depth-badge {
+    background: rgba(175, 82, 222, 0.08);
+    padding: 4px 10px;
+    border-radius: 8px;
+    color: #8e44ad;
+}
+.inundation-depth-badge.depth-outside {
+    background: rgba(0, 0, 0, 0.035);
+    color: var(--text-muted);
+}
+.inundation-depth-badge.depth-in-zone {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.18);
+    color: #c0392b;
+}
+.mode-emergency .inundation-depth-badge { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.mode-emergency .inundation-depth-badge.depth-in-zone {
+    background: rgba(255, 59, 48, 0.22);
+    border-color: rgba(255, 59, 48, 0.35);
+    color: #ff8a80;
+}
 
 /* P2P Status */
 .p2p-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
@@ -578,16 +1146,17 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     position: absolute;
     bottom: 0; left: 0; right: 0;
     border-radius: 24px 24px 0 0;
-    padding: 12px 20px calc(env(safe-area-inset-bottom, 20px) + 20px);
+    padding: 6px 10px calc(env(safe-area-inset-bottom, 12px) + 10px);
     z-index: 1000;
     box-shadow: var(--shadow-lg);
     transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), max-height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     border-bottom: none;
     max-height: 50vh;
-    overflow-y: auto;
+    overflow: visible;
 }
 .bottom-sheet.panel-expanded {
     max-height: 85vh;
+    overflow-y: auto;
 }
 
 .passing-shelter-container {
@@ -597,12 +1166,313 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 }
 
 .bottom-sheet-handle {
-    width: 40px; height: 4px;
+    width: 36px; height: 4px;
     background: rgba(120,120,120,0.3);
     border-radius: 2px;
-    margin: 0 auto 16px;
+    margin: 0 auto 8px;
 }
 .mode-emergency .bottom-sheet-handle { background: rgba(255,255,255,0.3); }
+
+/* ── Bottom dock (trunk + sub-sheet) ── */
+.bottom-dock-wrap {
+    position: relative;
+}
+.bottom-dock-trunks {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    gap: 4px;
+    padding: 4px 2px 0;
+}
+.trunk-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 1px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 64px;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+.trunk-item:active { transform: scale(0.94); }
+.trunk-item.active .trunk-icon {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+.trunk-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+.trunk-label {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: rgba(28, 28, 30, 0.88);
+    text-align: center;
+    line-height: 1.1;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: -0.02em;
+}
+.mode-emergency .trunk-label { color: rgba(255, 255, 255, 0.9); }
+.trunk-icon svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+.trunk-icon-evac {
+    background: linear-gradient(145deg, #ff9f0a 0%, #ff5e00 100%);
+    padding: 0;
+    overflow: hidden;
+    border-radius: 14px;
+}
+.trunk-icon-evac .trunk-evac-logo {
+    display: block;
+    width: 58%;
+    height: 58%;
+    object-fit: contain;
+}
+.trunk-icon-quake { background: linear-gradient(145deg, #ff6b00 0%, #ff3b30 100%); }
+.trunk-icon-map { background: linear-gradient(145deg, #007aff 0%, #5e5ce6 100%); }
+.trunk-icon-community { background: linear-gradient(145deg, #34c759 0%, #30b0c7 100%); }
+.trunk-icon-learn { background: linear-gradient(145deg, #ff9f0a 0%, #ff5e00 100%); }
+.trunk-icon-more { background: linear-gradient(145deg, #8e8e93 0%, #636366 100%); }
+
+/* Sub-sheet popover above trunks */
+.dock-sub-sheet {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 4px;
+    right: 4px;
+    border-radius: 20px;
+    padding: 12px 14px 14px;
+    z-index: 10;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    transform-origin: bottom center;
+    transform: translateY(8px) scale(0.96);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.22s ease;
+}
+.dock-sub-sheet:not(.hidden) {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+.dock-sub-sheet.hidden { display: block; }
+.dock-sub-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0 2px;
+}
+.dock-sub-title {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: rgba(28, 28, 30, 0.9);
+    letter-spacing: -0.02em;
+}
+.mode-emergency .dock-sub-title { color: rgba(255, 255, 255, 0.92); }
+.dock-sub-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(120, 120, 128, 0.12);
+    color: rgba(60, 60, 67, 0.7);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.mode-emergency .dock-sub-close {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.75);
+}
+.dock-sub-panel {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px 6px;
+}
+.dock-sub-panel[data-trunk="map"],
+.dock-sub-panel[data-trunk="more"] {
+    grid-template-columns: repeat(3, 1fr);
+}
+.dock-sub-panel[data-trunk="quake"] {
+    grid-template-columns: repeat(2, 1fr);
+}
+.dock-sub-panel[data-trunk="community"],
+.dock-sub-panel[data-trunk="learn"] {
+    grid-template-columns: repeat(2, 1fr);
+}
+.dock-sub-panel[hidden] { display: none !important; }
+
+/* Root action items inside sub-sheet */
+.dock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+.dock-item:active { transform: scale(0.94); }
+.dock-item.dock-coast-active .dock-icon-coast {
+    background: linear-gradient(135deg, #ff375f 0%, #ff3b30 100%);
+    box-shadow: 0 0 0 2px rgba(255, 55, 95, 0.45), 0 4px 12px rgba(255, 59, 48, 0.35);
+    animation: coastActivePulse 2.2s ease-in-out infinite;
+}
+@keyframes coastActivePulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(255, 55, 95, 0.5), 0 4px 12px rgba(255, 59, 48, 0.35); }
+    50%      { box-shadow: 0 0 0 7px rgba(255, 55, 95, 0.22), 0 4px 14px rgba(255, 59, 48, 0.4); }
+}
+.dock-item.dock-coast-active .dock-label {
+    color: #ff375f;
+    font-weight: 700;
+}
+.dock-item.dock-coast-active .dock-label::after {
+    content: attr(data-coast-hint);
+    display: block;
+    font-size: 0.52rem;
+    font-weight: 600;
+    opacity: 0.85;
+    line-height: 1.1;
+    margin-top: 1px;
+}
+.sp-card.dock-coast-active .sp-card-label {
+    color: #ff375f;
+    font-weight: 700;
+}
+.dock-item.dock-toggle-active .dock-label {
+    font-weight: 700;
+}
+.dock-item.dock-toggle-active.dock-toggle-p2p .dock-icon-p2p {
+    background: linear-gradient(145deg, #ff453a 0%, #bf5af2 100%);
+    box-shadow: 0 0 0 2px rgba(191, 90, 242, 0.45), 0 4px 12px rgba(255, 69, 58, 0.35);
+}
+.dock-item.dock-toggle-active.dock-toggle-p2p .dock-label {
+    color: #bf5af2;
+}
+.dock-item.dock-toggle-active.dock-toggle-hazard .dock-icon-hazard {
+    background: linear-gradient(145deg, #0a84ff 0%, #64d2ff 100%);
+    box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.45), 0 4px 12px rgba(10, 132, 255, 0.35);
+}
+.dock-item.dock-toggle-active.dock-toggle-hazard .dock-label {
+    color: #0a84ff;
+}
+.dock-item:not(.dock-toggle-active).dock-toggle-p2p .dock-icon-p2p,
+.dock-item:not(.dock-toggle-active).dock-toggle-hazard .dock-icon-hazard {
+    opacity: 0.55;
+    filter: grayscale(0.35);
+}
+.dock-item:not(.dock-toggle-active).dock-toggle-p2p .dock-label,
+.dock-item:not(.dock-toggle-active).dock-toggle-hazard .dock-label {
+    opacity: 0.65;
+}
+.sp-card.dock-coast-active {
+    border-color: rgba(255, 55, 95, 0.55);
+    box-shadow: 0 4px 16px rgba(255, 55, 95, 0.25);
+}
+.dock-item.hidden { display: none !important; }
+.dock-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    flex-shrink: 0;
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease;
+}
+.dock-item:hover .dock-icon {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+.dock-label {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 0.64rem;
+    font-weight: 600;
+    color: rgba(28, 28, 30, 0.82);
+    text-align: center;
+    line-height: 1.15;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+}
+.mode-emergency .dock-label { color: rgba(255, 255, 255, 0.88); }
+.dock-icon-drill { background: linear-gradient(145deg, #ff9f0a 0%, #ff6a00 100%); }
+.dock-icon-real  { background: linear-gradient(145deg, #ff6961 0%, #e0271d 100%); }
+.dock-icon-gps   { background: linear-gradient(145deg, #30d158 0%, #248a3d 100%); }
+.dock-icon-layers { background: linear-gradient(145deg, #007aff 0%, #5e5ce6 100%); }
+.dock-icon-model { background: linear-gradient(145deg, #5e5ce6 0%, #bf5af2 100%); }
+.dock-icon-settings { background: linear-gradient(145deg, #636366 0%, #48484a 100%); }
+.dock-icon-quake { background: linear-gradient(145deg, #ff6b00 0%, #ff3b30 100%); }
+.dock-icon-tsunami { background: linear-gradient(145deg, #007aff 0%, #30b0c7 100%); }
+.dock-icon-earthquake { background: linear-gradient(145deg, #ff6b00 0%, #ff3b30 100%); }
+.dock-icon-p2p { background: linear-gradient(145deg, #ff453a 0%, #bf5af2 100%); }
+.dock-icon-hazard { background: linear-gradient(145deg, #007aff 0%, #30b0c7 100%); }
+.dock-icon-coast { background: linear-gradient(145deg, #ff375f 0%, #ff3b30 100%); }
+.dock-icon-report { background: linear-gradient(145deg, #ff9f0a 0%, #ff6b00 100%); }
+.dock-icon-ai { background: linear-gradient(145deg, #ff9f0a 0%, #ff5e00 100%); }
+.dock-icon-demo { background: linear-gradient(145deg, #5e5ce6 0%, #007aff 100%); }
+.dock-icon-guide { background: linear-gradient(145deg, #ff3b30 0%, #ff6b00 100%); }
+.dock-icon-note { background: linear-gradient(145deg, #41c9b4 0%, #2ecc71 100%); }
+.dock-icon-research { background: linear-gradient(145deg, #0a84ff 0%, #5e5ce6 100%); }
+.dock-icon-promo { background: linear-gradient(145deg, #ff6482 0%, #ff375f 100%); }
+.dock-icon-portal { background: linear-gradient(145deg, #5856d6 0%, #007aff 100%); }
+a.dock-item.dock-learn-external {
+    text-decoration: none;
+    color: inherit;
+}
+.dock-icon-ann { background: linear-gradient(145deg, #5e5ce6 0%, #007aff 100%); }
+.dock-icon-share { background: linear-gradient(145deg, #34c759 0%, #248a3d 100%); }
+.dock-icon-app-share { background: linear-gradient(145deg, #5e5ce6 0%, #007aff 100%); }
+.dock-icon-menu { background: linear-gradient(145deg, #8e8e93 0%, #636366 100%); }
+.dock-ann-badge {
+    position: absolute;
+    top: 0;
+    right: calc(50% - 28px);
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #ff3b30;
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(255, 59, 48, 0.45);
+}
+.dock-ann-badge.hidden { display: none !important; }
 
 /* Buttons inside Bottom Sheet */
 .action-btn {
@@ -946,33 +1816,374 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 }
 .rcb-confirm-btn:active { transform: scale(0.97); }
 
-/* ── みんなのレポート 選択画面 ── */
-.report-choice-dialog { max-width: 340px; width: 92%; }
-.report-choice-btn {
-    display: flex; align-items: center; gap: 14px;
-    width: 100%; padding: 16px 18px; margin-bottom: 12px;
-    background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px; cursor: pointer; text-align: left;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+/* ── 情報共有 選択画面 ── */
+.report-choice-dialog {
+    max-width: 320px;
+    width: 92%;
+    padding: 0;
+    text-align: left;
+    overflow: hidden;
 }
-.report-choice-btn:last-of-type { margin-bottom: 0; }
+.report-choice-dialog .report-choice-header {
+    padding: 16px 18px 8px;
+    border-bottom: none;
+    background: transparent;
+    position: static;
+}
+.report-choice-dialog .report-choice-header h2 {
+    font-size: 1.08rem;
+    font-weight: 800;
+    margin: 0;
+}
+.report-choice-dialog .close-btn {
+    font-size: 1.5rem;
+    line-height: 1;
+    opacity: 0.55;
+    padding: 0 2px;
+}
+.report-choice-dialog .close-btn:hover { opacity: 0.85; }
+.report-choice-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 4px 16px 18px;
+}
+.report-choice-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 56px;
+    padding: 12px 16px;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
 .report-choice-btn:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.16);
 }
 .report-choice-btn:active {
-    transform: scale(0.97) translateY(0);
-    background: rgba(255, 255, 255, 0.04);
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.05);
 }
 .report-choice-icon {
-    width: 46px; height: 46px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
-.report-choice-title { font-size: 0.97rem; font-weight: 700; color: var(--text-primary, #111); }
-.report-choice-desc { font-size: 0.8rem; color: var(--text-secondary, #666); margin-top: 2px; }
+.report-choice-icon--view {
+    background: linear-gradient(135deg, #5e5ce6, #007aff);
+    box-shadow: 0 4px 12px rgba(94, 92, 230, 0.28);
+}
+.report-choice-icon--submit {
+    background: linear-gradient(135deg, #ff9f0a, #ff6b00);
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.25);
+}
+.report-choice-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1.25;
+}
+
+/* ── アプリ共有 QR ── */
+.app-share-dialog {
+    max-width: 340px;
+    width: 92%;
+    text-align: center;
+}
+.app-share-dialog .dialog-header {
+    justify-content: center;
+    position: relative;
+    padding-right: 36px;
+}
+.app-share-dialog .dialog-header h2 {
+    font-size: 1.08rem;
+    font-weight: 800;
+    margin: 0;
+}
+.app-share-dialog .close-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.app-share-desc {
+    font-size: 0.86rem;
+    line-height: 1.5;
+    opacity: 0.88;
+    margin: 0 0 14px;
+    text-align: center;
+}
+.app-share-qr-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 0 auto 12px;
+    padding: 14px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+    width: fit-content;
+    max-width: 100%;
+}
+.app-share-qr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 180px;
+    min-height: 180px;
+}
+.app-share-qr svg,
+.app-share-qr canvas,
+.app-share-qr img {
+    display: block;
+    width: 200px;
+    height: 200px;
+    max-width: 100%;
+}
+.app-share-url {
+    font-size: 0.72rem;
+    word-break: break-all;
+    opacity: 0.65;
+    margin: 0 0 14px;
+    line-height: 1.35;
+}
+.app-share-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ── モデル地区ダイアログ ── */
+.model-area-dialog {
+    max-width: 340px;
+    width: 92%;
+    text-align: center;
+    padding: 28px 22px 22px;
+    position: relative;
+    overflow: visible;
+}
+.model-area-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    z-index: 2;
+    font-size: 1.6rem;
+    opacity: 0.55;
+    transition: opacity 0.2s;
+}
+.model-area-close:hover { opacity: 0.85; }
+.model-area-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+}
+.overlay.active .model-area-hero {
+    animation: modelAreaFadeUp 0.4s 0.05s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.model-area-hero-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #5e5ce6 0%, #007aff 55%, #bf5af2 100%);
+    box-shadow: 0 8px 24px rgba(94, 92, 230, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+.model-area-hero-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: rgba(94, 92, 230, 0.1);
+    border: 1px solid rgba(94, 92, 230, 0.18);
+    padding: 4px 12px;
+    border-radius: 999px;
+}
+.model-area-title {
+    font-size: 1.22rem;
+    font-weight: 800;
+    line-height: 1.35;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+    color: var(--text-color);
+    opacity: 0;
+    transform: translateY(8px);
+}
+.overlay.active .model-area-title {
+    animation: modelAreaFadeUp 0.4s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.model-area-subtitle {
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin: 0 0 18px;
+    opacity: 0;
+    transform: translateY(8px);
+}
+.overlay.active .model-area-subtitle {
+    animation: modelAreaFadeUp 0.4s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.model-area-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+.model-area-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    opacity: 0;
+    transform: translateY(8px);
+}
+.overlay.active .model-area-chip:nth-child(1) {
+    animation: modelAreaFadeUp 0.38s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.overlay.active .model-area-chip:nth-child(2) {
+    animation: modelAreaFadeUp 0.38s 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.overlay.active .model-area-chip:nth-child(3) {
+    animation: modelAreaFadeUp 0.38s 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.model-area-chip-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.model-area-chip-icon--route { background: linear-gradient(135deg, #ff9f0a, #ff6b00); }
+.model-area-chip-icon--ai    { background: linear-gradient(135deg, #5e5ce6, #007aff); }
+.model-area-chip-icon--pin   { background: linear-gradient(135deg, #30d158, #34c759); }
+.model-area-more-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0 auto 6px;
+    padding: 6px 10px;
+    background: none;
+    border: none;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+}
+.model-area-more-toggle:hover { opacity: 1; }
+.model-area-more-chevron {
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.model-area-more-toggle[aria-expanded="true"] .model-area-more-chevron {
+    transform: rotate(180deg);
+}
+.model-area-more-panel {
+    text-align: left;
+    font-size: 0.76rem;
+    line-height: 1.65;
+    color: var(--text-muted);
+    background: rgba(0, 113, 227, 0.05);
+    border-left: 3px solid rgba(0, 113, 227, 0.35);
+    border-radius: 0 10px 10px 0;
+    padding: 10px 12px;
+    margin: 0;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.3s ease,
+                padding 0.3s ease,
+                margin 0.3s ease;
+}
+.model-area-more-panel:not(.expanded) {
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+.model-area-more-panel.expanded {
+    max-height: 200px;
+    opacity: 1;
+    margin-bottom: 16px;
+}
+.model-area-more-panel p { margin: 0; }
+.model-area-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.model-area-cta-primary {
+    width: 100%;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff9f0a 0%, #ff6b00 100%);
+    box-shadow: 0 6px 20px rgba(255, 107, 0, 0.32);
+    transition: transform 0.12s, box-shadow 0.2s;
+}
+.model-area-cta-primary:hover {
+    box-shadow: 0 8px 24px rgba(255, 107, 0, 0.4);
+}
+.model-area-cta-primary:active { transform: scale(0.97); }
+.model-area-cta-secondary {
+    width: 100%;
+    padding: 13px 20px;
+    border: 1.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.12s;
+}
+.model-area-cta-secondary:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+.model-area-cta-secondary:active { transform: scale(0.98); }
+.model-area-footnote {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    opacity: 0.75;
+    margin: 0;
+    line-height: 1.45;
+}
+@keyframes modelAreaFadeUp {
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 /* ── Community Report Intro Overlay ── */
 .report-intro-dialog { max-width: 340px; width: 92%; text-align: center; }
@@ -1183,6 +2394,12 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     backdrop-filter: blur(0.5px);
     -webkit-backdrop-filter: blur(0.5px);
 }
+#route-overlay.overlay.active {
+    pointer-events: none;
+}
+#route-overlay .route-bottom-sheet {
+    pointer-events: auto;
+}
 .overlay .dialog {
     transform: scale(0.92);
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1213,6 +2430,11 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
 }
 .dialog h2 { font-size: 1.3rem; margin-bottom: 12px; }
 .dialog p { font-size: 0.95rem; opacity: 0.8; margin-bottom: 24px; line-height: 1.5; }
+.dialog.dialog-compact { padding: 20px 22px; }
+.dialog.dialog-compact .dialog-icon { margin-bottom: 10px; }
+.dialog.dialog-compact .dialog-icon svg { width: 40px; height: 40px; }
+.dialog.dialog-compact h2 { font-size: 1.15rem; margin-bottom: 8px; }
+.dialog.dialog-compact p { font-size: 0.88rem; line-height: 1.4; margin-bottom: 16px; }
 
 /* Privacy Warning Notice */
 .privacy-warning-box {
@@ -1413,16 +2635,56 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     flex-shrink: 0;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
+.guide-scroll-content {
+    overflow-y: auto;
+    flex: 1;
+    padding: 15px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.guide-intro {
+    margin: 0 0 2px !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    opacity: 0.88;
+    line-height: 1.45;
+}
 .guide-card-title {
-    font-size: 0.98rem !important;
-    font-weight: 700 !important;
+    font-size: 1.12rem !important;
+    font-weight: 800 !important;
     margin: 0 !important;
+    line-height: 1.35 !important;
+    letter-spacing: -0.01em;
 }
 .guide-card-desc {
-    font-size: 0.85rem !important;
-    line-height: 1.55 !important;
+    font-size: 0.8rem !important;
+    line-height: 1.5 !important;
     margin: 0 !important;
-    opacity: 0.78;
+    opacity: 0.82;
+    font-weight: 400;
+}
+.guide-source-note {
+    margin: 4px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--glass-border);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    opacity: 0.65;
+    text-align: left;
+}
+.guide-source-note a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.guide-source-note a:hover {
+    opacity: 0.85;
+}
+
+/* ── Safe Zone Preparedness Guide (legacy panel — agent bubble に移行) ── */
+#safe-zone-guide {
+    display: none !important;
 }
 
 
@@ -1551,6 +2813,73 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     box-shadow: 0 0 0 3px rgba(255,255,255,0.55), 0 10px 28px rgba(94,92,230,0.55);
 }
 .acc-route-btn.pressed { transform: scale(0.96) !important; }
+
+/* ── フォールバック時：最短ルート ヒーローカード（青系グラデーション） ── */
+.short-route-btn {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 16px !important;
+    border-radius: 16px;
+    border: none !important;
+    width: 100%;
+    cursor: pointer;
+    background: linear-gradient(125deg, #0a84ff 0%, #0071e3 48%, #005bb5 100%);
+    box-shadow: 0 8px 24px rgba(0, 113, 227, 0.40);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: transform 0.12s cubic-bezier(0.2,0,0,1), box-shadow 0.2s ease;
+}
+.short-route-btn .ai-route-glow {
+    position: absolute;
+    top: -40%; left: -20%;
+    width: 60%; height: 180%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-18deg);
+    animation: aiRouteShimmer 3.2s ease-in-out infinite;
+    pointer-events: none;
+}
+.short-route-btn.active {
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.55), 0 10px 28px rgba(0, 113, 227, 0.55);
+}
+.short-route-btn.pressed { transform: scale(0.96) !important; }
+
+/* ── フォールバック時：混雑回避ルート ヒーローカード（緑系グラデーション） ── */
+.avoid-route-btn {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 16px !important;
+    border-radius: 16px;
+    border: none !important;
+    width: 100%;
+    cursor: pointer;
+    background: linear-gradient(125deg, #30d158 0%, #34c759 48%, #248a3d 100%);
+    box-shadow: 0 8px 24px rgba(52, 199, 89, 0.40);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: transform 0.12s cubic-bezier(0.2,0,0,1), box-shadow 0.2s ease;
+}
+.avoid-route-btn .ai-route-glow {
+    position: absolute;
+    top: -40%; left: -20%;
+    width: 60%; height: 180%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-18deg);
+    animation: aiRouteShimmer 3.2s ease-in-out infinite;
+    pointer-events: none;
+}
+.avoid-route-btn.active {
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.55), 0 10px 28px rgba(52, 199, 89, 0.55);
+}
+.avoid-route-btn.pressed { transform: scale(0.96) !important; }
+
 .acc-route-badge {
     font-size: 0.62rem;
     font-weight: 800;
@@ -1603,7 +2932,56 @@ body.ep-mode .route-branch-marker { display: none !important; }
     box-shadow: 0 3px 10px rgba(0,0,0,0.35);
 }
 
+/* Active route destination shelter/hill pin — subtle edge glow */
+.shelter-marker-destination {
+    position: relative;
+    overflow: visible;
+}
+.shelter-marker-destination::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 34px; height: 34px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+.shelter-marker-destination-primary::after {
+    border: 2px solid rgba(0, 113, 227, 0.75);
+    animation: shelterDestRingPrimary 2.4s infinite ease-out;
+}
+.shelter-marker-destination-secondary::after {
+    border: 2px solid rgba(255, 149, 0, 0.85);
+    animation: shelterDestRingSecondary 2.4s infinite ease-out;
+}
+.shelter-marker-destination-primary .shelter-marker-img {
+    animation: shelterDestGlowPrimary 2.4s infinite ease-in-out;
+}
+.shelter-marker-destination-secondary .shelter-marker-img {
+    animation: shelterDestGlowSecondary 2.4s infinite ease-in-out;
+}
+@keyframes shelterDestRingPrimary {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+    50% { transform: translate(-50%, -50%) scale(1.18); opacity: 0.35; }
+}
+@keyframes shelterDestRingSecondary {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1.22); opacity: 0.4; }
+}
+@keyframes shelterDestGlowPrimary {
+    0%, 100% { box-shadow: 0 3px 10px rgba(0,0,0,0.35), 0 0 6px rgba(0, 113, 227, 0.35); }
+    50% { box-shadow: 0 3px 10px rgba(0,0,0,0.35), 0 0 12px rgba(0, 113, 227, 0.55); }
+}
+@keyframes shelterDestGlowSecondary {
+    0%, 100% { box-shadow: 0 3px 10px rgba(0,0,0,0.35), 0 0 8px rgba(255, 149, 0, 0.45); }
+    50% { box-shadow: 0 3px 10px rgba(0,0,0,0.35), 0 0 14px rgba(255, 149, 0, 0.7); }
+}
+
 /* User Marker */
+/* 予習再生中は現在地ピンを非表示（JSでも除去するが、再描画時の保険） */
+body.ep-mode .user-marker-container { display: none !important; }
+
 .user-marker-container { background: none; border: none; }
 .user-marker-inner {
     width: 24px; height: 24px;
@@ -1677,6 +3055,60 @@ body.ep-mode .route-branch-marker { display: none !important; }
 .switch-container input {
     width: 100%;
     height: 100%;
+}
+
+.settings-version-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.06);
+    font-size: 0.88rem;
+    color: var(--text-muted);
+}
+.settings-version-footer strong {
+    color: var(--text-color);
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+}
+
+.about-body {
+    text-align: center;
+}
+.about-brand-mark img {
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 122, 255, 0.22);
+}
+.about-desc {
+    margin: 16px 0 20px;
+    line-height: 1.65;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+.about-version-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+}
+.about-version-row strong {
+    font-size: 1.05rem;
+    color: var(--primary);
+}
+.about-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.about-link-btn {
+    text-decoration: none;
+    justify-content: center;
 }
 
 /* Route Animation */
@@ -1844,66 +3276,178 @@ input:checked + .slider:before {
     box-shadow: var(--shadow-sm);
 }
 
-/* Top bar responsiveness optimization to prevent overlapping on tiny viewports & PC mock container views */
-@media (max-width: 480px), (min-width: 769px) {
+.hud-label-short,
+.gps-label-short { display: none; }
+
+/* Top bar compact layout — container width covers real phones & desktop phone mock (420px) */
+@container tenden-app (max-width: 768px) {
+    #app-container {
+        --top-status-bar-body: 84px;
+    }
     .top-status-bar {
-        padding: max(env(safe-area-inset-top, 10px), 10px) 12px 10px 12px;
+        padding: max(env(safe-area-inset-top, 10px), 10px) 10px 8px 10px;
         display: flex;
-        flex-direction: column; /* Stack into 2 premium rows */
-        gap: 8px;
-        background: var(--glass-bg);
-        border-bottom: 1px solid var(--glass-border);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        flex-direction: column;
+        gap: 5px;
+        overflow: visible;
+        flex-wrap: nowrap;
     }
+    .status-badge .status-icon.hud-label-full,
+    .gps-badge .gps-label-full,
+    .status-time .hud-label-full { display: none !important; }
+    .status-badge .status-icon.hud-label-short,
+    .gps-badge .gps-label-short,
+    .status-time .hud-label-short { display: inline !important; }
+
     .map-action-fabs {
-        top: 140px; /* Push down to clear 2-row stacked top HUD status bar! */
+        top: 128px;
     }
-    .model-area-badge {
-        top: 104px; /* Push down to clear 2-row stacked top HUD status bar */
-    }
-    .status-left, .status-right {
+    .status-left {
         display: flex;
         align-items: center;
         width: 100%;
-        justify-content: space-between; /* Space out elements evenly */
-        gap: 8px;
-    }
-    /* Add a subtle separation border between rows for premium HUD feel */
-    .status-left {
+        gap: 6px;
+        min-width: 0;
+        justify-content: space-between;
+        flex-wrap: nowrap;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        padding-bottom: 6px;
+        padding-bottom: 4px;
     }
     .mode-emergency .status-left {
         border-bottom-color: rgba(255, 255, 255, 0.08);
     }
     .status-right {
-        padding-top: 2px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 3px;
+        padding-top: 0;
+        width: 100%;
+        min-width: 0;
+    }
+    #tsunami-status-box {
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 100%;
+    }
+    #tsunami-status-box.dash-info-card {
+        font-size: 0.82rem;
+        padding: 4px 10px 4px 9px !important;
+    }
+    .status-time {
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin: 0 2px;
+        flex-shrink: 0;
+    }
+    .status-time .status-icon.hud-label-short {
+        font-size: 0.72rem;
+        opacity: 0.65;
+        font-weight: 600;
     }
     .status-badge {
-        font-size: 0.85rem;
-        gap: 5px;
+        font-size: 0.82rem;
+        gap: 4px;
+        min-width: 0;
     }
-    .status-badge .status-icon {
+    .status-badge .status-icon:not(.hud-label-full) {
         display: inline !important;
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         opacity: 0.65;
     }
-    .network-badge, .gps-badge, .elev-badge {
+    .status-right .status-badge {
+        justify-content: center;
+        font-size: 0.78rem;
+    }
+    .network-badge, .gps-badge, .elev-badge, .inundation-depth-badge {
         padding: 4px 8px;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         border-radius: 6px;
         background: rgba(0, 0, 0, 0.04);
     }
     .mode-emergency .network-badge,
     .mode-emergency .gps-badge,
-    .mode-emergency .elev-badge {
+    .mode-emergency .elev-badge,
+    .mode-emergency .inundation-depth-badge {
         background: rgba(255, 255, 255, 0.08);
     }
-    .status-time {
-        font-size: 0.9rem;
-        font-weight: 700;
-        margin: 0 4px;
+
+    /* Elevation + coast distance + inundation depth are glanceable safety numbers */
+    .elev-badge, .coast-dist-badge, .inundation-depth-badge {
+        padding: 4px 8px !important;
+        border-radius: 10px !important;
+        border: 1px solid rgba(0,0,0,0.05);
     }
+    .elev-badge { background: rgba(0,0,0,0.045) !important; }
+    .coast-dist-badge {
+        background: rgba(0,122,255,0.08) !important;
+        border-color: rgba(0,122,255,0.14) !important;
+        color: var(--primary);
+    }
+    .elev-badge .status-icon,
+    .coast-dist-badge .status-icon,
+    .inundation-depth-badge .status-icon {
+        opacity: 0.55;
+        font-weight: 600;
+        font-size: 0.68rem;
+    }
+    .elev-badge strong, .coast-dist-badge strong, .inundation-depth-badge strong {
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* GPS is diagnostic, not a safety metric — keep it light and quiet */
+    .gps-badge {
+        padding: 4px 7px !important;
+        background: rgba(0,0,0,0.035) !important;
+        border-radius: 10px !important;
+        opacity: 0.92;
+    }
+    .gps-badge strong { font-weight: 600; font-size: 0.76rem; }
+
+    .network-badge {
+        padding: 4px 8px !important;
+        border-radius: 10px !important;
+        flex-shrink: 0;
+    }
+    .network-badge strong { font-weight: 600; font-size: 0.78rem; }
+
+    .mode-emergency .elev-badge,
+    .mode-emergency .coast-dist-badge,
+    .mode-emergency .gps-badge,
+    .mode-emergency .inundation-depth-badge {
+        background: rgba(255,255,255,0.08) !important;
+        border-color: rgba(255,255,255,0.10);
+    }
+
+    #hud-tsunami-chip {
+        font-size: 0.68rem;
+        padding: 3px 7px;
+        max-width: 34%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #hud-tsunami-chip strong {
+        font-weight: 700;
+        font-size: inherit;
+    }
+}
+
+@container tenden-app (max-width: 400px) {
+    .top-status-bar {
+        padding-left: 8px;
+        padding-right: 8px;
+        gap: 6px;
+    }
+    .status-left, .status-right { gap: 5px; }
+    .status-right { gap: 5px; }
+    #tsunami-status-box.dash-info-card {
+        font-size: 0.76rem;
+        padding: 3px 8px 3px 7px !important;
+    }
+    .status-time { font-size: 0.82rem; }
+    .status-right .status-badge { font-size: 0.68rem; padding: 3px 4px !important; }
+    #hud-tsunami-chip { font-size: 0.64rem; padding: 3px 6px; max-width: 32%; }
+    .network-badge strong { font-size: 0.72rem; }
 }
 
 /* ==========================================================================
@@ -1985,56 +3529,7 @@ input:checked + .slider:before {
 }
 .mode-emergency #tsunami-status-box.tsunami-status-safe { color: #5be584 !important; }
 
-/* ── Tier 2 + 3 · Metric chips and device status (mobile / mock frame) ───── */
-@media (max-width: 480px), (min-width: 769px) {
-    .top-status-bar { gap: 7px; }
-    .status-left { padding-bottom: 7px; }
-
-    /* Elevation + coast distance are the two glanceable safety numbers */
-    .elev-badge, .coast-dist-badge {
-        padding: 4px 11px !important;
-        border-radius: 10px !important;
-        border: 1px solid rgba(0,0,0,0.05);
-    }
-    .elev-badge { background: rgba(0,0,0,0.045) !important; }
-    .coast-dist-badge {
-        background: rgba(0,122,255,0.08) !important;
-        border-color: rgba(0,122,255,0.14) !important;
-        color: var(--primary);
-    }
-    .elev-badge .status-icon,
-    .coast-dist-badge .status-icon {
-        opacity: 0.55;
-        font-weight: 600;
-        font-size: 0.72rem;
-    }
-    .elev-badge strong, .coast-dist-badge strong {
-        font-weight: 700;
-        font-variant-numeric: tabular-nums;
-    }
-
-    /* GPS is diagnostic, not a safety metric — keep it light and quiet */
-    .gps-badge {
-        padding: 4px 9px !important;
-        background: rgba(0,0,0,0.035) !important;
-        border-radius: 10px !important;
-        opacity: 0.92;
-    }
-    .gps-badge strong { font-weight: 600; font-size: 0.78rem; }
-
-    .network-badge {
-        padding: 4px 9px !important;
-        border-radius: 10px !important;
-    }
-    .network-badge strong { font-weight: 600; }
-
-    .mode-emergency .elev-badge,
-    .mode-emergency .coast-dist-badge,
-    .mode-emergency .gps-badge {
-        background: rgba(255,255,255,0.08) !important;
-        border-color: rgba(255,255,255,0.10);
-    }
-}
+/* (Compact HUD chip styling lives in @container tenden-app block above) */
 
 /* ==========================================================================
    5螟ｧ繝励Ξ繝溘い繝繝ｻ繝・じ繧､繝ｳ繝ｻ繧ｷ繧ｹ繝・Β繝ｻ繧｢繝・・繝・・繝・
@@ -2075,13 +3570,16 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     to { stroke-dashoffset: -500; }
 }
 
-/* 3. Apple繝ｩ繧､繧ｯ縺ｪ縲後ム繧､繝翫Α繝・け繝ｻ繧｢繧､繝ｩ繝ｳ繝会ｼ井ｸ企Κ莨ｸ邵ｮ繧ｫ繝励そ繝ｫ騾夂衍・峨・*/
+/* 3. Dynamic Island — 非表示（通知は #tenden-agent 吹き出しに一本化） */
 #dynamic-island {
+    display: none !important;
+    visibility: hidden;
+    pointer-events: none;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: max(env(safe-area-inset-top, 12px), 12px);
-    z-index: 10000; /* Highest priority overlay */
+    top: var(--dynamic-island-top);
+    z-index: 1050; /* Above map/HUD cards, below modals */
     background: rgba(15, 15, 15, 0.95);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
@@ -2092,7 +3590,15 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.25);
+    will-change: transform, opacity, width, height;
+    transition:
+        top 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+        width 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.25),
+        height 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.25),
+        padding 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.25),
+        border-radius 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.25),
+        opacity 0.45s ease,
+        transform 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.25);
 }
 
 .dynamic-island-collapsed {
@@ -2101,7 +3607,7 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     border-radius: 15px;
     opacity: 0;
     pointer-events: none;
-    transform: translateX(-50%) scale(0.85) translateY(-20px) !important;
+    transform: translateX(-50%) scale(0.55) translateY(-16px);
 }
 
 .dynamic-island-expanded {
@@ -2113,7 +3619,21 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     border-radius: 24px;
     opacity: 1;
     pointer-events: auto;
-    transform: translateX(-50%) scale(1.0) translateY(0) !important;
+    transform: translateX(-50%) scale(1) translateY(0);
+}
+
+.dynamic-island-exiting {
+    width: 340px;
+    max-width: 90vw;
+    min-height: 48px;
+    padding: 10px 18px;
+    border-radius: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) scale(0.94) translateY(-12px);
+    transition:
+        opacity 0.45s ease,
+        transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .island-content {
@@ -2126,11 +3646,20 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .island-icon {
     font-size: 1.2rem;
     flex-shrink: 0;
-    animation: scalePulse 1.5s infinite alternate ease-in-out;
+}
+.dynamic-island-expanded .island-icon {
+    animation:
+        islandIconPop 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards,
+        scalePulse 1.5s infinite alternate ease-in-out 0.55s;
+}
+@keyframes islandIconPop {
+    0% { transform: scale(0.35); opacity: 0; }
+    65% { transform: scale(1.18); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
 }
 @keyframes scalePulse {
-    0% { transform: scale(0.9); }
-    100% { transform: scale(1.1); }
+    0% { transform: scale(0.92); }
+    100% { transform: scale(1.08); }
 }
 
 .island-text {
@@ -2142,32 +3671,334 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     width: 100%;
 }
 
-/* 4. 繝懊ち繝ｳ縺ｮ縲・D繝槭う繧ｯ繝ｭ繝ｻ繝ｪ繝輔Ξ繧ｯ繧ｷ繝ｧ繝ｳ・医ぎ繝ｩ繧ｹ蜈画ｲ｢蜿榊ｰ・ｼ峨€榊柑譫・*/
+/* 4. オンボーディング：全画面白背景（標準オーバーレイの暗幕・ぼかしは使わない） */
+#onboarding-overlay.overlay {
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+}
 #onboarding-overlay.overlay.active {
     position: fixed !important;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    height: 100dvh !important;
     z-index: 20000;
-    align-items: flex-end;
+    align-items: stretch;
+    justify-content: stretch;
     padding: 0;
     pointer-events: auto !important;
     -webkit-user-select: none;
     touch-action: manipulation;
-    /* Immersive branded backdrop so the live app chrome recedes during onboarding */
-    background: radial-gradient(circle at 50% 50%, #0d0d26 0%, #050514 80%) !important;
+    background: #ffffff !important;
+    overflow: hidden;
 }
-/* Soft aurora glow above the card for depth */
+#onboarding-overlay.overlay::before,
 #onboarding-overlay.overlay.active::before {
-    content: '';
-    position: absolute;
-    top: -10%; left: -10%;
-    width: 120%; height: 120%;
-    background: 
-        radial-gradient(circle at 20% 30%, rgba(0, 113, 227, 0.16) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(94, 92, 230, 0.12) 0%, transparent 40%),
-        radial-gradient(circle at 50% 10%, rgba(52, 199, 89, 0.08) 0%, transparent 35%);
-    filter: blur(60px);
-    pointer-events: none;
-    animation: onboardAuroraDrift 16s ease-in-out infinite alternate;
+    display: none;
 }
+
+/* オンボーディング中: エージェントを画面上部中央に固定（吹き出し→スプライト） */
+body.onboarding-demo-active {
+    --onboarding-safe-top: max(env(safe-area-inset-top, 58px), 58px);
+    --onboarding-step0-content-offset: 36px;
+    --onboarding-agent-bubble-cap: min(var(--agent-bubble-max-height), 112px);
+    --onboarding-agent-zone: calc(
+        var(--agent-height) +
+        var(--agent-bubble-gap) +
+        var(--onboarding-agent-bubble-cap) +
+        20px
+    );
+    /* step0: スプライト上端を safe-area 上端〜アプリアイコン上端の中央に */
+    --onboarding-agent-top: calc(
+        var(--onboarding-safe-top) +
+        var(--onboarding-agent-zone) +
+        var(--onboarding-step0-content-offset) -
+        var(--agent-height)
+    );
+}
+body.onboarding-demo-active #onboarding-overlay {
+    position: fixed !important;
+}
+body.onboarding-demo-active #onboarding-overlay #tenden-agent,
+body.onboarding-demo-active #onboarding-overlay #tenden-agent.tenden-agent--onboarding {
+    position: absolute;
+    left: 50%;
+    top: var(--onboarding-agent-top);
+    right: auto;
+    bottom: auto;
+    transform: translateX(-50%);
+    z-index: 6;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    align-items: center;
+    width: max-content;
+    min-width: 0;
+    max-width: min(320px, calc(100% - 32px));
+    --agent-dock-offset: 0px;
+}
+body.onboarding-demo-active #onboarding-overlay #tenden-agent .tenden-agent-bubble {
+    width: min(320px, calc(100vw - 48px));
+    max-width: min(320px, calc(100vw - 48px));
+    transform-origin: center bottom;
+}
+body.onboarding-demo-active #onboarding-overlay #tenden-agent .tenden-agent-bubble::after {
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+}
+body.onboarding-demo-active #onboarding-overlay #tenden-agent .tenden-agent-bubble--visible {
+    transform: translateY(0) scale(1);
+}
+body.onboarding-demo-active #onboarding-overlay #tenden-agent .tenden-agent-bubble--exiting {
+    transform: translateY(-6px) scale(0.96);
+}
+body.onboarding-demo-active .demo-nav,
+body.onboarding-demo-active .demo-cta-area {
+    margin-left: 0;
+    width: 100%;
+    align-self: stretch;
+}
+body.onboarding-demo-active .demo-overlay-inner {
+    padding-top: calc(
+        var(--onboarding-agent-top) +
+        var(--onboarding-agent-zone)
+    );
+    padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
+}
+/* Steps 1–3: agent at top — step 0 keeps logo-centered sprite positioning */
+body.onboarding-demo-active:has(#demo-step-1.active),
+body.onboarding-demo-active:has(#demo-step-2.active),
+body.onboarding-demo-active:has(#demo-step-3.active) {
+    --onboarding-agent-top: var(--onboarding-safe-top);
+    --onboarding-agent-bubble-cap: min(var(--agent-bubble-max-height), 96px);
+    --onboarding-agent-zone: calc(
+        var(--agent-height) +
+        var(--agent-bubble-gap) +
+        var(--onboarding-agent-bubble-cap) +
+        14px
+    );
+    --onboarding-step-gap: 8px;
+}
+body.onboarding-demo-active:has(#demo-step-1.active) .demo-overlay-inner,
+body.onboarding-demo-active:has(#demo-step-2.active) .demo-overlay-inner,
+body.onboarding-demo-active:has(#demo-step-3.active) .demo-overlay-inner {
+    padding-top: calc(var(--onboarding-safe-top) + var(--onboarding-agent-zone) + 2px);
+}
+body.onboarding-demo-active:has(#demo-step-1.active) .demo-overlay-inner,
+body.onboarding-demo-active:has(#demo-step-2.active) .demo-overlay-inner,
+body.onboarding-demo-active:has(#demo-step-3.active) .demo-overlay-inner {
+    padding-bottom: max(env(safe-area-inset-bottom, 10px), 10px);
+}
+body.onboarding-demo-active:has(#demo-step-1.active) .demo-step.active,
+body.onboarding-demo-active:has(#demo-step-2.active) .demo-step.active,
+body.onboarding-demo-active:has(#demo-step-3.active) .demo-step.active {
+    overflow: hidden;
+    gap: var(--onboarding-step-gap, 8px);
+    min-height: 0;
+}
+/* Agent bubble carries copy on steps 2–3 — hide duplicate headings */
+body.onboarding-demo-active #demo-step-2.active .demo-step-title,
+body.onboarding-demo-active #demo-step-2.active .demo-step-desc,
+body.onboarding-demo-active #demo-step-3.active .demo-step-title,
+body.onboarding-demo-active #demo-step-3.active .demo-step-desc {
+    display: none;
+}
+body.onboarding-demo-active:has(#demo-step-1.active) .demo-alert-box {
+    padding: 14px 16px;
+    gap: 4px;
+    flex-shrink: 0;
+}
+body.onboarding-demo-active:has(#demo-step-1.active) .demo-quake-visual {
+    flex: 1 1 auto;
+    min-height: 100px;
+    height: clamp(110px, 20vh, 160px);
+    flex-shrink: 1;
+}
+body.onboarding-demo-active:has(#demo-step-2.active) .demo-routes-visual {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: hidden;
+    display: block;
+    padding: 10px 12px 8px;
+    box-sizing: border-box;
+}
+body.onboarding-demo-active:has(#demo-step-2.active) .demo-routes-svg {
+    max-height: clamp(148px, 28vh, 196px);
+    width: 100%;
+    height: auto;
+    flex-shrink: 0;
+}
+body.onboarding-demo-active:has(#demo-step-2.active) .demo-route-legend {
+    flex-shrink: 0;
+}
+body.onboarding-demo-active:has(#demo-step-3.active) .demo-flow-visual {
+    flex: 1 1 auto;
+    min-height: clamp(96px, 18vh, 130px);
+    height: auto;
+    max-height: clamp(140px, 28vh, 200px);
+    flex-shrink: 1;
+}
+body.onboarding-demo-active .demo-nav,
+body.onboarding-demo-active .demo-cta-area {
+    padding-top: 8px;
+    gap: 6px;
+    flex-shrink: 0;
+}
+body.onboarding-demo-active .demo-btn-primary,
+body.onboarding-demo-active .demo-btn-use {
+    padding: 12px 14px;
+}
+body.onboarding-demo-active .demo-btn-secondary {
+    padding: 11px 14px;
+}
+body.onboarding-demo-active .demo-btn-ghost,
+body.onboarding-demo-active .demo-link {
+    padding: 6px 10px;
+}
+body.onboarding-demo-active .demo-overlay-footer {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    position: relative;
+    z-index: 4;
+}
+body.onboarding-demo-active .demo-overlay-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+body.onboarding-demo-active .demo-agent-strip {
+    display: none;
+    height: 0;
+    flex-shrink: 0;
+    pointer-events: none;
+}
+body.onboarding-demo-active .demo-dots {
+    padding-left: 0;
+    margin-top: 0;
+    padding-bottom: 0;
+    position: relative;
+    z-index: 4;
+}
+body.onboarding-demo-active #demo-step-0.active {
+    justify-content: center;
+    padding-top: var(--onboarding-step0-content-offset);
+}
+body.onboarding-demo-active #demo-step-0.active .demo-nav {
+    margin-top: auto;
+    padding-top: 12px;
+}
+body.onboarding-demo-active .demo-step.active {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+body.onboarding-demo-active #demo-step-0.active {
+    overflow: hidden;
+}
+@media (max-height: 680px) {
+    body.onboarding-demo-active {
+        --onboarding-safe-top: max(env(safe-area-inset-top, 46px), 46px);
+        --onboarding-step0-content-offset: 12px;
+        --onboarding-agent-bubble-cap: min(var(--agent-bubble-max-height), 88px);
+    }
+    body.onboarding-demo-active:has(#demo-step-0.active) {
+        --onboarding-step0-content-offset: 8px;
+        --onboarding-agent-bubble-cap: min(var(--agent-bubble-max-height), 72px);
+        --onboarding-agent-zone: calc(
+            var(--agent-height) +
+            var(--agent-bubble-gap) +
+            var(--onboarding-agent-bubble-cap) +
+            10px
+        );
+        --onboarding-agent-top: calc(
+            var(--onboarding-safe-top) +
+            var(--onboarding-agent-zone) +
+            var(--onboarding-step0-content-offset) -
+            var(--agent-height)
+        );
+    }
+    body.onboarding-demo-active #demo-step-0.active {
+        padding-top: 8px;
+        gap: 8px;
+    }
+    body.onboarding-demo-active #demo-step-0.active .demo-logo-gif {
+        width: 60px;
+        height: 60px;
+    }
+    body.onboarding-demo-active #demo-step-0.active .demo-wave-wrap {
+        height: 22px;
+        margin: 0;
+    }
+    body.onboarding-demo-active #demo-step-0.active .demo-hero-sub {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+    body.onboarding-demo-active #demo-step-0.active .demo-nav {
+        padding-top: 6px;
+        gap: 6px;
+    }
+    body.onboarding-demo-active #onboarding-overlay #tenden-agent .tenden-agent-bubble-scroll {
+        max-height: 88px;
+    }
+    body.onboarding-demo-active:has(#demo-step-1.active),
+    body.onboarding-demo-active:has(#demo-step-2.active),
+    body.onboarding-demo-active:has(#demo-step-3.active) {
+        --onboarding-agent-bubble-cap: min(var(--agent-bubble-max-height), 80px);
+        --onboarding-agent-zone: calc(
+            var(--agent-height) +
+            var(--agent-bubble-gap) +
+            var(--onboarding-agent-bubble-cap) +
+            10px
+        );
+        --onboarding-step-gap: 6px;
+    }
+    body.onboarding-demo-active:has(#demo-step-1.active) .demo-quake-visual {
+        height: clamp(96px, 18vh, 130px);
+        min-height: 88px;
+    }
+    body.onboarding-demo-active:has(#demo-step-1.active) .demo-alert-box {
+        padding: 10px 14px;
+    }
+    body.onboarding-demo-active:has(#demo-step-1.active) .demo-alert-drill-notice {
+        font-size: 10px;
+    }
+    body.onboarding-demo-active:has(#demo-step-2.active) .demo-routes-svg {
+        max-height: clamp(132px, 26vh, 168px);
+    }
+    body.onboarding-demo-active:has(#demo-step-3.active) .demo-flow-visual {
+        min-height: 80px;
+        max-height: clamp(110px, 24vh, 150px);
+    }
+    body.onboarding-demo-active .demo-nav,
+    body.onboarding-demo-active .demo-cta-area {
+        padding-top: 6px;
+        gap: 5px;
+    }
+    body.onboarding-demo-active .demo-btn-primary,
+    body.onboarding-demo-active .demo-btn-use {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    body.onboarding-demo-active .demo-btn-secondary {
+        padding: 9px 12px;
+        font-size: 13px;
+    }
+    body.onboarding-demo-active .demo-overlay-footer {
+        padding-top: 4px;
+    }
+}
+
 @keyframes onboardAuroraDrift {
     0% { transform: scale(1) translate(0, 0); }
     50% { transform: scale(1.08) translate(2%, -3%); }
@@ -2177,18 +4008,43 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 
 .demo-overlay-inner {
     width: 100%;
-    max-height: 92svh;
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border-radius: 32px 32px 0 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.45);
-    box-shadow: 0 -15px 50px rgba(0,0,0,0.3);
-    padding: 32px 24px 40px;
+    height: 100%;
+    min-height: 100%;
+    max-height: none;
+    background: #ffffff;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding:
+        max(env(safe-area-inset-top, 16px), 16px)
+        max(env(safe-area-inset-right, 20px), 20px)
+        max(env(safe-area-inset-bottom, 16px), 16px)
+        max(env(safe-area-inset-left, 20px), 20px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.demo-overlay-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.demo-overlay-footer {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.demo-agent-strip {
+    display: none;
 }
 
 .fab-btn, .action-btn {
@@ -2226,39 +4082,6 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 
 
 
-/* Simulation Disclaimer Banner */
-.demo-sim-banner {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: rgba(255, 149, 0, 0.08);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1.5px solid rgba(255, 149, 0, 0.24);
-    padding: 10px 16px;
-    border-radius: 16px;
-    margin-bottom: 20px;
-    width: 100%;
-    box-shadow: 0 4px 16px rgba(255, 149, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.2);
-}
-.demo-sim-badge {
-    background: #ff9500;
-    color: white;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 5px;
-    letter-spacing: 0.05em;
-    flex-shrink: 0;
-}
-.demo-sim-text {
-    font-size: 12px;
-    font-weight: 600;
-    color: #bf6f00;
-    line-height: 1.5;
-    text-align: left;
-}
-
 /* Demo Steps */
 .demo-step {
     display: none;
@@ -2269,6 +4092,9 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 }
 .demo-step.active {
     display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 @keyframes demoFadeIn {
@@ -2365,6 +4191,14 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     color: #ff3b30;
     line-height: 1.3;
 }
+.demo-alert-drill-notice {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(60, 60, 67, 0.62);
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    margin: -1px 0 0;
+}
 .demo-alert-desc {
     font-size: 13px;
     color: #1c1c1e;
@@ -2401,56 +4235,72 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .wave-path-1 { animation: waveFlow 4.5s linear infinite; }
 .wave-path-2 { animation: waveFlow 6.0s linear infinite reverse; }
 
-/* ── Step 1: Earthquake ripple ── */
+/* ── Step 1: Earthquake map + flood-risk location marker ── */
 .demo-quake-visual {
     width: 100%;
-    height: 150px;
-    background: linear-gradient(160deg, #fff5f5 0%, #fff0ee 100%);
+    height: clamp(140px, 22vh, 180px);
+    flex-shrink: 0;
     border: 1px solid rgba(255,59,48,0.12);
     border-radius: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
     overflow: hidden;
-}
-.quake-epicenter {
     position: relative;
-    width: 60px;
-    height: 60px;
+    background: #f5f5f7;
+}
+#demo-quake-map {
+    width: 100%;
+    height: 100%;
+}
+.demo-quake-visual .quake-eta-pill {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+.demo-quake-marker.leaflet-div-icon {
+    background: transparent;
+    border: none;
+}
+.demo-quake-marker .demo-flood-marker {
+    width: 56px;
+    height: 56px;
+}
+.demo-flood-marker {
+    position: relative;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.quake-ring {
+.flood-ring {
     position: absolute;
     border-radius: 50%;
-    border: 2px solid rgba(255,59,48,0.5);
-    width: 20px;
-    height: 20px;
-    animation: quakeRipple 2.4s ease-out infinite;
+    border: 2px solid rgba(255,59,48,0.45);
+    width: 18px;
+    height: 18px;
+    animation: floodPulse 2.8s ease-out infinite;
 }
-.quake-ring-1 { animation-delay: 0s; }
-.quake-ring-2 { animation-delay: 0.5s; }
-.quake-ring-3 { animation-delay: 1.0s; }
-@keyframes quakeRipple {
-    0%   { transform: scale(0.5); opacity: 0.9; }
-    80%  { opacity: 0; }
-    100% { transform: scale(3.5); opacity: 0; }
+.flood-ring-1 { animation-delay: 0s; }
+.flood-ring-2 { animation-delay: 0.9s; }
+@keyframes floodPulse {
+    0%   { transform: scale(0.6); opacity: 0.85; }
+    75%  { opacity: 0; }
+    100% { transform: scale(3.2); opacity: 0; }
 }
-.quake-core {
-    width: 14px;
-    height: 14px;
+.flood-pin {
+    width: 16px;
+    height: 16px;
     background: #ff3b30;
+    border: 3px solid #ffffff;
     border-radius: 50%;
-    box-shadow: 0 0 0 3px rgba(255,59,48,0.2);
-    animation: quakeCoreShake 0.09s ease-in-out infinite alternate;
+    box-shadow: 0 2px 8px rgba(255,59,48,0.45);
     z-index: 1;
-}
-@keyframes quakeCoreShake {
-    0%   { transform: translate(0,0); }
-    100% { transform: translate(1.5px,-1px); }
 }
 .quake-eta-pill {
     display: flex;
@@ -2468,12 +4318,20 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 /* ── Step 2: SVG route draw animation ── */
 .demo-routes-visual {
     width: 100%;
+    flex-shrink: 0;
     border-radius: 14px;
     background: #f5f5f7;
     border: 1px solid rgba(0,0,0,0.06);
     overflow: hidden;
+    padding: 10px 12px 8px;
+    box-sizing: border-box;
 }
-.demo-routes-svg { width: 100%; height: auto; display: block; }
+.demo-routes-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+}
 .demo-route-svg-path {
     stroke-dasharray: 320;
     stroke-dashoffset: 320;
@@ -2489,15 +4347,19 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 /* ── Step 3: People flow SVG ── */
 .demo-flow-visual {
     width: 100%;
-    height: 148px;
+    max-width: 100%;
+    min-height: 200px;
+    height: clamp(200px, 42vw, 260px);
     border-radius: 14px;
     background: linear-gradient(160deg, #e8f4f0 0%, #eaf0f8 100%);
     border: 1px solid rgba(0,0,0,0.06);
     overflow: hidden;
+    flex-shrink: 0;
 }
 .demo-flow-svg {
     width: 100%;
     height: 100%;
+    max-width: 100%;
     display: block;
 }
 
@@ -2516,13 +4378,21 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     border-radius: 99px;
     border: 1px solid rgba(0,0,0,0.06);
 }
+.legend-item.legend-ai {
+    color: var(--route-ai-color);
+}
+.legend-item.legend-purple {
+    color: var(--route-accessible-color);
+}
 
 /* Navigation buttons */
 .demo-nav {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: auto;
+    padding-top: 16px;
+    flex-shrink: 0;
 }
 
 .demo-btn-primary {
@@ -2601,7 +4471,9 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: auto;
+    padding-top: 16px;
+    flex-shrink: 0;
 }
 
 /* Step indicator dots */
@@ -2634,6 +4506,8 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     height: 100%;
     position: relative;
     overflow: hidden;
+    container-type: inline-size;
+    container-name: tenden-app;
 }
 
 /* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
@@ -2666,7 +4540,6 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     .top-status-bar, 
     .bottom-sheet, 
     .overlay, 
-    #dynamic-island, 
     #splash-screen,
     #flash-overlay {
         max-width: 100% !important;
@@ -2692,9 +4565,19 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
         height: 100% !important;
     }
     
+    #onboarding-overlay.overlay,
     #onboarding-overlay.overlay.active {
         position: absolute !important;
         height: 100% !important;
+        align-items: stretch !important;
+        background: #ffffff !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        overflow: hidden !important;
+    }
+
+    body.onboarding-demo-active #onboarding-overlay #tenden-agent {
+        transform: translateX(-50%) !important;
     }
     
     /* Floating action buttons aligned cleanly to the right side of the device screen */
@@ -2702,9 +4585,23 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
         right: 16px !important;
     }
     
-    /* Center Dynamic Island notification neatly */
+    /* Center Dynamic Island below HUD inside phone frame */
     #dynamic-island {
+        left: 50% !important;
+        right: auto !important;
+        max-width: calc(100% - 32px) !important;
+        transform: translateX(-50%) !important;
+    }
+    #dynamic-island.dynamic-island-collapsed {
+        transform: translateX(-50%) scale(0.55) translateY(-16px) !important;
+    }
+    #dynamic-island.dynamic-island-expanded {
         width: calc(100% - 32px) !important;
+        transform: translateX(-50%) scale(1) translateY(0) !important;
+    }
+    #dynamic-island.dynamic-island-exiting {
+        width: calc(100% - 32px) !important;
+        transform: translateX(-50%) scale(0.94) translateY(-12px) !important;
     }
 }
 
@@ -2714,6 +4611,12 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .coastal-proximity-line {
     animation: strokePulse 2s infinite linear;
     filter: drop-shadow(0 0 8px #ff2d55);
+    cursor: pointer;
+    pointer-events: stroke;
+}
+.coastal-proximity-hit {
+    cursor: pointer;
+    pointer-events: stroke;
 }
 @keyframes strokePulse {
     0% { stroke-dashoffset: 0; }
@@ -2732,6 +4635,17 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     white-space: nowrap;
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    cursor: pointer;
+}
+.shoreline-tap-hint {
+    font-size: 8px;
+    font-weight: 600;
+    opacity: 0.88;
+    letter-spacing: 0.02em;
 }
 
 /* ── 地震・津波情報パネル ─────────────────────────────── */
@@ -2799,12 +4713,13 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 }
 /* ── 津波危険性ステータス（大きく明示・色＋アイコン＋文言） ── */
 .quake-ts-status {
-    display: flex; align-items: center; gap: 13px;
+    display: flex; align-items: flex-start; gap: 13px;
     margin: 8px 16px 6px;
     padding: 15px 16px;
     border-radius: 16px;
     border: 2px solid transparent;
 }
+.quake-ts-body { flex: 1; min-width: 0; }
 .quake-ts-icon {
     width: 44px; height: 44px; flex-shrink: 0;
     border-radius: 50%;
@@ -2822,11 +4737,68 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .quake-ts-danger { background: rgba(255,59,48,0.18);  border-color: rgba(255,59,48,0.75); animation: tsAlertPulse 1.5s ease-in-out infinite; }
 .quake-ts-danger .quake-ts-icon { background: #ff3b30; }
 .quake-ts-danger .quake-ts-main { color: #ff6a60; }
+.quake-ts-map-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    margin-top: 10px; padding: 9px 12px; width: 100%; box-sizing: border-box;
+    border-radius: 10px; font-size: 0.82rem; font-weight: 700; line-height: 1.35;
+    text-decoration: none; border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.12); color: #fff;
+    transition: background 0.15s, transform 0.15s;
+}
+.quake-ts-map-btn:active { background: rgba(255,255,255,0.22); transform: scale(0.98); }
+.quake-ts-watch .quake-ts-map-btn {
+    background: rgba(255,159,10,0.22); border-color: rgba(255,159,10,0.55); color: #ffe0a3;
+}
+.quake-ts-watch .quake-ts-map-btn:active { background: rgba(255,159,10,0.35); }
+.quake-ts-danger .quake-ts-map-btn {
+    background: rgba(255,59,48,0.28); border-color: rgba(255,59,48,0.65); color: #ffb4ae;
+}
+.quake-ts-danger .quake-ts-map-btn:active { background: rgba(255,59,48,0.42); }
 
 .quake-list-label {
     font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.55);
-    padding: 6px 18px 0; letter-spacing: 0.02em;
+    padding: 10px 18px 4px; letter-spacing: 0.02em;
 }
+
+/* ── 津波予報区リスト（code 552 海岸別） ── */
+.quake-ts-issue-time {
+    font-size: 0.68rem; color: rgba(255,255,255,0.45);
+    padding: 0 18px 4px;
+}
+.quake-ts-area-list {
+    padding: 4px 14px 8px;
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 200px; overflow-y: auto;
+}
+.quake-ts-area-empty {
+    font-size: 0.82rem; color: rgba(255,255,255,0.55);
+    padding: 10px 4px; text-align: center; line-height: 1.45;
+}
+.quake-ts-area-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    border-left: 3px solid rgba(255,255,255,0.2);
+}
+.quake-ts-area-item.ts-grade-major { border-left-color: #ff3b30; background: rgba(255,59,48,0.1); }
+.quake-ts-area-item.ts-grade-warning { border-left-color: #ff6a00; background: rgba(255,106,0,0.08); }
+.quake-ts-area-item.ts-grade-watch { border-left-color: #ff9f0a; background: rgba(255,159,10,0.08); }
+.quake-ts-area-item.ts-from-eq { border-left-color: #ff9f0a; }
+.quake-ts-area-grade {
+    flex-shrink: 0; font-size: 0.68rem; font-weight: 800;
+    padding: 3px 7px; border-radius: 6px; line-height: 1.3;
+    max-width: 5.5em; text-align: center;
+}
+.ts-grade-major .quake-ts-area-grade { background: rgba(255,59,48,0.35); color: #ffb4ae; }
+.ts-grade-warning .quake-ts-area-grade { background: rgba(255,106,0,0.3); color: #ffc899; }
+.ts-grade-watch .quake-ts-area-grade,
+.ts-from-eq .quake-ts-area-grade { background: rgba(255,159,10,0.28); color: #ffe0a3; }
+.ts-grade-unknown .quake-ts-area-grade { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); }
+.quake-ts-area-body { flex: 1; min-width: 0; }
+.quake-ts-area-name { font-size: 0.9rem; font-weight: 700; color: #fff; line-height: 1.35; }
+.quake-ts-area-meta { font-size: 0.72rem; color: rgba(255,255,255,0.62); margin-top: 3px; line-height: 1.45; }
 
 /* ── 地震カード（大きく・高コントラスト） ── */
 .eq-card {
@@ -2839,8 +4811,12 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .eq-card-mag { flex-shrink: 0; min-width: 62px; text-align: center; }
 .eq-card-mag .eq-mag-num { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
 .eq-card-body { flex: 1; min-width: 0; }
-.eq-card-place { font-size: 0.98rem; font-weight: 700; color: #fff; line-height: 1.3; }
+.eq-card-place { font-size: 0.98rem; font-weight: 700; color: #fff; line-height: 1.3; margin-bottom: 4px; }
 .eq-card-meta  { font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-top: 2px; }
+.eq-card-fields { margin: 0; padding: 0; display: grid; gap: 3px; }
+.eq-field-row { display: flex; gap: 8px; font-size: 0.76rem; line-height: 1.4; }
+.eq-field-row dt { flex-shrink: 0; min-width: 4.8em; color: rgba(255,255,255,0.48); font-weight: 500; }
+.eq-field-row dd { margin: 0; color: rgba(255,255,255,0.88); flex: 1; min-width: 0; word-break: break-word; }
 .eq-card-ts { font-size: 0.78rem; font-weight: 700; margin-top: 5px; display: flex; align-items: center; gap: 6px; }
 .eq-card-ts .eq-ts-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .eq-card.eq-ts-none   .eq-card-ts { color: #5fe07b; }
@@ -2966,7 +4942,7 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
 .quake-sheet-title {
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--text-primary, #fff);
+    color: #fff;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -2994,9 +4970,58 @@ body, .top-status-bar, .bottom-sheet, .dialog, .fab-btn, .action-btn, select, bu
     padding: 4px 18px 0;
     flex-shrink: 0;
 }
-.quake-eq-list {
+.quake-sheet-body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+#quake-overlay[data-focus="tsunami"] .quake-focus-earthquake { display: none; }
+#quake-overlay[data-focus="earthquake"] .quake-focus-tsunami { display: none; }
+.quake-focus-section + .quake-focus-section {
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin-top: 4px;
+    padding-top: 4px;
+}
+.quake-action-block {
+    padding: 8px 14px 16px;
+}
+.quake-action-list {
+    margin: 6px 0 10px;
+    padding-left: 1.15rem;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.82);
+}
+.quake-action-list li + li { margin-top: 6px; }
+.quake-action-btn {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,159,10,0.35);
+    background: rgba(255,159,10,0.12);
+    color: #ffbf57;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+}
+.quake-action-btn:active {
+    background: rgba(255,159,10,0.22);
+    transform: scale(0.98);
+}
+.quake-source-note {
+    margin: 10px 0 0;
+    font-size: 0.68rem;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.42);
+}
+.quake-eq-actions { padding-bottom: 4px; }
+.quake-eq-list {
+    flex: none;
+    overflow-y: visible;
     padding: 10px 14px 20px;
     display: flex;
     flex-direction: column;
@@ -3390,10 +5415,70 @@ body.ep-mode .bottom-sheet { display: none !important; }
     font-weight: 700 !important;
 }
 
-/* 訓練終了ボタンを明確なボタンに（フル幅・控えめ赤系） */
-.end-drill-btn { width: 100%; margin-top: 8px; justify-content: center; color: var(--danger, #ff3b30); border-color: rgba(255,59,48,0.3); }
+/* 避難バナー内ボタンは縦並び（再生→訓練終了） */
+#evacuation-banner.emergency-mode-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+#evacuation-banner .btn-large,
+#evacuation-banner .end-drill-btn {
+    width: 100%;
+    min-height: 44px;
+    flex-shrink: 0;
+}
 
-/* 予習ナビ情報チップ（目的地まで残り距離・到着まで時間）Googleマップ風の上部バナー */
+/* 訓練終了ボタン（セカンダリ・アウトライン） */
+.end-drill-btn {
+    width: 100%;
+    margin-top: 10px;
+    justify-content: center;
+    color: #636366;
+    background: #ffffff;
+    border: 1px solid rgba(60, 60, 67, 0.29);
+    min-height: 44px;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(60, 60, 67, 0.12);
+    position: relative;
+    z-index: 2;
+    box-shadow: none;
+}
+#evacuation-banner .end-drill-btn,
+#evacuation-banner .end-drill-btn * {
+    color: #636366 !important;
+}
+#evacuation-banner .end-drill-btn svg {
+    stroke: #636366;
+}
+
+/* ルート選択/計算オーバーレイ表示中のみ前面に固定（通常はバナー内フロー） */
+body.tenden-nav-active:not(.ep-mode):has(#route-overlay.overlay.active) #btn-reset-alert.end-drill-btn,
+body.tenden-nav-active:not(.ep-mode):has(#route-loading:not(.hidden)) #btn-reset-alert.end-drill-btn {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(env(safe-area-inset-bottom, 12px) + 10px);
+    width: auto;
+    margin: 0;
+    z-index: 2450;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.22);
+    background: #ffffff;
+    border: 1px solid rgba(60, 60, 67, 0.29);
+}
+body.tenden-nav-active:not(.ep-mode) #evacuation-banner:not(.hidden) {
+    position: relative;
+    z-index: 2100;
+    pointer-events: auto;
+}
+.ep-ctrl-btn.ep-end-drill {
+    color: #ff3b30 !important;
+    border: 1px solid rgba(255, 59, 48, 0.35);
+    background: rgba(255, 59, 48, 0.08);
+}
+.ep-ctrl-btn.ep-end-drill svg { stroke: #ff3b30 !important; }
+
+/* 予習ナビ情報チップ（避難先まで残り距離・避難完了までの時間）Googleマップ風の上部バナー */
 .ep-navinfo {
     position: fixed; top: calc(env(safe-area-inset-top, 0px) + 96px); left: 50%; transform: translateX(-50%);
     display: flex; align-items: center; gap: 14px;
@@ -3405,7 +5490,8 @@ body.ep-mode .bottom-sheet { display: none !important; }
 .ep-navinfo-dist { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.05; }
 .ep-navinfo-dist span { font-size: 1.2rem; font-weight: 800; color: var(--text-color); }
 .ep-navinfo-dist small { font-size: 0.6rem; font-weight: 600; color: var(--text-muted); }
-.ep-navinfo-eta { font-size: 0.78rem; color: var(--text-muted); border-left: 1px solid var(--glass-border); padding-left: 14px; }
+.ep-navinfo-eta { font-size: 0.78rem; color: var(--text-muted); border-left: 1px solid var(--glass-border); padding-left: 14px; line-height: 1.1; }
+.ep-navinfo-eta > [data-i18n="epNavEtaLabel"] { font-size: 0.72rem; }
 .ep-navinfo-eta span { font-weight: 800; color: var(--primary); font-size: 0.95rem; }
 
 /* 予習：シミュ由来の一言インサイト（混雑×AI分散の知見） */
@@ -3436,7 +5522,7 @@ body.ep-mode .bottom-sheet { display: none !important; }
     position: fixed; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 150px);
     display: none; flex-direction: column; gap: 10px; z-index: 1100;
 }
-body.ep-mode .ep-nav-controls, body.tenden-nav-active .ep-nav-controls { display: flex; }
+body.ep-mode .ep-nav-controls, body.tenden-nav-active .ep-nav-controls, body.model-area-demo .ep-nav-controls { display: flex; }
 /* 「最初に戻る」は再生位置の巻き戻しなので予習再生中のみ意味を持つ */
 .ep-restart-only { display: none; }
 body.ep-mode .ep-restart-only { display: flex; }
@@ -3447,6 +5533,11 @@ body.ep-mode .map-action-fabs, body.tenden-nav-active .map-action-fabs { display
     box-shadow: 0 4px 14px rgba(0,0,0,0.2);
     position: relative; display: flex; align-items: center; justify-content: center;
 }
+.ep-compass-title {
+    position: absolute; font-size: 7px; font-weight: 800; color: var(--text-muted);
+    opacity: 0.65; pointer-events: none; letter-spacing: 0.04em;
+}
+body.model-area-demo #ep-compass { border-color: rgba(255, 159, 10, 0.45); }
 /* 北固定コンパス（地図が北上のため針は常に上=N） */
 .ep-compass-lbl { position: absolute; font-size: 8px; font-weight: 800; color: var(--text-muted); }
 .ep-compass-lbl.ep-c-n { top: 2px; left: 50%; transform: translateX(-50%); color: var(--danger); }
