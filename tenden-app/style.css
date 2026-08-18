@@ -5583,3 +5583,28 @@ body.model-area-demo #ep-compass { border-color: rgba(255, 159, 10, 0.45); }
 
 /* ルート選択シートは背面の地図がイメージできる程度の高さに留める（覆い過ぎを防止） */
 .route-bottom-sheet { max-height: 50vh; overflow-y: auto; }
+/* 30-language support: right-to-left reading order for Arabic, Persian and Hebrew.
+   The map itself and numeric HUD values remain left-to-right. */
+html[dir="rtl"] body {
+  direction: rtl;
+}
+
+html[dir="rtl"] .dialog,
+html[dir="rtl"] .side-panel,
+html[dir="rtl"] .dock-sub-panel,
+html[dir="rtl"] .settings-section,
+html[dir="rtl"] .route-card,
+html[dir="rtl"] .tenden-agent-bubble,
+html[dir="rtl"] .report-choice-dialog,
+html[dir="rtl"] .quake-sheet {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] #map,
+html[dir="rtl"] .leaflet-container,
+html[dir="rtl"] .status-time,
+html[dir="rtl"] .route-card-time,
+html[dir="rtl"] .ep-navinfo {
+  direction: ltr;
+}

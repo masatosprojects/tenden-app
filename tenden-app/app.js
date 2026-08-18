@@ -357,7 +357,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
- fetch('assets/i18n.json?v=179')
+ fetch('assets/i18n.json?v=180')
  .then(res => res.json())
  .then(data => {
  i18nDict = data;
@@ -5639,7 +5639,13 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  if (savedLang !== 'auto') {
  return savedLang;
  }
- const browserLang = (navigator.language || navigator.userLanguage).split('-')[0];
+ const raw = String(navigator.language || navigator.userLanguage || 'ja').toLowerCase().replace('_', '-');
+ let browserLang = raw.split('-')[0];
+ if (browserLang === 'zh') {
+   browserLang = /(^|-)tw($|-)|(^|-)hk($|-)|(^|-)mo($|-)|hant/.test(raw) ? 'zh-tw' : 'zh';
+ }
+ const aliases = { nb: 'no', nn: 'no', fil: 'tl', iw: 'he' };
+ browserLang = aliases[browserLang] || browserLang;
  return i18nDict[browserLang] ? browserLang : 'ja';
  }
 
@@ -5711,6 +5717,98 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  function syncBodyLangClass(langCode) {
  Array.from(document.body.classList).filter(c => c.startsWith('lang-')).forEach(c => document.body.classList.remove(c));
  document.body.classList.add('lang-' + langCode);
+ document.documentElement.lang = langCode === 'zh-tw' ? 'zh-Hant' : langCode;
+ document.documentElement.dir = ['ar', 'fa', 'he'].includes(langCode) ? 'rtl' : 'ltr';
+ }
+
+ const _hardcodedTextSources = new WeakMap();
+ const _hardcodedAttrSources = new WeakMap();
+ let _hardcodedI18nObserver = null;
+
+ function _normalizeI18nSource(value) {
+   return String(value || '').replace(/\s+/g, ' ').trim();
+ }
+
+ function _hardcodedReverseMap() {
+   const reverse = new Map();
+   const ja = i18nDict['ja'] || {};
+   Object.entries(ja).forEach(([key, value]) => {
+     if (typeof value !== 'string' || value.includes('<')) return;
+     const normalized = _normalizeI18nSource(value);
+     if (normalized) reverse.set(normalized, key);
+   });
+   return reverse;
+ }
+
+ function translateHardcodedDom(root, langCode) {
+   if (!root || !i18nDict[langCode] || !i18nDict['ja']) return;
+   const dict = { ...i18nDict['ja'], ...i18nDict[langCode] };
+   const reverse = _hardcodedReverseMap();
+   const container = root.nodeType === Node.TEXT_NODE ? root.parentElement : root;
+   if (!container) return;
+
+   const translateTextNode = node => {
+     const parent = node.parentElement;
+     if (!parent || parent.closest('script, style') || parent.hasAttribute('data-i18n')) return;
+     let source = _hardcodedTextSources.get(node);
+     const current = _normalizeI18nSource(node.nodeValue);
+     if (!source && reverse.has(current)) {
+       source = current;
+       _hardcodedTextSources.set(node, source);
+     }
+     const key = source && reverse.get(source);
+     const translated = key && dict[key];
+     if (!translated || typeof translated !== 'string') return;
+     const leading = (node.nodeValue.match(/^\s*/) || [''])[0];
+     const trailing = (node.nodeValue.match(/\s*$/) || [''])[0];
+     const next = leading + translated + trailing;
+     if (node.nodeValue !== next) node.nodeValue = next;
+   };
+
+   if (root.nodeType === Node.TEXT_NODE) {
+     translateTextNode(root);
+   } else {
+     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+     let textNode;
+     while ((textNode = walker.nextNode())) translateTextNode(textNode);
+   }
+
+   const elements = root.nodeType === Node.ELEMENT_NODE
+     ? [root, ...root.querySelectorAll('*')]
+     : [...container.querySelectorAll('*')];
+   elements.forEach(el => {
+     const sources = _hardcodedAttrSources.get(el) || {};
+     ['aria-label', 'title', 'placeholder'].forEach(attr => {
+       if (attr === 'aria-label' && el.hasAttribute('data-i18n-aria')) return;
+       const currentValue = el.getAttribute(attr);
+       if (!currentValue) return;
+       const current = _normalizeI18nSource(currentValue);
+       if (!sources[attr] && reverse.has(current)) sources[attr] = current;
+       const key = sources[attr] && reverse.get(sources[attr]);
+       const translated = key && dict[key];
+       if (translated && el.getAttribute(attr) !== translated) el.setAttribute(attr, translated);
+     });
+     if (Object.keys(sources).length) _hardcodedAttrSources.set(el, sources);
+   });
+ }
+
+ function installHardcodedI18nObserver() {
+   if (_hardcodedI18nObserver || !document.body) return;
+   _hardcodedI18nObserver = new MutationObserver(mutations => {
+     const langCode = getLanguageCode();
+     mutations.forEach(mutation => {
+       if (mutation.type === 'characterData') translateHardcodedDom(mutation.target, langCode);
+       if (mutation.type === 'attributes') translateHardcodedDom(mutation.target, langCode);
+       mutation.addedNodes?.forEach(node => translateHardcodedDom(node, langCode));
+     });
+   });
+   _hardcodedI18nObserver.observe(document.body, {
+     subtree: true,
+     childList: true,
+     characterData: true,
+     attributes: true,
+     attributeFilter: ['aria-label', 'title', 'placeholder'],
+   });
  }
 
  function initI18n() {
@@ -5725,16 +5823,16 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  }
 
  if (i18nDict[langCode]) {
- const dict = i18nDict[langCode];
+ const dict = { ...(i18nDict['ja'] || {}), ...i18nDict[langCode] };
  document.querySelectorAll('[data-i18n]').forEach(el => {
  const key = el.getAttribute('data-i18n');
- if (dict[key]) {
+ if (dict[key] !== undefined && dict[key] !== null) {
  el.innerHTML = dict[key];
  }
  });
  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
  const key = el.getAttribute('data-i18n-aria');
- if (dict[key]) el.setAttribute('aria-label', dict[key]);
+ if (dict[key] !== undefined && dict[key] !== null) el.setAttribute('aria-label', dict[key]);
  });
  if (_coastDistActive && typeof updateCoastDistDockLabels === 'function') {
    updateCoastDistDockLabels(true);
@@ -5748,6 +5846,8 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  if (typeof _updateHudTsunamiChip === 'function') _updateHudTsunamiChip(_hudTsunamiKind);
  if (typeof updateHudTimeWarning === 'function') updateHudTimeWarning();
  if (typeof updateSafeZoneGuideVisibility === 'function') updateSafeZoneGuideVisibility();
+ translateHardcodedDom(document.body, langCode);
+ installHardcodedI18nObserver();
  }
  }
 
