@@ -5608,3 +5608,31 @@ html[dir="rtl"] .route-card-time,
 html[dir="rtl"] .ep-navinfo {
   direction: ltr;
 }
+
+/* 実災害・体験モード中に「公式情報を最優先」を常時提示する帯。
+   #app-container基準のposition:absoluteで、デスクトップ版のスマホ枠表示にも追従する。 */
+#safety-priority-banner {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    padding: max(env(safe-area-inset-top, 4px), 4px) 12px 4px 12px;
+    background: #1c1c1e;
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-align: center;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+body.tenden-nav-active #safety-priority-banner {
+    display: block;
+}
+body.tenden-nav-active .top-status-bar {
+    margin-top: 22px;
+}

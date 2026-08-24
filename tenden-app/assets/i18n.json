@@ -264,7 +264,7 @@
   "routeAccessibleBadge": "バリアフリー",
   "locationExplTitle": "位置情報について",
   "locationExplReasons": "• 浸水区域の確認<br>• 避難ルートの算出<br>• 海抜・海岸距離の表示<br><br>",
-  "locationExplPrivacy": "公開サービスへの送信のみ。個人を特定する保存はしません。<br><br>",
+  "locationExplPrivacy": "経路計算・海抜取得のため、位置情報を外部サービス（OSRM、国土地理院API等）へ送信する場合があります。詳しくはプライバシーポリシーをご確認ください。<br><br>",
   "locationExplFooter": "次に表示されるダイアログで「許可」を選んでください。",
   "trunkEvac": "避難",
   "trunkQuake": "速報",

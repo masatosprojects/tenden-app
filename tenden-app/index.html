@@ -8,7 +8,7 @@
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
- <link rel="stylesheet" href="style.css?v=182">
+ <link rel="stylesheet" href="style.css?v=183">
  <link rel="manifest" href="manifest.json">
 
   <!-- PWA / iOS ホーム画面対応 -->
@@ -142,6 +142,9 @@
  </div>
  </div>
  
+ <!-- 実災害・体験モード中に常時表示する最優先事項の帯（避難ナビ中のみ body.tenden-nav-active で表示） -->
+ <div id="safety-priority-banner" aria-live="polite">公式情報と現地状況を最優先｜TENDENの経路・混雑・時間表示は参考情報です</div>
+
  <!-- Top Status Bar (Full width rectangular) -->
  <div class="top-status-bar glass-panel">
  <div class="status-left">
@@ -944,9 +947,21 @@
  <div id="tos-gate-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tos-gate-title">
  <div class="dialog glass-panel" style="max-width:480px; max-height:88vh; display:flex; flex-direction:column;">
  <div class="dialog-header">
- <h2 id="tos-gate-title">利用規約への同意</h2>
+ <h2 id="tos-gate-title">TENDENを利用する前に</h2>
  </div>
  <div id="tos-gate-body" style="flex:1; min-height:0; overflow-y:auto; font-size:0.82rem; line-height:1.7; padding:4px 6px 4px 2px; color:var(--text-color);">
+ <p style="font-size:0.85rem; opacity:0.85; margin:0 0 12px;">TENDENを利用する前に、次の6点をご確認ください。</p>
+ <ul id="tos-gate-checklist" style="list-style:none; padding:0; margin:0 0 16px; display:flex; flex-direction:column; gap:10px;">
+ <li><label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;"><input type="checkbox" class="tos-gate-item-check" style="margin-top:3px; width:17px; height:17px; flex-shrink:0;"><span style="font-size:0.85rem; line-height:1.5;">TENDENは研究中の実験的プロトタイプで、公的機関の公式避難サービスではありません。</span></label></li>
+ <li><label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;"><input type="checkbox" class="tos-gate-item-check" style="margin-top:3px; width:17px; height:17px; flex-shrink:0;"><span style="font-size:0.85rem; line-height:1.5;">表示経路は参考情報であり、安全・通行可能・到達を保証しません。</span></label></li>
+ <li><label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;"><input type="checkbox" class="tos-gate-item-check" style="margin-top:3px; width:17px; height:17px; flex-shrink:0;"><span style="font-size:0.85rem; line-height:1.5;">混雑情報は現時点のリアルタイム人流ではなく、シミュレーションを基にした情報です。</span></label></li>
+ <li><label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;"><input type="checkbox" class="tos-gate-item-check" style="margin-top:3px; width:17px; height:17px; flex-shrink:0;"><span style="font-size:0.85rem; line-height:1.5;">実災害では気象庁・自治体・警察・消防・現地標識と実際の状況を最優先します。</span></label></li>
+ <li><label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;"><input type="checkbox" class="tos-gate-item-check" style="margin-top:3px; width:17px; height:17px; flex-shrink:0;"><span style="font-size:0.85rem; line-height:1.5;">GPS・通信・地図・翻訳・外部APIには誤差、遅延、停止、古い情報が生じる場合があります。</span></label></li>
+ <li><label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;"><input type="checkbox" class="tos-gate-item-check" style="margin-top:3px; width:17px; height:17px; flex-shrink:0;"><span style="font-size:0.85rem; line-height:1.5;">位置情報等が経路計算等のため外部サービスへ送信される場合があります。<a href="#" id="tos-gate-privacy-link" style="color:var(--primary);">プライバシーポリシー</a>を確認しました。</span></label></li>
+ </ul>
+ <details style="margin-bottom:10px;">
+ <summary style="cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--primary);">利用規約 全文を見る（第1条〜第32条）</summary>
+ <div style="margin-top:10px;">
  <h3 style="font-size:0.9rem; margin:0 0 4px;">第1条（目的・適用）</h3>
  <p>本利用規約（以下「本規約」）は、個人研究プロジェクト「KAMAKURA SIM Project」が提供する津波避難支援Webアプリ「TENDEN」（以下「本サービス」）の利用条件を定めるものです。利用者は、本規約および別途定めるプライバシーポリシーの内容を確認し、同意した場合に本サービスを利用することができます。本サービスは、研究成果を実際に利用可能な形へ実装し、その有用性および課題を検証することを目的とする実験的プロトタイプです。</p>
  <h3 style="font-size:0.9rem; margin:14px 0 4px;">第2条（公式サービスではないこと）</h3>
@@ -1016,17 +1031,93 @@
  制定日：<mark style="background:#ffe08a; padding:0 3px;">[2026年○月○日]</mark><br>
  最終改定日：<mark style="background:#ffe08a; padding:0 3px;">[2026年○月○日]</mark></p>
  </div>
- <label style="display:flex; align-items:flex-start; gap:10px; margin-top:14px; cursor:pointer;">
- <input type="checkbox" id="tos-gate-checkbox" style="margin-top:3px; width:18px; height:18px; flex-shrink:0;">
- <span style="font-size:0.85rem; line-height:1.5;">利用規約の内容を読み、同意します</span>
+ </details>
+ <details style="margin-bottom:4px;">
+ <summary style="cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--primary);">プライバシーポリシー 全文を見る</summary>
+ <div style="margin-top:10px; font-size:0.82rem; line-height:1.7;">
+ <p>取得する情報の種類、外部送信先、保存期間その他の詳細は、独立したプライバシーポリシーに定めています。</p>
+ <button type="button" id="tos-gate-open-privacy" class="action-btn secondary-btn w-100" style="margin-top:8px;">プライバシーポリシーを別画面で開く</button>
+ </div>
+ </details>
+ </div>
+ <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(128,128,128,0.25);">
+ <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+ <input type="checkbox" id="tos-gate-checkbox" style="margin-top:3px; width:18px; height:18px; flex-shrink:0;" disabled>
+ <span style="font-size:0.85rem; line-height:1.5;">上記6項目をすべて確認しました。利用規約・プライバシーポリシーに同意します。</span>
  </label>
+ </div>
  <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
- <button id="tos-gate-agree" class="action-btn primary-btn w-100 btn-large" disabled>同意して進む</button>
+ <button id="tos-gate-agree" class="action-btn primary-btn w-100 btn-large" disabled>同意してTENDENを開始する</button>
  <button id="tos-gate-decline" class="action-btn secondary-btn w-100">同意しない</button>
  </div>
  <div id="tos-gate-decline-panel" class="hidden" style="margin-top:14px; text-align:center;">
  <p style="font-size:0.85rem; opacity:0.8; margin-bottom:10px;">利用規約にご同意いただけない場合、本アプリはご利用いただけません。このタブを閉じてください。</p>
  <button id="tos-gate-close-tab" class="action-btn w-100" style="background:#ff3b30; color:#fff; border:none;">タブを閉じる</button>
+ </div>
+ </div>
+ </div>
+
+ <!-- プライバシーポリシー — ToSゲート内リンクおよび設定画面から開く独立ページ。
+      外部送信先の記載は実コードの通信先を監査した結果に基づく。 -->
+ <div id="privacy-policy-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="privacy-policy-title">
+ <div class="dialog glass-panel" style="max-width:520px; max-height:88vh; display:flex; flex-direction:column;">
+ <div class="dialog-header">
+ <h2 id="privacy-policy-title">プライバシーポリシー</h2>
+ <button id="btn-privacy-policy-close" class="close-btn" type="button" aria-label="閉じる">&times;</button>
+ </div>
+ <div style="flex:1; min-height:0; overflow-y:auto; font-size:0.82rem; line-height:1.7; padding:4px 6px 4px 2px; color:var(--text-color);">
+ <h3 style="font-size:0.9rem; margin:0 0 4px;">第1章（総則）</h3>
+ <p>本プライバシーポリシー（以下「本ポリシー」）は、個人研究プロジェクト「KAMAKURA SIM Project」が提供する津波避難支援Webアプリ「TENDEN」（以下「本サービス」）における、利用者情報の取り扱いについて定めるものです。本サービスの利用は、本ポリシーへの同意を前提とします。</p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第2章（取得する情報）</h3>
+ <p>本サービスは、以下の情報を取得する場合があります。</p>
+ <p>・位置情報（GPSまたは地図上での指定による緯度経度）<br>
+ ・端末内に保存する設定情報（言語設定、オフラインモード設定、音声案内・振動・通知等のON/OFF設定）<br>
+ ・端末固有の分散避難用シード値（避難経路を端末ごとに分散させるための乱数。個人を特定する情報ではありません）<br>
+ ・コミュニティ危険レポート機能を利用した場合の投稿内容（位置は約100mメッシュに丸めた上で保存、カテゴリ、任意のコメント文）<br>
+ ・通信に伴い技術的に発生する情報（IPアドレス、ブラウザ種別、アクセス日時等）</p>
+ <p>本サービスは、氏名・電話番号・メールアドレス等、利用者が直接入力するような個人情報の取得を求める機能を備えていません。ただし、位置情報は継続的な蓄積により個人を推定しうる情報（個人関連情報）となる可能性があります。</p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第3章（取得方法）</h3>
+ <p>位置情報は、利用者が本サービス上で位置情報の利用を許可した場合に、端末のGPS機能または地図上でのピン指定を通じて取得します。設定情報・分散避難用シードは、利用者の操作に伴い自動的に生成され、端末内のブラウザストレージ（localStorage、Cache Storage等）に保存されます。コミュニティ危険レポートは、利用者が任意でレポート機能を利用した場合にのみ、その入力内容を取得します。</p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第4章（利用目的）</h3>
+ <p>取得した情報は、以下の目的の範囲内で利用します。</p>
+ <p>・現在地に基づく避難経路・浸水区域判定・海抜表示等、本サービスの中核機能の提供<br>
+ ・避難経路を端末ごとに分散させ、特定経路への集中を緩和するため<br>
+ ・コミュニティ危険レポート機能における情報共有<br>
+ ・本サービスの不具合対応・改善</p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第5章（端末内保存）</h3>
+ <p>本サービスは、言語設定・各種ON/OFF設定・避難経路分散用の端末固有シード値・オフラインモードのON/OFF設定（ONの場合は地図タイル・アプリ本体のキャッシュを含む）・利用規約およびプライバシーポリシーへの同意状況を、利用者の端末内（localStorage、Cache Storage等）に保存する場合があります。これらはブラウザの標準機能により端末内にのみ保存されるものであり、当プロジェクトのサーバーへ自動的に送信されるものではありません。ブラウザの設定でこれらのデータを削除した場合、保存されていた設定や分散シードは失われ、次回利用時に再生成されます。</p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第6章（外部送信先）</h3>
+ <p>本サービスの機能の実行に伴い、以下の外部サービスへ情報が送信される場合があります。いずれも当プロジェクトが直接運営するサーバーではなく、各サービス提供者が運営する外部のサービスです。特に標高API・OSRM・逆ジオコーディング・Overpass APIについては、利用者の現在地の緯度経度をそのまま送信します。一部（OSRM）は各提供元が無償で運営する公開デモサーバーであり、当プロジェクトの管理下にはありません。各提供元における情報の取り扱いについては、各サービスの利用条件をご確認ください。</p>
+ <table style="width:100%; border-collapse:collapse; font-size:0.76rem; margin-top:8px;">
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.35);"><th style="text-align:left; padding:4px 4px;">送信先</th><th style="text-align:left; padding:4px 4px;">送信される情報</th><th style="text-align:left; padding:4px 4px;">目的</th></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">国土地理院 標高API<br><span style="opacity:0.7;">cyberjapandata2.gsi.go.jp</span></td><td style="padding:4px 4px;">指定地点の緯度経度</td><td style="padding:4px 4px;">海抜表示・坂勾配の計算</td></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">OSRM（公開デモサーバー）<br><span style="opacity:0.7;">routing.openstreetmap.de<br>router.project-osrm.org</span></td><td style="padding:4px 4px;">出発地点・目的地点の緯度経度</td><td style="padding:4px 4px;">徒歩避難経路の計算</td></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">国土地理院 逆ジオコーディング<br><span style="opacity:0.7;">mreversegeocoder.gsi.go.jp</span></td><td style="padding:4px 4px;">現在地の緯度経度</td><td style="padding:4px 4px;">ハザードマップの都道府県切替</td></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">Nominatim（OpenStreetMap）<br><span style="opacity:0.7;">nominatim.openstreetmap.org</span></td><td style="padding:4px 4px;">現在地の緯度経度</td><td style="padding:4px 4px;">モデル地区外での都道府県判定（予備手段）</td></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">Overpass API<br><span style="opacity:0.7;">overpass-api.de</span></td><td style="padding:4px 4px;">現在地の緯度経度を含む検索範囲</td><td style="padding:4px 4px;">最寄り海岸線までの距離表示</td></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">国土地理院 ハザードマップ・地理院タイル<br><span style="opacity:0.7;">disaportal(data).gsi.go.jp<br>cyberjapandata.gsi.go.jp</span></td><td style="padding:4px 4px;">表示中の地図タイル座標</td><td style="padding:4px 4px;">津波浸水想定・標高レリーフの地図表示</td></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">CARTO<br><span style="opacity:0.7;">basemaps.cartocdn.com</span></td><td style="padding:4px 4px;">表示中の地図タイル座標</td><td style="padding:4px 4px;">背景地図の表示</td></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">気象庁 P2P地震情報ネットワーク<br><span style="opacity:0.7;">api.p2pquake.net</span></td><td style="padding:4px 4px;">（送信なし・受信のみ）</td><td style="padding:4px 4px;">地震・津波情報のリアルタイム受信</td></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">Firebase / Firestore（Google）</td><td style="padding:4px 4px;">危険レポートの位置（約100mメッシュに丸めた緯度経度）、カテゴリ、コメント文</td><td style="padding:4px 4px;">コミュニティ危険レポート機能</td></tr>
+ <tr style="border-bottom:1px solid rgba(128,128,128,0.2);"><td style="padding:4px 4px;">LINE / Googleマップ</td><td style="padding:4px 4px;">「安否を共有」使用時の共有テキスト（現在地リンクを含む）</td><td style="padding:4px 4px;">安否共有機能（利用者の操作時のみ）</td></tr>
+ <tr><td style="padding:4px 4px;">Leaflet / Turf.js / html2canvas / Googleフォント等<br><span style="opacity:0.7;">unpkg.com, cdn.jsdelivr.net, html2canvas.hertzen.com, fonts.googleapis.com 等</span></td><td style="padding:4px 4px;">情報の授受なし（ライブラリ・フォントの読み込みのみ）</td><td style="padding:4px 4px;">地図描画・スクリーンショット生成・フォント表示</td></tr>
+ </table>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第7章（第三者提供）</h3>
+ <p>当プロジェクトは、法令に基づく場合を除き、取得した情報を、前章に記載した外部サービスへの送信以外の方法で、利用者の同意なく第三者へ提供することはありません。</p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第8章（保存期間）</h3>
+ <p>端末内に保存される情報は、利用者がブラウザの設定等で削除するまで、または本サービスの機能により自動的に更新・削除されるまで保存されます。コミュニティ危険レポートの投稿内容は、Firebase上に保存され、当プロジェクトが不要と判断した場合または利用者からの削除依頼があった場合に削除します。外部サービスへ送信された位置情報等が、送信先においてどの程度の期間保存されるかは、各サービス提供者の方針によります。</p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第9章（削除方法）</h3>
+ <p>端末内に保存された情報は、ブラウザの設定から本サービスのサイトデータを削除することで消去できます。設定画面内の「キャッシュをクリア」機能からも一部を削除できます。コミュニティ危険レポートの削除をご希望の場合は、下記お問い合わせ先までご連絡ください。</p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第10章（未成年者の利用）</h3>
+ <p>本サービスは年齢確認を行っていません。未成年者が利用する場合、保護者の方は本ポリシーの内容をご確認の上、必要に応じて利用について助言してください。</p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第11章（お問い合わせ先）</h3>
+ <p>運営者：KAMAKURA SIM Project / TENDEN開発者<br>
+ 連絡先：<mark style="background:#ffe08a; padding:0 3px;">[専用メールアドレス]</mark></p>
+ <h3 style="font-size:0.9rem; margin:14px 0 4px;">第12章（本ポリシーの改定）</h3>
+ <p>本ポリシーの内容を変更する場合、変更内容および効力発生日を本サービス上で公表します。取得する情報の種類や外部送信先に実質的な変更がある場合は、必要に応じて利用者へ再度確認を求めます。</p>
+ <p>プライバシーポリシーバージョン：<mark style="background:#ffe08a; padding:0 3px;">[1.0]</mark><br>
+ 制定日：<mark style="background:#ffe08a; padding:0 3px;">[2026年○月○日]</mark><br>
+ 最終改定日：<mark style="background:#ffe08a; padding:0 3px;">[2026年○月○日]</mark></p>
  </div>
  </div>
  </div>
@@ -1191,7 +1282,7 @@
    <div class="pwa-toggle-row">
      <div class="pwa-toggle-info">
        <div id="pwa-toggle-status" class="pwa-toggle-status">オフラインモード：OFF（自動更新あり）</div>
-       <div class="pwa-toggle-desc">ONにすると地図・データをキャッシュし、ネット不要で動作します。ただしアプリの更新が自動で届かなくなります。</div>
+       <div class="pwa-toggle-desc">ONにすると事前に閲覧した地図・アプリ本体をキャッシュし、通信がなくても表示できます。ただし経路探索・標高取得・地震/津波速報の受信等は通信断時には利用できず、保存済み情報が古くなる場合があります。また、アプリの自動更新が届かなくなります。</div>
      </div>
      <label class="switch-container" style="flex-shrink:0; margin-left:12px;">
        <input type="checkbox" id="pwa-offline-toggle">
@@ -1242,6 +1333,8 @@
      <a href="https://masatosprojects.github.io/kamakura-sim/" data-config-href="portalSiteUrl" target="_blank" rel="noopener" class="action-btn outline-btn w-100 about-link-btn">
        <span data-i18n="dockLearnPortal">鎌倉SIMポータル</span>
      </a>
+     <button type="button" id="btn-about-view-tos" class="action-btn outline-btn w-100 about-link-btn">利用規約を見る</button>
+     <button type="button" id="btn-about-view-privacy" class="action-btn outline-btn w-100 about-link-btn">プライバシーポリシーを見る</button>
    </div>
  </div>
  </div>
@@ -1781,7 +1874,7 @@
  <script src="assets/vendor/qrcode.min.js?v=1"></script>
  <script src="app-config.js?v=1"></script>
  <script src="agent.js?v=147"></script>
- <script src="app.js?v=180"></script>
+ <script src="app.js?v=181"></script>
 
 <!-- ======================================================
      ホーム画面追加ガイド（手動トリガーのみ）

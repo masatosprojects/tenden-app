@@ -355,10 +355,11 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  try { wireEndDrillButton(); } catch(e) {}
  try { wireShareSafetyNavButton(); } catch(e) {}
  try { wireTosGate(); } catch(e) {}
+ try { wirePrivacyPolicyOverlay(); } catch(e) {}
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
- fetch('assets/i18n.json?v=182')
+ fetch('assets/i18n.json?v=183')
  .then(res => res.json())
  .then(data => {
  i18nDict = data;
@@ -2225,6 +2226,14 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  aboutOverlay?.addEventListener('click', (e) => {
    if (e.target === aboutOverlay) closeAboutOverlay();
  });
+ document.getElementById('btn-about-view-tos')?.addEventListener('click', () => {
+   closeAboutOverlay();
+   setTimeout(() => { if (typeof showTosGateReadOnly === 'function') showTosGateReadOnly(); }, 260);
+ });
+ document.getElementById('btn-about-view-privacy')?.addEventListener('click', () => {
+   closeAboutOverlay();
+   setTimeout(() => { if (typeof openPrivacyPolicyOverlay === 'function') openPrivacyPolicyOverlay(); }, 260);
+ });
 
  // Initialize Lang Select
  const savedLang = localStorage.getItem('tenden-lang') || 'auto';
@@ -2284,7 +2293,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
      const statusEl = document.getElementById('pwa-toggle-status');
      if (statusEl) statusEl.textContent = enabling ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
      if (enabling) {
-       if (confirm('オフライン緊急モードを有効にします。\n\n地図とデータをキャッシュし、ネット接続なしでも動作します。\nただしアプリの更新が自動で届かなくなります。\n\n有効にしますか？')) {
+       if (confirm('オフライン緊急モードを有効にします。\n\n事前に閲覧した地図タイルやアプリ本体はキャッシュされ、通信がなくても表示できます。\nただし、経路探索(OSRM)・標高取得・地震/津波速報(P2P)等は通信断時に利用できません。保存済みの情報が古くなる場合もあります。\nまた、アプリの自動更新が届かなくなります。\n\n有効にしますか？')) {
          location.reload();
        } else {
          pwaOfflineToggle.checked = false;
@@ -7889,14 +7898,45 @@ function markTosAgreed() {
   try { localStorage.setItem('tenden-tos-agreed', '1'); } catch (e) {}
 }
 
+function _resetTosGateInteractiveState() {
+  document.querySelectorAll('.tos-gate-item-check').forEach(function (el) {
+    el.checked = false;
+    el.disabled = false;
+  });
+  var cb = document.getElementById('tos-gate-checkbox');
+  if (cb) { cb.checked = false; cb.disabled = true; }
+  var declineBtn = document.getElementById('tos-gate-decline');
+  if (declineBtn) declineBtn.style.display = '';
+  var agreeBtn = document.getElementById('tos-gate-agree');
+  if (agreeBtn) { agreeBtn.textContent = '同意してTENDENを開始する'; agreeBtn.disabled = true; agreeBtn.style.opacity = '0.5'; }
+}
+
 function showTosGate(onAgree) {
   var ov = document.getElementById('tos-gate-overlay');
   if (!ov) { if (onAgree) onAgree(); return; } // ゲートDOMが無い場合は素通りさせる（安全側フォールバック）
   _tosGatePendingAction = onAgree;
+  _resetTosGateInteractiveState();
+  document.getElementById('tos-gate-decline-panel')?.classList.add('hidden');
+  ov.classList.remove('hidden');
+  requestAnimationFrame(function () { ov.classList.add('active'); });
+}
+
+// 既に同意済みの利用者が「設定」から規約を読み返すための閲覧専用モード。
+// 同意操作としては扱わない（すべてチェック済み・操作不可で表示するだけ）。
+function showTosGateReadOnly() {
+  var ov = document.getElementById('tos-gate-overlay');
+  if (!ov) return;
+  _tosGatePendingAction = null;
+  document.querySelectorAll('.tos-gate-item-check').forEach(function (el) {
+    el.checked = true;
+    el.disabled = true;
+  });
   var cb = document.getElementById('tos-gate-checkbox');
+  if (cb) { cb.checked = true; cb.disabled = true; }
+  var declineBtn = document.getElementById('tos-gate-decline');
+  if (declineBtn) declineBtn.style.display = 'none';
   var agreeBtn = document.getElementById('tos-gate-agree');
-  if (cb) cb.checked = false;
-  if (agreeBtn) { agreeBtn.disabled = true; agreeBtn.style.opacity = '0.5'; }
+  if (agreeBtn) { agreeBtn.textContent = '閉じる'; agreeBtn.disabled = false; agreeBtn.style.opacity = '1'; }
   document.getElementById('tos-gate-decline-panel')?.classList.add('hidden');
   ov.classList.remove('hidden');
   requestAnimationFrame(function () { ov.classList.add('active'); });
@@ -7911,12 +7951,35 @@ function requireTosThen(action) {
 
 function wireTosGate() {
   var ov = document.getElementById('tos-gate-overlay');
+  var itemChecks = document.querySelectorAll('.tos-gate-item-check');
   var cb = document.getElementById('tos-gate-checkbox');
   var agreeBtn = document.getElementById('tos-gate-agree');
   var declineBtn = document.getElementById('tos-gate-decline');
   var declinePanel = document.getElementById('tos-gate-decline-panel');
   var closeTabBtn = document.getElementById('tos-gate-close-tab');
+  var openPrivacyBtn = document.getElementById('tos-gate-open-privacy');
+  var privacyLink = document.getElementById('tos-gate-privacy-link');
   if (!ov || !cb || !agreeBtn) return;
+
+  function allItemsChecked() {
+    for (var i = 0; i < itemChecks.length; i++) {
+      if (!itemChecks[i].checked) return false;
+    }
+    return true;
+  }
+
+  // 6項目すべてにチェックが入るまで、最終確認チェックボックス自体を操作不能にする。
+  itemChecks.forEach(function (item) {
+    item.addEventListener('change', function () {
+      var ready = allItemsChecked();
+      cb.disabled = !ready;
+      if (!ready) {
+        cb.checked = false;
+        agreeBtn.disabled = true;
+        agreeBtn.style.opacity = '0.5';
+      }
+    });
+  });
 
   cb.addEventListener('change', function () {
     agreeBtn.disabled = !cb.checked;
@@ -7924,7 +7987,7 @@ function wireTosGate() {
   });
 
   agreeBtn.addEventListener('click', function () {
-    if (!cb.checked) return;
+    if (!cb.checked || !allItemsChecked()) return;
     markTosAgreed();
     ov.classList.remove('active');
     setTimeout(function () { ov.classList.add('hidden'); }, 300);
@@ -7941,6 +8004,37 @@ function wireTosGate() {
     // window.close() はスクリプトで開いたタブにしか効かないブラウザが多く、
     // 通常のタブでは何も起きないことがある（declinePanel の案内文で代替）。
     window.close();
+  });
+
+  if (openPrivacyBtn) openPrivacyBtn.addEventListener('click', function () {
+    openPrivacyPolicyOverlay();
+  });
+  if (privacyLink) privacyLink.addEventListener('click', function (e) {
+    e.preventDefault();
+    openPrivacyPolicyOverlay();
+  });
+}
+
+function openPrivacyPolicyOverlay() {
+  var ov = document.getElementById('privacy-policy-overlay');
+  if (!ov) return;
+  ov.classList.remove('hidden');
+  requestAnimationFrame(function () { ov.classList.add('active'); });
+}
+
+function closePrivacyPolicyOverlay() {
+  var ov = document.getElementById('privacy-policy-overlay');
+  if (!ov) return;
+  ov.classList.remove('active');
+  setTimeout(function () { ov.classList.add('hidden'); }, 300);
+}
+
+function wirePrivacyPolicyOverlay() {
+  var closeBtn = document.getElementById('btn-privacy-policy-close');
+  if (closeBtn) closeBtn.addEventListener('click', closePrivacyPolicyOverlay);
+  var ov = document.getElementById('privacy-policy-overlay');
+  if (ov) ov.addEventListener('click', function (e) {
+    if (e.target === ov) closePrivacyPolicyOverlay();
   });
 }
 
