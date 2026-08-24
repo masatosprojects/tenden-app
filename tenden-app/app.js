@@ -357,7 +357,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
- fetch('assets/i18n.json?v=180')
+ fetch('assets/i18n.json?v=181')
  .then(res => res.json())
  .then(data => {
  i18nDict = data;
@@ -2748,7 +2748,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  activeLocationId = locationId;
  emergencyStartTimeMs = Date.now();
  loadCongestionTimeseries(); // 緊急モード中のみ時系列混雑データを遅延ロード
- loadAiPolicy();             // AIスマート避難ルート用の方策データを先読み
+ loadAiPolicy();             // 強化学習ルート用の方策データを先読み
  loadAccessiblePolicy();     // 要配慮者ルート用の方策データを先読み
  if (!isTest) {
  document.body.classList.add('emergency-mode');
@@ -3183,7 +3183,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
 
  if (isSelected) {
  mainRouteLine = pline;
- // [2026-06-21] ルート上に常設のラベル（AIスマート避難ルート等）を置くのをやめた。
+ // [2026-06-21] ルート上に常設のラベル（強化学習ルート等）を置くのをやめた。
  //   道の上に重なって視認性を落とすため。選択した旨は selectEvacuationRoute() 側で
  //   showAgentBubble() の一時トースト（約4.5秒で自動的に消える）に一本化。
 
@@ -3624,7 +3624,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
      ? Math.min(99, Math.floor(d.model_info.final_survival_rate * 100)) : 99;
    return {
      id: 'AI',
-     label: dict.routeAiLabel || 'AIスマート避難ルート',
+     label: dict.routeAiLabel || '強化学習ルート',
      color: '#ff6b00',
      waypoints: wps,
      distance_m: Math.round(dist),
