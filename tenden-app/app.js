@@ -354,6 +354,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  try { initHudTsunamiPolling(); } catch(e) {}
  try { wireEndDrillButton(); } catch(e) {}
  try { wireShareSafetyNavButton(); } catch(e) {}
+ try { wireTosGate(); } catch(e) {}
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
@@ -7874,6 +7875,75 @@ function wireEndDrillButton() {
   });
 }
 
+// ── 利用規約 同意ゲート ──────────────────────────────────────────────
+// オンボーディング序盤（step0の次）に挟む必須関門。同意済みでない限り、
+// requireTosThen() でラップされた遷移は必ずこのゲートで止まる。
+// 一度同意すればlocalStorageに記録され、以後の再訪問では再表示しない。
+var _tosGatePendingAction = null;
+
+function isTosAgreed() {
+  try { return localStorage.getItem('tenden-tos-agreed') === '1'; } catch (e) { return false; }
+}
+
+function markTosAgreed() {
+  try { localStorage.setItem('tenden-tos-agreed', '1'); } catch (e) {}
+}
+
+function showTosGate(onAgree) {
+  var ov = document.getElementById('tos-gate-overlay');
+  if (!ov) { if (onAgree) onAgree(); return; } // ゲートDOMが無い場合は素通りさせる（安全側フォールバック）
+  _tosGatePendingAction = onAgree;
+  var cb = document.getElementById('tos-gate-checkbox');
+  var agreeBtn = document.getElementById('tos-gate-agree');
+  if (cb) cb.checked = false;
+  if (agreeBtn) { agreeBtn.disabled = true; agreeBtn.style.opacity = '0.5'; }
+  document.getElementById('tos-gate-decline-panel')?.classList.add('hidden');
+  ov.classList.remove('hidden');
+  requestAnimationFrame(function () { ov.classList.add('active'); });
+}
+
+// 同意済みならそのまま action() を実行、未同意ならゲートを表示して待つ。
+// オンボーディングの遷移（次へ／スキップ／ドット）はすべてこれ経由にする。
+function requireTosThen(action) {
+  if (isTosAgreed()) { action(); return; }
+  showTosGate(action);
+}
+
+function wireTosGate() {
+  var ov = document.getElementById('tos-gate-overlay');
+  var cb = document.getElementById('tos-gate-checkbox');
+  var agreeBtn = document.getElementById('tos-gate-agree');
+  var declineBtn = document.getElementById('tos-gate-decline');
+  var declinePanel = document.getElementById('tos-gate-decline-panel');
+  var closeTabBtn = document.getElementById('tos-gate-close-tab');
+  if (!ov || !cb || !agreeBtn) return;
+
+  cb.addEventListener('change', function () {
+    agreeBtn.disabled = !cb.checked;
+    agreeBtn.style.opacity = cb.checked ? '1' : '0.5';
+  });
+
+  agreeBtn.addEventListener('click', function () {
+    if (!cb.checked) return;
+    markTosAgreed();
+    ov.classList.remove('active');
+    setTimeout(function () { ov.classList.add('hidden'); }, 300);
+    var action = _tosGatePendingAction;
+    _tosGatePendingAction = null;
+    if (typeof action === 'function') action();
+  });
+
+  if (declineBtn) declineBtn.addEventListener('click', function () {
+    if (declinePanel) declinePanel.classList.remove('hidden');
+  });
+
+  if (closeTabBtn) closeTabBtn.addEventListener('click', function () {
+    // window.close() はスクリプトで開いたタブにしか効かないブラウザが多く、
+    // 通常のタブでは何も起きないことがある（declinePanel の案内文で代替）。
+    window.close();
+  });
+}
+
 // ── オンボーディングボタンの安全な直接配線 ──────────────────────────
 // startOnboardingDemo 内でエラーが起きても必ずボタンが機能するフォールバック。
 function wireOnboardingButtons() {
@@ -7893,8 +7963,8 @@ function wireOnboardingButtons() {
     }
   }
   [
-    ['btn-demo-next-0', function() { goFB(1); }],
-    ['btn-demo-skip-0', function() { closeFB(); showLocationExplanation(requestLocation); }],
+    ['btn-demo-next-0', function() { requireTosThen(function(){ goFB(1); }); }],
+    ['btn-demo-skip-0', function() { requireTosThen(function(){ closeFB(); showLocationExplanation(requestLocation); }); }],
     ['btn-demo-next-1', function() { goFB(2); }],
     ['btn-demo-skip-1', function() { closeFB(); showLocationExplanation(requestLocation); }],
     ['btn-demo-next-2', function() { goFB(3); }],
@@ -8781,8 +8851,8 @@ function startOnboardingDemo() {
  const btnUse = document.getElementById('btn-demo-use-here');
  const btnReplay = document.getElementById('btn-demo-replay');
 
- if (btn0Next) btn0Next.addEventListener('click', () => goToStep(1));
- if (btn0Skip) btn0Skip.addEventListener('click', () => { closeDemo(); showLocationExplanation(requestLocation); });
+ if (btn0Next) btn0Next.addEventListener('click', () => requireTosThen(() => goToStep(1)));
+ if (btn0Skip) btn0Skip.addEventListener('click', () => requireTosThen(() => { closeDemo(); showLocationExplanation(requestLocation); }));
  if (btn1Next) btn1Next.addEventListener('click', () => goToStep(2));
  if (btn1Skip) btn1Skip.addEventListener('click', () => { closeDemo(); showLocationExplanation(requestLocation); });
  if (btn2Next) btn2Next.addEventListener('click', () => goToStep(3));
@@ -8800,7 +8870,9 @@ function startOnboardingDemo() {
  document.querySelectorAll('.demo-dot').forEach(dot => {
  dot.addEventListener('click', () => {
  const step = parseInt(dot.dataset.step);
- if (!isNaN(step)) goToStep(step);
+ if (isNaN(step)) return;
+ if (step > 0) requireTosThen(() => goToStep(step));
+ else goToStep(step);
  });
  });
 

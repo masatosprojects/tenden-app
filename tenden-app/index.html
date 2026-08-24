@@ -939,6 +939,31 @@
  </div>
  </div>
 
+ <!-- 利用規約 同意ゲート — オンボーディング序盤の必須関門。同意するまで先へ進めない。
+      本文はプレースホルダー。実際の利用規約テキストに差し替え予定 (#tos-gate-body)。 -->
+ <div id="tos-gate-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tos-gate-title">
+ <div class="dialog glass-panel" style="max-width:480px; max-height:88vh; display:flex; flex-direction:column;">
+ <div class="dialog-header">
+ <h2 id="tos-gate-title">利用規約への同意</h2>
+ </div>
+ <div id="tos-gate-body" style="flex:1; min-height:0; overflow-y:auto; font-size:0.85rem; line-height:1.7; padding:4px 2px; color:var(--text-color);">
+ <p>（利用規約の本文は準備中です。差し替え予定）</p>
+ </div>
+ <label style="display:flex; align-items:flex-start; gap:10px; margin-top:14px; cursor:pointer;">
+ <input type="checkbox" id="tos-gate-checkbox" style="margin-top:3px; width:18px; height:18px; flex-shrink:0;">
+ <span style="font-size:0.85rem; line-height:1.5;">利用規約の内容を読み、同意します</span>
+ </label>
+ <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
+ <button id="tos-gate-agree" class="action-btn primary-btn w-100 btn-large" disabled>同意して進む</button>
+ <button id="tos-gate-decline" class="action-btn secondary-btn w-100">同意しない</button>
+ </div>
+ <div id="tos-gate-decline-panel" class="hidden" style="margin-top:14px; text-align:center;">
+ <p style="font-size:0.85rem; opacity:0.8; margin-bottom:10px;">利用規約にご同意いただけない場合、本アプリはご利用いただけません。このタブを閉じてください。</p>
+ <button id="tos-gate-close-tab" class="action-btn w-100" style="background:#ff3b30; color:#fff; border:none;">タブを閉じる</button>
+ </div>
+ </div>
+ </div>
+
  <!-- Hidden compat element: btn-onboarding-ok is still referenced by legacy JS, keep as hidden -->
  <button id="btn-onboarding-ok" style="display:none;" aria-hidden="true"></button>
 
@@ -1689,7 +1714,7 @@
  <script src="assets/vendor/qrcode.min.js?v=1"></script>
  <script src="app-config.js?v=1"></script>
  <script src="agent.js?v=147"></script>
- <script src="app.js?v=178"></script>
+ <script src="app.js?v=179"></script>
 
 <!-- ======================================================
      ホーム画面追加ガイド（手動トリガーのみ）
