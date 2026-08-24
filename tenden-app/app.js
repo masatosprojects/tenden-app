@@ -358,7 +358,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
- fetch('assets/i18n.json?v=181')
+ fetch('assets/i18n.json?v=182')
  .then(res => res.json())
  .then(data => {
  i18nDict = data;
@@ -8790,7 +8790,7 @@ function startOnboardingDemo() {
 
   const etaEl = document.getElementById('demo-quake-eta');
   if (etaEl) {
-   const etaLabel = getDemoText('etaLabel', '津波到達まで:').replace(/:$/, '');
+   const etaLabel = getDemoText('etaLabel', 'モデル参考時間(到達まで):').replace(/:$/, '');
    etaEl.innerHTML = `${etaLabel} <strong>約15分</strong>`;
   }
  }

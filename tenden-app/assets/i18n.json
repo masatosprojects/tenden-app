@@ -251,7 +251,7 @@
   "modelAreaDismissAria": "鎌倉モデル地区のデモ表示中。タップして現在地に戻る",
   "modelAreaBubbleHint": "鎌倉モデル地区でデモ表示中です。下のチップから現在地に戻れます",
   "modelAreaReturnBtn": "現在地に戻る",
-  "etaLabel": "津波到達まで:",
+  "etaLabel": "モデル参考時間(到達まで):",
   "fabMore": "その他",
   "evacPrimaryBtn": "避難ルートに従って進む",
   "panelMoreBtn": "その他の操作",
