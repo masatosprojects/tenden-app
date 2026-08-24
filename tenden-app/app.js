@@ -5872,8 +5872,15 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  if (typeof _updateHudTsunamiChip === 'function') _updateHudTsunamiChip(_hudTsunamiKind);
  if (typeof updateHudTimeWarning === 'function') updateHudTimeWarning();
  if (typeof updateSafeZoneGuideVisibility === 'function') updateSafeZoneGuideVisibility();
+ // 日本語は翻訳元そのものなのでハードコードDOM翻訳・監視は不要。
+ // このMutationObserverはbody全体のあらゆる変更（class切替・秒更新等）で
+ // 発火し辞書逆引きマップの再構築とDOM全走査を行うため、常時起動すると
+ // 時計更新やアニメーションのたびに重い処理が走り、日本語ユーザーの
+ // メインスレッドを圧迫してタップ等の操作が効かなくなる原因になっていた。
+ if (langCode !== 'ja') {
  translateHardcodedDom(document.body, langCode);
  installHardcodedI18nObserver();
+ }
  }
  }
 
