@@ -7918,7 +7918,7 @@ function showTosGate(onAgree) {
   _resetTosGateInteractiveState();
   document.getElementById('tos-gate-decline-panel')?.classList.add('hidden');
   ov.classList.remove('hidden');
-  requestAnimationFrame(function () { ov.classList.add('active'); });
+  setTimeout(function () { ov.classList.add('active'); }, 10);
 }
 
 // 既に同意済みの利用者が「設定」から規約を読み返すための閲覧専用モード。
@@ -7939,7 +7939,7 @@ function showTosGateReadOnly() {
   if (agreeBtn) { agreeBtn.textContent = '閉じる'; agreeBtn.disabled = false; agreeBtn.style.opacity = '1'; }
   document.getElementById('tos-gate-decline-panel')?.classList.add('hidden');
   ov.classList.remove('hidden');
-  requestAnimationFrame(function () { ov.classList.add('active'); });
+  setTimeout(function () { ov.classList.add('active'); }, 10);
 }
 
 // 同意済みならそのまま action() を実行、未同意ならゲートを表示して待つ。
@@ -8019,7 +8019,7 @@ function openPrivacyPolicyOverlay() {
   var ov = document.getElementById('privacy-policy-overlay');
   if (!ov) return;
   ov.classList.remove('hidden');
-  requestAnimationFrame(function () { ov.classList.add('active'); });
+  setTimeout(function () { ov.classList.add('active'); }, 10);
 }
 
 function closePrivacyPolicyOverlay() {
