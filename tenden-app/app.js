@@ -7897,6 +7897,9 @@ function wireOnboardingButtons() {
   ].forEach(function(pair) {
     var el = document.getElementById(pair[0]);
     if (!el) return;
+    // startOnboardingDemo() が正常に配線済みなら、cloneNode で
+    // 正規ハンドラ（アニメーション後始末等を含む）を消さずそのまま使う。
+    if (el.dataset.onboardingWired === '1') return;
     var fresh = el.cloneNode(true);
     el.parentNode.replaceChild(fresh, el);
     fresh.addEventListener('click', pair[1]);
@@ -8779,6 +8782,12 @@ function startOnboardingDemo() {
  if (btn2Skip) btn2Skip.addEventListener('click', () => { closeDemo(); showLocationExplanation(requestLocation); });
  if (btnReplay) btnReplay.addEventListener('click', () => goToStep(0));
  if (btnUse) btnUse.addEventListener('click', () => { closeDemo(); showLocationExplanation(requestLocation); });
+
+ // wireOnboardingButtons()（フォールバック配線）がこの正規ハンドラを
+ // cloneNode で silently 上書きしないよう、配線済みを明示しておく。
+ [btn0Next, btn0Skip, btn1Next, btn1Skip, btn2Next, btn2Skip, btnUse, btnReplay].forEach(function (el) {
+   if (el) el.dataset.onboardingWired = '1';
+ });
 
  // Dot clicks
  document.querySelectorAll('.demo-dot').forEach(dot => {
