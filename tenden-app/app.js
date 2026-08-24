@@ -34,6 +34,32 @@ var _onboardingStartedThisLoad = false;
 document.addEventListener('DOMContentLoaded', () => {
  applyTendenConfig();
 
+ // ── [TEMP DIAG 2026-08-24] タップが実際どの要素に届いているか可視化する一時計測。
+ //    問題解決後に削除すること。
+ try {
+   ['pointerdown', 'mousedown', 'touchstart', 'click'].forEach(function (evtName) {
+     document.addEventListener(evtName, function (e) {
+       var t = e.target;
+       var path = [];
+       var cur = t;
+       while (cur && path.length < 6) {
+         path.push((cur.id ? '#' + cur.id : cur.tagName) + (cur.className && typeof cur.className === 'string' ? '.' + cur.className.split(' ').join('.') : ''));
+         cur = cur.parentElement;
+       }
+       var x = (e.clientX !== undefined) ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : null);
+       var y = (e.clientY !== undefined) ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : null);
+       var atPoint = (x != null && y != null) ? document.elementFromPoint(x, y) : null;
+       console.log('[TAP_DEBUG]', evtName, {
+         targetPath: path.join(' < '),
+         x: x, y: y,
+         elementFromPointId: atPoint ? (atPoint.id || atPoint.tagName) : null,
+         vw: window.innerWidth, vh: window.innerHeight
+       });
+     }, true);
+   });
+   console.log('[TAP_DEBUG] instrumentation attached');
+ } catch (e) { console.error('[TAP_DEBUG] setup failed', e); }
+
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
