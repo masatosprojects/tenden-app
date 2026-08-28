@@ -111,8 +111,9 @@ async function openFromDock(page, trunk, selector, hasTouch) {
     await context.addInitScript(() => {
       localStorage.setItem('tenden-tos-agreed', '1');
       localStorage.setItem('tenden-location-explained', 'true');
-      localStorage.setItem('tenden-pwa-ver', 'v7.4');
+      localStorage.setItem('tenden-pwa-ver', 'v7.5');
       localStorage.setItem('tenden-demo-seen', 'true');
+      sessionStorage.setItem('sn-dismissed', '1');
     });
     const page = await context.newPage();
     page.on('pageerror', (error) => errors.push({ viewport: viewport.name, message: error.message }));
@@ -130,6 +131,9 @@ async function openFromDock(page, trunk, selector, hasTouch) {
       await activate(page.locator('#btn-startup-notice-close'), viewport.hasTouch);
       await page.waitForTimeout(350);
     }
+    // The notice payload can arrive after the initial close check; keep visual
+    // navigation audits deterministic once startup UI has been exercised.
+    await page.locator('#startup-notice').evaluate((element) => element.classList.add('hidden')).catch(() => {});
 
     await capture(page, viewport.name, 'main', records);
     await activate(page.locator('.trunk-item[data-trunk="learn"]'), viewport.hasTouch);
