@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.1';
+     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.2';
      var ver = 'v' + cfgVer;
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
@@ -161,7 +161,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
      status: 'active',
      category: 'お知らせ',
      title: 'オフライン緊急モードを手動で有効化できます',
-     body: '設定から「オフライン緊急モード」をONにすると、電波のない緊急時でもTENDENが動作します。ONにするとアプリの自動更新が止まる点にご注意ください。',
+     body: '設定から「オフライン緊急モード」をONにすると、電波のない緊急時でもTENDENが動作します。オンラインに戻るとアプリ本体は更新されます。',
    },
    {
      id: 'community-reports',
@@ -348,7 +348,10 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  // Initialize (各関数をtry/catchで保護 — どれかがエラーでもスプラッシュは消える)
  try { initFirebase(); } catch(e) { console.warn('[TENDEN] Firebase init error:', e); }
  try { initMap(); } catch(e) { console.error('[TENDEN] initMap error:', e); }
- try { initUI(); } catch(e) { console.error('[TENDEN] initUI error:', e); }
+  try { initUI(); } catch(e) { console.error('[TENDEN] initUI error:', e); }
+  // Keep the primary bottom navigation independent from the large initUI
+  // routine. A missing optional control must never disable every trunk.
+  try { initDockTrunks(); } catch(e) { console.error('[TENDEN] dock init error:', e); }
  try { startClock(); } catch(e) {}
  try { connectP2PQuake(); } catch(e) {}
  try { initHudTsunamiPolling(); } catch(e) {}
@@ -384,7 +387,9 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
+        navigator.serviceWorker.register('sw.js?v=167', { updateViaCache: 'none' })
+          .then(registration => registration.update())
+          .catch(() => {});
       });
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -975,16 +980,18 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  });
  }
 
- btnOnboarding.addEventListener('click', () => {
+ btnOnboarding?.addEventListener('click', () => {
  const overlay = document.getElementById('onboarding-overlay');
+ if (!overlay) return;
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
  // いきなりOS許可ダイアログを出さず、用途・プライバシー説明を挟んでから要求（他導線と統一）
  showLocationExplanation(requestLocation);
  });
 
- btnErrorOk.addEventListener('click', () => {
+ btnErrorOk?.addEventListener('click', () => {
  const overlay = document.getElementById('error-overlay');
+ if (!overlay) return;
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
  
@@ -1107,7 +1114,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
    toggleCommunityReportsLayer(this.checked);
  });
 
- btnTestAlert.addEventListener('click', () => {
+ btnTestAlert?.addEventListener('click', () => {
    startDrillExperienceFlow();
  });
 
@@ -1234,20 +1241,22 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  if (sheltersLayerGroup) sheltersLayerGroup.addTo(map);
  syncDockHazardToggle();
 
- btnToggleLayers.addEventListener('click', () => {
+ btnToggleLayers?.addEventListener('click', () => {
  const overlay = document.getElementById('layers-overlay');
+ if (!overlay) return;
  overlay.classList.remove('hidden');
  setTimeout(() => overlay.classList.add('active'), 10);
  });
 
  // Layer Dialog Listeners
- document.getElementById('btn-layers-close').addEventListener('click', () => {
+ document.getElementById('btn-layers-close')?.addEventListener('click', () => {
  const overlay = document.getElementById('layers-overlay');
+ if (!overlay) return;
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
  });
 
- document.getElementById('toggle-shelters').addEventListener('change', (e) => {
+ document.getElementById('toggle-shelters')?.addEventListener('change', (e) => {
  if (e.target.checked) {
  if (sheltersLayerGroup) sheltersLayerGroup.addTo(map);
  } else {
@@ -1284,7 +1293,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  dock.classList.toggle('dock-toggle-active', on);
  }
 
- document.getElementById('toggle-congestion').addEventListener('change', (e) => {
+ document.getElementById('toggle-congestion')?.addEventListener('change', (e) => {
  if (e.target.checked) {
  if (congestionLayer) congestionLayer.addTo(map);
  } else {
@@ -1292,7 +1301,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  }
  });
 
- document.getElementById('toggle-relief').addEventListener('change', (e) => {
+ document.getElementById('toggle-relief')?.addEventListener('change', (e) => {
  if (e.target.checked) {
  if (reliefLayer) reliefLayer.addTo(map);
  } else {
@@ -1614,29 +1623,6 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
    if (typeof updateHudTimeWarning === 'function') updateHudTimeWarning();
  }
 
- function updateHudTimeWarning() {
-   const wrap = document.getElementById('status-time-wrap');
-   if (!wrap) return;
-   const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
-   const p2pDot = document.getElementById('p2p-dot');
-   const p2pAlert = p2pDot && p2pDot.classList.contains('p2p-alert');
-   let level = 'safe';
-   let ariaKey = 'hudTimeAriaSafe';
-   if (isEmergency) {
-     level = 'emergency';
-     ariaKey = 'hudTimeAriaEmergency';
-   } else if (_hudTsunamiKind === 'danger' || lastTsunamiIsInundated === true) {
-     level = 'danger';
-     ariaKey = 'hudTimeAriaDanger';
-   } else if (_hudTsunamiKind === 'watch' || p2pAlert) {
-     level = 'watch';
-     ariaKey = 'hudTimeAriaWatch';
-   }
-   wrap.classList.remove('hud-time--watch', 'hud-time--danger', 'hud-time--emergency');
-   if (level !== 'safe') wrap.classList.add('hud-time--' + level);
-   if (dict[ariaKey]) wrap.setAttribute('aria-label', dict[ariaKey]);
- }
-
  async function refreshHudTsunamiStatus() {
    _updateHudTsunamiChip('checking');
    try {
@@ -1930,80 +1916,6 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
    triggerHapticTick();
  });
 
- // トランク → サブシート展開
- (function initDockTrunks() {
-   const subSheet = document.getElementById('dock-sub-sheet');
-   const subTitle = document.getElementById('dock-sub-title');
-   const trunkItems = document.querySelectorAll('.trunk-item');
-   const trunkTitleKeys = { evac: 'trunkEvac', quake: 'trunkQuake', map: 'trunkMap', community: 'trunkCommunityTitle', learn: 'trunkLearn', more: 'trunkMore' };
-   let activeTrunk = null;
-
-   function closeDockSub() {
-     subSheet?.classList.add('hidden');
-     subSheet?.setAttribute('aria-hidden', 'true');
-     trunkItems.forEach(t => {
-       t.classList.remove('active');
-       t.setAttribute('aria-expanded', 'false');
-     });
-     document.querySelectorAll('.dock-sub-panel').forEach(p => { p.hidden = true; });
-     activeTrunk = null;
-   }
-
-   function openDockSub(trunkId) {
-     if (activeTrunk === trunkId) { closeDockSub(); return; }
-     activeTrunk = trunkId;
-     trunkItems.forEach(t => {
-       const isActive = t.dataset.trunk === trunkId;
-       t.classList.toggle('active', isActive);
-       t.setAttribute('aria-expanded', isActive ? 'true' : 'false');
-     });
-     document.querySelectorAll('.dock-sub-panel').forEach(p => {
-       p.hidden = p.dataset.trunk !== trunkId;
-     });
-     const key = trunkTitleKeys[trunkId];
-     if (subTitle && key) {
-       subTitle.setAttribute('data-i18n', key);
-       const lang = typeof getLanguageCode === 'function' ? getLanguageCode() : 'ja';
-       const dict = i18nDict[lang] || i18nDict.ja;
-       const trunkLabel = document.querySelector(`.trunk-item[data-trunk="${trunkId}"] .trunk-label`);
-       if (dict?.[key]) subTitle.textContent = dict[key];
-       else if (trunkLabel) subTitle.textContent = trunkLabel.textContent;
-     }
-     subSheet?.classList.remove('hidden');
-     subSheet?.setAttribute('aria-hidden', 'false');
-     // トランクタップ直後のゴーストクリックでサブ項目（QR共有等）が誤発火しないよう短時間ガード
-     if (subSheet) {
-       subSheet.classList.add('dock-sub-guard');
-       clearTimeout(subSheet._guardTimer);
-       subSheet._guardTimer = setTimeout(() => subSheet.classList.remove('dock-sub-guard'), 450);
-     }
-   }
-
-   trunkItems.forEach(trunk => {
-     trunk.addEventListener('click', e => {
-       e.stopPropagation();
-       openDockSub(trunk.dataset.trunk);
-     });
-   });
-   document.getElementById('dock-sub-close')?.addEventListener('click', closeDockSub);
-   document.querySelectorAll('.dock-sub-panel .dock-item').forEach(item => {
-     item.addEventListener('click', () => {
-       if (item.classList.contains('dock-toggle-p2p') || item.classList.contains('dock-toggle-hazard')) return;
-       // 海岸距離はトグル操作 — サブシートを開いたままにして再タップでOFFできるようにする
-       if (item.dataset.trigger === 'btn-coastline-dist') return;
-       setTimeout(closeDockSub, 80);
-     });
-   });
-   document.addEventListener('click', e => {
-     if (activeTrunk && !e.target.closest('.bottom-dock-wrap')) {
-       // 海岸距離ON中は地図サブシートを開いたまま → ボタン再タップでOFFしやすくする
-       if (_coastDistActive && activeTrunk === 'map') return;
-       closeDockSub();
-     }
-   });
-   window.closeDockSub = closeDockSub;
- })();
-
  // レポートカード（サイドパネル内）— 選択画面を表示
  document.getElementById('sp-report-card')?.addEventListener('click', () => {
    closeSidePanel();
@@ -2128,6 +2040,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
 
  function closeModelAreaOverlay() {
  const overlay = document.getElementById('model-area-overlay');
+ if (!overlay) return;
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
  resetModelAreaMorePanel();
@@ -2190,14 +2103,16 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
 
  document.getElementById('model-area-dismiss-chip')?.addEventListener('click', exitModelAreaDemo);
 
- btnSettings.addEventListener('click', () => {
+ btnSettings?.addEventListener('click', () => {
  const overlay = document.getElementById('settings-overlay');
+ if (!overlay) return;
  overlay.classList.remove('hidden');
  setTimeout(() => overlay.classList.add('active'), 10);
  });
 
- btnSettingsClose.addEventListener('click', () => {
+ btnSettingsClose?.addEventListener('click', () => {
  const overlay = document.getElementById('settings-overlay');
+ if (!overlay) return;
  overlay.classList.remove('active');
  setTimeout(() => overlay.classList.add('hidden'), 300);
  });
@@ -2237,9 +2152,9 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
 
  // Initialize Lang Select
  const savedLang = localStorage.getItem('tenden-lang') || 'auto';
- langSelect.value = savedLang;
+ if (langSelect) langSelect.value = savedLang;
 
- langSelect.addEventListener('change', (e) => {
+ langSelect?.addEventListener('change', (e) => {
  localStorage.setItem('tenden-lang', e.target.value);
  initI18n();
  
@@ -2265,7 +2180,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  }
  });
 
- btnClearCache.addEventListener('click', async () => {
+ btnClearCache?.addEventListener('click', async () => {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  if ('caches' in window) {
  const keys = await caches.keys();
@@ -2276,7 +2191,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  }
  });
 
- btnScreenshot.addEventListener('click', () => {
+ btnScreenshot?.addEventListener('click', () => {
  takeScreenshot();
  });
 
@@ -2293,7 +2208,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
      const statusEl = document.getElementById('pwa-toggle-status');
      if (statusEl) statusEl.textContent = enabling ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
      if (enabling) {
-       if (confirm('オフライン緊急モードを有効にします。\n\n事前に閲覧した地図タイルやアプリ本体はキャッシュされ、通信がなくても表示できます。\nただし、経路探索(OSRM)・標高取得・地震/津波速報(P2P)等は通信断時に利用できません。保存済みの情報が古くなる場合もあります。\nまた、アプリの自動更新が届かなくなります。\n\n有効にしますか？')) {
+       if (confirm('オフライン緊急モードを有効にします。\n\n事前に閲覧した地図タイルやアプリ本体はキャッシュされ、通信がなくても表示できます。\nただし、経路探索(OSRM)・標高取得・地震/津波速報(P2P)等は通信断時に利用できません。保存済みの情報が古くなる場合もあります。\nオンラインに戻るとアプリ本体を更新します。\n\n有効にしますか？')) {
          location.reload();
        } else {
          pwaOfflineToggle.checked = false;
@@ -2441,6 +2356,107 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
 
  if (typeof initTendenAgent === 'function') initTendenAgent();
  initSafeZoneGuide();
+ }
+
+ // This status updater is used by both initUI-local code and global polling/state
+ // routines, so it must remain in the application scope rather than initUI scope.
+ function updateHudTimeWarning() {
+  const wrap = document.getElementById('status-time-wrap');
+  if (!wrap) return;
+  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+  const p2pDot = document.getElementById('p2p-dot');
+  const p2pAlert = p2pDot && p2pDot.classList.contains('p2p-alert');
+  let level = 'safe';
+  let ariaKey = 'hudTimeAriaSafe';
+  if (isEmergency) {
+   level = 'emergency';
+   ariaKey = 'hudTimeAriaEmergency';
+  } else if (_hudTsunamiKind === 'danger' || lastTsunamiIsInundated === true) {
+   level = 'danger';
+   ariaKey = 'hudTimeAriaDanger';
+  } else if (_hudTsunamiKind === 'watch' || p2pAlert) {
+   level = 'watch';
+   ariaKey = 'hudTimeAriaWatch';
+  }
+  wrap.classList.remove('hud-time--watch', 'hud-time--danger', 'hud-time--emergency');
+  if (level !== 'safe') wrap.classList.add('hud-time--' + level);
+  if (dict[ariaKey]) wrap.setAttribute('aria-label', dict[ariaKey]);
+ }
+
+ // Wire the six primary dock categories separately from initUI. This keeps the
+ // main navigation usable even when an optional control is absent in an older
+ // cached HTML document.
+ function initDockTrunks() {
+  const root = document.documentElement;
+  if (root.dataset.dockTrunksWired === '1') return;
+  root.dataset.dockTrunksWired = '1';
+  const subSheet = document.getElementById('dock-sub-sheet');
+  const subTitle = document.getElementById('dock-sub-title');
+  const trunkItems = document.querySelectorAll('.trunk-item');
+  const trunkTitleKeys = { evac: 'trunkEvac', quake: 'trunkQuake', map: 'trunkMap', community: 'trunkCommunityTitle', learn: 'trunkLearn', more: 'trunkMore' };
+  let activeTrunk = null;
+
+  function closeDockSub() {
+   subSheet?.classList.add('hidden');
+   subSheet?.setAttribute('aria-hidden', 'true');
+   trunkItems.forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-expanded', 'false');
+   });
+   document.querySelectorAll('.dock-sub-panel').forEach(p => { p.hidden = true; });
+   activeTrunk = null;
+  }
+
+  function openDockSub(trunkId) {
+   if (activeTrunk === trunkId) { closeDockSub(); return; }
+   activeTrunk = trunkId;
+   trunkItems.forEach(t => {
+    const isActive = t.dataset.trunk === trunkId;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+   });
+   document.querySelectorAll('.dock-sub-panel').forEach(p => {
+    p.hidden = p.dataset.trunk !== trunkId;
+   });
+   const key = trunkTitleKeys[trunkId];
+   if (subTitle && key) {
+    subTitle.setAttribute('data-i18n', key);
+    const lang = typeof getLanguageCode === 'function' ? getLanguageCode() : 'ja';
+    const dict = i18nDict[lang] || i18nDict.ja;
+    const trunkLabel = document.querySelector(`.trunk-item[data-trunk="${trunkId}"] .trunk-label`);
+    if (dict?.[key]) subTitle.textContent = dict[key];
+    else if (trunkLabel) subTitle.textContent = trunkLabel.textContent;
+   }
+   subSheet?.classList.remove('hidden');
+   subSheet?.setAttribute('aria-hidden', 'false');
+   if (subSheet) {
+    subSheet.classList.add('dock-sub-guard');
+    clearTimeout(subSheet._guardTimer);
+    subSheet._guardTimer = setTimeout(() => subSheet.classList.remove('dock-sub-guard'), 450);
+   }
+  }
+
+  trunkItems.forEach(trunk => {
+   trunk.addEventListener('click', e => {
+    e.stopPropagation();
+    openDockSub(trunk.dataset.trunk);
+   });
+  });
+  document.getElementById('dock-sub-close')?.addEventListener('click', closeDockSub);
+  document.querySelectorAll('.dock-sub-panel .dock-item').forEach(item => {
+   item.addEventListener('click', () => {
+    if (item.classList.contains('dock-toggle-p2p') || item.classList.contains('dock-toggle-hazard')) return;
+    if (item.dataset.trigger === 'btn-coastline-dist') return;
+    setTimeout(closeDockSub, 80);
+   });
+  });
+  document.addEventListener('click', e => {
+   if (activeTrunk && !e.target.closest('.bottom-dock-wrap')) {
+    if (_coastDistActive && activeTrunk === 'map') return;
+    closeDockSub();
+   }
+  });
+  window.closeDockSub = closeDockSub;
  }
 
 
@@ -9027,4 +9043,3 @@ function startOnboardingDemo() {
 
 
 });
-

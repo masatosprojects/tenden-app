@@ -1,9 +1,9 @@
 // TENDEN Service Worker — オフライン緊急モード用
 // ユーザーが設定でONにした場合のみ登録されます（デフォルト: 未登録）
-// ONにすると地図・データをキャッシュしネット不要で動作しますが、アプリの自動更新が届かなくなります。
+// ONにすると地図・データをキャッシュし、オンライン時はアプリ本体を更新します。
 
-const CACHE_NAME = 'tenden-v166';
-const DYNAMIC_CACHE = 'tenden-dynamic-v80';
+const CACHE_NAME = 'tenden-v167';
+const DYNAMIC_CACHE = 'tenden-dynamic-v81';
 
 const urlsToCache = [
   './',
@@ -75,11 +75,26 @@ const TILE_DOMAINS = [
   'fonts.gstatic.com'
 ];
 
+const CORE_APP_PATHS = new Set([
+  '',
+  'index.html',
+  'style.css',
+  'app-config.js',
+  'app.js',
+  'agent.js',
+  'manifest.json',
+  'assets/i18n.json'
+]);
+
 self.addEventListener('install', event => {
   self.skipWaiting();
+  const localUrls = urlsToCache.filter(url => !/^https?:/i.test(url));
+  const remoteUrls = urlsToCache.filter(url => /^https?:/i.test(url));
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(cache => cache.addAll(localUrls)
+        // A temporary CDN failure must not prevent this service worker update.
+        .then(() => Promise.allSettled(remoteUrls.map(url => cache.add(url)))))
   );
 });
 
@@ -96,7 +111,28 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const req = event.request;
+  if (req.method !== 'GET') return;
   const cleanUrl = req.url.split('?')[0];
+  const requestUrl = new URL(req.url);
+  const appBase = new URL('./', self.location.href).pathname;
+  const relativePath = requestUrl.origin === self.location.origin && requestUrl.pathname.startsWith(appBase)
+    ? requestUrl.pathname.slice(appBase.length)
+    : null;
+  const isCoreApp = relativePath !== null && CORE_APP_PATHS.has(relativePath);
+
+  // Avoid mixed-version HTML/JS/CSS while online. If the network is unavailable,
+  // fall back to the last complete app shell retained for emergency use.
+  if (isCoreApp) {
+    event.respondWith(
+      fetch(req, { cache: 'no-store' }).then(networkRes => {
+        if (networkRes && networkRes.ok) {
+          caches.open(CACHE_NAME).then(cache => cache.put(req, networkRes.clone()));
+        }
+        return networkRes;
+      }).catch(() => caches.match(req).then(cachedRes => cachedRes || caches.match(req, { ignoreSearch: true })))
+    );
+    return;
+  }
 
   const isStaticAsset = urlsToCache.some(url => {
     try {
