@@ -1307,10 +1307,10 @@ body.ep-mode .coast-dist-dismiss-chip {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     border: none;
     border-radius: 50%;
     background: rgba(120, 120, 128, 0.12);
@@ -2558,6 +2558,13 @@ a.dock-item.dock-learn-external {
     border-radius: 18px;
     transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.toggle-group > label {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 8px 12px 0;
+    margin: -12px 0;
+    cursor: pointer;
+}
 .toggle-group:hover {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.08);
@@ -3458,6 +3465,8 @@ input:checked + .slider:before {
     #hud-tsunami-chip {
         font-size: 0.68rem;
         padding: 3px 7px;
+        min-width: 44px;
+        min-height: 24px;
         max-width: 34%;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -5124,13 +5133,24 @@ body.onboarding-demo-active #demo-step-0.active {
     border: none;
     color: var(--text-secondary, #8e8e93);
     cursor: pointer;
-    padding: 7px;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
     border-radius: 9px;
     display: flex;
     align-items: center;
     transition: background 0.15s, color 0.15s;
 }
 .quake-refresh-btn:active { background: rgba(0,122,255,0.18); color: var(--accent,#007aff); }
+
+#btn-force-reload { min-height: 44px; }
+.guide-dialog a[target="_blank"] {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
 .quake-updated {
     font-size: 0.68rem;
     color: var(--text-tertiary, #636366);

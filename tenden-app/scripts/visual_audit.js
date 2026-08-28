@@ -111,7 +111,7 @@ async function openFromDock(page, trunk, selector, hasTouch) {
     await context.addInitScript(() => {
       localStorage.setItem('tenden-tos-agreed', '1');
       localStorage.setItem('tenden-location-explained', 'true');
-      localStorage.setItem('tenden-pwa-ver', 'v7.3');
+      localStorage.setItem('tenden-pwa-ver', 'v7.4');
       localStorage.setItem('tenden-demo-seen', 'true');
     });
     const page = await context.newPage();
