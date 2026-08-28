@@ -1263,6 +1263,10 @@ body.ep-mode .coast-dist-dismiss-chip {
     border-radius: 20px;
     padding: 12px 14px 14px;
     z-index: 10;
+    max-height: calc(100dvh - 108px - env(safe-area-inset-top, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
     transform-origin: bottom center;
     transform: translateY(8px) scale(0.96);
@@ -1285,6 +1289,11 @@ body.ep-mode .coast-dist-dismiss-chip {
     justify-content: space-between;
     margin-bottom: 10px;
     padding: 0 2px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--glass-bg);
+    border-radius: 12px;
 }
 .dock-sub-title {
     font-family: 'Outfit', 'Inter', sans-serif;
@@ -1298,8 +1307,10 @@ body.ep-mode .coast-dist-dismiss-chip {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
     border: none;
     border-radius: 50%;
     background: rgba(120, 120, 128, 0.12);
@@ -1482,6 +1493,8 @@ a.dock-item.dock-learn-external {
     border: none; border-radius: 16px;
     font-weight: 700; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px;
+    padding: 11px 14px;
     transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     font-size: 0.95rem;
     position: relative;
@@ -1904,6 +1917,9 @@ a.dock-item.dock-learn-external {
     max-width: 340px;
     width: 92%;
     text-align: center;
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 .app-share-dialog .dialog-header {
     justify-content: center;
@@ -2386,6 +2402,7 @@ a.dock-item.dock-learn-external {
     -webkit-backdrop-filter: blur(5px);
     z-index: 2000;
     display: flex; justify-content: center; align-items: center;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px));
     opacity: 0; visibility: hidden; 
     transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s;
 }
@@ -2419,6 +2436,7 @@ a.dock-item.dock-learn-external {
 }
 .dialog {
     width: 90%; max-width: 360px;
+    max-height: 100%;
     padding: 24px; border-radius: 24px;
     text-align: center;
 }
@@ -2505,17 +2523,24 @@ a.dock-item.dock-learn-external {
 .dialog-header h2 { margin: 0; }
 /* 設定コンテンツエリアだけスクロール */
 .settings-dialog .settings-scroll-body,
-.settings-dialog > :not(.dialog-header) {
+.layers-scroll-body {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding: 16px 24px 24px;
     flex: 1;
+    min-height: 0;
 }
 .close-btn {
     background: none; border: none; font-size: 1.8rem;
     color: var(--text-muted); cursor: pointer; line-height: 1;
-    padding: 0 4px; flex-shrink: 0;
+    padding: 0; flex-shrink: 0;
+    width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    -webkit-tap-highlight-color: transparent;
 }
+.close-btn:active { background: rgba(120, 120, 128, 0.14); }
 .form-group { margin-bottom: 20px; text-align: left; }
 .form-group label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; }
 .form-control { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.05); color: var(--text-color); font-size: 1rem; }
@@ -3072,12 +3097,13 @@ body.ep-mode .user-marker-container { display: none !important; }
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-top: 8px;
+    margin-top: 0;
     padding: 14px 16px;
     border-radius: 12px;
     background: rgba(0, 0, 0, 0.06);
     font-size: 0.88rem;
     color: var(--text-muted);
+    flex-shrink: 0;
 }
 .settings-version-footer strong {
     color: var(--text-color);
@@ -3458,6 +3484,38 @@ input:checked + .slider:before {
     .status-right .status-badge { font-size: 0.68rem; padding: 3px 4px !important; }
     #hud-tsunami-chip { font-size: 0.64rem; padding: 3px 6px; max-width: 32%; }
     .network-badge strong { font-size: 0.72rem; }
+}
+
+@container tenden-app (max-width: 340px) {
+    .status-time .hud-label-short,
+    .network-badge strong { display: none !important; }
+    .network-badge { padding-left: 6px !important; padding-right: 6px !important; }
+    #hud-tsunami-chip { max-width: none; flex: 0 1 auto; }
+}
+
+@media (max-height: 650px) {
+    .app-share-dialog {
+        padding: 12px 16px 14px;
+    }
+    .app-share-dialog .dialog-header {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+    .app-share-desc { margin-bottom: 8px; line-height: 1.35; }
+    .app-share-qr-wrap { padding: 10px; margin-bottom: 8px; }
+    .app-share-qr { min-width: 150px; min-height: 150px; }
+    .app-share-qr svg,
+    .app-share-qr canvas,
+    .app-share-qr img { width: 150px; height: 150px; }
+    .app-share-url { margin-bottom: 8px; }
+    .app-share-actions { gap: 6px; }
+
+    .about-dialog .settings-scroll-body { padding: 12px 18px 18px; }
+    .about-brand-mark img { width: 52px; height: 52px; }
+    .about-desc { margin: 10px 0 12px; font-size: 0.86rem; line-height: 1.45; }
+    .about-version-row { margin-bottom: 12px; }
+    .about-links { gap: 8px; margin-bottom: 0; }
+    .about-link-btn { min-height: 42px; padding-top: 9px; padding-bottom: 9px; }
 }
 
 /* ==========================================================================
@@ -4009,6 +4067,105 @@ body.onboarding-demo-active #demo-step-0.active {
     }
 }
 
+/* Phone landscape: keep every onboarding action reachable without relying on
+   page scrolling (the full-screen demo intentionally locks body scrolling). */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+    body.onboarding-demo-active,
+    body.onboarding-demo-active:has(#demo-step-0.active),
+    body.onboarding-demo-active:has(#demo-step-1.active),
+    body.onboarding-demo-active:has(#demo-step-2.active),
+    body.onboarding-demo-active:has(#demo-step-3.active) {
+        --agent-width: 48px;
+        --agent-height: 48px;
+        --agent-bubble-gap: 6px;
+        --onboarding-safe-top: max(env(safe-area-inset-top, 8px), 8px);
+        --onboarding-agent-bubble-cap: 72px;
+        --onboarding-agent-zone: 138px;
+        --onboarding-agent-top: var(--onboarding-safe-top);
+        --onboarding-step-gap: 4px;
+    }
+    body.onboarding-demo-active #onboarding-overlay #tenden-agent,
+    body.onboarding-demo-active #onboarding-overlay #tenden-agent.tenden-agent--onboarding {
+        top: var(--onboarding-safe-top);
+    }
+    body.onboarding-demo-active #onboarding-overlay #tenden-agent .tenden-agent-bubble-scroll {
+        max-height: 68px;
+    }
+    body.onboarding-demo-active .demo-overlay-inner,
+    body.onboarding-demo-active:has(#demo-step-0.active) .demo-overlay-inner,
+    body.onboarding-demo-active:has(#demo-step-1.active) .demo-overlay-inner,
+    body.onboarding-demo-active:has(#demo-step-2.active) .demo-overlay-inner,
+    body.onboarding-demo-active:has(#demo-step-3.active) .demo-overlay-inner {
+        padding: calc(var(--onboarding-safe-top) + var(--onboarding-agent-zone)) 20px 6px;
+    }
+    body.onboarding-demo-active .demo-step.active,
+    body.onboarding-demo-active #demo-step-0.active {
+        padding-top: 0;
+        gap: 4px;
+        overflow: hidden;
+        justify-content: flex-start;
+    }
+    body.onboarding-demo-active #demo-step-0.active .demo-logo-wrap,
+    body.onboarding-demo-active #demo-step-0.active .demo-wave-wrap {
+        display: none;
+    }
+    body.onboarding-demo-active #demo-step-0.active .demo-hero-title {
+        font-size: 22px;
+        margin-top: 8px;
+    }
+    body.onboarding-demo-active #demo-step-0.active .demo-hero-sub {
+        font-size: 12px;
+    }
+    body.onboarding-demo-active:has(#demo-step-1.active) .demo-alert-box {
+        padding: 6px 12px;
+    }
+    body.onboarding-demo-active:has(#demo-step-1.active) .demo-alert-title { font-size: 15px; }
+    body.onboarding-demo-active:has(#demo-step-1.active) .demo-alert-desc { font-size: 11px; line-height: 1.3; }
+    body.onboarding-demo-active:has(#demo-step-1.active) .demo-alert-drill-notice { display: none; }
+    body.onboarding-demo-active:has(#demo-step-1.active) .demo-quake-visual {
+        height: 58px;
+        min-height: 58px;
+    }
+    body.onboarding-demo-active:has(#demo-step-2.active) .demo-routes-visual {
+        padding: 3px 8px;
+    }
+    body.onboarding-demo-active:has(#demo-step-2.active) .demo-routes-svg {
+        height: 76px;
+        max-height: 76px;
+    }
+    body.onboarding-demo-active .demo-route-legend { gap: 4px; }
+    body.onboarding-demo-active .legend-item { padding: 2px 8px; font-size: 10px; }
+    body.onboarding-demo-active:has(#demo-step-3.active) .demo-flow-visual {
+        min-height: 66px;
+        height: 66px;
+        max-height: 66px;
+    }
+    body.onboarding-demo-active .demo-nav {
+        flex-direction: row;
+        margin-top: auto;
+        padding-top: 2px;
+        gap: 8px;
+    }
+    body.onboarding-demo-active .demo-nav .demo-btn-primary { flex: 2; width: auto; }
+    body.onboarding-demo-active .demo-nav .demo-btn-ghost { flex: 1; min-height: 44px; }
+    body.onboarding-demo-active .demo-cta-area {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        margin-top: auto;
+        padding-top: 2px;
+        gap: 4px 8px;
+    }
+    body.onboarding-demo-active .demo-cta-area .demo-btn-use,
+    body.onboarding-demo-active .demo-cta-area .demo-btn-secondary { width: 100%; min-height: 42px; }
+    body.onboarding-demo-active .demo-cta-area .demo-link {
+        grid-column: 1 / -1;
+        min-height: 24px;
+        padding: 2px 8px;
+        text-align: center;
+    }
+    body.onboarding-demo-active .demo-overlay-footer { padding-top: 2px; }
+}
+
 @keyframes onboardAuroraDrift {
     0% { transform: scale(1) translate(0, 0); }
     50% { transform: scale(1.08) translate(2%, -3%); }
@@ -4523,7 +4680,7 @@ body.onboarding-demo-active #demo-step-0.active {
 /* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
    DESKTOP VIEWPORT SIMULATOR (Premium Smartphone Mockup)
    笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */
-@media (min-width: 769px) {
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
     body {
         background: #111214 !important; /* Premium dark background surrounding the phone */
         display: flex !important;
