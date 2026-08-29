@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.11';
+     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.12';
      var ver = 'v' + cfgVer;
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
@@ -393,7 +393,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=176', { updateViaCache: 'none' })
+        navigator.serviceWorker.register('sw.js?v=177', { updateViaCache: 'none' })
           .then(registration => registration.update())
           .catch(() => {});
       });
@@ -8150,6 +8150,13 @@ function wireOnboardingButtons() {
  function initDemoQuakeMap() {
   const container = document.getElementById('demo-quake-map');
   if (!container) return;
+  if (typeof window.L === 'undefined') {
+   container.classList.add('demo-quake-map--fallback');
+   container.textContent = '地図を読み込めませんでした。案内はそのまま続けられます。';
+   return;
+  }
+  container.classList.remove('demo-quake-map--fallback');
+  container.textContent = '';
   if (demoQuakeMap) {
    requestAnimationFrame(() => {
     if (!demoQuakeMap) return;
