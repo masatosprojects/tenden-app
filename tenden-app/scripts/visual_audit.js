@@ -99,6 +99,7 @@ async function openFromDock(page, trunk, selector, hasTouch) {
   const browser = await chromium.launch({ executablePath: CHROME, headless: true });
   const records = [];
   const errors = [];
+  const consoleErrors = [];
 
   for (const viewport of ACTIVE_VIEWPORTS) {
     const context = await browser.newContext({
@@ -111,12 +112,21 @@ async function openFromDock(page, trunk, selector, hasTouch) {
     await context.addInitScript(() => {
       localStorage.setItem('tenden-tos-agreed', '1');
       localStorage.setItem('tenden-location-explained', 'true');
-      localStorage.setItem('tenden-pwa-ver', 'v7.5');
+      localStorage.setItem('tenden-pwa-ver', 'v7.6');
       localStorage.setItem('tenden-demo-seen', 'true');
       sessionStorage.setItem('sn-dismissed', '1');
     });
     const page = await context.newPage();
-    page.on('pageerror', (error) => errors.push({ viewport: viewport.name, message: error.message }));
+    page.on('console', (message) => {
+      if (message.type() === 'error') {
+        consoleErrors.push({ viewport: viewport.name, message: message.text() });
+      }
+    });
+    page.on('pageerror', (error) => errors.push({
+      viewport: viewport.name,
+      message: error.message,
+      stack: error.stack || '',
+    }));
     await page.goto(APP_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForTimeout(5000);
     if (await page.locator('#btn-demo-skip-0').isVisible().catch(() => false)) {
@@ -161,13 +171,14 @@ async function openFromDock(page, trunk, selector, hasTouch) {
     await context.close();
   }
 
-  const report = { outputDir: OUTPUT_DIR, records, errors };
+  const report = { outputDir: OUTPUT_DIR, records, errors, consoleErrors };
   const reportPath = path.join(OUTPUT_DIR, 'report.json');
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
   console.log(JSON.stringify({
     reportPath,
     screenshotCount: records.length,
     pageErrors: errors,
+    consoleErrors,
     overflowCases: records.filter((r) => r.horizontalOverflow.length).map((r) => ({ label: r.label, items: r.horizontalOverflow.length })),
     outsideOverlayCases: records.flatMap((r) => r.activeOverlays.filter((o) => o.outsideViewport).map((o) => ({ label: r.label, overlay: o.id, rect: o.rect }))),
     smallTargetCases: records.map((r) => ({ label: r.label, targets: r.smallTargets })).filter((r) => r.targets.length),

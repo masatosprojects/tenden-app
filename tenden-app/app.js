@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.5';
+     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.6';
      var ver = 'v' + cfgVer;
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
@@ -387,7 +387,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=170', { updateViaCache: 'none' })
+        navigator.serviceWorker.register('sw.js?v=171', { updateViaCache: 'none' })
           .then(registration => registration.update())
           .catch(() => {});
       });
@@ -597,6 +597,10 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  });
 
  // 警報バナーは展開なしの常時表示ヘッダーに変更（チェブロン/展開機能は撤去）
+ }
+
+ function isLeafletMapReady() {
+ return !!(map && typeof map.setView === 'function' && typeof window.L !== 'undefined');
  }
 
  let _drillFlyMoveHandler = null;
@@ -2522,15 +2526,20 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
  if (typeof position.coords.heading === 'number' && !isNaN(position.coords.heading) && position.coords.heading >= 0) {
    gpsMovementHeading = position.coords.heading;
  }
- currentLocation = {
- lat: position.coords.latitude,
- lng: position.coords.longitude
- };
- map.setView([currentLocation.lat, currentLocation.lng], 16);
- updateMarker(currentLocation);
- fetchElevation(currentLocation);
- triggerLocationTsunamiCheck(currentLocation);
- generalizeFirstTargets(currentLocation);
+  currentLocation = {
+  lat: position.coords.latitude,
+  lng: position.coords.longitude
+  };
+  const mapReady = isLeafletMapReady();
+  if (mapReady) {
+  map.setView([currentLocation.lat, currentLocation.lng], 16);
+  updateMarker(currentLocation);
+  } else {
+  console.warn('[TENDEN] Location acquired before the map library became available.');
+  }
+  fetchElevation(currentLocation);
+  triggerLocationTsunamiCheck(currentLocation);
+  if (mapReady) generalizeFirstTargets(currentLocation);
  
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  if (typeof setAgentForFeature === 'function') setAgentForFeature('location-synced', dict.locationAcquiredLabel || '現在地を同期しました', { revertTo: 'default', revertMs: 3500 });
@@ -2551,13 +2560,14 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
    if (!isManualLocation && !_ep) applyCompassDisplay();
  }
  if (!isManualLocation) {
- currentLocation = {
- lat: pos.coords.latitude,
- lng: pos.coords.longitude
- };
- updateMarker(currentLocation);
- triggerLocationTsunamiCheck(currentLocation);
- generalizeFirstTargets(currentLocation);
+  currentLocation = {
+  lat: pos.coords.latitude,
+  lng: pos.coords.longitude
+  };
+  const locationMapReady = isLeafletMapReady();
+  if (locationMapReady) updateMarker(currentLocation);
+  triggerLocationTsunamiCheck(currentLocation);
+  if (locationMapReady) generalizeFirstTargets(currentLocation);
  updateCoastDistBar(currentLocation);
  }
  
