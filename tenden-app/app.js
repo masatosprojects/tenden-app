@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.8';
+     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.9';
      var ver = 'v' + cfgVer;
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
@@ -393,7 +393,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=173', { updateViaCache: 'none' })
+        navigator.serviceWorker.register('sw.js?v=174', { updateViaCache: 'none' })
           .then(registration => registration.update())
           .catch(() => {});
       });
@@ -2768,6 +2768,13 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
  if (elevDisplay && etaDisplay) {
  elevDisplay.classList.toggle('hidden', isEmergency);
  etaDisplay.classList.toggle('hidden', !isEmergency);
+ }
+ const elevBadgeSlot = document.getElementById('elev-badge-slot');
+ if (elevBadgeSlot) {
+ const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
+ elevBadgeSlot.setAttribute('aria-label', isEmergency
+   ? (dict.etaLabel || '津波到達までのモデル参考時間')
+   : (dict.hudElevationAria || '現在地の海抜（標高）'));
  }
 
  // Emergency mode: highlight the coastline-distance FAB inside the "more" menu

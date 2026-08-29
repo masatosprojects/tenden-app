@@ -53,7 +53,7 @@ async function inspect(page, label) {
     await context.addInitScript(() => {
       localStorage.setItem('tenden-tos-agreed', '1');
       localStorage.setItem('tenden-location-explained', 'true');
-      localStorage.setItem('tenden-pwa-ver', 'v7.8');
+      localStorage.setItem('tenden-pwa-ver', 'v7.9');
       localStorage.removeItem('tenden-demo-seen');
     });
     const page = await context.newPage();

@@ -9,7 +9,7 @@
  * 4. sw.js の CACHE_NAME / DYNAMIC_CACHE 連番をインクリメント
  */
 window.TENDEN_CONFIG = {
-  version: '7.8',
+  version: '7.9',
   termsVersion: '1.0',
   promoSiteUrl: 'https://masatosprojects.github.io/tenden-promo/',
   portalSiteUrl: 'https://masatosprojects.github.io/kamakura-sim/',

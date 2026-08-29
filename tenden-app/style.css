@@ -3495,6 +3495,20 @@ input:checked + .slider:before {
     .status-right .status-badge {
         justify-content: center;
         font-size: 0.78rem;
+        overflow: hidden;
+    }
+    .status-right .slot-content {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+        gap: 3px;
+        overflow: hidden;
+    }
+    .status-right .slot-content strong {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .network-badge, .gps-badge, .elev-badge, .inundation-depth-badge {
         padding: 4px 8px;
@@ -3588,6 +3602,8 @@ input:checked + .slider:before {
     .status-right .status-badge { font-size: 0.68rem; padding: 3px 4px !important; }
     #hud-tsunami-chip { font-size: 0.64rem; padding: 3px 6px; max-width: 32%; }
     .network-badge strong { font-size: 0.72rem; }
+    #eta-display .hud-label-short { font-size: 0.62rem; letter-spacing: -0.01em; }
+    #eta-display strong { font-size: 0.74rem; }
 }
 
 @container tenden-app (max-width: 340px) {
