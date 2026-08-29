@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.7';
+     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.8';
      var ver = 'v' + cfgVer;
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const KAMAKURA_DEMO_PIN = [35.3069, 139.5518]; // 由比ヶ浜海岸（デモ開始ピン・浸水想定区域内）
 const DEMO_QUAKE_FLOOD_POINT = KAMAKURA_DEMO_PIN; // オンボーディング Step1：現在地＝浸水リスク地点
 const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地区全域
+const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
 
  // ── Developer Announcements ───────────────────────────────────────────────
  // status: 'active' = 現在有効  |  'resolved' = 対応済み・過去のもの
@@ -392,7 +393,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=172', { updateViaCache: 'none' })
+        navigator.serviceWorker.register('sw.js?v=173', { updateViaCache: 'none' })
           .then(registration => registration.update())
           .catch(() => {});
       });
@@ -418,14 +419,16 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
   // 位置情報の許可はオンボーディング完了後に行う
   // requestLocation() は onboarding の「スキップ」「使ってみる」で呼ばれる
 
- // OSM Light style for Normal mode
- L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
- maxZoom: 19
+ // 国土地理院の淡色地図。APIキー不要で日本全国を表示する。
+ L.tileLayer(GSI_PALE_TILE_URL, {
+ maxNativeZoom: 18,
+ maxZoom: 19,
+ attribution: '地理院タイル（淡色地図）'
  }).addTo(map);
 
  L.control.attribution({
  position: 'bottomleft',
-    prefix: 'Source: GSI Hazard Map Portal (GSI Japan) | Leaflet',
+    prefix: '地図: 国土地理院 | Leaflet',
  }).addTo(map);
 
  routeLayerGroup = L.layerGroup().addTo(map);
@@ -8179,8 +8182,10 @@ function wireOnboardingButtons() {
    touchZoom: false
   }).setView(DEMO_QUAKE_FLOOD_POINT, 13);
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-   maxZoom: 19
+  L.tileLayer(GSI_PALE_TILE_URL, {
+   maxNativeZoom: 18,
+   maxZoom: 19,
+   attribution: '地理院タイル（淡色地図）'
   }).addTo(demoQuakeMap);
 
   const icon = L.divIcon({
