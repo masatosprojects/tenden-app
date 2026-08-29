@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.10';
+     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.11';
      var ver = 'v' + cfgVer;
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
@@ -393,7 +393,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=175', { updateViaCache: 'none' })
+        navigator.serviceWorker.register('sw.js?v=176', { updateViaCache: 'none' })
           .then(registration => registration.update())
           .catch(() => {});
       });
@@ -1348,14 +1348,6 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
  requestNotificationPermission();
  triggerHapticTick();
  });
- }
-
- // FAB: 鎌倉モデル地区を全域表示
- const btnFlyModel = document.getElementById('btn-fly-model');
- if (btnFlyModel) {
-   btnFlyModel.addEventListener('click', () => {
-     map.flyTo([35.308, 139.551], 13, { duration: 1.8, easeLinearity: 0.25 });
-   });
  }
 
  // FAB: みんなのレポート → 選択画面を開く
@@ -6929,22 +6921,11 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
  };
 
  const drillBtn = document.getElementById('safe-guide-btn-drill');
- const modelBtn = document.getElementById('safe-guide-btn-model');
  if (drillBtn) {
  drillBtn.addEventListener('click', (e) => {
  e.stopPropagation();
  dismissSafeZoneGuide();
  startDrillExperienceFlow();
- if (typeof triggerHapticTick === 'function') triggerHapticTick();
- });
- }
- if (modelBtn) {
- modelBtn.addEventListener('click', (e) => {
- e.stopPropagation();
- dismissSafeZoneGuide();
- clearDrillFlyHandler();
- try { hideTendenLoading(); } catch (err) {}
- document.getElementById('btn-focus-model')?.click();
  if (typeof triggerHapticTick === 'function') triggerHapticTick();
  });
  }

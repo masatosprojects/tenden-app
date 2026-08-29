@@ -230,7 +230,6 @@
        <p id="tenden-agent-bubble-text" class="tenden-agent-bubble-text" aria-live="polite"></p>
        <div id="tenden-agent-bubble-actions" class="tenden-agent-bubble-actions hidden">
          <button type="button" id="safe-guide-btn-drill" class="tenden-agent-bubble-chip primary" data-i18n="safeGuideBtnDrill">体験</button>
-         <button type="button" id="safe-guide-btn-model" class="tenden-agent-bubble-chip" data-i18n="safeGuideBtnModel">モデル地区</button>
        </div>
      </div>
    </div>
@@ -273,15 +272,6 @@
  </svg>
  </button>
  <span class="fab-label" data-i18n="fabGps">現在地</span>
- </div>
- <div class="fab-container">
- <button id="btn-fly-model" class="fab-btn" aria-label="モデル地区を表示">
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
- <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
- <circle cx="12" cy="10" r="3"/>
- </svg>
- </button>
- <span class="fab-label">モデル地区</span>
  </div>
  <div class="fab-container">
  <button id="btn-toggle-reports-fab" class="fab-btn" aria-label="みんなのレポートを表示" aria-pressed="false">
@@ -340,13 +330,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
       </div>
       <span class="sp-card-label">レイヤー設定</span>
-    </button>
-    <!-- モデル地区 -->
-    <button class="sp-card" data-trigger="btn-focus-model">
-      <div class="sp-card-icon" style="background:linear-gradient(135deg,#5e5ce6 0%,#bf5af2 100%)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      </div>
-      <span class="sp-card-label">モデル地区</span>
     </button>
     <!-- 設定 -->
     <button class="sp-card" data-trigger="btn-settings">
@@ -458,12 +441,6 @@
          </span>
          <span class="dock-label" data-i18n="dockGps">現在地</span>
        </button>
-       <button class="dock-item" data-trigger="btn-focus-model" aria-label="モデル地区を表示">
-         <span class="dock-icon dock-icon-model">
-           <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-         </span>
-         <span class="dock-label" data-i18n="dockModel">モデル地区</span>
-       </button>
      </div>
     <div class="dock-sub-panel" data-trunk="quake" hidden>
       <button class="dock-item dock-quake-specialty" id="dock-quake-tsunami" type="button" data-i18n-aria="dockQuakeTsunamiAria" aria-label="津波情報・警報・避難の心得">
@@ -503,12 +480,6 @@
            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6 0 1.2-.2 1.7-.6L5.3 4c.9-.9 2.5-.9 3.4 0l1.6 1.4c.5.4 1.1.6 1.7.6s1.2-.2 1.7-.6L17.3 4c.9-.9 2.5-.9 3.4 0l1.3 1.1"/><path d="M2 12c.6 0 1.2-.2 1.7-.6l1.6-1.4c.9-.9 2.5-.9 3.4 0l1.6 1.4c.5.4 1.1.6 1.7.6s1.2-.2 1.7-.6l1.6-1.4c.9-.9 2.5-.9 3.4 0l1.3 1.1"/><path d="M2 18c.6 0 1.2-.2 1.7-.6l1.6-1.4c.9-.9 2.5-.9 3.4 0l1.6 1.4c.5.4 1.1.6 1.7.6s1.2-.2 1.7-.6l1.6-1.4c.9-.9 2.5-.9 3.4 0l1.3 1.1"/></svg>
          </span>
          <span class="dock-label" data-i18n="dockCoast">海岸距離</span>
-       </button>
-       <button class="dock-item" data-trigger="btn-focus-model" aria-label="モデル地区を表示">
-         <span class="dock-icon dock-icon-model">
-           <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="22" height="22" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-         </span>
-         <span class="dock-label" data-i18n="dockModel">モデル地区</span>
        </button>
      </div>
      <div class="dock-sub-panel" data-trunk="community" hidden>
@@ -1311,7 +1282,7 @@
  </div>
  <div class="settings-version-footer">
    <span data-i18n="settingsVersionLabel">アプリバージョン</span>
-   <strong id="settings-version-value" data-config-version>v7.10</strong>
+   <strong id="settings-version-value" data-config-version>v7.11</strong>
  </div>
  </div>
  </div>
@@ -1331,7 +1302,7 @@
    <p class="about-desc" data-i18n="aboutDesc">鎌倉の津波避難を支援する無料アプリ。シミュレーション研究に基づく分散避難ナビです。</p>
    <div class="about-version-row">
      <span data-i18n="aboutVersionLabel">バージョン</span>
-     <strong id="about-version-value" data-config-version>v7.10</strong>
+     <strong id="about-version-value" data-config-version>v7.11</strong>
    </div>
    <div class="form-group about-links">
      <a href="https://masatosprojects.github.io/tenden-promo/" data-config-href="promoSiteUrl" target="_blank" rel="noopener" class="action-btn secondary-btn w-100 about-link-btn">
@@ -1880,9 +1851,9 @@
  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
  <script src="assets/vendor/qrcode.min.js?v=1"></script>
- <script src="app-config.js?v=10"></script>
+ <script src="app-config.js?v=11"></script>
  <script src="agent.js?v=147"></script>
- <script src="app.js?v=191"></script>
+ <script src="app.js?v=192"></script>
 
 <!-- ======================================================
      ホーム画面追加ガイド（手動トリガーのみ）
