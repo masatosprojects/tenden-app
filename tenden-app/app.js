@@ -27,7 +27,7 @@ var ONBOARDING_AGENT_CFG = [
   { feature: 'onboarding-flow', type: 'info' }
 ];
 var ONBOARDING_AGENT_FALLBACKS = [
-  'エージェントが吹き出しで、使い方をご案内します！',
+  '現在地の浸水リスクを確認し、避難先までの流れを安全に体験できます。',
   '地震が発生しました。津波の危険があります。すぐに避難を始めましょう。',
   '2つの避難ルートから選べます。あなたに合った道を、自分の判断で。',
   '歩く前に混雑を予習できます。準備ができたら、下のボタンではじめましょう！'
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.9';
+     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.10';
      var ver = 'v' + cfgVer;
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
@@ -368,7 +368,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
- fetch('assets/i18n.json?v=183')
+ fetch('assets/i18n.json?v=184')
  .then(res => res.json())
  .then(data => {
  i18nDict = data;
@@ -393,7 +393,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=174', { updateViaCache: 'none' })
+        navigator.serviceWorker.register('sw.js?v=175', { updateViaCache: 'none' })
           .then(registration => registration.update())
           .catch(() => {});
       });

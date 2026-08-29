@@ -246,7 +246,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #000; colo
     align-items: flex-start;
     width: auto;
     min-width: var(--agent-width);
-    max-width: min(280px, calc(100vw - 88px));
+    max-width: min(232px, calc(100vw - 104px));
     height: auto;
     pointer-events: none;
     overflow: visible;
@@ -267,7 +267,7 @@ body:not(.onboarding-demo-active) #app-container > #tenden-agent {
     order: 1;
     width: 100%;
     min-width: 120px;
-    max-width: min(280px, calc(100vw - 88px));
+    max-width: min(232px, calc(100vw - 104px));
     margin-bottom: var(--agent-bubble-gap);
     padding: 0;
     border-radius: 14px;
@@ -290,7 +290,7 @@ body:not(.onboarding-demo-active) #app-container > #tenden-agent {
 .tenden-agent-bubble-scroll {
     max-height: var(--agent-bubble-max-height);
     min-width: 0;
-    padding: 10px 14px 12px;
+    padding: 9px 12px 10px;
     border-radius: inherit;
     overflow-x: hidden;
     overflow-y: auto;
@@ -379,9 +379,9 @@ body:not(.onboarding-demo-active) #app-container > #tenden-agent {
 .tenden-agent-bubble-text {
     margin: 0;
     font-family: var(--agent-bubble-font);
-    font-size: 0.92rem;
+    font-size: 0.84rem;
     font-weight: 400;
-    line-height: 1.6;
+    line-height: 1.5;
     letter-spacing: 0.015em;
     word-break: break-word;
     overflow-wrap: anywhere;
@@ -396,8 +396,8 @@ body:not(.onboarding-demo-active) #app-container > #tenden-agent {
 }
 @container tenden-app (max-width: 420px) {
     .tenden-agent-bubble-text {
-        font-size: 0.86rem;
-        line-height: 1.55;
+        font-size: 0.82rem;
+        line-height: 1.48;
         letter-spacing: 0.01em;
     }
 }
@@ -3926,12 +3926,12 @@ body.onboarding-demo-active #onboarding-overlay #tenden-agent.tenden-agent--onbo
     align-items: center;
     width: max-content;
     min-width: 0;
-    max-width: min(320px, calc(100% - 32px));
+    max-width: min(260px, calc(100% - 40px));
     --agent-dock-offset: 0px;
 }
 body.onboarding-demo-active #onboarding-overlay #tenden-agent .tenden-agent-bubble {
-    width: min(320px, calc(100vw - 48px));
-    max-width: min(320px, calc(100vw - 48px));
+    width: min(260px, calc(100vw - 56px));
+    max-width: min(260px, calc(100vw - 56px));
     transform-origin: center bottom;
 }
 body.onboarding-demo-active #onboarding-overlay #tenden-agent .tenden-agent-bubble::after {
