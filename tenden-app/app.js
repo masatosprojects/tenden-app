@@ -12,6 +12,11 @@ function applyTendenConfig() {
       el.textContent = label;
     });
   }
+  if (cfg.termsVersion) {
+    document.querySelectorAll('[data-config-terms-version]').forEach(function (el) {
+      el.textContent = cfg.termsVersion;
+    });
+  }
 }
 
 // ── オンボーディング定数（DOMContentLoaded 初回 boot より前に初期化）
@@ -37,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
  // ── デモ強制リセット（新バージョン起動時に必ずオンボーディングを表示）
  (function() {
    try {
-     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.6';
+     var cfgVer = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.version) || '7.7';
      var ver = 'v' + cfgVer;
      if (localStorage.getItem('tenden-pwa-ver') !== ver) {
        localStorage.removeItem('tenden-demo-seen');
@@ -387,7 +392,7 @@ const KAMAKURA_BOUNDS = [[35.278, 139.525], [35.342, 139.578]]; // モデル地�
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=171', { updateViaCache: 'none' })
+        navigator.serviceWorker.register('sw.js?v=172', { updateViaCache: 'none' })
           .then(registration => registration.update())
           .catch(() => {});
       });
@@ -7915,13 +7920,38 @@ function wireEndDrillButton() {
 // requireTosThen() でラップされた遷移は必ずこのゲートで止まる。
 // 一度同意すればlocalStorageに記録され、以後の再訪問では再表示しない。
 var _tosGatePendingAction = null;
+var TOS_VERSION = (window.TENDEN_CONFIG && window.TENDEN_CONFIG.termsVersion) || '1.0';
 
 function isTosAgreed() {
-  try { return localStorage.getItem('tenden-tos-agreed') === '1'; } catch (e) { return false; }
+  try {
+    if (localStorage.getItem('tenden-tos-agreed') !== '1') return false;
+    var agreedVersion = localStorage.getItem('tenden-tos-agreed-version');
+    // Existing v1.0 users already agreed to the same text before versioned
+    // metadata was introduced. Migrate them without showing the gate again.
+    if (!agreedVersion) {
+      localStorage.setItem('tenden-tos-agreed-version', TOS_VERSION);
+      localStorage.setItem('tenden-tos-agreement-migrated', '1');
+      return true;
+    }
+    return agreedVersion === TOS_VERSION;
+  } catch (e) { return false; }
 }
 
 function markTosAgreed() {
-  try { localStorage.setItem('tenden-tos-agreed', '1'); } catch (e) {}
+  try {
+    localStorage.setItem('tenden-tos-agreed', '1');
+    localStorage.setItem('tenden-tos-agreed-version', TOS_VERSION);
+    localStorage.setItem('tenden-tos-agreed-at', new Date().toISOString());
+    localStorage.removeItem('tenden-tos-agreement-migrated');
+  } catch (e) {}
+}
+
+function syncTosGateScrollCue() {
+  var body = document.getElementById('tos-gate-body');
+  var cue = document.getElementById('tos-gate-scroll-cue');
+  if (!body || !cue) return;
+  var hasMore = body.scrollHeight > body.clientHeight + 8 && body.scrollTop + body.clientHeight < body.scrollHeight - 12;
+  cue.classList.toggle('is-complete', !hasMore);
 }
 
 function _resetTosGateInteractiveState() {
@@ -7942,9 +7972,11 @@ function showTosGate(onAgree) {
   if (!ov) { if (onAgree) onAgree(); return; } // ゲートDOMが無い場合は素通りさせる（安全側フォールバック）
   _tosGatePendingAction = onAgree;
   _resetTosGateInteractiveState();
+  var body = document.getElementById('tos-gate-body');
+  if (body) body.scrollTop = 0;
   document.getElementById('tos-gate-decline-panel')?.classList.add('hidden');
   ov.classList.remove('hidden');
-  setTimeout(function () { ov.classList.add('active'); }, 10);
+  setTimeout(function () { ov.classList.add('active'); syncTosGateScrollCue(); }, 10);
 }
 
 // 既に同意済みの利用者が「設定」から規約を読み返すための閲覧専用モード。
@@ -7953,6 +7985,8 @@ function showTosGateReadOnly() {
   var ov = document.getElementById('tos-gate-overlay');
   if (!ov) return;
   _tosGatePendingAction = null;
+  var body = document.getElementById('tos-gate-body');
+  if (body) body.scrollTop = 0;
   document.querySelectorAll('.tos-gate-item-check').forEach(function (el) {
     el.checked = true;
     el.disabled = true;
@@ -7965,7 +7999,7 @@ function showTosGateReadOnly() {
   if (agreeBtn) { agreeBtn.textContent = '閉じる'; agreeBtn.disabled = false; agreeBtn.style.opacity = '1'; }
   document.getElementById('tos-gate-decline-panel')?.classList.add('hidden');
   ov.classList.remove('hidden');
-  setTimeout(function () { ov.classList.add('active'); }, 10);
+  setTimeout(function () { ov.classList.add('active'); syncTosGateScrollCue(); }, 10);
 }
 
 // 同意済みならそのまま action() を実行、未同意ならゲートを表示して待つ。
@@ -7985,7 +8019,18 @@ function wireTosGate() {
   var closeTabBtn = document.getElementById('tos-gate-close-tab');
   var openPrivacyBtn = document.getElementById('tos-gate-open-privacy');
   var privacyLink = document.getElementById('tos-gate-privacy-link');
+  var scrollBody = document.getElementById('tos-gate-body');
+  var scrollCue = document.getElementById('tos-gate-scroll-cue');
   if (!ov || !cb || !agreeBtn) return;
+
+  if (scrollBody) scrollBody.addEventListener('scroll', syncTosGateScrollCue, { passive: true });
+  if (scrollCue && scrollBody) scrollCue.addEventListener('click', function () {
+    scrollBody.scrollBy({ top: Math.max(180, scrollBody.clientHeight * 0.72), behavior: 'smooth' });
+    setTimeout(syncTosGateScrollCue, 360);
+  });
+  ov.querySelectorAll('details').forEach(function (details) {
+    details.addEventListener('toggle', function () { setTimeout(syncTosGateScrollCue, 20); });
+  });
 
   function allItemsChecked() {
     for (var i = 0; i < itemChecks.length; i++) {

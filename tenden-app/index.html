@@ -8,7 +8,7 @@
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
- <link rel="stylesheet" href="style.css?v=187">
+ <link rel="stylesheet" href="style.css?v=188">
  <link rel="manifest" href="manifest.json">
 
   <!-- PWA / iOS ホーム画面対応 -->
@@ -945,11 +945,12 @@
  <!-- 利用規約 同意ゲート — オンボーディング序盤の必須関門。同意するまで先へ進めない。
       本文はプレースホルダー。実際の利用規約テキストに差し替え予定 (#tos-gate-body)。 -->
  <div id="tos-gate-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tos-gate-title">
- <div class="dialog glass-panel" style="max-width:480px; max-height:88vh; display:flex; flex-direction:column;">
+ <div class="dialog glass-panel tos-gate-dialog" style="max-width:480px; max-height:88vh; display:flex; flex-direction:column;">
  <div class="dialog-header">
  <h2 id="tos-gate-title">TENDENを利用する前に</h2>
  </div>
- <div id="tos-gate-body" style="flex:1; min-height:0; overflow-y:auto; font-size:0.82rem; line-height:1.7; padding:4px 6px 4px 2px; color:var(--text-color);">
+ <div class="tos-gate-scroll-shell">
+ <div id="tos-gate-body" class="tos-gate-scroll-body" tabindex="0" aria-describedby="tos-gate-scroll-cue" style="flex:1; min-height:0; overflow-y:auto; font-size:0.82rem; line-height:1.7; padding:4px 6px 4px 2px; color:var(--text-color);">
  <p style="font-size:0.85rem; opacity:0.85; margin:0 0 12px;">TENDENを利用する前に、次の6点をご確認ください。</p>
  <ul id="tos-gate-checklist" style="list-style:none; padding:0; margin:0 0 16px; display:flex; flex-direction:column; gap:10px;">
  <li><label style="display:flex; align-items:flex-start; gap:9px; cursor:pointer;"><input type="checkbox" class="tos-gate-item-check" style="margin-top:3px; width:17px; height:17px; flex-shrink:0;"><span style="font-size:0.85rem; line-height:1.5;">TENDENは研究中の実験的プロトタイプで、公的機関の公式避難サービスではありません。</span></label></li>
@@ -1027,7 +1028,7 @@
  <h3 style="font-size:0.9rem; margin:14px 0 4px;">第32条（運営者・問い合わせ）</h3>
  <p>運営者：KAMAKURA SIM Project / TENDEN開発者<br>
  連絡先：<mark style="background:#ffe08a; padding:0 3px;">[専用メールアドレス]</mark><br>
- 利用規約バージョン：<mark style="background:#ffe08a; padding:0 3px;">[1.0]</mark><br>
+ 利用規約バージョン：<span data-config-terms-version>1.0</span><br>
  制定日：<mark style="background:#ffe08a; padding:0 3px;">[2026年○月○日]</mark><br>
  最終改定日：<mark style="background:#ffe08a; padding:0 3px;">[2026年○月○日]</mark></p>
  </div>
@@ -1039,6 +1040,11 @@
  <button type="button" id="tos-gate-open-privacy" class="action-btn secondary-btn w-100" style="margin-top:8px;">プライバシーポリシーを別画面で開く</button>
  </div>
  </details>
+ </div>
+ <button type="button" id="tos-gate-scroll-cue" class="tos-gate-scroll-cue" aria-controls="tos-gate-body" aria-label="下に続く確認項目へスクロール">
+   <span class="tos-scroll-cue-copy"><strong>下にも確認項目があります</strong><small>スクロールして6項目すべてをご確認ください</small></span>
+   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="20" height="20" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+ </button>
  </div>
  <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(128,128,128,0.25);">
  <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
@@ -1304,7 +1310,7 @@
  </div>
  <div class="settings-version-footer">
    <span data-i18n="settingsVersionLabel">アプリバージョン</span>
-   <strong id="settings-version-value" data-config-version>v7.6</strong>
+   <strong id="settings-version-value" data-config-version>v7.7</strong>
  </div>
  </div>
  </div>
@@ -1324,7 +1330,7 @@
    <p class="about-desc" data-i18n="aboutDesc">鎌倉の津波避難を支援する無料アプリ。シミュレーション研究に基づく分散避難ナビです。</p>
    <div class="about-version-row">
      <span data-i18n="aboutVersionLabel">バージョン</span>
-     <strong id="about-version-value" data-config-version>v7.6</strong>
+     <strong id="about-version-value" data-config-version>v7.7</strong>
    </div>
    <div class="form-group about-links">
      <a href="https://masatosprojects.github.io/tenden-promo/" data-config-href="promoSiteUrl" target="_blank" rel="noopener" class="action-btn secondary-btn w-100 about-link-btn">
@@ -1873,9 +1879,9 @@
  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
  <script src="assets/vendor/qrcode.min.js?v=1"></script>
- <script src="app-config.js?v=6"></script>
+ <script src="app-config.js?v=7"></script>
  <script src="agent.js?v=147"></script>
- <script src="app.js?v=187"></script>
+ <script src="app.js?v=188"></script>
 
 <!-- ======================================================
      ホーム画面追加ガイド（手動トリガーのみ）

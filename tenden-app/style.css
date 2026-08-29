@@ -2432,6 +2432,83 @@ a.dock-item.dock-learn-external {
 #tos-gate-overlay.overlay { z-index: 30000; }
 #privacy-policy-overlay.overlay { z-index: 31000; }
 
+.tos-gate-scroll-shell {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+.tos-gate-scroll-body {
+    width: 100%;
+    padding-bottom: 68px !important;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+.tos-gate-scroll-cue {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 9px 12px 8px;
+    border: 1px solid rgba(0, 113, 227, 0.22);
+    border-radius: 14px;
+    color: #0066cc;
+    background: rgba(245, 250, 255, 0.97);
+    box-shadow: 0 -12px 24px rgba(255, 255, 255, 0.96), 0 4px 14px rgba(0, 80, 160, 0.12);
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+.tos-gate-scroll-cue::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -28px;
+    height: 28px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.96));
+    pointer-events: none;
+}
+.tos-scroll-cue-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    line-height: 1.25;
+}
+.tos-scroll-cue-copy strong { font-size: 0.82rem; }
+.tos-scroll-cue-copy small { margin-top: 2px; font-size: 0.68rem; font-weight: 600; opacity: 0.76; }
+.tos-gate-scroll-cue svg { flex: 0 0 auto; animation: tosCueBounce 1.3s ease-in-out infinite; }
+.tos-gate-scroll-cue.is-complete {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    pointer-events: none;
+}
+.mode-emergency .tos-gate-scroll-cue {
+    color: #7dbdff;
+    background: rgba(22, 30, 42, 0.97);
+    border-color: rgba(125, 189, 255, 0.3);
+    box-shadow: 0 -12px 24px rgba(22, 22, 26, 0.94), 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+.mode-emergency .tos-gate-scroll-cue::before {
+    background: linear-gradient(to bottom, rgba(22, 22, 26, 0), rgba(22, 22, 26, 0.96));
+}
+@keyframes tosCueBounce {
+    0%, 100% { transform: translateY(-1px); }
+    50% { transform: translateY(4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tos-gate-scroll-cue svg { animation: none; }
+    .tos-gate-scroll-body { scroll-behavior: auto; }
+}
+
 /* ルート選択シートは背後の地図に両ルート（AI/要配慮者）を描いて見比べさせるため、
    標準オーバーレイより薄く透過させる。 */
 #route-overlay {
