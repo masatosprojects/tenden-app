@@ -167,7 +167,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
      status: 'active',
      category: 'お知らせ',
      title: 'オフライン緊急モードを手動で有効化できます',
-     body: '設定から「オフライン緊急モード」をONにすると、電波のない緊急時でもTENDENが動作します。オンラインに戻るとアプリ本体は更新されます。',
+     body: '設定から「オフライン緊急モード」をONにすると、事前に保存したアプリ資産を通信断時にも表示できる場合があります。経路探索・標高取得・速報など外部通信を必要とする機能や未取得データは利用できない場合があります。オンラインに戻るとアプリ本体は更新されます。',
    },
    {
      id: 'community-reports',
@@ -2690,7 +2690,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
  },
  'b': {
  name: "地点B: 和田塚駅周辺 (市街中間地帯/海抜0.8m)",
- desc: "青いルートに沿って最寄りの高台（鎌倉市役所）へ避難してください",
+ desc: "青い参考ルートに沿って、設定した候補地点（市役所付近）を確認してください。現地の指示を最優先にしてください",
  start: { lat: 35.3135, lng: 139.5448 }, // Wadazuka Station
  goal: { lat: 35.3180, lng: 139.5400 }, // Kamakura City Hall
  goal2: { lat: 35.3190, lng: 139.5510 }, // Onari Elementary
@@ -4470,7 +4470,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
        </div>
        <div class="route-card-text">
          <div class="route-card-name">${c.label}</div>
-         <div class="route-card-kw">${(dict.routeAiBadge || 'AI推奨・最適ルート')}</div>
+         <div class="route-card-kw">${(dict.routeAiBadge || 'AI参考ルート')}</div>
        </div>
        <div class="route-card-time">${c.estimated_min}<small>${(dict.minutesSuffix || '分')}</small></div>
      </div>`;
