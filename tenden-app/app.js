@@ -2205,12 +2205,12 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
    const _pwaOn = localStorage.getItem('tenden-pwa-enabled') === '1';
    pwaOfflineToggle.checked = _pwaOn;
    const _statusEl = document.getElementById('pwa-toggle-status');
-   if (_statusEl) _statusEl.textContent = _pwaOn ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
+   if (_statusEl) _statusEl.textContent = _pwaOn ? 'オフラインモード：ON（保存済み範囲のみ）' : 'オフラインモード：OFF（自動更新あり）';
    pwaOfflineToggle.addEventListener('change', () => {
      const enabling = pwaOfflineToggle.checked;
      localStorage.setItem('tenden-pwa-enabled', enabling ? '1' : '0');
      const statusEl = document.getElementById('pwa-toggle-status');
-     if (statusEl) statusEl.textContent = enabling ? 'オフラインモード：ON（ネット不要）' : 'オフラインモード：OFF（自動更新あり）';
+     if (statusEl) statusEl.textContent = enabling ? 'オフラインモード：ON（保存済み範囲のみ）' : 'オフラインモード：OFF（自動更新あり）';
      if (enabling) {
        if (confirm('オフライン緊急モードを有効にします。\n\n事前に閲覧した地図タイルやアプリ本体はキャッシュされ、通信がなくても表示できます。\nただし、経路探索(OSRM)・標高取得・地震/津波速報(P2P)等は通信断時に利用できません。保存済みの情報が古くなる場合もあります。\nオンラインに戻るとアプリ本体を更新します。\n\n有効にしますか？')) {
          location.reload();
