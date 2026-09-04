@@ -368,7 +368,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
- fetch('assets/i18n.json?v=20260904')
+ fetch('assets/i18n.json?v=20260905')
  .then(res => res.json())
  .then(data => {
  i18nDict = data;
@@ -6070,8 +6070,8 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
  // Smartphone Background Notification & Celebration Vibration
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
  sendSystemNotification(
-  dict.arrivalTitle || "Evacuation Completed!",
-      dict.arrivalDesc || 'You have successfully reached a safe location. Please remain here.',
+  dict.arrivalTitle || "Near destination",
+      dict.arrivalDesc || 'You are near the destination. Check local conditions and official instructions.',
  "arrival-alert"
  );
  if ('vibrate' in navigator) {
@@ -6081,8 +6081,8 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
 
  // Trigger beautiful completion alert popup
  showCustomAlert(
-  dict.arrivalTitle || "Evacuation Completed!",
-      dict.arrivalDesc || 'You have successfully reached a safe location. Please remain here.',
+  dict.arrivalTitle || "Near destination",
+      dict.arrivalDesc || 'You are near the destination. Check local conditions and official instructions.',
  "success",
  () => {
  // Automatically trigger the beautiful evacuation plan card screenshot & share overlay!
@@ -6849,7 +6849,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
 
  function getSafeGuideBubbleMessage() {
  const dict = i18nDict[getLanguageCode()] || i18nDict['ja'] || {};
- return dict.safeGuideBubble || 'いまの場所は安全です。避難の流れを体験してみましょう。';
+ return dict.safeGuideBubble || '現在地の安全は確認できません。避難の流れを体験してみましょう。';
  }
 
  function hideSafeZoneGuideBubble() {
