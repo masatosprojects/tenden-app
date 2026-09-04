@@ -368,7 +368,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
 
 
  // Load 30-languages localization dictionary from external JSON file (PWA cache optimized)
- fetch('assets/i18n.json?v=184')
+ fetch('assets/i18n.json?v=20260904')
  .then(res => res.json())
  .then(data => {
  i18nDict = data;
@@ -3672,7 +3672,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
      waypoints: wps,
      distance_m: Math.round(dist),
      estimated_min: est,
-     characteristics: (dict.routeAiDesc || '強化学習AIが距離・標高・津波到達・道幅・混雑を総合判断した最適経路')
+     characteristics: (dict.routeAiDesc || '事前計算した方策に基づく参考経路。現地の混雑・通行可能性・安全性は未確認')
        .replace('{rate}', survival),
      congestion_score: 'ai',
      isAI: true,

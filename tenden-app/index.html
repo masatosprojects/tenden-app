@@ -1731,62 +1731,24 @@
  </div>
 
  <div class="guide-scroll-content" style="overflow-y: auto; flex: 1; padding: 15px 0; display: flex; flex-direction: column; gap: 16px; font-size: 0.9rem; line-height: 1.6;">
- <p class="dialog-subtitle" style="margin-bottom: 5px; font-weight: 500; opacity: 0.9;">本アプリの「AIスマート避難ルート」に使われた強化学習モデルの技術解説です。</p>
-
- <!-- Card 1 -->
- <div class="guide-card" style="background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;">
- <h3 style="color: var(--warning); font-size: 1.0rem; margin: 0;">1. 訓練シナリオ：実際の鎌倉の大規模避難</h3>
- <p style="margin: 0; opacity: 0.85;">観光客・住民・就業者など実際の鎌倉の人口構成に基づく大規模避難シミュレーションを複数回実行し、その平均的な混雑（道路に渋滞が発生し歩行速度が大きく低下する状況）を再現しました。この現実的な混雑の中に強化学習エージェントを投入し、繰り返し試行して避難の方策を学習させています。</p>
+ <p class="dialog-subtitle" data-i18n="evidenceGuideIntro">「強化学習ルート」（旧称：AIスマート避難ルート）は、鎌倉沿岸部のモデルで事前計算した方策を使う参考候補です。端末で学習し続けたり、現地の混雑を監視したりする仕組みではありません。</p>
+ <div class="guide-card" style="padding:16px; border:1px solid var(--glass-border); border-radius:16px;">
+ <h3 data-i18n="evidenceGuideMethodTitle">1. 事前計算と端末上の経路構成</h3>
+ <p data-i18n="evidenceGuideMethod">線形Q学習で得た方策データから次の道路ノードをたどります。端末ごとの疑似乱数で分岐候補を選び、予測移動時間に応じて事前計算した混雑回避候補を限定的に参照します。これは実際の道路閉塞・人流を観測した案内ではありません。</p>
  </div>
-
- <!-- Card 2 -->
- <div class="guide-card" style="background: rgba(0, 122, 255, 0.08); border: 1px solid rgba(0, 122, 255, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;">
- <h3 style="color: var(--primary); font-size: 1.0rem; margin: 0;">2. AIが学習した7つの判断基準</h3>
- <p style="margin: 0; opacity: 0.85;">Q学習（線形関数近似）を用い、以下の特徴量から「最も多くの人が高台へ避難できる道」を選ぶ方策を学習しました。</p>
- <ul style="margin: 4px 0 0 16px; padding: 0; opacity: 0.85; display: flex; flex-direction: column; gap: 4px;">
-    <li>最寄りの安全な高台へ最短で接近すること</li>
-    <li>標高の高い場所へ上昇すること</li>
-    <li>津波が早く到達する場所を避けること</li>
-    <li>同じ場所を行き来する「迷走」を防ぐこと</li>
-    <li>幅が広く通行しやすい道路を優先すること</li>
-    <li>袋小路（行き止まり）を避けること</li>
-    <li>混雑状況を考慮すること</li>
-  </ul>
+ <div class="guide-card" style="padding:16px; border:1px solid var(--glass-border); border-radius:16px;">
+ <h3 data-i18n="evidenceGuideVersionTitle">2. 公開モデルと研究評価の区別</h3>
+ <p data-i18n="evidenceGuideVersion">2026年9月4日に確認した配信方策は200エピソード版です。研究で作成した400エピソード版とは区別し、今回の説明修正では経路データを差し替えていません。モデル情報の93.4%や、別の研究評価の99.76%を、アプリ利用者の生存確率として扱うことはできません。</p>
+ <p><a href="research-model-notes.html" target="_blank" rel="noopener" data-i18n="evidenceGuideLink">配信版・研究評価・変更記録を見る（日本語 / English）</a></p>
  </div>
-
- <!-- Card 3 -->
- <div class="guide-card" style="background: rgba(52, 199, 89, 0.08); border: 1px solid rgba(52, 199, 89, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;">
- <h3 style="color: #34c759; font-size: 1.0rem; margin: 0;">3. 学習成果：厳密な評価で確認</h3>
- <p style="margin: 0; opacity: 0.85;">探索を切った（ε=0）方策を、複数の固定シードで繰り返し評価しました。学習済みモデルの平均避難成功率は<strong>約99%</strong>に達し、単純に「最寄りの安全地点へ最短で向かう」方式（約98%）を<strong>上回る</strong>ことを確認しています（鎌倉モデル地区・シミュレーション上の指標）。</p>
- <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px; font-size: 0.82rem; text-align: center;">
-    <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px;">
-      <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-muted, #888);">約98%</div>
-      <div style="opacity: 0.7;">最短経路方式</div>
-    </div>
-    <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px;">
-      <div style="font-weight: 700; font-size: 1.1rem; color: #34c759;">約99%</div>
-      <div style="opacity: 0.7;">AIモデル（本アプリ）</div>
-    </div>
-  </div>
+ <div class="guide-card" style="padding:16px; border:1px solid var(--glass-border); border-radius:16px;">
+ <h3 data-i18n="evidenceGuideAccessibleTitle">3. 要配慮者ルートは別方式</h3>
+ <p data-i18n="evidenceGuideAccessible">急坂回避の比較では強化学習案を採用せず、勾配・道幅をコストに組み込んだ多源ダイクストラ法を選びました。車いすでの通行、段差・階段・障害物の回避、現地での安全を保証するものではありません。</p>
  </div>
-
- <!-- Card 3.5: How to use the AI route -->
- <div class="guide-card" style="background: linear-gradient(135deg, rgba(255,122,24,0.12), rgba(255,61,119,0.10)); border: 1px solid rgba(255,94,58,0.3); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
- <h3 style="font-size: 1.0rem; margin: 0; color: #ff6b3d;">このモデルの推奨ルートを使う</h3>
- <p style="margin: 0; opacity: 0.88;">避難体験を開始すると表示される「<strong>避難ルートを選択</strong>」画面の先頭に、この学習済みモデルが現在地から高台まで提案する「<strong>AIスマート避難ルート</strong>」が表示されます。タップすると地図上に経路が描画されます。</p>
- </div>
-
- <!-- Card 3.6: Accessible route — honest RL vs Dijkstra finding (research transparency) -->
- <div class="guide-card" style="background: rgba(94, 92, 230, 0.08); border: 1px solid rgba(94, 92, 230, 0.25); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px;">
- <h3 style="color: #5e5ce6; font-size: 1.0rem; margin: 0;">要配慮者ルートだけは「強化学習を使わない」と決めた理由</h3>
- <p style="margin: 0; opacity: 0.85;">高齢者・車椅子・ベビーカーなどの方に向けた「<strong>要配慮者ルート</strong>」（急な坂や狭い道を避ける経路）でも、当初は同じ強化学習で最適化を試みました。しかし複数シードで厳密に検証した結果、<strong>強化学習版はかえって急な坂を多く通ってしまい</strong>、坂を直接コスト化して避ける古典的な経路探索（ダイクストラ法）に明確に及びませんでした。</p>
- <p style="margin: 0; opacity: 0.85;">「AIだから何でも優れている」とは限りません。<strong>目的に対してより確実で説明可能な手法を選ぶ</strong>という研究上の判断から、本アプリの要配慮者ルートは強化学習ではなく、坂の急さを直接避けるダイクストラ最適経路を採用しています。これは強化学習の失敗ではなく、手法を正しく比較・検証した結果の選択です。</p>
- </div>
-
- <!-- Card 4: Warning -->
- <div class="guide-card" style="background: rgba(255, 59, 48, 0.08); border: 1px solid rgba(255, 59, 48, 0.2); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px;">
- <h3 style="color: var(--danger); font-size: 1.0rem; margin: 0;">AIルートの重要な注意事項</h3>
- <p style="margin: 0; opacity: 0.85;">「AIスマート避難ルート」は事前シミュレーションに基づく<strong>参考情報</strong>です。実際の災害時には瓦礫・建物崩壊・局所的パニックなど予測不能な要因があります。必ず現地の避難誘導看板・警察・防災担当者の指示を最優先にしてください。</p>
+ <div class="guide-card" style="padding:16px; border:1px solid var(--glass-border); border-radius:16px;">
+ <h3 data-i18n="evidenceGuideLimitsTitle">4. 利用上の限界</h3>
+ <p data-i18n="evidenceGuideLimits">経路はシミュレーションに基づく参考情報です。オフライン機能は設定で有効にする方式で、保存済み資産に限られます。外部APIや未取得データを使う機能、情報の最新性は保証しません。実際の避難では現地状況と公的な避難情報を優先してください。</p>
+ <p data-i18n="evidenceGuideTranslation">この更新部分は日本語と英語で説明しています。他言語では英語を補助表示します。30言語の意味の検証は完了していません。</p>
  </div>
  </div>
 
@@ -1853,7 +1815,7 @@
  <script src="assets/vendor/qrcode.min.js?v=1"></script>
  <script src="app-config.js?v=12"></script>
  <script src="agent.js?v=147"></script>
- <script src="app.js?v=193"></script>
+ <script src="app.js?v=20260904"></script>
 
 <!-- ======================================================
      ホーム画面追加ガイド（手動トリガーのみ）

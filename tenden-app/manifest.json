@@ -1,7 +1,7 @@
 {
     "name": "TENDEN - 日頃の備えと迷わないルートを",
     "short_name": "TENDEN",
-    "description": "津波発生時に「迷わず逃げる」ための避難ナビ。AIスマート避難ルート・リアルタイム浸水判定・オフライン対応・30言語。",
+    "description": "鎌倉沿岸部の研究に基づく公開実験版。強化学習ルート・要配慮者ルート・浸水想定の参照。オフラインは設定で有効化した保存済み範囲に限られ、安全を保証しません。",
     "start_url": "./index.html",
     "scope": "./",
     "display": "standalone",
@@ -24,7 +24,7 @@
             "src": "assets/screenshots/screen2.png",
             "sizes": "1170x2532",
             "type": "image/png",
-            "label": "緊急モード — AIスマート避難ルート"
+            "label": "緊急モード — 強化学習ルート（参考候補）"
         },
         {
             "src": "assets/screenshots/screen3.png",
