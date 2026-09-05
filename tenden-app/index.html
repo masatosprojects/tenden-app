@@ -27,16 +27,16 @@
   <meta property="og:locale" content="ja_JP">
   <meta property="og:site_name" content="TENDEN">
   <meta property="og:title" content="TENDEN（テンデン）- 鎌倉の津波避難ナビ｜AIが推奨する避難ルート">
-  <meta property="og:description" content="鎌倉で津波が来たらどこへ逃げる？強化学習AIが推奨する避難ルート・リアルタイム浸水判定・オフライン対応・30言語。高校生研究者が避難シミュレーション研究をもとに開発した無料アプリ。">
+  <meta property="og:description" content="鎌倉沿岸部の津波避難を考える公開実験版。2経路比較・浸水想定の確認・一部情報の事前キャッシュ・30言語に対応した個人開発のPWAです。">
   <meta property="og:image" content="https://masatosprojects.github.io/tenden-app/assets/icons/icon-512.png">
   <meta property="og:url" content="https://masatosprojects.github.io/tenden-app/">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="TENDEN - 鎌倉の津波避難ナビ">
-  <meta name="twitter:description" content="鎌倉で津波が来たらどこへ逃げる？AIの推奨ルート・オフライン対応・30言語の無料避難アプリ。">
+  <meta name="twitter:description" content="鎌倉沿岸部の津波避難を考える公開実験版。2経路比較・一部情報の事前キャッシュ・30言語に対応した個人開発PWA。">
   <meta name="twitter:image" content="https://masatosprojects.github.io/tenden-app/assets/icons/icon-512.png">
 
   <!-- SEO -->
-  <meta name="description" content="鎌倉（由比ヶ浜・七里ヶ浜・材木座）で津波が来たらどこへ逃げる？強化学習AIが推奨する避難ルート・リアルタイム浸水判定・オフライン対応・30言語。鎌倉市の避難シミュレーション研究から生まれた無料の津波避難アプリ（PWA）。">
+  <meta name="description" content="鎌倉沿岸部（由比ヶ浜・七里ヶ浜・材木座）の津波避難を考える公開実験版。2経路比較・浸水想定の確認・一部情報の事前キャッシュ・30言語に対応した個人開発のPWA。自治体の公式アプリではありません。">
   <meta name="keywords" content="鎌倉,津波避難,津波避難アプリ,ハザードマップ,観光客 防災,避難アプリ,減災,TENDEN">
   <meta name="robots" content="index, follow">
 
@@ -50,7 +50,7 @@
     "url": "https://masatosprojects.github.io/tenden-app/",
     "applicationCategory": "NavigationApplication",
     "operatingSystem": "Any (PWA)",
-    "description": "鎌倉（由比ヶ浜・七里ヶ浜・材木座）の津波避難を支援する無料PWAアプリ。強化学習AIが推奨する避難ルート・リアルタイム浸水判定・オフライン対応・30言語対応。",
+    "description": "鎌倉沿岸部（由比ヶ浜・七里ヶ浜・材木座）の津波避難を考える公開実験版PWA。2経路比較・浸水想定の確認・一部情報の事前キャッシュ・30言語対応。自治体の公式アプリではありません。",
     "offers": {
       "@type": "Offer",
       "price": "0",
@@ -58,7 +58,7 @@
     },
     "areaServed": {
       "@type": "Place",
-      "name": "鎌倉市（由比ヶ浜・七里ヶ浜・材木座）"
+      "name": "鎌倉沿岸部（由比ヶ浜・七里ヶ浜・材木座）"
     },
     "inLanguage": ["ja", "en", "zh", "zh-tw", "ko", "es", "fr", "de", "pt", "ru"]
   }
@@ -733,7 +733,7 @@
        <h2 style="font-size:1.35rem;margin:0;">鎌倉で避難を体験する</h2>
      </div>
      <div style="flex-shrink:0; padding:4px 2px;">
-       <p style="font-size:0.98rem; line-height:1.7; margin:0; text-align:center;">津波が来たら、<strong>どこへどう逃げるか</strong>をモデル上で体験できます。</p>
+       <p style="font-size:0.98rem; line-height:1.7; margin:0; text-align:center;">津波が来た場合の<strong>避難の流れと経路比較</strong>をモデル上で体験できます。実地の安全性を保証するものではありません。</p>
        <a href="https://masatosprojects.github.io/kamakura-sim/" data-config-href="portalSiteUrl" style="display:block; text-align:center; margin-top:12px; font-size:0.82rem; color:var(--primary); text-decoration:none; font-weight:600;">研究の詳しい内容を見る ↗</a>
      </div>
      <button id="btn-research-intro-start" class="action-btn primary-btn w-100 btn-large" style="margin-top:16px;border-radius:12px;flex-shrink:0;">はじめる</button>
@@ -791,7 +791,7 @@
  <div class="demo-step" id="demo-step-1">
  <div class="demo-scenario-badge">
  <span class="demo-badge-dot"></span>
- <span id="demo-badge-label">鎌倉市 由比ヶ浜</span>
+ <span id="demo-badge-label">鎌倉沿岸部・由比ヶ浜</span>
  </div>
  <div class="demo-alert-box" id="demo-alert-box">
  <div class="demo-alert-icon"></div>
@@ -1239,7 +1239,7 @@
 
  <!-- App Promotion Site Link -->
  <div class="form-group">
- <label data-i18n="promoSiteLabel">アプリ公式サイト・研究背景</label>
+ <label data-i18n="promoSiteLabel">TENDEN情報サイト・研究背景</label>
  <a href="https://masatosprojects.github.io/tenden-promo/" data-config-href="promoSiteUrl" target="_blank" rel="noopener" class="action-btn secondary-btn w-100" style="padding:14px; border-radius:12px; font-weight:600; display:flex; justify-content:center; align-items:center; gap:8px; text-decoration: none;">
  <span data-i18n="promoSiteBtnText"> TENDEN 解説サイトを開く</span>
  </a>

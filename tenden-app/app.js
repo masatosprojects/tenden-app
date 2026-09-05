@@ -27,7 +27,7 @@ var ONBOARDING_AGENT_CFG = [
   { feature: 'onboarding-flow', type: 'info' }
 ];
 var ONBOARDING_AGENT_FALLBACKS = [
-  '現在地の浸水リスクを確認し、避難先までの流れを安全に体験できます。',
+  '現在地の浸水想定を確認し、避難先までの流れを画面上で体験できます。実地の安全性を保証するものではありません。',
   '地震が発生しました。津波の危険があります。すぐに避難を始めましょう。',
   '2つの避難ルートから選べます。あなたに合った道を、自分の判断で。',
   '歩く前に混雑を予習できます。準備ができたら、下のボタンではじめましょう！'
@@ -393,7 +393,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
   if ('serviceWorker' in navigator) {
     if (_pwaEnabled) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js?v=177', { updateViaCache: 'none' })
+        navigator.serviceWorker.register('sw.js?v=179', { updateViaCache: 'none' })
           .then(registration => registration.update())
           .catch(() => {});
       });
@@ -514,7 +514,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
  const capLine = (s.capacity && s.capacity > 0) ? `<br><span style="font-size:0.85em;opacity:0.85">${capText}</span>` : '';
  const addrLine = s.address ? `<br><span style="font-size:0.8em;opacity:0.7">${s.address}</span>` : '';
 
- const disclaimerText = dict.shelterSourceNote || '出典：鎌倉市公式オープンデータ';
+ const disclaimerText = dict.shelterSourceNote || '出典：鎌倉市が公開するオープンデータ（TENDENは個人開発・自治体非公式）';
  const disclaimer = `<br><em style="font-size:0.74em;opacity:0.6">${disclaimerText}</em>`;
 
  L.marker([s.lat, s.lng], { icon })
@@ -2676,7 +2676,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
  desc: "青いルートに沿って直ちに高台（御成小学校）へ避難してください",
  start: { lat: 35.3111, lng: 139.5467 }, // Yuigahama Beach
  goal: { lat: 35.3190, lng: 139.5510 }, // Onari Elementary
- goal2: { lat: 35.3180, lng: 139.5400 }, // Kamakura City Hall
+ goal2: { lat: 35.3180, lng: 139.5400 }, // Demo target B
  mainRoute: [
  [35.3111, 139.5467],
  [35.3150, 139.5480],
@@ -2692,7 +2692,7 @@ const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}
  name: "地点B: 和田塚駅周辺 (市街中間地帯/海抜0.8m)",
  desc: "青い参考ルートに沿って、設定した候補地点（市役所付近）を確認してください。現地の指示を最優先にしてください",
  start: { lat: 35.3135, lng: 139.5448 }, // Wadazuka Station
- goal: { lat: 35.3180, lng: 139.5400 }, // Kamakura City Hall
+ goal: { lat: 35.3180, lng: 139.5400 }, // Demo target B
  goal2: { lat: 35.3190, lng: 139.5510 }, // Onari Elementary
  mainRoute: [
  [35.3135, 139.5448],
